@@ -1,22 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
-<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:drawable="@drawable/ic_logo_vector">
-    <target
-        android:name="outline_a_horizontal"
-        android:animation="@animator/anim_outline_horizontal" />
-    <target
-        android:name="outline_a_vertical"
-        android:animation="@animator/anim_outline_vertical" />
-    <target
-        android:name="outline_b_horizontal"
-        android:animation="@animator/anim_outline_horizontal" />
-    <target
-        android:name="outline_b_vertical"
-        android:animation="@animator/anim_outline_vertical" />
-    <target
-        android:name="square_a"
-        android:animation="@animator/anim_square_path" />
-    <target
-        android:name="square_b"
-        android:animation="@animator/anim_square_path_rev" />
-</animated-vector>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- 与启动图标一致的绿色渐变底 -->
+    <path android:pathData="M36,10 h36 a26,26 0 0 1 26,26 v36 a26,26 0 0 1 -26,26 h-36 a26,26 0 0 1 -26,-26 v-36 a26,26 0 0 1 26,-26 z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="10"
+                android:startY="10"
+                android:endX="98"
+                android:endY="98">
+                <item
+                    android:color="#FF4AE75A"
+                    android:offset="0.0" />
+                <item
+                    android:color="#FF0FC01F"
+                    android:offset="0.55" />
+                <item
+                    android:color="#FF008F06"
+                    android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.56"
+        android:scaleY="0.56">
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:fillType="evenOdd"
+            android:pathData="M23,15 L42,40 Q54,33.5 66,40 L85,15 L86,50 Q86,69 54,90 Q22,69 22,50 Z M36.6,50.4 L47.6,50.4 L42.1,57.6 Z M71.4,50.4 L60.4,50.4 L65.9,57.6 Z" />
+    </group>
+</vector>
