@@ -34,6 +34,13 @@ data class Customization(
     val kpiImages: List<String?> = List(KPI_CARD_COUNT) { null },
     /** Opacity of each KPI card picture, 0.2f..1f. */
     val kpiAlphas: List<Float> = List(KPI_CARD_COUNT) { 0.7f },
+    /**
+     * Per-card surface override: slot 0 is the hero card, 1..4 are the KPI cards.
+     * 0 = follow the global card colour.
+     */
+    val surfaceColors: List<Int> = List(SURFACE_SLOT_COUNT) { 0 },
+    /** Per-card opacity override, -1f = follow the global card opacity. */
+    val surfaceAlphas: List<Float> = List(SURFACE_SLOT_COUNT) { -1f },
     /** 0 = follow the theme scheme, otherwise an ARGB color. */
     val cardColor: Int = 0,
     /** 0.2f..1f, applied on top of [cardColor] (or the themed card surface). */
@@ -44,6 +51,10 @@ data class Customization(
 
 /** Number of equal-sized KPI cards on the ColorUI home screen. */
 const val KPI_CARD_COUNT = 4
+
+/** Hero card + the four KPI cards. */
+const val SURFACE_SLOT_COUNT = KPI_CARD_COUNT + 1
+const val HERO_SLOT = 0
 
 object CustomizationStore {
     private const val PREFS = "customization"
@@ -59,6 +70,8 @@ object CustomizationStore {
     private const val KEY_HERO_DIM = "hero_wallpaper_dim"
     private const val KEY_KPI_IMAGE = "kpi_image_"
     private const val KEY_KPI_ALPHA = "kpi_alpha_"
+    private const val KEY_SURFACE_COLOR = "surface_color_"
+    private const val KEY_SURFACE_ALPHA = "surface_alpha_"
     private const val KEY_CARD_COLOR = "card_color"
     private const val KEY_CARD_ALPHA = "card_alpha"
     private const val KEY_ICON_STYLE = "icon_style"
@@ -97,6 +110,8 @@ object CustomizationStore {
             heroDim = getFloat(KEY_HERO_DIM, 0.35f),
             kpiImages = List(KPI_CARD_COUNT) { getString(KEY_KPI_IMAGE + it, null) },
             kpiAlphas = List(KPI_CARD_COUNT) { getFloat(KEY_KPI_ALPHA + it, 0.7f) },
+            surfaceColors = List(SURFACE_SLOT_COUNT) { getInt(KEY_SURFACE_COLOR + it, 0) },
+            surfaceAlphas = List(SURFACE_SLOT_COUNT) { getFloat(KEY_SURFACE_ALPHA + it, -1f) },
             cardColor = getInt(KEY_CARD_COLOR, 0),
             cardAlpha = getFloat(KEY_CARD_ALPHA, 1f),
             iconStyle = getInt(KEY_ICON_STYLE, 0),
@@ -125,6 +140,18 @@ object CustomizationStore {
         )
     }
 
+    fun setSurfaceColor(index: Int, color: Int) = update {
+        if (index !in 0 until SURFACE_SLOT_COUNT) it else it.copy(
+            surfaceColors = it.surfaceColors.toMutableList().also { list -> list[index] = color }
+        )
+    }
+
+    fun setSurfaceAlpha(index: Int, alpha: Float) = update {
+        if (index !in 0 until SURFACE_SLOT_COUNT) it else it.copy(
+            surfaceAlphas = it.surfaceAlphas.toMutableList().also { list -> list[index] = alpha }
+        )
+    }
+
     fun setCardColor(color: Int) = update { it.copy(cardColor = color) }
     fun setCardAlpha(alpha: Float) = update { it.copy(cardAlpha = alpha) }
     fun setIconStyle(style: Int) = update { it.copy(iconStyle = style) }
@@ -147,6 +174,10 @@ object CustomizationStore {
             repeat(KPI_CARD_COUNT) { index ->
                 putString(KEY_KPI_IMAGE + index, next.kpiImages.getOrNull(index))
                 putFloat(KEY_KPI_ALPHA + index, next.kpiAlphas.getOrNull(index) ?: 0.7f)
+            }
+            repeat(SURFACE_SLOT_COUNT) { index ->
+                putInt(KEY_SURFACE_COLOR + index, next.surfaceColors.getOrNull(index) ?: 0)
+                putFloat(KEY_SURFACE_ALPHA + index, next.surfaceAlphas.getOrNull(index) ?: -1f)
             }
             putInt(KEY_CARD_COLOR, next.cardColor)
             putFloat(KEY_CARD_ALPHA, next.cardAlpha)

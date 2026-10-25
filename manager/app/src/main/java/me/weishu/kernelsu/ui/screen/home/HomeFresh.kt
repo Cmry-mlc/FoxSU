@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
@@ -27,8 +29,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.MenuBook
@@ -48,6 +52,7 @@ import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PowerSettingsNew
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.SettingsBackupRestore
@@ -95,6 +100,7 @@ import kotlinx.coroutines.withContext
 import me.weishu.kernelsu.Natives
 import me.weishu.kernelsu.data.settings.Customization
 import me.weishu.kernelsu.data.settings.CustomizationStore
+import me.weishu.kernelsu.data.settings.HERO_SLOT
 import me.weishu.kernelsu.data.repository.SettingsRepositoryImpl
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.LocalUiMode
@@ -107,6 +113,35 @@ import me.weishu.kernelsu.ui.component.rebootlistpopup.getRebootListOption
 import me.weishu.kernelsu.ui.component.rebootlistpopup.rememberRebootAction
 import me.weishu.kernelsu.ui.uiModeLabelRes
 import me.weishu.kernelsu.ui.util.savePickedImage
+
+/** Resolved colours for one card: global settings with optional per-card override. */
+private data class CardSurface(val container: Color, val content: Color, val accent: Color)
+
+/**
+ * Slot 0 is the hero card, 1..4 are the KPI cards. A card either follows the global card
+ * colour / opacity or overrides it from the long-press sheet.
+ */
+@Composable
+private fun resolveCardSurface(slot: Int): CardSurface {
+    val custom = CustomizationStore.current
+    val overrideColor = custom.surfaceColors.getOrNull(slot) ?: 0
+    val effectiveColor = if (overrideColor != 0) overrideColor else custom.cardColor
+    val alphaOverride = custom.surfaceAlphas.getOrNull(slot) ?: -1f
+    val alpha = if (alphaOverride >= 0f) alphaOverride else custom.cardAlpha
+
+    val base = if (effectiveColor == 0) {
+        MaterialTheme.colorScheme.surfaceContainerLowest
+    } else {
+        Color(effectiveColor)
+    }
+    val content = when {
+        effectiveColor == 0 -> MaterialTheme.colorScheme.onSurface
+        base.luminance() > 0.55f -> Color(0xFF141A14)
+        else -> Color.White
+    }
+    val accent = if (effectiveColor == 0) MaterialTheme.colorScheme.primary else content
+    return CardSurface(base.copy(alpha = alpha), content, accent)
+}
 
 /** Things worth telling the user about, all derived from real state. */
 private enum class FreshIssue {
@@ -209,11 +244,18 @@ fun HomePagerFresh(
         cardContent
     }
 
+    // 顶部大卡 + 四张卡各自可覆盖卡面颜色与透明度
+    val heroSurface = resolveCardSurface(HERO_SLOT)
+    val surface1 = resolveCardSurface(HERO_SLOT + 1)
+    val surface2 = resolveCardSurface(HERO_SLOT + 2)
+    val surface3 = resolveCardSurface(HERO_SLOT + 3)
+    val surface4 = resolveCardSurface(HERO_SLOT + 4)
+
     // 顶部大卡可以单独铺一张图片；有图时文字转为白色，靠暗化蒙层保证可读
     val heroCustom = if (custom.heroWallpaperUri != null) custom else null
     val heroBitmap = rememberWallpaper(custom.heroWallpaperUri)
     val heroOn = heroBitmap != null
-    val heroContent = if (heroOn) Color.White else cardContent
+    val heroContent = if (heroOn) Color.White else heroSurface.content
 
     val navigationBarPadding = if (!Natives.isFullFeatured()) {
         WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
@@ -264,7 +306,7 @@ fun HomePagerFresh(
                     state = state,
                     onInstall = actions.onInstallClick,
                     onJailbreak = actions.onJailbreakClick,
-                    containerColor = if (heroOn) Color.Transparent else cardColor,
+                    containerColor = if (heroOn) Color.Transparent else heroSurface.container,
                     contentColor = heroContent,
                     hero = heroCustom,
                     heroBitmap = heroBitmap,
@@ -283,9 +325,9 @@ fun HomePagerFresh(
                         title = stringResource(R.string.home_device_model),
                         value = state.systemInfo.deviceModel,
                         caption = stringResource(R.string.fresh_home_device_sub),
-                        containerColor = cardColor,
-                        contentColor = cardContent,
-                        accentColor = cardAccent,
+                        containerColor = surface1.container,
+                        contentColor = surface1.content,
+                        accentColor = surface1.accent,
                         imageUri = custom.kpiImages.getOrNull(0),
                         imageAlpha = custom.kpiAlphas.getOrNull(0) ?: 0.7f,
                         onLongPress = { kpiMenuIndex = 0 },
@@ -297,9 +339,9 @@ fun HomePagerFresh(
                         title = stringResource(R.string.settings_ui_mode),
                         value = stringResource(uiModeLabelRes(currentUiMode)),
                         caption = stringResource(R.string.fresh_home_style_switch),
-                        containerColor = cardColor,
-                        contentColor = cardContent,
-                        accentColor = cardAccent,
+                        containerColor = surface2.container,
+                        contentColor = surface2.content,
+                        accentColor = surface2.accent,
                         imageUri = custom.kpiImages.getOrNull(1),
                         imageAlpha = custom.kpiAlphas.getOrNull(1) ?: 0.7f,
                         onLongPress = { kpiMenuIndex = 1 },
@@ -319,9 +361,9 @@ fun HomePagerFresh(
                         title = stringResource(R.string.superuser),
                         value = navigationBadge.superuserCount.toString(),
                         caption = stringResource(R.string.fresh_home_superuser_sub),
-                        containerColor = cardColor,
-                        contentColor = cardContent,
-                        accentColor = cardAccent,
+                        containerColor = surface3.container,
+                        contentColor = surface3.content,
+                        accentColor = surface3.accent,
                         imageUri = custom.kpiImages.getOrNull(2),
                         imageAlpha = custom.kpiAlphas.getOrNull(2) ?: 0.7f,
                         onLongPress = { kpiMenuIndex = 2 },
@@ -333,9 +375,9 @@ fun HomePagerFresh(
                         title = stringResource(R.string.module),
                         value = navigationBadge.moduleEnabledCount.toString(),
                         caption = stringResource(R.string.fresh_home_module_sub),
-                        containerColor = cardColor,
-                        contentColor = cardContent,
-                        accentColor = cardAccent,
+                        containerColor = surface4.container,
+                        contentColor = surface4.content,
+                        accentColor = surface4.accent,
                         imageUri = custom.kpiImages.getOrNull(3),
                         imageAlpha = custom.kpiAlphas.getOrNull(3) ?: 0.7f,
                         onLongPress = { kpiMenuIndex = 3 },
@@ -405,6 +447,11 @@ fun HomePagerFresh(
         FreshBackdropDialog(
             title = stringResource(R.string.fresh_home_hero_title),
             description = stringResource(R.string.fresh_home_hero_desc),
+            surfaceColor = custom.surfaceColors.getOrNull(HERO_SLOT) ?: 0,
+            surfaceAlpha = (custom.surfaceAlphas.getOrNull(HERO_SLOT) ?: -1f)
+                .let { if (it >= 0f) it else custom.cardAlpha },
+            onSurfaceColorChange = { CustomizationStore.setSurfaceColor(HERO_SLOT, it) },
+            onSurfaceAlphaChange = { CustomizationStore.setSurfaceAlpha(HERO_SLOT, it) },
             hasImage = heroOn,
             alpha = custom.heroDim,
             alphaRange = 0f..0.8f,
@@ -429,6 +476,11 @@ fun HomePagerFresh(
         FreshBackdropDialog(
             title = stringResource(R.string.fresh_home_kpi_bg_title),
             description = stringResource(R.string.fresh_home_kpi_bg_desc),
+            surfaceColor = custom.surfaceColors.getOrNull(kpiIndex + 1) ?: 0,
+            surfaceAlpha = (custom.surfaceAlphas.getOrNull(kpiIndex + 1) ?: -1f)
+                .let { if (it >= 0f) it else custom.cardAlpha },
+            onSurfaceColorChange = { CustomizationStore.setSurfaceColor(kpiIndex + 1, it) },
+            onSurfaceAlphaChange = { CustomizationStore.setSurfaceAlpha(kpiIndex + 1, it) },
             hasImage = custom.kpiImages.getOrNull(kpiIndex) != null,
             alpha = custom.kpiAlphas.getOrNull(kpiIndex) ?: 0.7f,
             alphaRange = 0.2f..1f,
@@ -890,6 +942,10 @@ private fun BoxScope.FreshHeroBackdrop(hero: Customization, bitmap: ImageBitmap?
 private fun FreshBackdropDialog(
     title: String,
     description: String,
+    surfaceColor: Int,
+    surfaceAlpha: Float,
+    onSurfaceColorChange: (Int) -> Unit,
+    onSurfaceAlphaChange: (Float) -> Unit,
     hasImage: Boolean,
     alpha: Float,
     alphaRange: ClosedFloatingPointRange<Float>,
@@ -904,7 +960,11 @@ private fun FreshBackdropDialog(
             shape = RoundedCornerShape(28.dp),
             color = MaterialTheme.colorScheme.surfaceContainerLowest,
         ) {
-            Column(modifier = Modifier.padding(20.dp)) {
+            Column(
+                modifier = Modifier
+                    .padding(20.dp)
+                    .verticalScroll(rememberScrollState()),
+            ) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
@@ -917,43 +977,56 @@ private fun FreshBackdropDialog(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Spacer(Modifier.height(16.dp))
 
-                FreshDialogRow(
-                    icon = Icons.Filled.Image,
-                    text = stringResource(R.string.customization_pick_image),
-                    onClick = onPick,
+                Spacer(Modifier.height(14.dp))
+                Text(
+                    text = stringResource(R.string.fresh_home_card_color),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                if (hasImage) {
-                    Spacer(Modifier.height(8.dp))
-                    FreshDialogRow(
-                        icon = Icons.Filled.Delete,
-                        text = stringResource(R.string.customization_clear),
-                        onClick = onRemove,
+                Spacer(Modifier.height(8.dp))
+                FreshColorSwatches(selected = surfaceColor, onSelect = onSurfaceColorChange)
+
+                DialogSliderRow(
+                    label = stringResource(R.string.fresh_home_card_alpha),
+                    value = surfaceAlpha,
+                    range = 0.2f..1f,
+                    onChange = onSurfaceAlphaChange,
+                )
+
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = stringResource(R.string.customization_wallpaper),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FreshPillButton(
+                        text = stringResource(R.string.customization_pick_image),
+                        icon = Icons.Filled.Image,
+                        filled = true,
+                        onClick = onPick,
                     )
-                    Spacer(Modifier.height(10.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = alphaLabel,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.weight(1f),
-                        )
-                        Text(
-                            text = "${(alpha * 100).toInt()}%",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.primary,
+                    if (hasImage) {
+                        FreshPillButton(
+                            text = stringResource(R.string.customization_clear),
+                            icon = Icons.Filled.Delete,
+                            filled = false,
+                            onClick = onRemove,
                         )
                     }
-                    Slider(
+                }
+                if (hasImage) {
+                    DialogSliderRow(
+                        label = alphaLabel,
                         value = alpha,
-                        onValueChange = onAlphaChange,
-                        valueRange = alphaRange,
-                        modifier = Modifier.padding(horizontal = 2.dp),
+                        range = alphaRange,
+                        onChange = onAlphaChange,
                     )
                 }
 
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(14.dp))
                 Surface(
                     shape = RoundedCornerShape(16.dp),
                     color = MaterialTheme.colorScheme.surfaceContainer,
@@ -974,6 +1047,123 @@ private fun FreshBackdropDialog(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun DialogSliderRow(
+    label: String,
+    value: Float,
+    range: ClosedFloatingPointRange<Float>,
+    onChange: (Float) -> Unit,
+) {
+    Column(modifier = Modifier.padding(top = 8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = "${(value * 100).toInt()}%",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+        Slider(
+            value = value,
+            onValueChange = onChange,
+            valueRange = range,
+            modifier = Modifier.padding(horizontal = 2.dp),
+        )
+    }
+}
+
+@Composable
+private fun FreshColorSwatches(selected: Int, onSelect: (Int) -> Unit) {
+    Row(
+        modifier = Modifier.horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        CustomizationStore.cardColorOptions.forEach { value ->
+            val isSelected = value == selected
+            val color = if (value == 0) {
+                MaterialTheme.colorScheme.surfaceContainerLowest
+            } else {
+                Color(value)
+            }
+            Box(
+                modifier = Modifier
+                    .size(38.dp)
+                    .clip(CircleShape)
+                    .background(color)
+                    .border(
+                        width = if (isSelected) 3.dp else 1.dp,
+                        color = if (isSelected) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.outlineVariant
+                        },
+                        shape = CircleShape,
+                    )
+                    .clickable { onSelect(value) },
+                contentAlignment = Alignment.Center,
+            ) {
+                when {
+                    value == 0 -> Icon(
+                        imageVector = Icons.Filled.Refresh,
+                        contentDescription = stringResource(R.string.customization_follow_theme),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(16.dp),
+                    )
+
+                    isSelected -> Icon(
+                        imageVector = Icons.Filled.Check,
+                        contentDescription = null,
+                        tint = if (color.luminance() > 0.55f) Color(0xFF141A14) else Color.White,
+                        modifier = Modifier.size(17.dp),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FreshPillButton(
+    text: String,
+    icon: ImageVector,
+    filled: Boolean,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+) {
+    val container = when {
+        !enabled -> MaterialTheme.colorScheme.surfaceContainer
+        filled -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+    }
+    val content = when {
+        !enabled -> MaterialTheme.colorScheme.outline
+        filled -> MaterialTheme.colorScheme.onPrimary
+        else -> MaterialTheme.colorScheme.onPrimaryContainer
+    }
+    Surface(
+        shape = RoundedCornerShape(50),
+        color = container,
+        contentColor = content,
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .clickable(enabled = enabled, onClick = onClick),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(17.dp))
+            Spacer(Modifier.width(6.dp))
+            Text(text = text, style = MaterialTheme.typography.labelLarge)
         }
     }
 }
