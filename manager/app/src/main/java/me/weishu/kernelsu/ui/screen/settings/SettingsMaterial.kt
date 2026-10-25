@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.SystemUpdateAlt
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -46,6 +47,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import me.weishu.kernelsu.R
@@ -61,6 +63,7 @@ import me.weishu.kernelsu.ui.component.material.SendLogBottomSheet
 import me.weishu.kernelsu.ui.component.material.SnackBarHost
 import me.weishu.kernelsu.ui.component.material.expressiveTopAppBarColors
 import me.weishu.kernelsu.ui.component.uninstalldialog.UninstallDialog
+import me.weishu.kernelsu.ui.theme.isFreshStyle
 
 /**
  * @author weishu
@@ -85,6 +88,11 @@ fun SettingPagerMaterial(
     ExpressiveScaffold(
         topBar = {
             TopBar(scrollBehavior = scrollBehavior)
+        },
+        containerColor = if (isFreshStyle()) {
+            MaterialTheme.colorScheme.surface
+        } else {
+            MaterialTheme.colorScheme.surfaceContainer
         },
         snackbarHost = { SnackBarHost(hostState = snackBarHost, modifier = Modifier.padding(bottom = bottomInnerPadding)) },
         contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
@@ -394,8 +402,25 @@ private fun TopBar(
     scrollBehavior: TopAppBarScrollBehavior? = null
 ) {
     LargeFlexibleTopAppBar(
-        title = { Text(stringResource(R.string.settings)) },
-        colors = expressiveTopAppBarColors(),
+        title = {
+            val titleText = stringResource(R.string.settings)
+            if (isFreshStyle()) {
+                Text(
+                    text = titleText,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            } else {
+                Text(text = titleText)
+            }
+        },
+        colors = expressiveTopAppBarColors(
+            containerColor = if (isFreshStyle()) {
+                MaterialTheme.colorScheme.surface
+            } else {
+                MaterialTheme.colorScheme.surfaceContainer
+            }
+        ),
         windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
         scrollBehavior = scrollBehavior
     )

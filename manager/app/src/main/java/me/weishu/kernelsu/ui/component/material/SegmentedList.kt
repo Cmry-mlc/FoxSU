@@ -71,6 +71,7 @@ import androidx.compose.ui.unit.round
 import androidx.compose.ui.zIndex
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import me.weishu.kernelsu.ui.theme.isFreshStyle
 
 val LocalListItemShapes = compositionLocalOf<ListItemShapes?> { null }
 private val SegmentedOuterRadius = 16.dp
@@ -83,18 +84,22 @@ annotation class SegmentedColumnDsl
 
 @Composable
 private fun defaultSegmentedColors(): ListItemColors = ListItemDefaults.segmentedColors(
-    containerColor = colorScheme.surfaceBright,
+    containerColor = if (isFreshStyle()) colorScheme.surfaceContainerLowest else colorScheme.surfaceBright,
     disabledContainerColor = colorScheme.surfaceBright,
     supportingContentColor = colorScheme.onSurfaceVariant
 )
 
 @Composable
+private fun freshStandaloneShapes(): ListItemShapes =
+    ListItemDefaults.segmentedShapes(0, 1).copy(shape = RoundedCornerShape(22.dp))
+
+@Composable
 private fun defaultSingleSegmentedShape(index: Int, count: Int): ListItemShapes {
     val base = ListItemDefaults.segmentedShapes(index, count)
-    return if (count == 1) {
-        base.copy(shape = MaterialTheme.shapes.large)
-    } else {
-        base
+    return when {
+        isFreshStyle() && count == 1 -> freshStandaloneShapes()
+        count == 1 -> base.copy(shape = MaterialTheme.shapes.large)
+        else -> base
     }
 }
 
@@ -193,11 +198,11 @@ fun SegmentedColumn(
                         val isLast = if (lastVisible == -1) index == entries.lastIndex else index == lastVisible
 
                         val topRadius by animateDpAsState(
-                            if (isFirst) SegmentedOuterRadius else SegmentedInnerRadius,
+                            if (isFirst) (if (isFreshStyle()) 22.dp else SegmentedOuterRadius) else SegmentedInnerRadius,
                             dpSpring, label = "SegmentedTopRadius"
                         )
                         val bottomRadius by animateDpAsState(
-                            if (isLast) SegmentedOuterRadius else SegmentedInnerRadius,
+                            if (isLast) (if (isFreshStyle()) 22.dp else SegmentedOuterRadius) else SegmentedInnerRadius,
                             dpSpring, label = "SegmentedBottomRadius"
                         )
                         val gap by animateDpAsState(
@@ -272,7 +277,7 @@ fun SegmentedItemContainer(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
-    val shapes = LocalListItemShapes.current ?: ListItemDefaults.segmentedShapes(0, 1)
+    val shapes = LocalListItemShapes.current ?: run { if (isFreshStyle()) freshStandaloneShapes() else ListItemDefaults.segmentedShapes(0, 1) }
     Surface(
         modifier = modifier.fillMaxWidth(),
         color = colorScheme.surfaceBright,
@@ -304,7 +309,7 @@ fun SegmentedListItem(
         enabled = enabled,
         colors = colors,
         interactionSource = interactionSource,
-        shapes = LocalListItemShapes.current ?: ListItemDefaults.segmentedShapes(0, 1),
+        shapes = LocalListItemShapes.current ?: run { if (isFreshStyle()) freshStandaloneShapes() else ListItemDefaults.segmentedShapes(0, 1) },
         modifier = modifier,
         leadingContent = leadingContent,
         trailingContent = trailingContent,
@@ -333,7 +338,7 @@ fun SegmentedListItem(
     SegmentedListItem(
         checked = checked,
         onCheckedChange = onCheckedChange,
-        shapes = LocalListItemShapes.current ?: ListItemDefaults.segmentedShapes(0, 1),
+        shapes = LocalListItemShapes.current ?: run { if (isFreshStyle()) freshStandaloneShapes() else ListItemDefaults.segmentedShapes(0, 1) },
         modifier = modifier,
         enabled = enabled,
         colors = colors,
@@ -366,7 +371,7 @@ fun SegmentedListItem(
     SegmentedListItem(
         selected = selected,
         onClick = onClick,
-        shapes = LocalListItemShapes.current ?: ListItemDefaults.segmentedShapes(0, 1),
+        shapes = LocalListItemShapes.current ?: run { if (isFreshStyle()) freshStandaloneShapes() else ListItemDefaults.segmentedShapes(0, 1) },
         modifier = modifier,
         enabled = enabled,
         colors = colors,

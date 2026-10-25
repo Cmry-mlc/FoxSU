@@ -33,6 +33,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.SelectableDropdownMenuItem
@@ -58,6 +59,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -71,6 +73,7 @@ import me.weishu.kernelsu.ui.component.material.SegmentedColumn
 import me.weishu.kernelsu.ui.component.material.SegmentedItem
 import me.weishu.kernelsu.ui.component.material.SegmentedListItem
 import me.weishu.kernelsu.ui.component.statustag.StatusTag
+import me.weishu.kernelsu.ui.theme.isFreshStyle
 import me.weishu.kernelsu.ui.util.ownerNameForUid
 import me.weishu.kernelsu.ui.viewmodel.AppSortType
 
@@ -95,10 +98,22 @@ fun SuperUserPagerMaterial(
     val snackbarHostState = remember { SnackbarHostState() }
 
     ExpressiveScaffold(
+        containerColor = if (isFreshStyle()) colorScheme.surface else colorScheme.surfaceContainer,
         topBar = {
             SearchAppBar(
                 snackbarHostState = snackbarHostState,
-                title = { Text(stringResource(R.string.superuser)) },
+                title = {
+                    val titleText = stringResource(R.string.superuser)
+                    if (isFreshStyle()) {
+                        Text(
+                            text = titleText,
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    } else {
+                        Text(text = titleText)
+                    }
+                },
                 searchText = localSearchText,
                 onSearchTextChange = {
                     localSearchText = it
@@ -253,7 +268,7 @@ fun SuperUserPagerMaterial(
                         modifier = Modifier
                             .fillMaxSize()
                             .nestedScroll(scrollBehavior.nestedScrollConnection),
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalArrangement = Arrangement.spacedBy(if (isFreshStyle()) 10.dp else 2.dp),
                         contentPadding = PaddingValues(
                             start = 16.dp,
                             end = 16.dp,
@@ -287,7 +302,7 @@ fun SuperUserPagerMaterial(
                         modifier = Modifier
                             .fillMaxSize()
                             .nestedScroll(scrollBehavior.nestedScrollConnection),
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalArrangement = Arrangement.spacedBy(if (isFreshStyle()) 10.dp else 2.dp),
                         contentPadding = PaddingValues(
                             start = 16.dp,
                             end = 16.dp,
@@ -347,7 +362,7 @@ fun SuperUserPagerMaterial(
                 modifier = Modifier
                     .fillMaxSize()
                     .nestedScroll(scrollBehavior.nestedScrollConnection),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
+                verticalArrangement = Arrangement.spacedBy(if (isFreshStyle()) 10.dp else 2.dp),
                 contentPadding = PaddingValues(
                     start = 16.dp,
                     end = 16.dp,

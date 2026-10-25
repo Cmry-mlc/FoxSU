@@ -4,6 +4,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -14,14 +15,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.dp
+import me.weishu.kernelsu.ui.theme.isFreshStyle
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TonalCard(
     modifier: Modifier = Modifier,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceBright,
+    containerColor: Color = if (isFreshStyle()) {
+        MaterialTheme.colorScheme.surfaceContainerLowest
+    } else {
+        MaterialTheme.colorScheme.surfaceBright
+    },
     contentColor: Color = contentColorFor(containerColor),
-    shape: Shape = MaterialTheme.shapes.large,
+    shape: Shape = if (isFreshStyle()) RoundedCornerShape(22.dp) else MaterialTheme.shapes.large,
     enabled: Boolean = true,
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
