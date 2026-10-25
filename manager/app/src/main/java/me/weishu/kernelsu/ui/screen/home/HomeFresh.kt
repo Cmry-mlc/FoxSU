@@ -31,13 +31,14 @@ import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Extension
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Memory
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -67,7 +68,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.Natives
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.ui.component.KsuIsValid
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
+import me.weishu.kernelsu.ui.component.rebootlistpopup.getRebootListOption
+import me.weishu.kernelsu.ui.component.rebootlistpopup.rememberRebootAction
 import me.weishu.kernelsu.ui.theme.FreshPalette
 
 /**
@@ -312,8 +316,8 @@ private fun FreshHeader(
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
-                        imageVector = Icons.Filled.MoreVert,
-                        contentDescription = null,
+                        imageVector = Icons.Filled.PowerSettingsNew,
+                        contentDescription = stringResource(R.string.reboot),
                         tint = MaterialTheme.colorScheme.onSurface,
                     )
                 }
@@ -338,6 +342,23 @@ private fun FreshHeader(
                         onOpenSettings()
                     },
                 )
+
+                HorizontalDivider()
+
+                // 与 Material 首页右上角一致的重启项：重启 / 软重启 / Recovery / Bootloader / Download / EDL
+                KsuIsValid {
+                    val rebootOptions = getRebootListOption()
+                    val onReboot = rememberRebootAction()
+                    rebootOptions.forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(stringResource(option.labelRes)) },
+                            onClick = {
+                                menuExpanded = false
+                                onReboot(option.reason)
+                            },
+                        )
+                    }
+                }
             }
         }
     }
