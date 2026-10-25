@@ -82,6 +82,8 @@ fun HomePager(
         },
     )
 
+    val mainPagerState = LocalMainPagerState.current
+
     when (LocalUiMode.current) {
         UiMode.Miuix -> HomePagerMiuix(
             state = uiState,
@@ -101,7 +103,7 @@ fun HomePager(
             bottomInnerPadding = bottomInnerPadding,
             navigationBadge = navigationBadge,
             onRefresh = { viewModel.refresh() },
-            onOpenTab = { page -> LocalMainPagerState.current.animateToPage(page) },
+            onOpenTab = { page -> mainPagerState.animateToPage(page) },
             onOpenModuleRepo = { navigator.push(Route.ModuleRepo) },
             onOpenLog = { navigator.push(Route.Sulog) },
         )
