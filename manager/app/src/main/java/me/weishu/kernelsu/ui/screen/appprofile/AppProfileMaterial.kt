@@ -51,6 +51,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
@@ -71,6 +72,7 @@ import me.weishu.kernelsu.ui.component.material.expressiveTopAppBarColors
 import me.weishu.kernelsu.ui.component.profile.AppProfileConfig
 import me.weishu.kernelsu.ui.component.profile.RootProfileConfig
 import me.weishu.kernelsu.ui.component.profile.TemplateConfig
+import me.weishu.kernelsu.ui.theme.isFreshStyle
 import me.weishu.kernelsu.ui.component.statustag.StatusTag
 import me.weishu.kernelsu.ui.util.ownerNameForUid
 import me.weishu.kernelsu.ui.viewmodel.SuperUserViewModel
@@ -177,74 +179,92 @@ private fun AppProfileInner(
     val mode = if (isRootGranted) rootMode else nonRootMode
 
     Column(modifier = modifier) {
-        SegmentedColumn(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            content = buildList<@Composable () -> Unit> {
-                add {
-                    SegmentedListItem(
-                        headlineContent = { Text(appLabel) },
-                        supportingContent = {
-                            Column {
-                                if (isSpecialApp) {
-                                    Text(packageName, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                } else if (!isUidGroup) {
-                                    Text("$appVersionName ($appVersionCode)", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    Text(packageName, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                } else {
-                                    if (sharedUserId.isNotEmpty()) {
-                                        Text(text = sharedUserId, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (isFreshStyle()) {
+            FreshAppHeader(
+                appLabel = appLabel,
+                packageName = packageName,
+                appIcon = appIcon,
+                appUid = appUid,
+                sharedUserId = sharedUserId,
+                appVersionName = appVersionName,
+                appVersionCode = appVersionCode,
+                isUidGroup = isUidGroup,
+                isSpecialApp = isSpecialApp,
+                affectedApps = affectedApps,
+                isRootGranted = isRootGranted,
+                onRootChange = { onProfileChange(profile.copy(allowSu = it)) },
+                mode = mode,
+            )
+        } else {
+            SegmentedColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                content = buildList<@Composable () -> Unit> {
+                    add {
+                        SegmentedListItem(
+                            headlineContent = { Text(appLabel) },
+                            supportingContent = {
+                                Column {
+                                    if (isSpecialApp) {
+                                        Text(packageName, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    } else if (!isUidGroup) {
+                                        Text("$appVersionName ($appVersionCode)", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Text(packageName, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    } else {
+                                        if (sharedUserId.isNotEmpty()) {
+                                            Text(text = sharedUserId, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
+                                        Text(
+                                            text = stringResource(R.string.group_contains_apps, affectedApps.size),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
                                     }
-                                    Text(
-                                        text = stringResource(R.string.group_contains_apps, affectedApps.size),
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                                }
+                            },
+                            leadingContent = appIcon,
+                            trailingContent = {
+                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    if (userId != 0) {
+                                        StatusTag(
+                                            label = "USER $userId",
+                                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                                            backgroundColor = MaterialTheme.colorScheme.tertiaryContainer
+                                        )
+                                        StatusTag(
+                                            label = "UID $appId",
+                                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                                            backgroundColor = MaterialTheme.colorScheme.tertiaryContainer
+                                        )
+                                    } else {
+                                        StatusTag(
+                                            label = "UID $appUid",
+                                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                                            backgroundColor = MaterialTheme.colorScheme.tertiaryContainer
+                                        )
+                                    }
                                 }
                             }
-                        },
-                        leadingContent = appIcon,
-                        trailingContent = {
-                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                if (userId != 0) {
-                                    StatusTag(
-                                        label = "USER $userId",
-                                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                                        backgroundColor = MaterialTheme.colorScheme.tertiaryContainer
-                                    )
-                                    StatusTag(
-                                        label = "UID $appId",
-                                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                                        backgroundColor = MaterialTheme.colorScheme.tertiaryContainer
-                                    )
-                                } else {
-                                    StatusTag(
-                                        label = "UID $appUid",
-                                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                                        backgroundColor = MaterialTheme.colorScheme.tertiaryContainer
-                                    )
-                                }
-                            }
-                        }
-                    )
+                        )
+                    }
+                    if (!isSpecialApp) add {
+                        SegmentedSwitchItem(
+                            icon = Icons.Filled.Security,
+                            title = stringResource(id = R.string.superuser),
+                            checked = isRootGranted,
+                            onCheckedChange = { onProfileChange(profile.copy(allowSu = it)) },
+                        )
+                    }
+                    add {
+                        SegmentedListItem(
+                            headlineContent = { Text(stringResource(R.string.profile)) },
+                            supportingContent = { Text(mode.text, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                            leadingContent = { Icon(Icons.Filled.AccountCircle, null) },
+                        )
+                    }
                 }
-                if (!isSpecialApp) add {
-                    SegmentedSwitchItem(
-                        icon = Icons.Filled.Security,
-                        title = stringResource(id = R.string.superuser),
-                        checked = isRootGranted,
-                        onCheckedChange = { onProfileChange(profile.copy(allowSu = it)) },
-                    )
-                }
-                add {
-                    SegmentedListItem(
-                        headlineContent = { Text(stringResource(R.string.profile)) },
-                        supportingContent = { Text(mode.text, color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                        leadingContent = { Icon(Icons.Filled.AccountCircle, null) },
-                    )
-                }
-            }
-        )
+            )
+        }
 
         Crossfade(targetState = isRootGranted, label = "") { current ->
             Column(
@@ -345,7 +365,18 @@ private fun TopBar(
 ) {
     val haptic = LocalHapticFeedback.current
     LargeFlexibleTopAppBar(
-        title = { Text(stringResource(R.string.profile)) },
+        title = {
+            val titleText = stringResource(R.string.profile)
+            if (isFreshStyle()) {
+                Text(
+                    text = titleText,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            } else {
+                Text(text = titleText)
+            }
+        },
         navigationIcon = {
             TopBarBackButton(onClick = onBack)
         },
@@ -387,7 +418,13 @@ private fun TopBar(
                 }
             }
         },
-        colors = expressiveTopAppBarColors(),
+        colors = expressiveTopAppBarColors(
+            containerColor = if (isFreshStyle()) {
+                MaterialTheme.colorScheme.surface
+            } else {
+                MaterialTheme.colorScheme.surfaceContainer
+            }
+        ),
         windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
         scrollBehavior = scrollBehavior
     )
@@ -399,6 +436,11 @@ private fun ProfileBox(
     hasTemplate: Boolean,
     onModeChange: (Mode) -> Unit,
 ) {
+    if (isFreshStyle()) {
+        FreshModeSelector(mode = mode, hasTemplate = hasTemplate, onModeChange = onModeChange)
+        return
+    }
+
     val haptic = LocalHapticFeedback.current
     Row(
         modifier = Modifier
