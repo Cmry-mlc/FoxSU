@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.SmartButton
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -318,35 +319,84 @@ fun CustomizationScreen() {
 
                 item {
                     SectionCard(
+                        icon = Icons.Filled.SmartButton,
+                        title = stringResource(R.string.customization_bottom_bar),
+                        subtitle = stringResource(R.string.customization_bottom_bar_sub),
+                    ) {
+                        SliderRow(
+                            label = stringResource(R.string.customization_radius),
+                            value = custom.bottomBarRadius,
+                            range = 0f..30f,
+                            display = "${custom.bottomBarRadius.toInt()}dp",
+                            onChange = CustomizationStore::setBottomBarRadius,
+                        )
+                    }
+                }
+
+                item {
+                    SectionCard(
                         icon = Icons.Filled.Photo,
                         title = stringResource(R.string.customization_icon),
                         subtitle = stringResource(R.string.customization_icon_hint),
                     ) {
-                        IconOption(
-                            label = stringResource(R.string.customization_icon_foxsu),
-                            selected = custom.iconStyle == LauncherIconManager.STYLE_FOXSU,
-                            background = Brush.linearGradient(
-                                listOf(Color(0xFF4AE75A), Color(0xFF008F06))
+                        val iconChoices = listOf(
+                            IconChoice(
+                                style = LauncherIconManager.STYLE_FOXSU,
+                                labelRes = R.string.customization_icon_foxsu,
+                                iconRes = R.drawable.ic_launcher_foreground,
+                                background = Brush.linearGradient(
+                                    listOf(Color(0xFF4AE75A), Color(0xFF008F06))
+                                ),
                             ),
-                            iconRes = R.drawable.ic_launcher_foreground,
-                            onSelect = {
-                                CustomizationStore.setIconStyle(LauncherIconManager.STYLE_FOXSU)
-                                LauncherIconManager.apply(LauncherIconManager.STYLE_FOXSU)
-                                Toast.makeText(context, R.string.customization_icon_hint, Toast.LENGTH_SHORT).show()
-                            },
+                            IconChoice(
+                                style = LauncherIconManager.STYLE_FOX2,
+                                labelRes = R.string.customization_icon_fox2,
+                                iconRes = R.drawable.ic_launcher_fox2_foreground,
+                                background = Brush.linearGradient(
+                                    listOf(Color(0xFF3FA34D), Color(0xFF0A3D12))
+                                ),
+                            ),
+                            IconChoice(
+                                style = LauncherIconManager.STYLE_FOX3,
+                                labelRes = R.string.customization_icon_fox3,
+                                iconRes = R.drawable.ic_launcher_fox3_foreground,
+                                background = Brush.linearGradient(
+                                    listOf(Color(0xFFF6EEE1), Color(0xFFF6EEE1))
+                                ),
+                            ),
+                            IconChoice(
+                                style = LauncherIconManager.STYLE_FOX4,
+                                labelRes = R.string.customization_icon_fox4,
+                                iconRes = R.drawable.ic_launcher_fox4_foreground,
+                                background = Brush.linearGradient(
+                                    listOf(Color(0xFF111311), Color(0xFF111311))
+                                ),
+                            ),
+                            IconChoice(
+                                style = LauncherIconManager.STYLE_KERNELSU,
+                                labelRes = R.string.customization_icon_kernelsu,
+                                iconRes = R.drawable.ic_launcher_kernelsu_foreground,
+                                background = Brush.linearGradient(listOf(Color.White, Color.White)),
+                            ),
                         )
-                        Spacer(Modifier.height(10.dp))
-                        IconOption(
-                            label = stringResource(R.string.customization_icon_kernelsu),
-                            selected = custom.iconStyle == LauncherIconManager.STYLE_KERNELSU,
-                            background = Brush.linearGradient(listOf(Color.White, Color.White)),
-                            iconRes = R.drawable.ic_launcher_kernelsu_foreground,
-                            onSelect = {
-                                CustomizationStore.setIconStyle(LauncherIconManager.STYLE_KERNELSU)
-                                LauncherIconManager.apply(LauncherIconManager.STYLE_KERNELSU)
-                                Toast.makeText(context, R.string.customization_icon_hint, Toast.LENGTH_SHORT).show()
-                            },
-                        )
+                        iconChoices.forEachIndexed { index, choice ->
+                            if (index > 0) Spacer(Modifier.height(10.dp))
+                            IconOption(
+                                label = stringResource(choice.labelRes),
+                                selected = custom.iconStyle == choice.style,
+                                background = choice.background,
+                                iconRes = choice.iconRes,
+                                onSelect = {
+                                    CustomizationStore.setIconStyle(choice.style)
+                                    LauncherIconManager.apply(choice.style)
+                                    Toast.makeText(
+                                        context,
+                                        R.string.customization_icon_hint,
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                },
+                            )
+                        }
                     }
                 }
 
@@ -559,6 +609,13 @@ private fun PillButton(
         }
     }
 }
+
+private class IconChoice(
+    val style: Int,
+    val labelRes: Int,
+    val iconRes: Int,
+    val background: Brush,
+)
 
 @Composable
 private fun IconOption(

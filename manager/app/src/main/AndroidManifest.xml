@@ -93,6 +93,45 @@
             </intent-filter>
         </activity-alias>
 
+        <activity-alias
+            android:name=".ui.LauncherFox2"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_fox2"
+            android:label="@string/app_name"
+            android:targetActivity=".ui.MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".ui.LauncherFox3"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_fox3"
+            android:label="@string/app_name"
+            android:targetActivity=".ui.MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".ui.LauncherFox4"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_fox4"
+            android:label="@string/app_name"
+            android:targetActivity=".ui.MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
         <activity
             android:name=".ui.webui.WebUIActivity"
             android:autoRemoveFromRecents="true"

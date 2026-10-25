@@ -254,6 +254,11 @@
     <string name="settings_ui_mode">UI Style</string>
     <string name="module_card_style_title">Module card style</string>
     <string name="module_card_style_desc">Only the module cards</string>
+    <string name="settings_grid_section_general">General</string>
+    <string name="settings_grid_section_look">Appearance</string>
+    <string name="settings_grid_section_root">Root &amp; security</string>
+    <string name="settings_grid_section_module">Modules &amp; debug</string>
+    <string name="settings_grid_section_other">Other</string>
     <string name="settings_grid">Quick actions</string>
     <string name="settings_grid_ui_mode">UI style</string>
     <string name="settings_grid_theme">Theme</string>
@@ -294,7 +299,13 @@
     <string name="customization_card">Card surface</string>
     <string name="customization_card_color">Card color</string>
     <string name="customization_card_alpha">Card opacity</string>
+    <string name="customization_bottom_bar">Bottom bar</string>
+    <string name="customization_bottom_bar_sub">Corner radius of the floating navigation bar</string>
+    <string name="customization_radius">Radius</string>
     <string name="customization_icon">Launcher icon</string>
+    <string name="customization_icon_fox2">Outline fox</string>
+    <string name="customization_icon_fox3">Cream fox</string>
+    <string name="customization_icon_fox4">Minimal fox</string>
     <string name="customization_icon_foxsu">FoxSu (default)</string>
     <string name="customization_icon_kernelsu">KernelSU (original)</string>
     <string name="customization_icon_hint">Launcher may take a few seconds to refresh</string>

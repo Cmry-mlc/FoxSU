@@ -574,7 +574,7 @@ private fun FreshHeader() {
                 border = freshCardBorder(),
                 shadowElevation = 2.dp,
                 modifier = Modifier
-                    .size(44.dp)
+                    .size(40.dp)
                     .clip(CircleShape)
                     .clickable { showRebootDialog = true },
             ) {
@@ -583,6 +583,7 @@ private fun FreshHeader() {
                         imageVector = Icons.Filled.PowerSettingsNew,
                         contentDescription = stringResource(R.string.reboot),
                         tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(19.dp),
                     )
                 }
             }

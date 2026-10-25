@@ -112,20 +112,15 @@ fun SettingPagerMaterial(
                 .verticalScroll(rememberScrollState())
         ) {
             if (isFreshStyle()) {
-                FreshSettingsGrid(
-                    checkUpdate = uiState.checkUpdate,
-                    onOpenUiMode = { showUiModePicker = true },
-                    onOpenTheme = actions.onOpenTheme,
+                FreshSettingsPage(
+                    uiState = uiState,
+                    actions = actions,
+                    onOpenUiModePicker = { showUiModePicker = true },
                     onOpenCustomization = { navigator.push(Route.Customization) },
-                    onOpenProfile = actions.onOpenProfileTemplate,
-                    onOpenRepo = { navigator.push(Route.ModuleRepo) },
-                    onOpenLog = { navigator.push(Route.Sulog) },
-                    onOpenInstall = { navigator.push(Route.Install) },
-                    onOpenAbout = actions.onOpenAbout,
-                    onToggleCheckUpdate = { actions.onSetCheckUpdate(!uiState.checkUpdate) },
+                    onShowUninstall = { showUninstallDialog.value = true },
+                    onShowLog = { showBottomSheet = true },
                 )
-            }
-
+            } else {
             KsuIsValid {
                 SegmentedColumn(
                     modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 13.dp),
@@ -422,6 +417,7 @@ fun SettingPagerMaterial(
             )
 
             Spacer(modifier = Modifier.height(8.dp))
+            }
 
             if (showBottomSheet) {
                 SendLogBottomSheet(

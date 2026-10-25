@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 奶油狐：奶油底 + 深绿圆脸 -->
+    <path
+        android:fillColor="#FF12401B"
+        android:pathData="M35,36 L40,16 L54,30 Z" />
+    <path
+        android:fillColor="#FF12401B"
+        android:pathData="M73,36 L68,16 L54,30 Z" />
+    <path
+        android:fillColor="#FF12401B"
+        android:pathData="M54,23 C39,23 29,36 29,52 C29,69 41,82 54,88 C67,82 79,69 79,52 C79,36 69,23 54,23 Z" />
+    <path
+        android:fillColor="#FFF6EEE1"
+        android:pathData="M39,34 L42,22 L50,30 Z" />
+    <path
+        android:fillColor="#FFF6EEE1"
+        android:pathData="M69,34 L66,22 L58,30 Z" />
+    <path
+        android:fillColor="#FFF6EEE1"
+        android:pathData="M44,55 m-4.2,0 a4.2,4.2 0 1,0 8.4,0 a4.2,4.2 0 1,0 -8.4,0" />
+    <path
+        android:fillColor="#FFF6EEE1"
+        android:pathData="M64,55 m-4.2,0 a4.2,4.2 0 1,0 8.4,0 a4.2,4.2 0 1,0 -8.4,0" />
+    <path
+        android:fillColor="#FFF6EEE1"
+        android:pathData="M54,66 C59,66 61.5,69 58.4,72.6 C56.4,74.8 51.6,74.8 49.6,72.6 C46.5,69 49,66 54,66 Z" />
+    <path
+        android:fillColor="#FF6BCB77"
+        android:pathData="M54,29 L58,35 L50,35 Z" />
+</vector>

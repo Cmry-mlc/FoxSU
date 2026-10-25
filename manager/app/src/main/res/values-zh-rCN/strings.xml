@@ -230,6 +230,11 @@
     <string name="settings_ui_mode">界面风格</string>
     <string name="module_card_style_title">模块卡片外观</string>
     <string name="module_card_style_desc">只作用于模块卡片</string>
+    <string name="settings_grid_section_general">通用</string>
+    <string name="settings_grid_section_look">外观</string>
+    <string name="settings_grid_section_root">安全与权限</string>
+    <string name="settings_grid_section_module">模块与调试</string>
+    <string name="settings_grid_section_other">其他</string>
     <string name="settings_grid">快捷入口</string>
     <string name="settings_grid_ui_mode">界面风格</string>
     <string name="settings_grid_theme">主题色</string>
@@ -270,7 +275,13 @@
     <string name="customization_card">卡片背景</string>
     <string name="customization_card_color">卡片颜色</string>
     <string name="customization_card_alpha">卡片透明度</string>
+    <string name="customization_bottom_bar">底部导航栏</string>
+    <string name="customization_bottom_bar_sub">调整悬浮底栏的圆角大小</string>
+    <string name="customization_radius">圆角</string>
     <string name="customization_icon">启动器图标</string>
+    <string name="customization_icon_fox2">线框狐</string>
+    <string name="customization_icon_fox3">奶油狐</string>
+    <string name="customization_icon_fox4">极简狐</string>
     <string name="customization_icon_foxsu">FoxSu（默认）</string>
     <string name="customization_icon_kernelsu">KernelSU（原版）</string>
     <string name="customization_icon_hint">桌面图标可能需要几秒刷新</string>

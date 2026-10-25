@@ -12,15 +12,27 @@ import me.weishu.kernelsu.ksuApp
 object LauncherIconManager {
     const val STYLE_FOXSU = 0
     const val STYLE_KERNELSU = 1
+    const val STYLE_FOX2 = 2
+    const val STYLE_FOX3 = 3
+    const val STYLE_FOX4 = 4
 
-    private const val ALIAS_FOXSU = "me.weishu.kernelsu.ui.LauncherDefault"
-    private const val ALIAS_KERNELSU = "me.weishu.kernelsu.ui.LauncherKernelSU"
+    private val ALIASES = listOf(
+        "me.weishu.kernelsu.ui.LauncherDefault",
+        "me.weishu.kernelsu.ui.LauncherKernelSU",
+        "me.weishu.kernelsu.ui.LauncherFox2",
+        "me.weishu.kernelsu.ui.LauncherFox3",
+        "me.weishu.kernelsu.ui.LauncherFox4",
+    )
 
     fun apply(style: Int) {
         val pm = ksuApp.packageManager
         val pkg = ksuApp.packageName
-        setEnabled(pm, pkg, ALIAS_FOXSU, style == STYLE_FOXSU)
-        setEnabled(pm, pkg, ALIAS_KERNELSU, style == STYLE_KERNELSU)
+        // Enable the wanted alias first so the launcher never ends up with no entry point.
+        val target = style.coerceIn(0, ALIASES.lastIndex)
+        setEnabled(pm, pkg, ALIASES[target], true)
+        ALIASES.forEachIndexed { index, alias ->
+            if (index != target) setEnabled(pm, pkg, alias, false)
+        }
     }
 
     private fun setEnabled(pm: PackageManager, pkg: String, alias: String, enabled: Boolean) {

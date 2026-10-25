@@ -40,6 +40,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import me.weishu.kernelsu.data.settings.CustomizationStore
+import me.weishu.kernelsu.ui.component.freshCardBorder
 import me.weishu.kernelsu.ui.component.freshCardColor
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.Natives
@@ -76,9 +78,11 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
                 bottom = navigationBarPadding + 12.dp,
             ),
     ) {
+        val barShape = RoundedCornerShape(CustomizationStore.current.bottomBarRadius.dp)
         Surface(
-            shape = RoundedCornerShape(30.dp),
+            shape = barShape,
             color = freshCardColor(),
+            border = freshCardBorder(),
             shadowElevation = 12.dp,
             modifier = Modifier.fillMaxWidth(),
         ) {

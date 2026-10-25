@@ -45,7 +45,9 @@ data class Customization(
     val cardColor: Int = 0,
     /** 0.2f..1f, applied on top of [cardColor] (or the themed card surface). */
     val cardAlpha: Float = 1f,
-    /** 0 = FoxSu icon, 1 = original KernelSU icon. */
+    /** Corner radius of the floating bottom bar, in dp. */
+    val bottomBarRadius: Float = 30f,
+    /** 0 = FoxSu icon, 1 = original KernelSU icon, 2..4 = alternative FoxSu icons. */
     val iconStyle: Int = 0,
 )
 
@@ -75,6 +77,7 @@ object CustomizationStore {
     private const val KEY_SURFACE_ALPHA = "surface_alpha_"
     private const val KEY_CARD_COLOR = "card_color"
     private const val KEY_CARD_ALPHA = "card_alpha"
+    private const val KEY_BOTTOM_RADIUS = "bottom_bar_radius"
     private const val KEY_ICON_STYLE = "icon_style"
 
     val cardColorOptions = listOf(
@@ -115,6 +118,7 @@ object CustomizationStore {
             surfaceAlphas = List(SURFACE_SLOT_COUNT) { getFloat(KEY_SURFACE_ALPHA + it, -1f) },
             cardColor = getInt(KEY_CARD_COLOR, 0),
             cardAlpha = getFloat(KEY_CARD_ALPHA, 1f),
+            bottomBarRadius = getFloat(KEY_BOTTOM_RADIUS, 30f),
             iconStyle = getInt(KEY_ICON_STYLE, 0),
         )
     }
@@ -155,6 +159,7 @@ object CustomizationStore {
 
     fun setCardColor(color: Int) = update { it.copy(cardColor = color) }
     fun setCardAlpha(alpha: Float) = update { it.copy(cardAlpha = alpha) }
+    fun setBottomBarRadius(radius: Float) = update { it.copy(bottomBarRadius = radius) }
     fun setIconStyle(style: Int) = update { it.copy(iconStyle = style) }
 
     fun reset() = update { Customization() }
@@ -184,6 +189,7 @@ object CustomizationStore {
             }
             putInt(KEY_CARD_COLOR, next.cardColor)
             putFloat(KEY_CARD_ALPHA, next.cardAlpha)
+            putFloat(KEY_BOTTOM_RADIUS, next.bottomBarRadius)
             putInt(KEY_ICON_STYLE, next.iconStyle)
         }
         current = next

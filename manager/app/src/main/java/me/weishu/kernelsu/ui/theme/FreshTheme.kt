@@ -55,38 +55,29 @@ fun FreshKernelSUTheme(
         colorSpec = appSettings.colorSpec,
     )
 
-    // Night mode keeps the accent colour but moves the neutrals to a calm grey scale
-    // (canvas #101010, card #262626, pure-white titles, 66% body text) — the toned
-    // containers generated from the seed colour are too green/purple to read comfortably.
+    // Night mode keeps the accent colour but moves the neutrals to a calm grey scale.
     val colorScheme = if (!darkTheme) {
         baseScheme
     } else {
-        val canvas = if (appSettings.colorMode.isAmoled) Color.Black else Color(0xFF101010)
+        // Pitch-black canvas + #1E1E1E cards: the same look on every screen, with pure white
+        // titles and a mid-grey secondary so nothing blends into the background.
         baseScheme.copy(
-            surface = canvas,
-            surfaceDim = canvas,
-            background = canvas,
-            surfaceContainerLowest = if (appSettings.colorMode.isAmoled) Color.Black else Color(0xFF0B0B0B),
-            surfaceContainerLow = if (appSettings.colorMode.isAmoled) Color(0xFF0A0A0A) else Color(0xFF171717),
-            surfaceContainer = if (appSettings.colorMode.isAmoled) Color(0xFF0F0F0F) else Color(0xFF1D1D1D),
-            surfaceContainerHigh = if (appSettings.colorMode.isAmoled) Color(0xFF161616) else Color(0xFF262626),
-            surfaceContainerHighest = if (appSettings.colorMode.isAmoled) Color(0xFF1E1E1E) else Color(0xFF303030),
-            onSurface = Color(0xFFF4F4F4),
-            onSurfaceVariant = Color(0xFFA9A9A9),
-            onBackground = Color(0xFFF4F4F4),
-            outline = Color(0xFF8C8C8C),
-            outlineVariant = Color(0xFF3B3B3B),
+            surface = Color.Black,
+            surfaceDim = Color.Black,
+            background = Color.Black,
+            surfaceContainerLowest = Color(0xFF0A0A0A),
+            surfaceContainerLow = Color(0xFF141414),
+            surfaceContainer = Color(0xFF181818),
+            surfaceContainerHigh = Color(0xFF1E1E1E),
+            surfaceContainerHighest = Color(0xFF262626),
+            onSurface = Color(0xFFF5F5F5),
+            onSurfaceVariant = Color(0xFFA6A6A6),
+            onBackground = Color(0xFFF5F5F5),
+            outline = Color(0xFF8A8A8A),
+            outlineVariant = Color(0xFF333333),
             inverseSurface = Color(0xFFEDEDED),
             inverseOnSurface = Color(0xFF1B1B1B),
         )
-    }
-
-    LaunchedEffect(darkTheme) {
-        val window = (context as? Activity)?.window ?: return@LaunchedEffect
-        WindowInsetsControllerCompat(window, window.decorView).apply {
-            isAppearanceLightStatusBars = !darkTheme
-            isAppearanceLightNavigationBars = !darkTheme
-        }
     }
 
     val animatedColorScheme = colorScheme.animateAsState()
