@@ -182,34 +182,35 @@ private fun DrawerNavItem(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box {
+        if (badge != null) {
+            BadgedBox(
+                badge = {
+                    Badge(
+                        containerColor = if (badge.tone == BadgeTone.Alert) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.primary
+                        },
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                    ) {
+                        Text(badge.count.toString())
+                    }
+                }
+            ) {
+                Icon(
+                    imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
+                    contentDescription = stringResource(item.label),
+                    tint = contentColor,
+                    modifier = Modifier.size(22.dp),
+                )
+            }
+        } else {
             Icon(
                 imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
                 contentDescription = stringResource(item.label),
                 tint = contentColor,
                 modifier = Modifier.size(22.dp),
             )
-            if (badge != null) {
-                Surface(
-                    shape = RoundedCornerShape(50),
-                    color = if (badge.tone == BadgeTone.Alert) {
-                        MaterialTheme.colorScheme.error
-                    } else {
-                        MaterialTheme.colorScheme.primary
-                    },
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(end = 0.dp),
-                ) {
-                    Text(
-                        text = badge.count.toString(),
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
-                    )
-                }
-            }
         }
 
         AnimatedVisibility(
