@@ -142,6 +142,11 @@ import me.weishu.kernelsu.ui.component.material.TonalCard
 import me.weishu.kernelsu.ui.component.statustag.StatusTag
 import me.weishu.kernelsu.ui.theme.LocalModuleDescriptionMaxLines
 import me.weishu.kernelsu.ui.component.scaffoldBackgroundColor
+import me.weishu.kernelsu.data.settings.MODULE_SLOT
+import me.weishu.kernelsu.ui.component.CardAppearanceDialog
+import me.weishu.kernelsu.ui.component.resolveCardSurface
+import me.weishu.kernelsu.ui.component.supportingTextAlpha
+import androidx.compose.material3.LocalContentColor
 import me.weishu.kernelsu.ui.theme.isFreshStyle
 import me.weishu.kernelsu.ui.util.reboot
 import top.yukonga.miuix.kmp.nav.gesture.WindowNavigationEventBridge
@@ -726,10 +731,15 @@ private fun ModuleItem(
     val canOpenWebUi = module.hasWebUi && !module.remove && module.enabled
     val cardInteractionSource = remember { MutableInteractionSource() }
     val descriptionInteractionSource = remember { MutableInteractionSource() }
+    val surface = resolveCardSurface(MODULE_SLOT)
+    var showAppearance by remember { mutableStateOf(false) }
 
     TonalCard(
         modifier = Modifier.fillMaxWidth(),
+        containerColor = surface.container,
+        contentColor = surface.content,
         interactionSource = cardInteractionSource,
+        onLongClick = { showAppearance = true },
         onClick = {
             if (canOpenWebUi) {
                 onOpenWebUi()
@@ -765,14 +775,14 @@ private fun ModuleItem(
 
                     Text(
                         text = "$moduleVersion: ${module.version}",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = LocalContentColor.current.copy(alpha = supportingTextAlpha()),
                         style = MaterialTheme.typography.bodySmall,
                         textDecoration = textDecoration
                     )
 
                     Text(
                         text = "$moduleAuthor: ${module.author}",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = LocalContentColor.current.copy(alpha = supportingTextAlpha()),
                         style = MaterialTheme.typography.bodySmall,
                         textDecoration = textDecoration
                     )
@@ -821,7 +831,7 @@ private fun ModuleItem(
                                 Modifier
                             }
                         ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = LocalContentColor.current.copy(alpha = supportingTextAlpha()),
                     style = MaterialTheme.typography.bodyMedium,
                     textDecoration = textDecoration,
                     onCanExpandChange = { descriptionCanExpand = it }
@@ -994,7 +1004,25 @@ private fun ModuleItem(
             }
         }
     }
+
+    if (showAppearance) {
+        CardAppearanceDialog(
+            slot = MODULE_SLOT,
+            title = stringResource(R.string.module_card_style_title),
+            description = stringResource(R.string.module_card_style_desc),
+            hasImage = false,
+            imageAlpha = 0f,
+            imageAlphaRange = 0f..1f,
+            imageAlphaLabel = "",
+            onImageAlphaChange = {},
+            onPickImage = {},
+            onRemoveImage = {},
+            onDismiss = { showAppearance = false },
+            showImage = false,
+        )
+    }
 }
+
 
 @Composable
 fun CombinedClickableButton(

@@ -109,9 +109,12 @@ import me.weishu.kernelsu.data.repository.SettingsRepositoryImpl
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.UiMode
+import me.weishu.kernelsu.ui.component.CardAppearanceDialog
+import me.weishu.kernelsu.ui.component.CardSurface
 import me.weishu.kernelsu.ui.component.KsuIsValid
 import me.weishu.kernelsu.ui.component.freshCardBorder
 import me.weishu.kernelsu.ui.component.freshCardColor
+import me.weishu.kernelsu.ui.component.resolveCardSurface
 import me.weishu.kernelsu.ui.component.supportingTextAlpha
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
 import me.weishu.kernelsu.ui.component.rememberWallpaper
@@ -122,40 +125,6 @@ import me.weishu.kernelsu.ui.uiModeLabelRes
 import me.weishu.kernelsu.ui.util.savePickedImage
 
 /** Resolved colours for one card: global settings with optional per-card override. */
-private data class CardSurface(
-    val container: Color,
-    val content: Color,
-    val accent: Color,
-    val border: BorderStroke?,
-)
-
-/**
- * Slot 0 is the hero card, 1..4 are the KPI cards. A card either follows the global card
- * colour / opacity or overrides it from the long-press sheet.
- */
-@Composable
-private fun resolveCardSurface(slot: Int): CardSurface {
-    val custom = CustomizationStore.current
-    val overrideColor = custom.surfaceColors.getOrNull(slot) ?: 0
-    val effectiveColor = if (overrideColor != 0) overrideColor else custom.cardColor
-    val alphaOverride = custom.surfaceAlphas.getOrNull(slot) ?: -1f
-    val alpha = if (alphaOverride >= 0f) alphaOverride else custom.cardAlpha
-
-    val base = if (effectiveColor == 0) {
-        freshCardColor()
-    } else {
-        Color(effectiveColor)
-    }
-    val content = when {
-        effectiveColor == 0 -> MaterialTheme.colorScheme.onSurface
-        base.luminance() > 0.55f -> Color(0xFF141A14)
-        else -> Color.White
-    }
-    val accent = if (effectiveColor == 0) MaterialTheme.colorScheme.primary else content
-    val border = if (effectiveColor == 0) freshCardBorder() else null
-    return CardSurface(base.copy(alpha = alpha), content, accent, border)
-}
-
 /** Things worth telling the user about, all derived from real state. */
 private enum class FreshIssue {
     RootMissing,
@@ -186,7 +155,6 @@ fun HomePagerFresh(
     bottomInnerPadding: Dp,
     navigationBadge: NavigationBadgeState,
     onOpenTab: (Int) -> Unit,
-    onOpenLog: () -> Unit,
 ) {
     val issues = state.freshIssues()
     var showStylePicker by remember { mutableStateOf(false) }
@@ -438,50 +406,28 @@ fun HomePagerFresh(
                     contentColor = cardContent,
                 )
 
-                Spacer(Modifier.height(24.dp))
-
-                Text(
-                    text = stringResource(R.string.fresh_home_tools),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 4.dp, bottom = 10.dp),
-                )
-
-                FreshToolRow(
-                    icon = Icons.AutoMirrored.Filled.ReceiptLong,
-                    tint = MaterialTheme.colorScheme.tertiary,
-                    title = stringResource(R.string.fresh_home_tool_log),
-                    description = stringResource(R.string.fresh_home_tool_log_desc),
-                    containerColor = cardColor,
-                    contentColor = cardContent,
-                    onClick = onOpenLog,
-                )
             }
         }
         }
     }
 
     if (showHeroMenu) {
-        FreshBackdropDialog(
+        CardAppearanceDialog(
+            slot = HERO_SLOT,
             title = stringResource(R.string.fresh_home_hero_title),
             description = stringResource(R.string.fresh_home_hero_desc),
-            surfaceColor = custom.surfaceColors.getOrNull(HERO_SLOT) ?: 0,
-            surfaceAlpha = (custom.surfaceAlphas.getOrNull(HERO_SLOT) ?: -1f)
-                .let { if (it >= 0f) it else custom.cardAlpha },
-            onSurfaceColorChange = { CustomizationStore.setSurfaceColor(HERO_SLOT, it) },
-            onSurfaceAlphaChange = { CustomizationStore.setSurfaceAlpha(HERO_SLOT, it) },
             hasImage = heroOn,
-            alpha = custom.heroDim,
-            alphaRange = 0f..0.8f,
-            alphaLabel = stringResource(R.string.customization_dim),
-            onAlphaChange = CustomizationStore::setHeroDim,
-            onPick = {
+            imageAlpha = custom.heroDim,
+            imageAlphaRange = 0f..0.8f,
+            imageAlphaLabel = stringResource(R.string.customization_dim),
+            onImageAlphaChange = CustomizationStore::setHeroDim,
+            onPickImage = {
                 showHeroMenu = false
                 heroPicker.launch(
                     PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                 )
             },
-            onRemove = {
+            onRemoveImage = {
                 showHeroMenu = false
                 CustomizationStore.setHeroWallpaper(null)
             },
@@ -491,27 +437,23 @@ fun HomePagerFresh(
 
     val kpiIndex = kpiMenuIndex
     if (kpiIndex >= 0) {
-        FreshBackdropDialog(
+        CardAppearanceDialog(
+            slot = kpiIndex + 1,
             title = stringResource(R.string.fresh_home_kpi_bg_title),
             description = stringResource(R.string.fresh_home_kpi_bg_desc),
-            surfaceColor = custom.surfaceColors.getOrNull(kpiIndex + 1) ?: 0,
-            surfaceAlpha = (custom.surfaceAlphas.getOrNull(kpiIndex + 1) ?: -1f)
-                .let { if (it >= 0f) it else custom.cardAlpha },
-            onSurfaceColorChange = { CustomizationStore.setSurfaceColor(kpiIndex + 1, it) },
-            onSurfaceAlphaChange = { CustomizationStore.setSurfaceAlpha(kpiIndex + 1, it) },
             hasImage = custom.kpiImages.getOrNull(kpiIndex) != null,
-            alpha = custom.kpiAlphas.getOrNull(kpiIndex) ?: 0.7f,
-            alphaRange = 0.2f..1f,
-            alphaLabel = stringResource(R.string.fresh_home_kpi_alpha),
-            onAlphaChange = { CustomizationStore.setKpiAlpha(kpiIndex, it) },
-            onPick = {
+            imageAlpha = custom.kpiAlphas.getOrNull(kpiIndex) ?: 0.7f,
+            imageAlphaRange = 0.2f..1f,
+            imageAlphaLabel = stringResource(R.string.fresh_home_kpi_alpha),
+            onImageAlphaChange = { CustomizationStore.setKpiAlpha(kpiIndex, it) },
+            onPickImage = {
                 kpiPickIndex = kpiIndex
                 kpiMenuIndex = -1
                 kpiPicker.launch(
                     PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                 )
             },
-            onRemove = {
+            onRemoveImage = {
                 CustomizationStore.setKpiImage(kpiIndex, null)
                 kpiMenuIndex = -1
             },
@@ -960,436 +902,6 @@ private fun BoxScope.FreshHeroBackdrop(hero: Customization, bitmap: ImageBitmap?
 
 /** Long-press menu offering to pick / remove the hero card picture. */
 @Composable
-private fun FreshBackdropDialog(
-    title: String,
-    description: String,
-    surfaceColor: Int,
-    surfaceAlpha: Float,
-    onSurfaceColorChange: (Int) -> Unit,
-    onSurfaceAlphaChange: (Float) -> Unit,
-    hasImage: Boolean,
-    alpha: Float,
-    alphaRange: ClosedFloatingPointRange<Float>,
-    alphaLabel: String,
-    onAlphaChange: (Float) -> Unit,
-    onPick: () -> Unit,
-    onRemove: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    Dialog(onDismissRequest = onDismiss) {
-        Surface(
-            shape = RoundedCornerShape(28.dp),
-            color = freshCardColor(),
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(20.dp)
-                    .verticalScroll(rememberScrollState()),
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.78f),
-                )
-
-                Spacer(Modifier.height(14.dp))
-                Text(
-                    text = stringResource(R.string.fresh_home_card_color),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                )
-                Spacer(Modifier.height(8.dp))
-                FreshCardColorSection(selected = surfaceColor, onSelect = onSurfaceColorChange)
-
-                DialogSliderRow(
-                    label = stringResource(R.string.fresh_home_card_alpha),
-                    value = surfaceAlpha,
-                    range = 0.2f..1f,
-                    onChange = onSurfaceAlphaChange,
-                )
-
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = stringResource(R.string.customization_wallpaper),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                )
-                Spacer(Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FreshPillButton(
-                        text = stringResource(R.string.customization_pick_image),
-                        icon = Icons.Filled.Image,
-                        filled = true,
-                        onClick = onPick,
-                    )
-                    if (hasImage) {
-                        FreshPillButton(
-                            text = stringResource(R.string.customization_clear),
-                            icon = Icons.Filled.Delete,
-                            filled = false,
-                            onClick = onRemove,
-                        )
-                    }
-                }
-                if (hasImage) {
-                    DialogSliderRow(
-                        label = alphaLabel,
-                        value = alpha,
-                        range = alphaRange,
-                        onChange = onAlphaChange,
-                    )
-                }
-
-                Spacer(Modifier.height(14.dp))
-                Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainer,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .clickable(onClick = onDismiss),
-                ) {
-                    Box(
-                        modifier = Modifier.padding(vertical = 12.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = stringResource(R.string.fresh_home_cancel),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun DialogSliderRow(
-    label: String,
-    value: Float,
-    range: ClosedFloatingPointRange<Float>,
-    onChange: (Float) -> Unit,
-) {
-    Column(modifier = Modifier.padding(top = 8.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.82f),
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                text = "${(value * 100).toInt()}%",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
-            )
-        }
-        Slider(
-            value = value,
-            onValueChange = onChange,
-            valueRange = range,
-            modifier = Modifier.padding(horizontal = 2.dp),
-        )
-    }
-}
-
-@Composable
-private fun FreshCardColorSection(selected: Int, onSelect: (Int) -> Unit) {
-    val presets = CustomizationStore.cardColorOptions
-    val isPreset = selected == 0 || presets.contains(selected)
-    var customOpen by remember { mutableStateOf(!isPreset) }
-    val themeSeed = MaterialTheme.colorScheme.primary.toArgb()
-    var hsv by remember {
-        mutableStateOf(argbToHsv(if (selected == 0) themeSeed else selected))
-    }
-
-    FreshColorSwatches(
-        selected = selected,
-        onSelect = {
-            customOpen = false
-            onSelect(it)
-        },
-        customColor = if (isPreset) null else selected,
-        customOpen = customOpen,
-        onCustomClick = {
-            customOpen = !customOpen
-            if (!isPreset) hsv = argbToHsv(selected)
-        },
-    )
-
-    if (!customOpen) return
-
-    Spacer(Modifier.height(12.dp))
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color(hsvToArgb(hsv)))
-                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp)),
-        )
-        Spacer(Modifier.width(12.dp))
-        Text(
-            text = "#" + Integer.toHexString(hsvToArgb(hsv) and 0xFFFFFF)
-                .uppercase()
-                .padStart(6, '0'),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-    }
-
-    Spacer(Modifier.height(6.dp))
-    GradientColorSlider(
-        label = stringResource(R.string.fresh_home_hue),
-        value = hsv[0],
-        range = 0f..360f,
-        gradient = Brush.horizontalGradient(
-            listOf(
-                Color.Red, Color.Yellow, Color.Green, Color.Cyan, Color.Blue, Color.Magenta, Color.Red,
-            )
-        ),
-        onChange = {
-            hsv = floatArrayOf(it, hsv[1], hsv[2])
-            onSelect(hsvToArgb(hsv))
-        },
-    )
-    GradientColorSlider(
-        label = stringResource(R.string.fresh_home_saturation),
-        value = hsv[1],
-        range = 0f..1f,
-        gradient = Brush.horizontalGradient(
-            listOf(
-                Color(android.graphics.Color.HSVToColor(floatArrayOf(hsv[0], 0f, 1f))),
-                Color(android.graphics.Color.HSVToColor(floatArrayOf(hsv[0], 1f, 1f))),
-            )
-        ),
-        onChange = {
-            hsv = floatArrayOf(hsv[0], it, hsv[2])
-            onSelect(hsvToArgb(hsv))
-        },
-    )
-    GradientColorSlider(
-        label = stringResource(R.string.fresh_home_brightness),
-        value = hsv[2],
-        range = 0.05f..1f,
-        gradient = Brush.horizontalGradient(
-            listOf(
-                Color.Black,
-                Color(android.graphics.Color.HSVToColor(floatArrayOf(hsv[0], hsv[1], 1f))),
-                Color.White,
-            )
-        ),
-        onChange = {
-            hsv = floatArrayOf(hsv[0], hsv[1], it)
-            onSelect(hsvToArgb(hsv))
-        },
-    )
-}
-
-@Composable
-private fun GradientColorSlider(
-    label: String,
-    value: Float,
-    range: ClosedFloatingPointRange<Float>,
-    gradient: Brush,
-    onChange: (Float) -> Unit,
-) {
-    Column(modifier = Modifier.padding(top = 6.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                text = (value * 100).toInt().toString() + "%",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(34.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp)
-                    .height(12.dp)
-                    .clip(RoundedCornerShape(50))
-                    .background(gradient),
-            )
-            Slider(
-                value = value,
-                onValueChange = onChange,
-                valueRange = range,
-                colors = SliderDefaults.colors(
-                    thumbColor = Color.White,
-                    activeTrackColor = Color.Transparent,
-                    inactiveTrackColor = Color.Transparent,
-                    activeTickColor = Color.Transparent,
-                    inactiveTickColor = Color.Transparent,
-                ),
-            )
-        }
-    }
-}
-
-@Composable
-private fun FreshColorSwatches(
-    selected: Int,
-    onSelect: (Int) -> Unit,
-    customColor: Int?,
-    customOpen: Boolean,
-    onCustomClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier.horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        CustomizationStore.cardColorOptions.forEach { value ->
-            val isSelected = value == selected
-            val color = if (value == 0) freshCardColor() else Color(value)
-            Box(
-                modifier = Modifier
-                    .size(38.dp)
-                    .clip(CircleShape)
-                    .background(color)
-                    .border(
-                        width = if (isSelected) 3.dp else 1.dp,
-                        color = if (isSelected) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.outlineVariant
-                        },
-                        shape = CircleShape,
-                    )
-                    .clickable { onSelect(value) },
-                contentAlignment = Alignment.Center,
-            ) {
-                when {
-                    value == 0 -> Icon(
-                        imageVector = Icons.Filled.Refresh,
-                        contentDescription = stringResource(R.string.customization_follow_theme),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(16.dp),
-                    )
-
-                    isSelected -> Icon(
-                        imageVector = Icons.Filled.Check,
-                        contentDescription = null,
-                        tint = if (color.luminance() > 0.55f) Color(0xFF141A14) else Color.White,
-                        modifier = Modifier.size(17.dp),
-                    )
-                }
-            }
-        }
-
-        // 自定义颜色
-        val rainbow = listOf(
-            Color(0xFFEF4444), Color(0xFFF59E0B), Color(0xFF22C55E),
-            Color(0xFF06B6D4), Color(0xFF3B82F6), Color(0xFFA855F7), Color(0xFFEF4444),
-        )
-        val active = customColor != null || customOpen
-        Box(
-            modifier = Modifier
-                .size(38.dp)
-                .clip(CircleShape)
-                .then(
-                    if (customColor != null) {
-                        Modifier.background(Color(customColor))
-                    } else {
-                        Modifier.background(Brush.sweepGradient(rainbow))
-                    }
-                )
-                .border(
-                    width = if (active) 3.dp else 1.dp,
-                    color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
-                    shape = CircleShape,
-                )
-                .clickable(onClick = onCustomClick),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (customColor == null) {
-                Icon(
-                    imageVector = Icons.Filled.Palette,
-                    contentDescription = stringResource(R.string.fresh_home_custom_color),
-                    tint = Color.White,
-                    modifier = Modifier.size(17.dp),
-                )
-            } else {
-                Icon(
-                    imageVector = Icons.Filled.Check,
-                    contentDescription = null,
-                    tint = if (Color(customColor).luminance() > 0.55f) Color(0xFF141A14) else Color.White,
-                    modifier = Modifier.size(17.dp),
-                )
-            }
-        }
-    }
-}
-
-private fun argbToHsv(argb: Int): FloatArray {
-    val hsv = FloatArray(3)
-    android.graphics.Color.colorToHSV(argb, hsv)
-    return hsv
-}
-
-private fun hsvToArgb(hsv: FloatArray): Int =
-    android.graphics.Color.HSVToColor(
-        floatArrayOf(hsv[0], hsv[1].coerceIn(0f, 1f), hsv[2].coerceIn(0.05f, 1f))
-    )
-
-@Composable
-private fun FreshPillButton(
-    text: String,
-    icon: ImageVector,
-    filled: Boolean,
-    enabled: Boolean = true,
-    onClick: () -> Unit,
-) {
-    val container = when {
-        !enabled -> MaterialTheme.colorScheme.surfaceContainer
-        filled -> MaterialTheme.colorScheme.primary
-        else -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
-    }
-    val content = when {
-        !enabled -> MaterialTheme.colorScheme.outline
-        filled -> MaterialTheme.colorScheme.onPrimary
-        else -> MaterialTheme.colorScheme.onPrimaryContainer
-    }
-    Surface(
-        shape = RoundedCornerShape(50),
-        color = container,
-        contentColor = content,
-        modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .clickable(enabled = enabled, onClick = onClick),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(17.dp))
-            Spacer(Modifier.width(6.dp))
-            Text(text = text, style = MaterialTheme.typography.labelLarge)
-        }
-    }
-}
-
-@Composable
 private fun FreshDialogRow(icon: ImageVector, text: String, onClick: () -> Unit) {
     Row(
         modifier = Modifier
@@ -1775,71 +1287,6 @@ private fun FreshIssueList(
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun FreshToolRow(
-    icon: ImageVector,
-    tint: Color,
-    title: String,
-    description: String,
-    containerColor: Color,
-    contentColor: Color,
-    onClick: () -> Unit,
-) {
-    Surface(
-        shape = RoundedCornerShape(20.dp),
-        color = containerColor,
-        contentColor = contentColor,
-        border = freshCardBorder(),
-        shadowElevation = if (freshCardBorder() != null) 0.dp else 1.dp,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .clickable(onClick = onClick),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Surface(
-                shape = RoundedCornerShape(14.dp),
-                color = tint.copy(alpha = 0.12f),
-                modifier = Modifier.size(44.dp),
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = tint,
-                        modifier = Modifier.size(22.dp),
-                    )
-                }
-            }
-            Spacer(Modifier.width(14.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = LocalContentColor.current,
-                )
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = LocalContentColor.current.copy(alpha = supportingTextAlpha()),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.outline,
-            )
         }
     }
 }

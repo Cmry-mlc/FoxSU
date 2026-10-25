@@ -52,9 +52,10 @@ data class Customization(
 /** Number of equal-sized KPI cards on the ColorUI home screen. */
 const val KPI_CARD_COUNT = 4
 
-/** Hero card + the four KPI cards. */
-const val SURFACE_SLOT_COUNT = KPI_CARD_COUNT + 1
+/** Hero card + four KPI cards + the module list cards. */
+const val SURFACE_SLOT_COUNT = KPI_CARD_COUNT + 2
 const val HERO_SLOT = 0
+const val MODULE_SLOT = KPI_CARD_COUNT + 1
 
 object CustomizationStore {
     private const val PREFS = "customization"

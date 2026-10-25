@@ -84,6 +84,7 @@ fun SettingPagerMaterial(
     val snackBarHost = remember { SnackbarHostState() }
     val showUninstallDialog = rememberSaveable { mutableStateOf(false) }
     var showBottomSheet by remember { mutableStateOf(false) }
+    var showUiModePicker by remember { mutableStateOf(false) }
 
     UninstallDialog(
         show = showUninstallDialog.value,
@@ -110,6 +111,21 @@ fun SettingPagerMaterial(
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
                 .verticalScroll(rememberScrollState())
         ) {
+            if (isFreshStyle()) {
+                FreshSettingsGrid(
+                    checkUpdate = uiState.checkUpdate,
+                    onOpenUiMode = { showUiModePicker = true },
+                    onOpenTheme = actions.onOpenTheme,
+                    onOpenCustomization = { navigator.push(Route.Customization) },
+                    onOpenProfile = actions.onOpenProfileTemplate,
+                    onOpenRepo = { navigator.push(Route.ModuleRepo) },
+                    onOpenLog = { navigator.push(Route.Sulog) },
+                    onOpenInstall = { navigator.push(Route.Install) },
+                    onOpenAbout = actions.onOpenAbout,
+                    onToggleCheckUpdate = { actions.onSetCheckUpdate(!uiState.checkUpdate) },
+                )
+            }
+
             KsuIsValid {
                 SegmentedColumn(
                     modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 13.dp),
@@ -415,6 +431,14 @@ fun SettingPagerMaterial(
             }
             Spacer(modifier = Modifier.height(bottomInnerPadding))
         }
+    }
+
+    if (showUiModePicker) {
+        FreshUiModePickerDialog(
+            currentValue = uiState.uiMode,
+            onSelectIndex = actions.onSetUiModeIndex,
+            onDismiss = { showUiModePicker = false },
+        )
     }
 }
 

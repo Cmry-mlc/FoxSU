@@ -103,7 +103,6 @@ fun HomePager(
             bottomInnerPadding = bottomInnerPadding,
             navigationBadge = navigationBadge,
             onOpenTab = { page -> mainPagerState.animateToPage(page) },
-            onOpenLog = { navigator.push(Route.Sulog) },
         )
     }
 }
