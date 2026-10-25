@@ -23,6 +23,13 @@ data class Customization(
     val wallpaperOffsetY: Float = 0f,
     /** 0f..0.8f black scrim over the wallpaper so text stays readable. */
     val wallpaperDim: Float = 0.15f,
+    /** Optional picture used as the backdrop of the home hero cards. */
+    val heroWallpaperUri: String? = null,
+    val heroScale: Float = 1f,
+    val heroOffsetX: Float = 0f,
+    val heroOffsetY: Float = 0f,
+    /** 0f..0.8f black scrim over the hero picture, keeps text readable. */
+    val heroDim: Float = 0.35f,
     /** 0 = follow the theme scheme, otherwise an ARGB color. */
     val cardColor: Int = 0,
     /** 0.2f..1f, applied on top of [cardColor] (or the themed card surface). */
@@ -38,6 +45,11 @@ object CustomizationStore {
     private const val KEY_OFFSET_X = "wallpaper_offset_x"
     private const val KEY_OFFSET_Y = "wallpaper_offset_y"
     private const val KEY_DIM = "wallpaper_dim"
+    private const val KEY_HERO_URI = "hero_wallpaper_uri"
+    private const val KEY_HERO_SCALE = "hero_wallpaper_scale"
+    private const val KEY_HERO_OFFSET_X = "hero_wallpaper_offset_x"
+    private const val KEY_HERO_OFFSET_Y = "hero_wallpaper_offset_y"
+    private const val KEY_HERO_DIM = "hero_wallpaper_dim"
     private const val KEY_CARD_COLOR = "card_color"
     private const val KEY_CARD_ALPHA = "card_alpha"
     private const val KEY_ICON_STYLE = "icon_style"
@@ -69,6 +81,11 @@ object CustomizationStore {
             wallpaperOffsetX = getFloat(KEY_OFFSET_X, 0f),
             wallpaperOffsetY = getFloat(KEY_OFFSET_Y, 0f),
             wallpaperDim = getFloat(KEY_DIM, 0.15f),
+            heroWallpaperUri = getString(KEY_HERO_URI, null),
+            heroScale = getFloat(KEY_HERO_SCALE, 1f),
+            heroOffsetX = getFloat(KEY_HERO_OFFSET_X, 0f),
+            heroOffsetY = getFloat(KEY_HERO_OFFSET_Y, 0f),
+            heroDim = getFloat(KEY_HERO_DIM, 0.35f),
             cardColor = getInt(KEY_CARD_COLOR, 0),
             cardAlpha = getFloat(KEY_CARD_ALPHA, 1f),
             iconStyle = getInt(KEY_ICON_STYLE, 0),
@@ -80,6 +97,11 @@ object CustomizationStore {
     fun setOffsetX(offset: Float) = update { it.copy(wallpaperOffsetX = offset) }
     fun setOffsetY(offset: Float) = update { it.copy(wallpaperOffsetY = offset) }
     fun setDim(dim: Float) = update { it.copy(wallpaperDim = dim) }
+    fun setHeroWallpaper(uri: String?) = update { it.copy(heroWallpaperUri = uri) }
+    fun setHeroScale(scale: Float) = update { it.copy(heroScale = scale) }
+    fun setHeroOffsetX(offset: Float) = update { it.copy(heroOffsetX = offset) }
+    fun setHeroOffsetY(offset: Float) = update { it.copy(heroOffsetY = offset) }
+    fun setHeroDim(dim: Float) = update { it.copy(heroDim = dim) }
     fun setCardColor(color: Int) = update { it.copy(cardColor = color) }
     fun setCardAlpha(alpha: Float) = update { it.copy(cardAlpha = alpha) }
     fun setIconStyle(style: Int) = update { it.copy(iconStyle = style) }
@@ -94,6 +116,11 @@ object CustomizationStore {
             putFloat(KEY_OFFSET_X, next.wallpaperOffsetX)
             putFloat(KEY_OFFSET_Y, next.wallpaperOffsetY)
             putFloat(KEY_DIM, next.wallpaperDim)
+            putString(KEY_HERO_URI, next.heroWallpaperUri)
+            putFloat(KEY_HERO_SCALE, next.heroScale)
+            putFloat(KEY_HERO_OFFSET_X, next.heroOffsetX)
+            putFloat(KEY_HERO_OFFSET_Y, next.heroOffsetY)
+            putFloat(KEY_HERO_DIM, next.heroDim)
             putInt(KEY_CARD_COLOR, next.cardColor)
             putFloat(KEY_CARD_ALPHA, next.cardAlpha)
             putInt(KEY_ICON_STYLE, next.iconStyle)

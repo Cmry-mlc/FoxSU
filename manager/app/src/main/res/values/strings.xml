@@ -256,6 +256,11 @@
     <string name="customization_entry_summary">Wallpaper, card style and launcher icon</string>
     <string name="customization_wallpaper">Wallpaper</string>
     <string name="customization_wallpaper_sub">Applies to every page, behind the cards</string>
+    <string name="customization_hero_title">Top card picture</string>
+    <string name="customization_hero_sub">Independent from the wallpaper and card colour</string>
+    <string name="fresh_home_hero_title">Top card background</string>
+    <string name="fresh_home_hero_desc">Long-press the top card any time to change it</string>
+    <string name="fresh_home_hero_hint">Long-press to set a background picture</string>
     <string name="customization_card_sub">Independent from the wallpaper</string>
     <string name="customization_offset_x">Horizontal position</string>
     <string name="customization_pick_image">Choose image</string>

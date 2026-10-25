@@ -1,7 +1,5 @@
 package me.weishu.kernelsu.ui.screen.customization
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -70,8 +68,7 @@ import me.weishu.kernelsu.ui.component.rememberCardSurface
 import me.weishu.kernelsu.ui.component.scaffoldBackgroundColor
 import me.weishu.kernelsu.ui.navigation3.LocalNavigator
 import me.weishu.kernelsu.ui.util.LauncherIconManager
-import java.io.File
-import java.io.FileOutputStream
+import me.weishu.kernelsu.ui.util.savePickedImage
 
 @Composable
 fun CustomizationScreen() {
@@ -85,11 +82,29 @@ fun CustomizationScreen() {
     ) { uri: Uri? ->
         if (uri == null) return@rememberLauncherForActivityResult
         scope.launch {
-            val saved = withContext(Dispatchers.IO) { saveWallpaper(context, uri) }
+            val saved = withContext(Dispatchers.IO) {
+                savePickedImage(context, uri, "wallpaper.jpg")
+            }
             if (saved == null) {
                 Toast.makeText(context, R.string.customization_wallpaper_failed, Toast.LENGTH_SHORT).show()
             } else {
                 CustomizationStore.setWallpaper(saved)
+            }
+        }
+    }
+
+    val heroPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            val saved = withContext(Dispatchers.IO) {
+                savePickedImage(context, uri, "hero_card.jpg", maxSide = 1400)
+            }
+            if (saved == null) {
+                Toast.makeText(context, R.string.customization_wallpaper_failed, Toast.LENGTH_SHORT).show()
+            } else {
+                CustomizationStore.setHeroWallpaper(saved)
             }
         }
     }
@@ -173,6 +188,65 @@ fun CustomizationScreen() {
                             range = 0f..0.8f,
                             display = "${(custom.wallpaperDim * 100).toInt()}%",
                             onChange = CustomizationStore::setDim,
+                        )
+                    }
+                }
+
+                item {
+                    SectionCard(
+                        icon = Icons.Filled.Wallpaper,
+                        title = stringResource(R.string.customization_hero_title),
+                        subtitle = stringResource(R.string.customization_hero_sub),
+                    ) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            PillButton(
+                                text = stringResource(R.string.customization_pick_image),
+                                icon = Icons.Filled.Photo,
+                                filled = true,
+                                onClick = {
+                                    heroPicker.launch(
+                                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                    )
+                                },
+                            )
+                            PillButton(
+                                text = stringResource(R.string.customization_clear),
+                                icon = Icons.Filled.DeleteOutline,
+                                filled = false,
+                                enabled = custom.heroWallpaperUri != null,
+                                onClick = { CustomizationStore.setHeroWallpaper(null) },
+                            )
+                        }
+
+                        if (custom.heroWallpaperUri != null) {
+                            SliderRow(
+                                label = stringResource(R.string.customization_scale),
+                                value = custom.heroScale,
+                                range = 1f..2.5f,
+                                display = "${(custom.heroScale * 100).toInt()}%",
+                                onChange = CustomizationStore::setHeroScale,
+                            )
+                            SliderRow(
+                                label = stringResource(R.string.customization_offset_x),
+                                value = custom.heroOffsetX,
+                                range = -0.4f..0.4f,
+                                display = "${(custom.heroOffsetX * 100).toInt()}%",
+                                onChange = CustomizationStore::setHeroOffsetX,
+                            )
+                            SliderRow(
+                                label = stringResource(R.string.customization_offset),
+                                value = custom.heroOffsetY,
+                                range = -0.4f..0.4f,
+                                display = "${(custom.heroOffsetY * 100).toInt()}%",
+                                onChange = CustomizationStore::setHeroOffsetY,
+                            )
+                        }
+                        SliderRow(
+                            label = stringResource(R.string.customization_dim),
+                            value = custom.heroDim,
+                            range = 0f..0.8f,
+                            display = "${(custom.heroDim * 100).toInt()}%",
+                            onChange = CustomizationStore::setHeroDim,
                         )
                     }
                 }
@@ -539,30 +613,3 @@ private fun IconOption(
         }
     }
 }
-
-private fun saveWallpaper(context: android.content.Context, uri: Uri): String? = runCatching {
-    val bitmap = context.contentResolver.openInputStream(uri)?.use {
-        BitmapFactory.decodeStream(it)
-    } ?: return null
-
-    val maxSide = 2000
-    val scaled = if (bitmap.width > maxSide || bitmap.height > maxSide) {
-        val ratio = maxSide.toFloat() / maxOf(bitmap.width, bitmap.height)
-        Bitmap.createScaledBitmap(
-            bitmap,
-            (bitmap.width * ratio).toInt(),
-            (bitmap.height * ratio).toInt(),
-            true,
-        )
-    } else {
-        bitmap
-    }
-
-    val file = File(context.filesDir, "wallpaper.jpg")
-    FileOutputStream(file).use { out ->
-        scaled.compress(Bitmap.CompressFormat.JPEG, 92, out)
-    }
-    if (scaled !== bitmap) scaled.recycle()
-    bitmap.recycle()
-    file.absolutePath
-}.getOrNull()

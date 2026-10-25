@@ -232,6 +232,11 @@
     <string name="customization_entry_summary">背景壁纸、卡片样式与启动器图标</string>
     <string name="customization_wallpaper">背景壁纸</string>
     <string name="customization_wallpaper_sub">作用于所有页面，位于卡片下层</string>
+    <string name="customization_hero_title">顶部卡片背景</string>
+    <string name="customization_hero_sub">与壁纸、卡片颜色分开设置</string>
+    <string name="fresh_home_hero_title">顶部卡片背景</string>
+    <string name="fresh_home_hero_desc">长按顶部卡片即可随时更换</string>
+    <string name="fresh_home_hero_hint">长按可设置背景图片</string>
     <string name="customization_card_sub">与壁纸分开设置</string>
     <string name="customization_offset_x">左右位置</string>
     <string name="customization_pick_image">选择图片</string>

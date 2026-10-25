@@ -1,10 +1,17 @@
 package me.weishu.kernelsu.ui.screen.home
 
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -29,12 +36,14 @@ import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Cached
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DeveloperBoard
 import androidx.compose.material.icons.filled.DeveloperMode
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Extension
 import androidx.compose.material.icons.filled.Fingerprint
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Palette
@@ -59,13 +68,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -74,7 +88,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import me.weishu.kernelsu.Natives
+import me.weishu.kernelsu.data.settings.Customization
 import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.data.repository.SettingsRepositoryImpl
 import me.weishu.kernelsu.R
@@ -82,10 +100,12 @@ import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.UiMode
 import me.weishu.kernelsu.ui.component.KsuIsValid
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
+import me.weishu.kernelsu.ui.component.rememberWallpaper
 import me.weishu.kernelsu.ui.component.rebootlistpopup.RebootListOption
 import me.weishu.kernelsu.ui.component.rebootlistpopup.getRebootListOption
 import me.weishu.kernelsu.ui.component.rebootlistpopup.rememberRebootAction
 import me.weishu.kernelsu.ui.uiModeLabelRes
+import me.weishu.kernelsu.ui.util.savePickedImage
 
 /** Things worth telling the user about, all derived from real state. */
 private enum class FreshIssue {
@@ -121,7 +141,30 @@ fun HomePagerFresh(
 ) {
     val issues = state.freshIssues()
     var showStylePicker by remember { mutableStateOf(false) }
+    var showHeroMenu by remember { mutableStateOf(false) }
     val currentUiMode = LocalUiMode.current
+
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val heroPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            val saved = withContext(Dispatchers.IO) {
+                savePickedImage(context, uri, "hero_card.jpg", maxSide = 1400)
+            }
+            if (saved == null) {
+                Toast.makeText(
+                    context,
+                    R.string.customization_wallpaper_failed,
+                    Toast.LENGTH_SHORT,
+                ).show()
+            } else {
+                CustomizationStore.setHeroWallpaper(saved)
+            }
+        }
+    }
 
     val custom = CustomizationStore.current
     val cardColor = if (custom.cardColor == 0) {
@@ -141,6 +184,12 @@ fun HomePagerFresh(
     } else {
         cardContent
     }
+
+    // 顶部大卡可以单独铺一张图片；有图时文字转为白色，靠暗化蒙层保证可读
+    val heroCustom = if (custom.heroWallpaperUri != null) custom else null
+    val heroBitmap = rememberWallpaper(custom.heroWallpaperUri)
+    val heroOn = heroBitmap != null
+    val heroContent = if (heroOn) Color.White else cardContent
 
     val navigationBarPadding = if (!Natives.isFullFeatured()) {
         WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
@@ -166,6 +215,9 @@ fun HomePagerFresh(
                         issues = issues,
                         onInstall = actions.onInstallClick,
                         canInstallKernel = state.canInstallKernelUpdate,
+                        containerColor = cardColor,
+                        contentColor = cardContent,
+                        onLongPress = { showHeroMenu = true },
                     )
                     Spacer(Modifier.height(14.dp))
                 }
@@ -175,6 +227,11 @@ fun HomePagerFresh(
                     state = state,
                     onInstall = actions.onInstallClick,
                     onJailbreak = actions.onJailbreakClick,
+                    containerColor = if (heroOn) Color.Transparent else cardColor,
+                    contentColor = heroContent,
+                    hero = heroCustom,
+                    heroBitmap = heroBitmap,
+                    onLongPress = { showHeroMenu = true },
                 )
 
                 Spacer(Modifier.height(12.dp))
@@ -292,6 +349,23 @@ fun HomePagerFresh(
                 )
             }
         }
+    }
+
+    if (showHeroMenu) {
+        FreshHeroDialog(
+            hasImage = heroOn,
+            onPick = {
+                showHeroMenu = false
+                heroPicker.launch(
+                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                )
+            },
+            onRemove = {
+                showHeroMenu = false
+                CustomizationStore.setHeroWallpaper(null)
+            },
+            onDismiss = { showHeroMenu = false },
+        )
     }
 
     if (showStylePicker) {
@@ -542,25 +616,20 @@ private fun rebootIcon(reason: String): ImageVector = when (reason) {
     else -> Icons.Filled.RestartAlt
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun FreshStatusCard(
     state: HomeUiState,
     onInstall: () -> Unit,
     onJailbreak: () -> Unit,
+    containerColor: Color,
+    contentColor: Color,
+    hero: Customization?,
+    heroBitmap: ImageBitmap?,
+    onLongPress: () -> Unit,
 ) {
     val ksuActive = state.ksuVersion != null
     val notInstalled = !ksuActive && state.kernelVersion.isGKI()
-
-    val containerColor = if (ksuActive) {
-        MaterialTheme.colorScheme.primaryContainer
-    } else {
-        MaterialTheme.colorScheme.errorContainer
-    }
-    val contentColor = if (ksuActive) {
-        MaterialTheme.colorScheme.onPrimaryContainer
-    } else {
-        MaterialTheme.colorScheme.onErrorContainer
-    }
 
     val statusIcon = when {
         ksuActive -> Icons.Filled.CheckCircle
@@ -586,103 +655,245 @@ private fun FreshStatusCard(
     } else ""
 
     val canJailbreak = notInstalled && state.isSELinuxPermissive
+    val hasHero = hero != null && heroBitmap != null
 
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(22.dp))
-            .clickable(enabled = !state.isLateLoadMode) { onInstall() },
+            .combinedClickable(
+                onClick = { if (!state.isLateLoadMode) onInstall() },
+                onLongClick = onLongPress,
+            ),
         shape = RoundedCornerShape(22.dp),
         color = containerColor,
         contentColor = contentColor,
+        shadowElevation = if (hasHero) 0.dp else 1.dp,
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 18.dp, vertical = 18.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = statusTitle,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    if (ksuActive && state.isLateLoadMode) {
-                        Spacer(Modifier.width(8.dp))
-                        FreshTag(
-                            text = stringResource(R.string.jailbreak_mode),
-                            container = MaterialTheme.colorScheme.errorContainer,
-                            content = MaterialTheme.colorScheme.onErrorContainer,
-                        )
-                    }
-                    if (ksuActive && state.isSafeMode) {
-                        Spacer(Modifier.width(8.dp))
-                        FreshTag(
-                            text = stringResource(R.string.safe_mode),
-                            container = MaterialTheme.colorScheme.errorContainer,
-                            content = MaterialTheme.colorScheme.onErrorContainer,
-                        )
-                    }
-                }
-                Spacer(Modifier.height(6.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = statusSummary,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = contentColor.copy(alpha = 0.78f),
-                    )
-                    if (state.showCustomLkmBadge) {
-                        Spacer(Modifier.width(8.dp))
-                        FreshTag(
-                            text = stringResource(R.string.home_lkm_custom),
-                            container = MaterialTheme.colorScheme.tertiaryContainer,
-                            content = MaterialTheme.colorScheme.onTertiaryContainer,
-                        )
-                    }
-                }
-                if (workingMode.isNotEmpty()) {
-                    Spacer(Modifier.height(10.dp))
+        Box {
+            if (hero != null && heroBitmap != null) {
+                FreshHeroBackdrop(hero = hero, bitmap = heroBitmap)
+            }
+            Row(
+                modifier = Modifier.padding(horizontal = 18.dp, vertical = 18.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        FreshTag(
-                            text = workingMode,
-                            container = MaterialTheme.colorScheme.primary,
-                            content = MaterialTheme.colorScheme.onPrimary,
+                        Text(
+                            text = statusTitle,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = contentColor,
                         )
-                        if (!state.isLateLoadMode) {
+                        if (ksuActive && state.isLateLoadMode) {
                             Spacer(Modifier.width(8.dp))
+                            FreshTag(
+                                text = stringResource(R.string.jailbreak_mode),
+                                container = MaterialTheme.colorScheme.errorContainer,
+                                content = MaterialTheme.colorScheme.onErrorContainer,
+                            )
+                        }
+                        if (ksuActive && state.isSafeMode) {
+                            Spacer(Modifier.width(8.dp))
+                            FreshTag(
+                                text = stringResource(R.string.safe_mode),
+                                container = MaterialTheme.colorScheme.errorContainer,
+                                content = MaterialTheme.colorScheme.onErrorContainer,
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(6.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = statusSummary,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = contentColor.copy(alpha = 0.78f),
+                        )
+                        if (state.showCustomLkmBadge) {
+                            Spacer(Modifier.width(8.dp))
+                            FreshTag(
+                                text = stringResource(R.string.home_lkm_custom),
+                                container = MaterialTheme.colorScheme.tertiaryContainer,
+                                content = MaterialTheme.colorScheme.onTertiaryContainer,
+                            )
+                        }
+                    }
+                    if (workingMode.isNotEmpty()) {
+                        Spacer(Modifier.height(10.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            FreshTag(
+                                text = workingMode,
+                                container = MaterialTheme.colorScheme.primary,
+                                content = MaterialTheme.colorScheme.onPrimary,
+                            )
+                            if (!state.isLateLoadMode) {
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    text = stringResource(R.string.fresh_home_flash_hint),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = contentColor.copy(alpha = 0.6f),
+                                )
+                            }
+                        }
+                    }
+                    if (!hasHero) {
+                        Spacer(Modifier.height(10.dp))
+                        Text(
+                            text = stringResource(R.string.fresh_home_hero_hint),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = contentColor.copy(alpha = 0.45f),
+                        )
+                    }
+                    if (canJailbreak) {
+                        Spacer(Modifier.height(12.dp))
+                        Surface(
+                            shape = RoundedCornerShape(14.dp),
+                            color = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(14.dp))
+                                .clickable { onJailbreak() },
+                        ) {
                             Text(
-                                text = stringResource(R.string.fresh_home_flash_hint),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = contentColor.copy(alpha = 0.6f),
+                                text = stringResource(R.string.home_jailbreak),
+                                style = MaterialTheme.typography.labelLarge,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                             )
                         }
                     }
                 }
-                if (canJailbreak) {
-                    Spacer(Modifier.height(12.dp))
-                    Surface(
-                        shape = RoundedCornerShape(14.dp),
-                        color = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(14.dp))
-                            .clickable { onJailbreak() },
+                Icon(
+                    imageVector = statusIcon,
+                    contentDescription = null,
+                    tint = if (ksuActive) {
+                        contentColor.copy(alpha = if (hasHero) 0.85f else 0.30f)
+                    } else {
+                        MaterialTheme.colorScheme.error
+                    },
+                    modifier = Modifier.size(44.dp),
+                )
+            }
+        }
+    }
+}
+
+/** Paints the optional picture behind the hero card, with the same zoom / pan model as the wallpaper. */
+@Composable
+private fun BoxScope.FreshHeroBackdrop(hero: Customization, bitmap: ImageBitmap?) {
+    if (bitmap == null) return
+    Image(
+        bitmap = bitmap,
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
+        modifier = Modifier
+            .matchParentSize()
+            .graphicsLayer {
+                scaleX = hero.heroScale
+                scaleY = hero.heroScale
+                translationX = hero.heroOffsetX * size.width
+                translationY = hero.heroOffsetY * size.height
+            },
+    )
+    if (hero.heroDim > 0f) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(Color.Black.copy(alpha = hero.heroDim)),
+        )
+    }
+}
+
+/** Long-press menu offering to pick / remove the hero card picture. */
+@Composable
+private fun FreshHeroDialog(
+    hasImage: Boolean,
+    onPick: () -> Unit,
+    onRemove: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Text(
+                    text = stringResource(R.string.fresh_home_hero_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = stringResource(R.string.fresh_home_hero_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(16.dp))
+
+                FreshDialogRow(
+                    icon = Icons.Filled.Image,
+                    text = stringResource(R.string.customization_pick_image),
+                    onClick = onPick,
+                )
+                if (hasImage) {
+                    Spacer(Modifier.height(8.dp))
+                    FreshDialogRow(
+                        icon = Icons.Filled.Delete,
+                        text = stringResource(R.string.customization_clear),
+                        onClick = onRemove,
+                    )
+                }
+
+                Spacer(Modifier.height(12.dp))
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable(onClick = onDismiss),
+                ) {
+                    Box(
+                        modifier = Modifier.padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center,
                     ) {
                         Text(
-                            text = stringResource(R.string.home_jailbreak),
+                            text = stringResource(R.string.fresh_home_cancel),
                             style = MaterialTheme.typography.labelLarge,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
             }
-            Icon(
-                imageVector = statusIcon,
-                contentDescription = null,
-                tint = contentColor.copy(alpha = 0.30f),
-                modifier = Modifier.size(44.dp),
-            )
         }
+    }
+}
+
+@Composable
+private fun FreshDialogRow(icon: ImageVector, text: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick)
+            .background(MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.7f))
+            .padding(horizontal = 14.dp, vertical = 13.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(20.dp),
+        )
+        Spacer(Modifier.width(12.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
     }
 }
 
@@ -947,11 +1158,15 @@ private fun FreshNavRow(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun FreshIssueList(
     issues: List<FreshIssue>,
     onInstall: () -> Unit,
     canInstallKernel: Boolean,
+    containerColor: Color,
+    contentColor: Color,
+    onLongPress: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         issues.forEach { issue ->
@@ -973,12 +1188,15 @@ private fun FreshIssueList(
                 )
             Surface(
                 shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                color = containerColor,
+                contentColor = contentColor,
+                shadowElevation = 1.dp,
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
-                    .then(
-                        if (actionable) Modifier.clickable(onClick = onInstall) else Modifier
+                    .combinedClickable(
+                        onClick = { if (actionable) onInstall() },
+                        onLongClick = onLongPress,
                     ),
             ) {
                 Row(
@@ -995,7 +1213,7 @@ private fun FreshIssueList(
                     Text(
                         text = text,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        color = contentColor,
                         modifier = Modifier.weight(1f),
                     )
                     if (actionable) {
