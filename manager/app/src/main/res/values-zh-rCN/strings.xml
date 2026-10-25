@@ -308,7 +308,7 @@
     <string name="fresh_issue_safe_mode">正在安全模式下运行</string>
     <string name="fresh_issue_not_gki">非 GKI 内核，部分功能可能受限</string>
     <string name="fresh_issue_selinux">SELinux 处于宽容模式</string>
-    <string name="fresh_issue_update">Manager 有新版本可用</string>
+    <string name="fresh_issue_update">FoxSu %1$d 可用 · 当前 %2$s</string>
     <string name="fresh_issue_lkm_update">内核模块有新版本可用</string>
     <string name="settings_page_scale">界面缩放</string>
     <string name="settings_page_scale_summary">调整全局显示比例</string>

@@ -11,16 +11,16 @@ enum class UiMode(val value: String) {
 
     companion object {
         fun fromValue(value: String): UiMode = when (value) {
+            Miuix.value -> Miuix
             Material.value -> Material
-            Fresh.value -> Fresh
-            else -> Miuix
+            else -> Fresh
         }
 
-        val DEFAULT_VALUE = Miuix.value
+        val DEFAULT_VALUE = Fresh.value
     }
 }
 
-val LocalUiMode = staticCompositionLocalOf { UiMode.Miuix }
+val LocalUiMode = staticCompositionLocalOf { UiMode.Fresh }
 
 @StringRes
 fun uiModeLabelRes(mode: UiMode): Int = when (mode) {

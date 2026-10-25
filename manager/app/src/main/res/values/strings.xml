@@ -332,7 +332,7 @@
     <string name="fresh_issue_safe_mode">Running in safe mode</string>
     <string name="fresh_issue_not_gki">Non-GKI kernel, features may be limited</string>
     <string name="fresh_issue_selinux">SELinux is permissive</string>
-    <string name="fresh_issue_update">A new manager build is available</string>
+    <string name="fresh_issue_update">FoxSu %1$d available · current %2$s</string>
     <string name="fresh_issue_lkm_update">A new kernel module build is available</string>
     <string name="settings_page_scale">Page Scale</string>
     <string name="settings_page_scale_summary">Adjust the global display scale.</string>

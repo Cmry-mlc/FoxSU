@@ -297,7 +297,7 @@ val LocalMainPagerState = staticCompositionLocalOf<MainPagerState> { error("Loca
 @Composable
 fun MainScreen(
     initialPage: Int = 0,
-    pagerInterceptionMode: Int = PagerInterceptionMode.CrossAxisInterceptor.ordinal,
+    pagerInterceptionMode: Int = PagerInterceptionMode.Native.ordinal,
     onPageChanged: (Int) -> Unit = {},
 ) {
     val navController = LocalNavigator.current
@@ -315,7 +315,8 @@ fun MainScreen(
         PagerInterceptionMode.Native
     }
     val interceptPagerGestures = pagerMode == PagerInterceptionMode.CrossAxisInterceptor
-    var userScrollEnabled by remember(isFullFeatured) { mutableStateOf(isFullFeatured) }
+    // Swiping between tabs works on every device, not only on full-featured kernels.
+    var userScrollEnabled by remember { mutableStateOf(true) }
 
     val enableNavigationBadge = LocalEnableNavigationBadge.current
     val badgeEnabled = enableNavigationBadge && isFullFeatured

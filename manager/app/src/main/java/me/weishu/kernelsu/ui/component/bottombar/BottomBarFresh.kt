@@ -1,5 +1,9 @@
 package me.weishu.kernelsu.ui.component.bottombar
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -31,10 +35,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -118,11 +124,29 @@ private fun FreshNavItemView(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val contentColor = if (selected) {
-        MaterialTheme.colorScheme.primary
-    } else {
-        MaterialTheme.colorScheme.onSurfaceVariant
-    }
+    val contentColor by animateColorAsState(
+        targetValue = if (selected) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        },
+        animationSpec = tween(durationMillis = 220),
+        label = "navContent",
+    )
+    val pillColor by animateColorAsState(
+        targetValue = if (selected) {
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
+        } else {
+            Color.Transparent
+        },
+        animationSpec = tween(durationMillis = 220),
+        label = "navPill",
+    )
+    val iconScale by animateFloatAsState(
+        targetValue = if (selected) 1.08f else 1f,
+        animationSpec = spring(dampingRatio = 0.55f, stiffness = 480f),
+        label = "navScale",
+    )
 
     Column(
         modifier = modifier
@@ -136,10 +160,7 @@ private fun FreshNavItemView(
                 .width(52.dp)
                 .height(28.dp)
                 .clip(RoundedCornerShape(14.dp))
-                .background(
-                    if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-                    else Color.Transparent
-                ),
+                .background(pillColor),
             contentAlignment = Alignment.Center,
         ) {
             if (badge != null) {
@@ -161,7 +182,12 @@ private fun FreshNavItemView(
                         imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
                         contentDescription = stringResource(item.label),
                         tint = contentColor,
-                        modifier = Modifier.size(22.dp),
+                        modifier = Modifier
+                            .size(22.dp)
+                            .graphicsLayer {
+                                scaleX = iconScale
+                                scaleY = iconScale
+                            },
                     )
                 }
             } else {
@@ -169,7 +195,12 @@ private fun FreshNavItemView(
                     imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
                     contentDescription = stringResource(item.label),
                     tint = contentColor,
-                    modifier = Modifier.size(22.dp),
+                    modifier = Modifier
+                        .size(22.dp)
+                        .graphicsLayer {
+                            scaleX = iconScale
+                            scaleY = iconScale
+                        },
                 )
             }
         }

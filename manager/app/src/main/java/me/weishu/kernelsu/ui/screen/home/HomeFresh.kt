@@ -101,6 +101,7 @@ import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import me.weishu.kernelsu.BuildConfig
 import me.weishu.kernelsu.Natives
 import me.weishu.kernelsu.data.settings.Customization
 import me.weishu.kernelsu.data.settings.CustomizationStore
@@ -279,6 +280,8 @@ fun HomePagerFresh(
                         canInstallKernel = state.canInstallKernelUpdate,
                         containerColor = cardColor,
                         contentColor = cardContent,
+                        latestVersionCode = state.latestVersionInfo.versionCode,
+                        currentVersion = BuildConfig.VERSION_NAME,
                         onLongPress = { showHeroMenu = true },
                     )
                     Spacer(Modifier.height(14.dp))
@@ -1230,6 +1233,8 @@ private fun FreshIssueList(
     canInstallKernel: Boolean,
     containerColor: Color,
     contentColor: Color,
+    latestVersionCode: Int,
+    currentVersion: String,
     onLongPress: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1241,7 +1246,11 @@ private fun FreshIssueList(
                 FreshIssue.SafeMode -> stringResource(R.string.fresh_issue_safe_mode)
                 FreshIssue.NotGki -> stringResource(R.string.fresh_issue_not_gki)
                 FreshIssue.SelinuxPermissive -> stringResource(R.string.fresh_issue_selinux)
-                FreshIssue.UpdateAvailable -> stringResource(R.string.fresh_issue_update)
+                FreshIssue.UpdateAvailable -> stringResource(
+                    R.string.fresh_issue_update,
+                    latestVersionCode,
+                    currentVersion,
+                )
                 FreshIssue.LkmUpdate -> stringResource(R.string.fresh_issue_lkm_update)
             }
             val actionable = canInstallKernel && (
