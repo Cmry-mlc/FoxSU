@@ -25,7 +25,6 @@ import me.weishu.kernelsu.magica.MagicaService
 import me.weishu.kernelsu.ui.LocalMainPagerState
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.UiMode
-import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
 import me.weishu.kernelsu.ui.component.dialog.rememberLoadingDialog
 import me.weishu.kernelsu.ui.navigation3.Navigator
 import me.weishu.kernelsu.ui.navigation3.Route
@@ -37,7 +36,6 @@ fun HomePager(
     navigator: Navigator,
     bottomInnerPadding: Dp,
     isCurrentPage: Boolean = true,
-    navigationBadge: NavigationBadgeState = NavigationBadgeState(),
 ) {
     val viewModel = viewModel<HomeViewModel>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -101,7 +99,6 @@ fun HomePager(
             state = uiState,
             actions = actions,
             bottomInnerPadding = bottomInnerPadding,
-            navigationBadge = navigationBadge,
             onRefresh = { viewModel.refresh() },
             onOpenTab = { page -> mainPagerState.animateToPage(page) },
             onOpenModuleRepo = { navigator.push(Route.ModuleRepo) },

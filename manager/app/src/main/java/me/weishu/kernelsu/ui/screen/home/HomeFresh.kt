@@ -1,18 +1,15 @@
 package me.weishu.kernelsu.ui.screen.home
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -26,20 +23,25 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
-import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.Extension
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Memory
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DeveloperBoard
+import androidx.compose.material.icons.filled.Fingerprint
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.PowerSettingsNew
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Smartphone
 import androidx.compose.material.icons.filled.Storefront
-import androidx.compose.material.icons.filled.SystemUpdate
+import androidx.compose.material.icons.filled.Tag
+import androidx.compose.material.icons.filled.VolunteerActivism
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -52,41 +54,33 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.Natives
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.component.KsuIsValid
-import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
 import me.weishu.kernelsu.ui.component.rebootlistpopup.getRebootListOption
 import me.weishu.kernelsu.ui.component.rebootlistpopup.rememberRebootAction
 import me.weishu.kernelsu.ui.theme.FreshPalette
 
 /**
- * Health checks that feed the ring gauge. Every item is derived from real state, so the
- * score is meaningful instead of decorative.
+ * Things worth telling the user about. Every entry is derived from real state, so the
+ * banner list never shows made-up items.
  */
-private enum class FreshIssue(val penalty: Int) {
-    RootMissing(35),
-    KernelOutdated(25),
-    ManagerOutdated(12),
-    SafeMode(15),
-    NotGki(10),
-    SelinuxPermissive(8),
-    UpdateAvailable(5),
-    LkmUpdate(5),
+private enum class FreshIssue {
+    RootMissing,
+    KernelOutdated,
+    ManagerOutdated,
+    SafeMode,
+    NotGki,
+    SelinuxPermissive,
+    UpdateAvailable,
+    LkmUpdate,
 }
 
 private fun HomeUiState.freshIssues(): List<FreshIssue> = buildList {
@@ -100,27 +94,17 @@ private fun HomeUiState.freshIssues(): List<FreshIssue> = buildList {
     if (showLkmUpdate) add(FreshIssue.LkmUpdate)
 }
 
-private fun List<FreshIssue>.freshScore(): Int =
-    (100 - sumOf { it.penalty }).coerceIn(20, 100)
-
 @Composable
 fun HomePagerFresh(
     state: HomeUiState,
     actions: HomeActions,
     bottomInnerPadding: Dp,
-    navigationBadge: NavigationBadgeState,
     onRefresh: () -> Unit,
     onOpenTab: (Int) -> Unit,
     onOpenModuleRepo: () -> Unit,
     onOpenLog: () -> Unit,
 ) {
     val issues = state.freshIssues()
-    val score = issues.freshScore()
-    val needsAction = issues.any {
-        it == FreshIssue.KernelOutdated || it == FreshIssue.ManagerOutdated ||
-            it == FreshIssue.UpdateAvailable || it == FreshIssue.LkmUpdate
-    }
-    val primaryAction = if (needsAction) actions.onInstallClick else onRefresh
 
     val navigationBarPadding = if (!Natives.isFullFeatured()) {
         WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
@@ -144,95 +128,35 @@ fun HomePagerFresh(
                     onOpenSettings = { onOpenTab(3) },
                 )
 
-                Spacer(Modifier.height(8.dp))
-
-                FreshScoreRing(score = score)
-
-                Spacer(Modifier.height(18.dp))
-
-                Text(
-                    text = freshStatusText(score = score, issueCount = issues.size),
-                    modifier = Modifier.fillMaxWidth(),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                )
-
-                Spacer(Modifier.height(18.dp))
-
-                FreshPrimaryButton(
-                    label = stringResource(
-                        if (needsAction) R.string.fresh_home_optimize else R.string.fresh_home_recheck
-                    ),
-                    onClick = primaryAction,
-                )
+                Spacer(Modifier.height(14.dp))
 
                 if (issues.isNotEmpty()) {
-                    Spacer(Modifier.height(16.dp))
                     FreshIssueList(
                         issues = issues,
                         onInstall = actions.onInstallClick,
                         canInstallKernel = state.canInstallKernelUpdate,
                     )
+                    Spacer(Modifier.height(14.dp))
                 }
 
-                Spacer(Modifier.height(24.dp))
+                // 原「刷入镜像」与「运行模式」合并成这张状态卡：点一下就去刷入/更新内核
+                FreshStatusCard(
+                    state = state,
+                    onInstall = actions.onInstallClick,
+                    onJailbreak = actions.onJailbreakClick,
+                )
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    FreshInfoCard(
-                        modifier = Modifier.weight(1f),
-                        icon = Icons.Filled.Memory,
-                        title = stringResource(R.string.fresh_home_kernel),
-                        value = state.kernelVersion.toString(),
-                        subtitle = stringResource(
-                            if (state.kernelVersion.isGKI()) R.string.fresh_home_kernel_gki
-                            else R.string.fresh_home_kernel_nongki
-                        ),
-                        onClick = actions.onInstallClick,
-                    )
-                    FreshInfoCard(
-                        modifier = Modifier.weight(1f),
-                        icon = Icons.Filled.Bolt,
-                        title = stringResource(R.string.fresh_home_mode),
-                        value = freshModeValue(state),
-                        subtitle = stringResource(R.string.fresh_home_mode_sub),
-                        onClick = actions.onInstallClick,
-                    )
-                }
+                Spacer(Modifier.height(14.dp))
 
-                Spacer(Modifier.height(12.dp))
+                FreshInfoGroup(systemInfo = state.systemInfo)
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    FreshInfoCard(
-                        modifier = Modifier.weight(1f),
-                        icon = Icons.Filled.Extension,
-                        title = stringResource(R.string.fresh_home_modules),
-                        value = navigationBadge.moduleEnabledCount.toString(),
-                        subtitle = if (navigationBadge.moduleUpdatableCount > 0) {
-                            stringResource(
-                                R.string.fresh_home_modules_update,
-                                navigationBadge.moduleUpdatableCount
-                            )
-                        } else {
-                            stringResource(R.string.fresh_home_modules_sub)
-                        },
-                        onClick = { onOpenTab(2) },
-                    )
-                    FreshInfoCard(
-                        modifier = Modifier.weight(1f),
-                        icon = Icons.Filled.Shield,
-                        title = stringResource(R.string.fresh_home_superuser),
-                        value = navigationBadge.superuserCount.toString(),
-                        subtitle = stringResource(R.string.fresh_home_superuser_sub),
-                        onClick = { onOpenTab(1) },
-                    )
-                }
+                Spacer(Modifier.height(14.dp))
+
+                FreshSecurityGroup(systemInfo = state.systemInfo)
+
+                Spacer(Modifier.height(14.dp))
+
+                FreshSupportGroup(onOpenUrl = actions.onOpenUrl)
 
                 Spacer(Modifier.height(24.dp))
 
@@ -252,14 +176,6 @@ fun HomePagerFresh(
                 )
                 Spacer(Modifier.height(10.dp))
                 FreshToolRow(
-                    icon = Icons.Filled.SystemUpdate,
-                    tint = FreshPalette.GreenDeep,
-                    title = stringResource(R.string.fresh_home_tool_flash),
-                    description = stringResource(R.string.fresh_home_tool_flash_desc),
-                    onClick = actions.onInstallClick,
-                )
-                Spacer(Modifier.height(10.dp))
-                FreshToolRow(
                     icon = Icons.AutoMirrored.Filled.ReceiptLong,
                     tint = FreshPalette.Amber,
                     title = stringResource(R.string.fresh_home_tool_log),
@@ -269,19 +185,6 @@ fun HomePagerFresh(
             }
         }
     }
-}
-
-private fun freshModeValue(state: HomeUiState): String = when {
-    state.lkmMode == true -> "LKM"
-    state.isLateLoadMode -> "Late"
-    else -> "Kernel"
-}
-
-@Composable
-private fun freshStatusText(score: Int, issueCount: Int): String = when {
-    score >= 95 -> stringResource(R.string.fresh_home_status_good)
-    score >= 80 -> stringResource(R.string.fresh_home_status_pending, issueCount)
-    else -> stringResource(R.string.fresh_home_status_bad, issueCount)
 }
 
 @Composable
@@ -345,7 +248,6 @@ private fun FreshHeader(
 
                 HorizontalDivider()
 
-                // 与 Material 首页右上角一致的重启项：重启 / 软重启 / Recovery / Bootloader / Download / EDL
                 KsuIsValid {
                     val rebootOptions = getRebootListOption()
                     val onReboot = rememberRebootAction()
@@ -365,92 +267,343 @@ private fun FreshHeader(
 }
 
 @Composable
-private fun FreshScoreRing(score: Int) {
-    val progress by animateFloatAsState(
-        targetValue = score / 100f,
-        animationSpec = spring(),
-        label = "fresh_score_progress",
-    )
-    val ringColor = when {
-        score >= 80 -> FreshPalette.Green
-        score >= 60 -> FreshPalette.Amber
-        else -> FreshPalette.Red
-    }
-    val trackColor = MaterialTheme.colorScheme.primaryContainer
-    val trackWidth = 22.dp
-    val ringSize = 208.dp
+private fun FreshStatusCard(
+    state: HomeUiState,
+    onInstall: () -> Unit,
+    onJailbreak: () -> Unit,
+) {
+    val ksuActive = state.ksuVersion != null
+    val notInstalled = !ksuActive && state.kernelVersion.isGKI()
 
-    Box(
+    val containerColor = if (ksuActive) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        MaterialTheme.colorScheme.errorContainer
+    }
+    val contentColor = if (ksuActive) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onErrorContainer
+    }
+
+    val statusIcon = when {
+        ksuActive -> Icons.Filled.CheckCircle
+        notInstalled -> Icons.Filled.Warning
+        else -> Icons.Filled.Block
+    }
+    val statusTitle = when {
+        ksuActive -> stringResource(R.string.home_working)
+        notInstalled -> stringResource(R.string.home_not_installed)
+        else -> stringResource(R.string.home_unsupported)
+    }
+    val statusSummary = when {
+        ksuActive -> stringResource(R.string.home_working_version, "${state.ksuVersion}-${state.kernelUAPIVersion}")
+        notInstalled -> stringResource(R.string.home_click_to_install)
+        else -> stringResource(R.string.home_unsupported_reason)
+    }
+    val workingMode = if (ksuActive) {
+        when (state.lkmMode) {
+            null -> ""
+            true -> "LKM"
+            else -> "GKI"
+        }
+    } else ""
+
+    val canJailbreak = notInstalled && state.isSELinuxPermissive
+
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 12.dp),
-        contentAlignment = Alignment.Center,
+            .clip(RoundedCornerShape(22.dp))
+            .clickable(enabled = !state.isLateLoadMode) { onInstall() },
+        shape = RoundedCornerShape(22.dp),
+        color = containerColor,
+        contentColor = contentColor,
     ) {
-        Canvas(modifier = Modifier.size(ringSize)) {
-            val stroke = trackWidth.toPx()
-            val inset = stroke / 2f
-            val arcSize = Size(size.width - stroke, size.height - stroke)
-            val topLeft = Offset(inset, inset)
-
-            drawArc(
-                color = trackColor,
-                startAngle = -90f,
-                sweepAngle = 360f,
-                useCenter = false,
-                topLeft = topLeft,
-                size = arcSize,
-                style = Stroke(width = stroke, cap = StrokeCap.Round),
-            )
-            drawArc(
-                brush = Brush.sweepGradient(
-                    colors = listOf(ringColor.copy(alpha = 0.55f), ringColor),
-                    center = center,
-                ),
-                startAngle = -90f,
-                sweepAngle = 360f * progress,
-                useCenter = false,
-                topLeft = topLeft,
-                size = arcSize,
-                style = Stroke(width = stroke, cap = StrokeCap.Round),
-            )
-        }
-
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = score.toString(),
-                fontSize = 64.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Text(
-                text = stringResource(R.string.fresh_home_score_unit),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+        Row(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 18.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = statusTitle,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    if (ksuActive && state.isLateLoadMode) {
+                        Spacer(Modifier.width(8.dp))
+                        FreshTag(
+                            text = stringResource(R.string.jailbreak_mode),
+                            container = MaterialTheme.colorScheme.errorContainer,
+                            content = MaterialTheme.colorScheme.onErrorContainer,
+                        )
+                    }
+                    if (ksuActive && state.isSafeMode) {
+                        Spacer(Modifier.width(8.dp))
+                        FreshTag(
+                            text = stringResource(R.string.safe_mode),
+                            container = MaterialTheme.colorScheme.errorContainer,
+                            content = MaterialTheme.colorScheme.onErrorContainer,
+                        )
+                    }
+                }
+                Spacer(Modifier.height(6.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = statusSummary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = contentColor.copy(alpha = 0.78f),
+                    )
+                    if (state.showCustomLkmBadge) {
+                        Spacer(Modifier.width(8.dp))
+                        FreshTag(
+                            text = stringResource(R.string.home_lkm_custom),
+                            container = MaterialTheme.colorScheme.tertiaryContainer,
+                            content = MaterialTheme.colorScheme.onTertiaryContainer,
+                        )
+                    }
+                }
+                if (workingMode.isNotEmpty()) {
+                    Spacer(Modifier.height(10.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        FreshTag(
+                            text = workingMode,
+                            container = MaterialTheme.colorScheme.primary,
+                            content = MaterialTheme.colorScheme.onPrimary,
+                        )
+                        if (!state.isLateLoadMode) {
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(R.string.fresh_home_flash_hint),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = contentColor.copy(alpha = 0.6f),
+                            )
+                        }
+                    }
+                }
+                if (canJailbreak) {
+                    Spacer(Modifier.height(12.dp))
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(14.dp))
+                            .clickable { onJailbreak() },
+                    ) {
+                        Text(
+                            text = stringResource(R.string.home_jailbreak),
+                            style = MaterialTheme.typography.labelLarge,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        )
+                    }
+                }
+            }
+            Icon(
+                imageVector = statusIcon,
+                contentDescription = null,
+                tint = contentColor.copy(alpha = 0.30f),
+                modifier = Modifier.size(44.dp),
             )
         }
     }
 }
 
 @Composable
-private fun FreshPrimaryButton(label: String, onClick: () -> Unit) {
+private fun FreshTag(text: String, container: Color, content: Color) {
     Surface(
-        shape = RoundedCornerShape(50),
-        color = FreshPalette.Green,
-        contentColor = Color.White,
-        shadowElevation = 6.dp,
+        shape = RoundedCornerShape(8.dp),
+        color = container,
+        contentColor = content,
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+        )
+    }
+}
+
+@Composable
+private fun FreshInfoGroup(systemInfo: SystemInfo) {
+    FreshCardGroup {
+        FreshInfoRow(
+            icon = Icons.Filled.Tag,
+            label = stringResource(R.string.home_manager_version),
+            value = systemInfo.managerVersion,
+        )
+        FreshDivider()
+        FreshInfoRow(
+            icon = Icons.Filled.DeveloperBoard,
+            label = stringResource(R.string.home_kernel),
+            value = systemInfo.kernelVersion,
+        )
+        FreshDivider()
+        FreshInfoRow(
+            icon = Icons.Filled.Smartphone,
+            label = stringResource(R.string.home_device_model),
+            value = systemInfo.deviceModel,
+        )
+        FreshDivider()
+        FreshInfoRow(
+            icon = Icons.Filled.Fingerprint,
+            label = stringResource(R.string.home_fingerprint),
+            value = systemInfo.fingerprint,
+        )
+    }
+}
+
+@Composable
+private fun FreshSecurityGroup(systemInfo: SystemInfo) {
+    val selinuxDisplay = when (systemInfo.selinuxStatus) {
+        "Enforcing" -> stringResource(R.string.selinux_status_enforcing)
+        "Permissive" -> stringResource(R.string.selinux_status_permissive)
+        "Disabled" -> stringResource(R.string.selinux_status_disabled)
+        else -> stringResource(R.string.selinux_status_unknown)
+    }
+    val seccompDisplay = when (systemInfo.seccompStatus) {
+        -1 -> stringResource(R.string.seccomp_status_not_supported)
+        0 -> stringResource(R.string.seccomp_status_disabled)
+        1 -> stringResource(R.string.seccomp_status_strict)
+        2 -> stringResource(R.string.seccomp_status_filter)
+        else -> stringResource(R.string.seccomp_status_unknown)
+    }
+
+    FreshCardGroup {
+        FreshInfoRow(
+            icon = Icons.Filled.Security,
+            label = stringResource(R.string.home_selinux_status),
+            value = selinuxDisplay,
+        )
+        FreshDivider()
+        FreshInfoRow(
+            icon = Icons.Filled.FilterList,
+            label = stringResource(R.string.home_seccomp_status),
+            value = seccompDisplay,
+        )
+    }
+}
+
+@Composable
+private fun FreshSupportGroup(onOpenUrl: (String) -> Unit) {
+    val learnMoreUrl = stringResource(R.string.home_learn_kernelsu_url)
+    FreshCardGroup {
+        FreshNavRow(
+            icon = Icons.Filled.VolunteerActivism,
+            title = stringResource(R.string.home_support_title),
+            description = stringResource(R.string.home_support_content),
+            onClick = { onOpenUrl("https://patreon.com/weishu") },
+        )
+        FreshDivider()
+        FreshNavRow(
+            icon = Icons.AutoMirrored.Filled.MenuBook,
+            title = stringResource(R.string.home_learn_kernelsu),
+            description = stringResource(R.string.home_click_to_learn_kernelsu),
+            onClick = { onOpenUrl(learnMoreUrl) },
+        )
+    }
+}
+
+@Composable
+private fun FreshCardGroup(content: @Composable () -> Unit) {
+    Surface(
+        shape = RoundedCornerShape(22.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        shadowElevation = 1.dp,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column { content() }
+    }
+}
+
+@Composable
+private fun FreshDivider() {
+    HorizontalDivider(
+        modifier = Modifier.padding(start = 56.dp, end = 16.dp),
+        color = MaterialTheme.colorScheme.outlineVariant,
+    )
+}
+
+@Composable
+private fun FreshInfoRow(
+    icon: ImageVector,
+    label: String,
+    value: String,
+) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(54.dp)
-            .clip(RoundedCornerShape(50))
-            .clickable(onClick = onClick),
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(contentAlignment = Alignment.Center) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(22.dp),
+        )
+        Spacer(Modifier.width(16.dp))
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = label,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
             )
         }
+    }
+}
+
+@Composable
+private fun FreshNavRow(
+    icon: ImageVector,
+    title: String,
+    description: String,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(22.dp),
+        )
+        Spacer(Modifier.width(16.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.outline,
+        )
     }
 }
 
@@ -493,10 +646,10 @@ private fun FreshIssueList(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.Info,
+                        imageVector = Icons.Filled.Warning,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(18.dp),
                     )
                     Spacer(Modifier.width(10.dp))
                     Text(
@@ -514,66 +667,6 @@ private fun FreshIssueList(
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun FreshInfoCard(
-    icon: ImageVector,
-    title: String,
-    value: String,
-    subtitle: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        modifier = modifier
-            .clip(RoundedCornerShape(22.dp))
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(22.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerLowest,
-        shadowElevation = 1.dp,
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(36.dp),
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-            }
-            Spacer(Modifier.height(14.dp))
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = value,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Spacer(Modifier.height(2.dp))
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
         }
     }
 }
