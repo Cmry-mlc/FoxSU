@@ -27,6 +27,7 @@ import androidx.compose.material.icons.rounded.FlashOn
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.LayersClear
 import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.Wallpaper
 import androidx.compose.material.icons.rounded.RestartAlt
 import androidx.compose.material.icons.rounded.Security
 import androidx.compose.material.icons.rounded.SystemUpdate
@@ -43,6 +44,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.UiMode
+import me.weishu.kernelsu.ui.navigation3.LocalNavigator
+import me.weishu.kernelsu.ui.navigation3.Route
 import me.weishu.kernelsu.ui.uiModeLabelRes
 import me.weishu.kernelsu.ui.component.KsuIsValid
 import me.weishu.kernelsu.ui.component.dialog.rememberLoadingDialog
@@ -74,6 +77,7 @@ fun SettingPagerMiuix(
     actions: SettingsScreenActions,
     bottomInnerPadding: Dp,
 ) {
+    val navigator = LocalNavigator.current
     val scrollBehavior = MiuixScrollBehavior()
     val enableBlur = LocalEnableBlur.current
     val backdrop = rememberBlurBackdrop(enableBlur)
@@ -179,6 +183,19 @@ fun SettingPagerMiuix(
                                 )
                             },
                             onClick = actions.onOpenTheme
+                        )
+                        ArrowPreference(
+                            title = stringResource(id = R.string.customization_title),
+                            summary = stringResource(id = R.string.customization_entry_summary),
+                            startAction = {
+                                Icon(
+                                    Icons.Rounded.Wallpaper,
+                                    modifier = Modifier.padding(end = 6.dp),
+                                    contentDescription = stringResource(id = R.string.customization_title),
+                                    tint = colorScheme.onBackground
+                                )
+                            },
+                            onClick = { navigator.push(Route.Customization) }
                         )
                     }
 

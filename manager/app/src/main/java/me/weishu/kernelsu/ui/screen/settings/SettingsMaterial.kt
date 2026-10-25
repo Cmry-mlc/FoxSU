@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.SystemUpdateAlt
+import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -63,6 +64,8 @@ import me.weishu.kernelsu.ui.component.material.SendLogBottomSheet
 import me.weishu.kernelsu.ui.component.material.SnackBarHost
 import me.weishu.kernelsu.ui.component.material.expressiveTopAppBarColors
 import me.weishu.kernelsu.ui.component.uninstalldialog.UninstallDialog
+import me.weishu.kernelsu.ui.navigation3.LocalNavigator
+import me.weishu.kernelsu.ui.navigation3.Route
 import me.weishu.kernelsu.ui.theme.isFreshStyle
 
 /**
@@ -75,6 +78,7 @@ fun SettingPagerMaterial(
     actions: SettingsScreenActions,
     bottomInnerPadding: Dp,
 ) {
+    val navigator = LocalNavigator.current
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
     val snackBarHost = remember { SnackbarHostState() }
     val showUninstallDialog = rememberSaveable { mutableStateOf(false) }
@@ -142,6 +146,20 @@ fun SettingPagerMaterial(
                                 .indexOfFirst { it.value == uiState.uiMode }
                                 .coerceAtLeast(0),
                             onItemSelected = actions.onSetUiModeIndex
+                        )
+                    }
+                    add {
+                        SegmentedListItem(
+                            onClick = { navigator.push(Route.Customization) },
+                            headlineContent = { Text(stringResource(R.string.customization_title)) },
+                            supportingContent = { Text(stringResource(R.string.customization_entry_summary)) },
+                            leadingContent = { Icon(Icons.Filled.Wallpaper, stringResource(R.string.customization_title)) },
+                            trailingContent = {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                    null
+                                )
+                            }
                         )
                     }
                     add {
