@@ -73,6 +73,7 @@ import me.weishu.kernelsu.ui.component.material.SegmentedColumn
 import me.weishu.kernelsu.ui.component.material.SegmentedItem
 import me.weishu.kernelsu.ui.component.material.SegmentedListItem
 import me.weishu.kernelsu.ui.component.statustag.StatusTag
+import me.weishu.kernelsu.ui.component.freshCardColor
 import me.weishu.kernelsu.ui.component.scaffoldBackgroundColor
 import me.weishu.kernelsu.ui.theme.isFreshStyle
 import me.weishu.kernelsu.ui.util.ownerNameForUid
@@ -453,15 +454,15 @@ private fun SimpleAppItem(
     matched: Boolean = false,
     onNavigate: () -> Unit,
 ) {
+    val rowContainer = if (matched) colorScheme.secondaryContainer else freshCardColor()
+    val rowContent = if (matched) colorScheme.onSecondaryContainer else colorScheme.onSurface
+
     ListItem(
         onClick = onNavigate,
         modifier = Modifier.padding(horizontal = 4.dp),
         colors = ListItemDefaults.colors(
-            containerColor = if (matched) {
-                colorScheme.secondaryContainer
-            } else {
-                colorScheme.surfaceColorAtElevation(3.dp)
-            }
+            containerColor = rowContainer,
+            contentColor = rowContent,
         ),
         content = { Text(app.label, overflow = TextOverflow.Ellipsis, maxLines = 1) },
         supportingContent = { Text(app.displayIdentifier, overflow = TextOverflow.Ellipsis, maxLines = 1) },

@@ -11,12 +11,22 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
 import me.weishu.kernelsu.data.settings.CustomizationStore
 
-/** Card surface with the user card color (or the theme fallback) and opacity applied. */
+/** True when the active scheme is the night one (works for forced dark / AMOLED too). */
+@Composable
+@ReadOnlyComposable
+fun isNightScheme(): Boolean = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+
+/**
+ * Card surface with the user card color (or the theme fallback) and opacity applied.
+ * Custom colours are a light-mode option: at night the card always uses the dark surface so
+ * white cards never glare on a black canvas.
+ */
 @Composable
 @ReadOnlyComposable
 fun rememberCardSurface(fallback: Color): Color {
     val custom = CustomizationStore.current
-    val base = if (custom.cardColor == 0) fallback else Color(custom.cardColor)
+    val useCustom = custom.cardColor != 0 && !isNightScheme()
+    val base = if (useCustom) Color(custom.cardColor) else fallback
     return base.copy(alpha = custom.cardAlpha)
 }
 
@@ -25,7 +35,7 @@ fun rememberCardSurface(fallback: Color): Color {
 @ReadOnlyComposable
 fun rememberCardContentColor(fallback: Color): Color {
     val custom = CustomizationStore.current
-    if (custom.cardColor == 0) return fallback
+    if (custom.cardColor == 0 || isNightScheme()) return fallback
     return if (Color(custom.cardColor).luminance() > 0.55f) Color(0xFF141A14) else Color.White
 }
 

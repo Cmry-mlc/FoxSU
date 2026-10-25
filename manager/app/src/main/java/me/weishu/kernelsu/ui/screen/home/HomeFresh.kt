@@ -114,6 +114,7 @@ import me.weishu.kernelsu.ui.component.CardSurface
 import me.weishu.kernelsu.ui.component.KsuIsValid
 import me.weishu.kernelsu.ui.component.freshCardBorder
 import me.weishu.kernelsu.ui.component.freshCardColor
+import me.weishu.kernelsu.ui.component.isNightScheme
 import me.weishu.kernelsu.ui.component.resolveCardSurface
 import me.weishu.kernelsu.ui.component.supportingTextAlpha
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
@@ -207,7 +208,8 @@ fun HomePagerFresh(
     }
 
     val custom = CustomizationStore.current
-    val cardColor = if (custom.cardColor == 0) {
+    val night = isNightScheme()
+    val cardColor = if (custom.cardColor == 0 || night) {
         freshCardColor().copy(alpha = custom.cardAlpha)
     } else {
         Color(custom.cardColor).copy(alpha = custom.cardAlpha)

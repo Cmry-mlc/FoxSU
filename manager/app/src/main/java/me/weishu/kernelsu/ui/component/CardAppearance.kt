@@ -67,8 +67,9 @@ data class CardSurface(
 @Composable
 fun resolveCardSurface(slot: Int): CardSurface {
     val custom = CustomizationStore.current
-    val overrideColor = custom.surfaceColors.getOrNull(slot) ?: 0
-    val effectiveColor = if (overrideColor != 0) overrideColor else custom.cardColor
+    val night = isNightScheme()
+    val overrideColor = if (night) 0 else custom.surfaceColors.getOrNull(slot) ?: 0
+    val effectiveColor = if (overrideColor != 0) overrideColor else if (night) 0 else custom.cardColor
     val alphaOverride = custom.surfaceAlphas.getOrNull(slot) ?: -1f
     val alpha = if (alphaOverride >= 0f) alphaOverride else custom.cardAlpha
 
