@@ -261,7 +261,7 @@
     <string name="fresh_home_cancel">Cancel</string>
     <string name="fresh_home_superuser_sub">apps granted</string>
     <string name="fresh_home_device_sub">Device</string>
-    <string name="fresh_home_manager_sub">Manager</string>
+    <string name="fresh_home_style_switch">Tap to switch</string>
     <string name="fresh_home_module_sub">modules enabled</string>
     <string name="fresh_home_tool_log">Run log</string>
     <string name="fresh_home_tool_log_desc">Check su and kernel logs</string>

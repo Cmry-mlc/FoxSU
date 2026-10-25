@@ -237,7 +237,7 @@
     <string name="fresh_home_cancel">取消</string>
     <string name="fresh_home_superuser_sub">已授权应用</string>
     <string name="fresh_home_device_sub">当前设备</string>
-    <string name="fresh_home_manager_sub">管理器</string>
+    <string name="fresh_home_style_switch">点击切换</string>
     <string name="fresh_home_module_sub">已启用模块</string>
     <string name="fresh_home_tool_log">运行日志</string>
     <string name="fresh_home_tool_log_desc">查看 su 与内核日志</string>

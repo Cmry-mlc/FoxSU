@@ -35,6 +35,8 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Extension
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Security
@@ -70,13 +72,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import me.weishu.kernelsu.Natives
+import me.weishu.kernelsu.data.repository.SettingsRepositoryImpl
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.ui.LocalUiMode
+import me.weishu.kernelsu.ui.UiMode
 import me.weishu.kernelsu.ui.component.KsuIsValid
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
 import me.weishu.kernelsu.ui.component.rebootlistpopup.RebootListOption
 import me.weishu.kernelsu.ui.component.rebootlistpopup.getRebootListOption
 import me.weishu.kernelsu.ui.component.rebootlistpopup.rememberRebootAction
 import me.weishu.kernelsu.ui.theme.FreshPalette
+import me.weishu.kernelsu.ui.uiModeLabelRes
 
 /** Things worth telling the user about, all derived from real state. */
 private enum class FreshIssue {
@@ -111,6 +117,8 @@ fun HomePagerFresh(
     onOpenLog: () -> Unit,
 ) {
     val issues = state.freshIssues()
+    var showStylePicker by remember { mutableStateOf(false) }
+    val currentUiMode = LocalUiMode.current
 
     val navigationBarPadding = if (!Natives.isFullFeatured()) {
         WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
@@ -165,11 +173,11 @@ fun HomePagerFresh(
                     )
                     FreshKpiCard(
                         modifier = Modifier.weight(1f),
-                        icon = Icons.Filled.Tag,
-                        title = stringResource(R.string.home_manager_version),
-                        value = state.systemInfo.managerVersion,
-                        caption = stringResource(R.string.fresh_home_manager_sub),
-                        onClick = null,
+                        icon = Icons.Filled.Palette,
+                        title = stringResource(R.string.settings_ui_mode),
+                        value = stringResource(uiModeLabelRes(currentUiMode)),
+                        caption = stringResource(R.string.fresh_home_style_switch),
+                        onClick = { showStylePicker = true },
                     )
                 }
 
@@ -237,6 +245,93 @@ fun HomePagerFresh(
                     description = stringResource(R.string.fresh_home_tool_log_desc),
                     onClick = onOpenLog,
                 )
+            }
+        }
+    }
+
+    if (showStylePicker) {
+        FreshStylePickerDialog(
+            current = currentUiMode,
+            onDismiss = { showStylePicker = false },
+        )
+    }
+}
+
+@Composable
+private fun FreshStylePickerDialog(
+    current: UiMode,
+    onDismiss: () -> Unit,
+) {
+    val repo = remember { SettingsRepositoryImpl() }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Text(
+                    text = stringResource(R.string.settings_ui_mode),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(Modifier.height(12.dp))
+
+                UiMode.entries.forEach { mode ->
+                    val selected = mode == current
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .clickable {
+                                repo.uiMode = mode.value
+                                onDismiss()
+                            }
+                            .background(
+                                if (selected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
+                                else Color.Transparent
+                            )
+                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = stringResource(uiModeLabelRes(mode)),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.weight(1f),
+                        )
+                        if (selected) {
+                            Icon(
+                                imageVector = Icons.Filled.Check,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(4.dp))
+                }
+
+                Spacer(Modifier.height(8.dp))
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable(onClick = onDismiss),
+                ) {
+                    Box(
+                        modifier = Modifier.padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.fresh_home_cancel),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
             }
         }
     }
