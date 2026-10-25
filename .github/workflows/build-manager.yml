@@ -126,7 +126,7 @@ jobs:
           - target: x86_64-pc-windows-gnu # windows pc
             os: ubuntu-latest
           - target: x86_64-apple-darwin # Intel mac
-            os: macos-latest
+            os: ubuntu-latest
           - target: aarch64-apple-darwin # M chip mac
             os: macos-latest
           - target: aarch64-unknown-linux-musl # arm64 Linux
@@ -277,6 +277,13 @@ jobs:
           cp -f "$X86_64_KSUD" target/x86_64-linux-android/release/ksud
           cp -f "$RISCV64_KSUD" target/riscv64-linux-android/release/ksud
 
+      - name: Setup Java
+        if: ${{ github.event_name == 'pull_request' || (github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')) || github.ref_type == 'tag' }}
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
       - name: Prepare signing inputs
         if: ${{ github.event_name == 'pull_request' || (github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')) || github.ref_type == 'tag' }}
         env:
@@ -294,8 +301,24 @@ jobs:
             echo "SIGN_KEY_ALIAS=pr-key" >> $GITHUB_ENV
             echo "SIGN_KEYSTORE_PASSWORD=$PR_KEYSTORE_PASSWORD" >> $GITHUB_ENV
             echo "SIGN_KEY_PASSWORD=$PR_KEY_PASSWORD" >> $GITHUB_ENV
+          elif [ -z "$PROD_KEYSTORE" ]; then
+            echo "::warning::KEYSTORE secret not configured, generating a temporary signing key (each build gets a new signature)"
+            KEYSTORE_PASSWORD=$(openssl rand -hex 16)
+            KEY_PASSWORD=$(openssl rand -hex 16)
+            keytool -genkeypair \
+              -alias fox-ci-key \
+              -keyalg RSA -keysize 2048 \
+              -validity 10000 \
+              -storepass "$KEYSTORE_PASSWORD" \
+              -keypass "$KEY_PASSWORD" \
+              -dname "CN=FoxSu CI Build" \
+              -storetype JKS \
+              -keystore key.jks
+            echo "SIGN_KEYSTORE_FILE=key.jks" >> $GITHUB_ENV
+            echo "SIGN_KEY_ALIAS=fox-ci-key" >> $GITHUB_ENV
+            echo "SIGN_KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD" >> $GITHUB_ENV
+            echo "SIGN_KEY_PASSWORD=$KEY_PASSWORD" >> $GITHUB_ENV
           else
-            test -n "$PROD_KEYSTORE"
             echo "$PROD_KEYSTORE" | base64 -d > key.jks
             echo "SIGN_KEYSTORE_FILE=key.jks" >> $GITHUB_ENV
             echo "SIGN_KEY_ALIAS=$PROD_KEY_ALIAS" >> $GITHUB_ENV
