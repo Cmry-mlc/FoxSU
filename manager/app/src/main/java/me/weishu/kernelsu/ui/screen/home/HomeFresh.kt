@@ -25,22 +25,26 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Cached
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DeveloperBoard
+import androidx.compose.material.icons.filled.DeveloperMode
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.PowerSettingsNew
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.SettingsBackupRestore
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Smartphone
 import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material.icons.filled.Tag
+import androidx.compose.material.icons.filled.Usb
 import androidx.compose.material.icons.filled.VolunteerActivism
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -58,20 +62,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import me.weishu.kernelsu.Natives
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.component.KsuIsValid
+import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
+import me.weishu.kernelsu.ui.component.rebootlistpopup.RebootListOption
 import me.weishu.kernelsu.ui.component.rebootlistpopup.getRebootListOption
 import me.weishu.kernelsu.ui.component.rebootlistpopup.rememberRebootAction
 import me.weishu.kernelsu.ui.theme.FreshPalette
 
-/**
- * Things worth telling the user about. Every entry is derived from real state, so the
- * banner list never shows made-up items.
- */
+/** Things worth telling the user about, all derived from real state. */
 private enum class FreshIssue {
     RootMissing,
     KernelOutdated,
@@ -99,7 +104,7 @@ fun HomePagerFresh(
     state: HomeUiState,
     actions: HomeActions,
     bottomInnerPadding: Dp,
-    onRefresh: () -> Unit,
+    navigationBadge: NavigationBadgeState,
     onOpenTab: (Int) -> Unit,
     onOpenModuleRepo: () -> Unit,
     onOpenLog: () -> Unit,
@@ -123,10 +128,7 @@ fun HomePagerFresh(
     ) {
         item {
             Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-                FreshHeader(
-                    onRefresh = onRefresh,
-                    onOpenSettings = { onOpenTab(3) },
-                )
+                FreshHeader()
 
                 Spacer(Modifier.height(14.dp))
 
@@ -139,16 +141,76 @@ fun HomePagerFresh(
                     Spacer(Modifier.height(14.dp))
                 }
 
-                // 原「刷入镜像」与「运行模式」合并成这张状态卡：点一下就去刷入/更新内核
+                // 状态卡：运行模式 + 版本 + 刷入入口（原「运行模式 / 刷入镜像」合并在此）
                 FreshStatusCard(
                     state = state,
                     onInstall = actions.onInstallClick,
                     onJailbreak = actions.onJailbreakClick,
                 )
 
+                Spacer(Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    FreshKpiCard(
+                        modifier = Modifier.weight(1f),
+                        icon = Icons.Filled.Smartphone,
+                        title = stringResource(R.string.home_device_model),
+                        value = state.systemInfo.deviceModel,
+                        subtitle = null,
+                        onClick = null,
+                    )
+                    FreshKpiCard(
+                        modifier = Modifier.weight(1f),
+                        icon = Icons.Filled.Tag,
+                        title = stringResource(R.string.home_manager_version),
+                        value = state.systemInfo.managerVersion,
+                        subtitle = null,
+                        onClick = null,
+                    )
+                }
+
+                Spacer(Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    FreshKpiCard(
+                        modifier = Modifier.weight(1f),
+                        icon = Icons.Filled.Shield,
+                        title = stringResource(R.string.superuser),
+                        value = navigationBadge.superuserCount.toString(),
+                        subtitle = stringResource(R.string.fresh_home_superuser_sub),
+                        onClick = { onOpenTab(1) },
+                    )
+                    FreshKpiCard(
+                        modifier = Modifier.weight(1f),
+                        icon = Icons.Filled.Storefront,
+                        title = stringResource(R.string.fresh_home_tool_repo),
+                        value = navigationBadge.moduleEnabledCount.toString(),
+                        subtitle = stringResource(R.string.fresh_home_repo_sub),
+                        onClick = onOpenModuleRepo,
+                    )
+                }
+
                 Spacer(Modifier.height(14.dp))
 
-                FreshInfoGroup(systemInfo = state.systemInfo)
+                FreshCardGroup {
+                    FreshInfoRow(
+                        icon = Icons.Filled.DeveloperBoard,
+                        label = stringResource(R.string.home_kernel),
+                        value = state.systemInfo.kernelVersion,
+                    )
+                    FreshDivider()
+                    FreshInfoRow(
+                        icon = Icons.Filled.Fingerprint,
+                        label = stringResource(R.string.home_fingerprint),
+                        value = state.systemInfo.fingerprint,
+                    )
+                }
 
                 Spacer(Modifier.height(14.dp))
 
@@ -168,14 +230,6 @@ fun HomePagerFresh(
                 )
 
                 FreshToolRow(
-                    icon = Icons.Filled.Storefront,
-                    tint = FreshPalette.Green,
-                    title = stringResource(R.string.fresh_home_tool_repo),
-                    description = stringResource(R.string.fresh_home_tool_repo_desc),
-                    onClick = onOpenModuleRepo,
-                )
-                Spacer(Modifier.height(10.dp))
-                FreshToolRow(
                     icon = Icons.AutoMirrored.Filled.ReceiptLong,
                     tint = FreshPalette.Amber,
                     title = stringResource(R.string.fresh_home_tool_log),
@@ -188,11 +242,8 @@ fun HomePagerFresh(
 }
 
 @Composable
-private fun FreshHeader(
-    onRefresh: () -> Unit,
-    onOpenSettings: () -> Unit,
-) {
-    var menuExpanded by remember { mutableStateOf(false) }
+private fun FreshHeader() {
+    var showRebootDialog by remember { mutableStateOf(false) }
 
     Row(
         modifier = Modifier
@@ -207,7 +258,8 @@ private fun FreshHeader(
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
         )
-        Box {
+
+        KsuIsValid {
             Surface(
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.surfaceContainerLowest,
@@ -215,7 +267,7 @@ private fun FreshHeader(
                 modifier = Modifier
                     .size(44.dp)
                     .clip(CircleShape)
-                    .clickable { menuExpanded = true },
+                    .clickable { showRebootDialog = true },
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
@@ -225,45 +277,128 @@ private fun FreshHeader(
                     )
                 }
             }
-            DropdownMenu(
-                expanded = menuExpanded,
-                onDismissRequest = { menuExpanded = false },
-            ) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.fresh_home_menu_recheck)) },
-                    leadingIcon = { Icon(Icons.Filled.Refresh, contentDescription = null) },
-                    onClick = {
-                        menuExpanded = false
-                        onRefresh()
-                    },
-                )
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.fresh_home_menu_settings)) },
-                    leadingIcon = { Icon(Icons.Filled.Settings, contentDescription = null) },
-                    onClick = {
-                        menuExpanded = false
-                        onOpenSettings()
-                    },
-                )
+        }
+    }
 
-                HorizontalDivider()
+    if (showRebootDialog) {
+        FreshRebootDialog(onDismiss = { showRebootDialog = false })
+    }
+}
 
-                KsuIsValid {
-                    val rebootOptions = getRebootListOption()
-                    val onReboot = rememberRebootAction()
-                    rebootOptions.forEach { option ->
-                        DropdownMenuItem(
-                            text = { Text(stringResource(option.labelRes)) },
-                            onClick = {
-                                menuExpanded = false
-                                onReboot(option.reason)
-                            },
+/** 3 x 3 grid of power options, replacing the old dropdown list. */
+@Composable
+private fun FreshRebootDialog(onDismiss: () -> Unit) {
+    val options = getRebootListOption()
+    val onReboot = rememberRebootAction()
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Text(
+                    text = stringResource(R.string.reboot),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(Modifier.height(16.dp))
+
+                options.chunked(3).forEach { rowOptions ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        rowOptions.forEach { option ->
+                            RebootGridCell(
+                                option = option,
+                                modifier = Modifier.weight(1f),
+                                onClick = {
+                                    onDismiss()
+                                    onReboot(option.reason)
+                                },
+                            )
+                        }
+                        repeat(3 - rowOptions.size) {
+                            Spacer(Modifier.weight(1f))
+                        }
+                    }
+                    Spacer(Modifier.height(10.dp))
+                }
+
+                Spacer(Modifier.height(2.dp))
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable(onClick = onDismiss),
+                ) {
+                    Box(
+                        modifier = Modifier.padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.fresh_home_cancel),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun RebootGridCell(
+    option: RebootListOption,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(18.dp))
+            .clickable(onClick = onClick)
+            .padding(vertical = 10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Surface(
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(48.dp),
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = rebootIcon(option.reason),
+                    contentDescription = null,
+                    modifier = Modifier.size(22.dp),
+                )
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = stringResource(option.labelRes),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+private fun rebootIcon(reason: String): ImageVector = when (reason) {
+    "userspace" -> Icons.Filled.Autorenew
+    "soft_reboot" -> Icons.Filled.Cached
+    "recovery" -> Icons.Filled.SettingsBackupRestore
+    "bootloader" -> Icons.Filled.DeveloperMode
+    "download" -> Icons.Filled.Download
+    "edl" -> Icons.Filled.Usb
+    else -> Icons.Filled.RestartAlt
 }
 
 @Composable
@@ -427,31 +562,70 @@ private fun FreshTag(text: String, container: Color, content: Color) {
 }
 
 @Composable
-private fun FreshInfoGroup(systemInfo: SystemInfo) {
-    FreshCardGroup {
-        FreshInfoRow(
-            icon = Icons.Filled.Tag,
-            label = stringResource(R.string.home_manager_version),
-            value = systemInfo.managerVersion,
-        )
-        FreshDivider()
-        FreshInfoRow(
-            icon = Icons.Filled.DeveloperBoard,
-            label = stringResource(R.string.home_kernel),
-            value = systemInfo.kernelVersion,
-        )
-        FreshDivider()
-        FreshInfoRow(
-            icon = Icons.Filled.Smartphone,
-            label = stringResource(R.string.home_device_model),
-            value = systemInfo.deviceModel,
-        )
-        FreshDivider()
-        FreshInfoRow(
-            icon = Icons.Filled.Fingerprint,
-            label = stringResource(R.string.home_fingerprint),
-            value = systemInfo.fingerprint,
-        )
+private fun FreshKpiCard(
+    icon: ImageVector,
+    title: String,
+    value: String,
+    subtitle: String?,
+    onClick: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+) {
+    val clickModifier = if (onClick != null) {
+        Modifier.clickable(onClick = onClick)
+    } else {
+        Modifier
+    }
+
+    Surface(
+        modifier = modifier
+            .clip(RoundedCornerShape(22.dp))
+            .then(clickModifier),
+        shape = RoundedCornerShape(22.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        shadowElevation = 1.dp,
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(36.dp),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
+            Spacer(Modifier.height(14.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (subtitle != null) {
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
     }
 }
 

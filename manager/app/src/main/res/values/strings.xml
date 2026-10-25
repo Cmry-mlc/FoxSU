@@ -259,11 +259,11 @@
     <string name="fresh_home_tools">Recommended tools</string>
     <string name="fresh_home_tool_repo">Module repository</string>
     <string name="fresh_home_flash_hint">Tap to flash or update the kernel</string>
-    <string name="fresh_home_tool_repo_desc">Browse and install community modules</string>
+    <string name="fresh_home_cancel">Cancel</string>
+    <string name="fresh_home_superuser_sub">apps granted</string>
+    <string name="fresh_home_repo_sub">modules enabled</string>
     <string name="fresh_home_tool_log">Run log</string>
     <string name="fresh_home_tool_log_desc">Check su and kernel logs</string>
-    <string name="fresh_home_menu_recheck">Re-check status</string>
-    <string name="fresh_home_menu_settings">Open settings</string>
     <string name="fresh_issue_root">Root is not available right now</string>
     <string name="fresh_issue_kernel_old">Kernel version does not match the manager</string>
     <string name="fresh_issue_manager_old">Manager is older than the kernel</string>

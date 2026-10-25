@@ -235,11 +235,11 @@
     <string name="fresh_home_tools">推荐工具</string>
     <string name="fresh_home_tool_repo">模块仓库</string>
     <string name="fresh_home_flash_hint">点按可刷入或更新内核</string>
-    <string name="fresh_home_tool_repo_desc">浏览并安装社区模块</string>
+    <string name="fresh_home_cancel">取消</string>
+    <string name="fresh_home_superuser_sub">已授权应用</string>
+    <string name="fresh_home_repo_sub">个模块已启用</string>
     <string name="fresh_home_tool_log">运行日志</string>
     <string name="fresh_home_tool_log_desc">查看 su 与内核日志</string>
-    <string name="fresh_home_menu_recheck">重新检测</string>
-    <string name="fresh_home_menu_settings">打开设置</string>
     <string name="fresh_issue_root">当前没有 Root 权限</string>
     <string name="fresh_issue_kernel_old">内核版本与 Manager 不匹配</string>
     <string name="fresh_issue_manager_old">Manager 版本低于内核版本</string>
