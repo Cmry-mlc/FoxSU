@@ -255,7 +255,7 @@
     <string name="settings_ui_mode_summary">Choose the interface style.</string>
     <string name="settings_ui_mode_miuix">Miuix</string>
     <string name="settings_ui_mode_material">Material</string>
-    <string name="settings_ui_mode_fresh">Fresh</string>
+    <string name="settings_ui_mode_fresh">ColorUI</string>
     <string name="fresh_home_tools">Recommended tools</string>
     <string name="fresh_home_flash_hint">Tap to flash or update the kernel</string>
     <string name="fresh_home_cancel">Cancel</string>

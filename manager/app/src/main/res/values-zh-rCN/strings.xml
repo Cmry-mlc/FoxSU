@@ -231,7 +231,7 @@
     <string name="settings_ui_mode_summary">选择应用的界面风格</string>
     <string name="settings_ui_mode_miuix">Miuix</string>
     <string name="settings_ui_mode_material">Material</string>
-    <string name="settings_ui_mode_fresh">清新</string>
+    <string name="settings_ui_mode_fresh">ColorUI</string>
     <string name="fresh_home_tools">推荐工具</string>
     <string name="fresh_home_flash_hint">点按可刷入或更新内核</string>
     <string name="fresh_home_cancel">取消</string>

@@ -81,7 +81,6 @@ import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
 import me.weishu.kernelsu.ui.component.rebootlistpopup.RebootListOption
 import me.weishu.kernelsu.ui.component.rebootlistpopup.getRebootListOption
 import me.weishu.kernelsu.ui.component.rebootlistpopup.rememberRebootAction
-import me.weishu.kernelsu.ui.theme.FreshPalette
 import me.weishu.kernelsu.ui.uiModeLabelRes
 
 /** Things worth telling the user about, all derived from real state. */
@@ -240,7 +239,7 @@ fun HomePagerFresh(
 
                 FreshToolRow(
                     icon = Icons.AutoMirrored.Filled.ReceiptLong,
-                    tint = FreshPalette.Amber,
+                    tint = MaterialTheme.colorScheme.tertiary,
                     title = stringResource(R.string.fresh_home_tool_log),
                     description = stringResource(R.string.fresh_home_tool_log_desc),
                     onClick = onOpenLog,
