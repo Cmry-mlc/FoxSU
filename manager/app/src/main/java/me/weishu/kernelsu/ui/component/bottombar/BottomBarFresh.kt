@@ -1,6 +1,12 @@
 package me.weishu.kernelsu.ui.component.bottombar
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -65,6 +71,7 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
     if (!Natives.isFullFeatured()) return
 
     val mainPagerState = LocalMainPagerState.current
+    val custom = CustomizationStore.current
 
     val items = listOf(
         FreshNavItem(R.string.home, Icons.Filled.Home, Icons.Outlined.Home),
@@ -84,7 +91,7 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
                 bottom = navigationBarPadding + 12.dp,
             ),
     ) {
-        val barShape = RoundedCornerShape(CustomizationStore.current.bottomBarRadius.dp)
+        val barShape = RoundedCornerShape(custom.bottomBarRadius.dp)
         Surface(
             shape = barShape,
             color = freshCardColor(),
@@ -96,22 +103,133 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 8.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
+                horizontalArrangement = if (custom.bottomBarStyle == 1) {
+                    Arrangement.Center
+                } else {
+                    Arrangement.SpaceEvenly
+                },
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 items.forEachIndexed { index, item ->
                     val selected = mainPagerState.selectedPage == index
-                    FreshNavItemView(
-                        item = item,
-                        selected = selected,
-                        badge = badgeFor(index, navigationBadge),
-                        onClick = {
-                            if (!selected) mainPagerState.animateToPage(index)
-                        },
-                        modifier = Modifier.weight(1f),
+                    val onClick = { if (!selected) mainPagerState.animateToPage(index) }
+                    if (custom.bottomBarStyle == 1) {
+                        DrawerNavItem(
+                            item = item,
+                            selected = selected,
+                            badge = badgeFor(index, navigationBadge),
+                            onClick = onClick,
+                        )
+                    } else {
+                        FreshNavItemView(
+                            item = item,
+                            selected = selected,
+                            badge = badgeFor(index, navigationBadge),
+                            onClick = onClick,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Drawer style tab: the selected tab expands into a pill that shows icon + label, the others
+ * collapse to bare icons. Width, colour and label all animate, so switching looks like a drawer
+ * sliding open.
+ */
+@Composable
+private fun DrawerNavItem(
+    item: FreshNavItem,
+    selected: Boolean,
+    badge: NavBadge?,
+    onClick: () -> Unit,
+) {
+    val width by animateDpAsState(
+        targetValue = if (selected) 124.dp else 56.dp,
+        animationSpec = spring(dampingRatio = 0.78f, stiffness = 380f),
+        label = "drawerWidth",
+    )
+    val pillColor by animateColorAsState(
+        targetValue = if (selected) {
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
+        } else {
+            Color.Transparent
+        },
+        animationSpec = tween(durationMillis = 240),
+        label = "drawerPill",
+    )
+    val contentColor by animateColorAsState(
+        targetValue = if (selected) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        },
+        animationSpec = tween(durationMillis = 240),
+        label = "drawerContent",
+    )
+
+    Row(
+        modifier = Modifier
+            .padding(horizontal = 2.dp)
+            .width(width)
+            .height(52.dp)
+            .clip(RoundedCornerShape(26.dp))
+            .background(pillColor)
+            .clickable(onClick = onClick),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box {
+            Icon(
+                imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
+                contentDescription = stringResource(item.label),
+                tint = contentColor,
+                modifier = Modifier.size(22.dp),
+            )
+            if (badge != null) {
+                Surface(
+                    shape = RoundedCornerShape(50),
+                    color = if (badge.tone == BadgeTone.Alert) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.primary
+                    },
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(end = 0.dp),
+                ) {
+                    Text(
+                        text = badge.count.toString(),
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
                     )
                 }
             }
+        }
+
+        AnimatedVisibility(
+            visible = selected,
+            enter = fadeIn(animationSpec = tween(180)) +
+                expandHorizontally(
+                    animationSpec = spring(dampingRatio = 0.8f, stiffness = 420f),
+                    expandFrom = Alignment.Start,
+                ),
+            exit = fadeOut(animationSpec = tween(90)) +
+                shrinkHorizontally(animationSpec = tween(120), shrinkTowards = Alignment.Start),
+        ) {
+            Text(
+                text = stringResource(item.label),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = contentColor,
+                maxLines = 1,
+                modifier = Modifier.padding(start = 8.dp),
+            )
         }
     }
 }

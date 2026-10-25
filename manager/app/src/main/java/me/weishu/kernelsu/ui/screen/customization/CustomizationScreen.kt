@@ -33,12 +33,14 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SmartButton
+import androidx.compose.material.icons.filled.Title
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -344,10 +346,38 @@ fun CustomizationScreen() {
 
                 item {
                     SectionCard(
+                        icon = Icons.Filled.Title,
+                        title = stringResource(R.string.customization_title_bar),
+                        subtitle = stringResource(R.string.customization_title_bar_sub),
+                    ) {
+                        OutlinedTextField(
+                            value = custom.homeTitle,
+                            onValueChange = CustomizationStore::setHomeTitle,
+                            singleLine = true,
+                            placeholder = { Text(stringResource(R.string.customization_title_placeholder)) },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+
+                item {
+                    SectionCard(
                         icon = Icons.Filled.SmartButton,
                         title = stringResource(R.string.customization_bottom_bar),
                         subtitle = stringResource(R.string.customization_bottom_bar_sub),
                     ) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            StyleChip(
+                                label = stringResource(R.string.customization_bottom_style_pill),
+                                selected = custom.bottomBarStyle == 0,
+                                onClick = { CustomizationStore.setBottomBarStyle(0) },
+                            )
+                            StyleChip(
+                                label = stringResource(R.string.customization_bottom_style_drawer),
+                                selected = custom.bottomBarStyle == 1,
+                                onClick = { CustomizationStore.setBottomBarStyle(1) },
+                            )
+                        }
                         SliderRow(
                             label = stringResource(R.string.customization_radius),
                             value = custom.bottomBarRadius,
@@ -632,6 +662,32 @@ private fun PillButton(
             Spacer(Modifier.width(6.dp))
             Text(text = text, style = MaterialTheme.typography.labelLarge)
         }
+    }
+}
+
+@Composable
+private fun StyleChip(label: String, selected: Boolean, onClick: () -> Unit) {
+    Surface(
+        shape = RoundedCornerShape(50),
+        color = if (selected) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            MaterialTheme.colorScheme.surfaceContainer
+        },
+        contentColor = if (selected) {
+            MaterialTheme.colorScheme.onPrimary
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        },
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .clickable(onClick = onClick),
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 9.dp),
+        )
     }
 }
 

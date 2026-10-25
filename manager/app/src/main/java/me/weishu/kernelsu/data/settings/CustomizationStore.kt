@@ -45,6 +45,10 @@ data class Customization(
     val cardColor: Int = 0,
     /** 0.2f..1f, applied on top of [cardColor] (or the themed card surface). */
     val cardAlpha: Float = 1f,
+    /** Title shown at the top of the home screen; blank = the app name. */
+    val homeTitle: String = "",
+    /** 0 = pill bar, 1 = drawer bar that expands the selected tab. */
+    val bottomBarStyle: Int = 0,
     /** Tint the four home KPI cards with the built-in palette (light mode only). */
     val homePalette: Boolean = true,
     /** Corner radius of the floating bottom bar, in dp. */
@@ -79,6 +83,8 @@ object CustomizationStore {
     private const val KEY_SURFACE_ALPHA = "surface_alpha_"
     private const val KEY_CARD_COLOR = "card_color"
     private const val KEY_CARD_ALPHA = "card_alpha"
+    private const val KEY_HOME_TITLE = "home_title"
+    private const val KEY_BOTTOM_STYLE = "bottom_bar_style"
     private const val KEY_HOME_PALETTE = "home_palette"
     private const val KEY_BOTTOM_RADIUS = "bottom_bar_radius"
     private const val KEY_ICON_STYLE = "icon_style"
@@ -121,6 +127,8 @@ object CustomizationStore {
             surfaceAlphas = List(SURFACE_SLOT_COUNT) { getFloat(KEY_SURFACE_ALPHA + it, -1f) },
             cardColor = getInt(KEY_CARD_COLOR, 0),
             cardAlpha = getFloat(KEY_CARD_ALPHA, 1f),
+            homeTitle = getString(KEY_HOME_TITLE, "").orEmpty(),
+            bottomBarStyle = getInt(KEY_BOTTOM_STYLE, 0),
             homePalette = getBoolean(KEY_HOME_PALETTE, true),
             bottomBarRadius = getFloat(KEY_BOTTOM_RADIUS, 30f),
             iconStyle = getInt(KEY_ICON_STYLE, 0),
@@ -163,6 +171,9 @@ object CustomizationStore {
 
     fun setCardColor(color: Int) = update { it.copy(cardColor = color) }
     fun setCardAlpha(alpha: Float) = update { it.copy(cardAlpha = alpha) }
+    fun setHomeTitle(title: String) = update { it.copy(homeTitle = title) }
+    fun setBottomBarStyle(style: Int) = update { it.copy(bottomBarStyle = style) }
+
     fun setHomePalette(enabled: Boolean) = update { it.copy(homePalette = enabled) }
     fun setBottomBarRadius(radius: Float) = update { it.copy(bottomBarRadius = radius) }
     fun setIconStyle(style: Int) = update { it.copy(iconStyle = style) }
@@ -194,6 +205,8 @@ object CustomizationStore {
             }
             putInt(KEY_CARD_COLOR, next.cardColor)
             putFloat(KEY_CARD_ALPHA, next.cardAlpha)
+            putString(KEY_HOME_TITLE, next.homeTitle)
+            putInt(KEY_BOTTOM_STYLE, next.bottomBarStyle)
             putBoolean(KEY_HOME_PALETTE, next.homePalette)
             putFloat(KEY_BOTTOM_RADIUS, next.bottomBarRadius)
             putInt(KEY_ICON_STYLE, next.iconStyle)

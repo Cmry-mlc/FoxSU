@@ -564,8 +564,9 @@ private fun FreshHeader() {
             .padding(top = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        val customTitle = CustomizationStore.current.homeTitle
         Text(
-            text = stringResource(R.string.app_name),
+            text = customTitle.ifBlank { stringResource(R.string.app_name) },
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface,

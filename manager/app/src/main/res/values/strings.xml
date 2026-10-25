@@ -301,6 +301,11 @@
     <string name="customization_home_palette">Colourful home cards</string>
     <string name="customization_home_palette_sum">Blue / lavender / mint / peach for the four KPI cards (light mode)</string>
     <string name="customization_card_alpha">Card opacity</string>
+    <string name="customization_title_bar">Title bar</string>
+    <string name="customization_title_bar_sub">Customise the text at the top of the home screen</string>
+    <string name="customization_title_placeholder">Leave empty to use the app name</string>
+    <string name="customization_bottom_style_pill">Pill</string>
+    <string name="customization_bottom_style_drawer">Drawer</string>
     <string name="customization_bottom_bar">Bottom bar</string>
     <string name="customization_bottom_bar_sub">Corner radius of the floating navigation bar</string>
     <string name="customization_radius">Radius</string>
