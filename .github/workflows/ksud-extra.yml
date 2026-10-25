@@ -54,6 +54,7 @@ jobs:
         cache-bin: false
 
     - name: Install cross
+      if: ${{ runner.os != 'macOS' }}
       run: |
         RUSTFLAGS="" cargo install cross --git https://github.com/cross-rs/cross --rev 66845c1
 
@@ -63,7 +64,12 @@ jobs:
           -o userspace/ksud/.lkm_image_bootstrap.o \
           userspace/ksud/src/lkm_image_bootstrap.S
 
-    - name: Build ksud
+    - name: Build ksud (macOS native)
+      if: ${{ runner.os == 'macOS' }}
+      run: cargo build --target ${{ inputs.target }} --release --manifest-path ./userspace/ksud/Cargo.toml
+
+    - name: Build ksud (cross)
+      if: ${{ runner.os != 'macOS' }}
       run: CROSS_NO_WARNINGS=0 cross build --target ${{ inputs.target }} --release --manifest-path ./userspace/ksud/Cargo.toml
 
     - name: Upload ksud artifact
