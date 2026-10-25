@@ -62,6 +62,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -142,6 +143,8 @@ fun HomePagerFresh(
     val issues = state.freshIssues()
     var showStylePicker by remember { mutableStateOf(false) }
     var showHeroMenu by remember { mutableStateOf(false) }
+    var kpiMenuIndex by remember { mutableStateOf(-1) }
+    var kpiPickIndex by remember { mutableStateOf(0) }
     val currentUiMode = LocalUiMode.current
 
     val context = LocalContext.current
@@ -162,6 +165,27 @@ fun HomePagerFresh(
                 ).show()
             } else {
                 CustomizationStore.setHeroWallpaper(saved)
+            }
+        }
+    }
+
+    val kpiPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        val index = kpiPickIndex
+        scope.launch {
+            val saved = withContext(Dispatchers.IO) {
+                savePickedImage(context, uri, "kpi_card_$index.jpg", maxSide = 1200)
+            }
+            if (saved == null) {
+                Toast.makeText(
+                    context,
+                    R.string.customization_wallpaper_failed,
+                    Toast.LENGTH_SHORT,
+                ).show()
+            } else {
+                CustomizationStore.setKpiImage(index, saved)
             }
         }
     }
@@ -197,19 +221,32 @@ fun HomePagerFresh(
         0.dp
     }
 
-    LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+    Column(modifier = Modifier.fillMaxSize()) {
+        // 标题栏保持不透明：全局壁纸只铺在它下方，避免图案压住 FoxSu 标题
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface)
+                .padding(
+                    start = 20.dp,
+                    end = 20.dp,
+                    top = WindowInsets.systemBars.asPaddingValues().calculateTopPadding() + 8.dp,
+                    bottom = 12.dp,
+                ),
+        ) {
+            FreshHeader()
+        }
+
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
             contentPadding = PaddingValues(
-            top = WindowInsets.systemBars.asPaddingValues().calculateTopPadding() + 8.dp,
                 bottom = bottomInnerPadding + navigationBarPadding + 16.dp,
             ),
         ) {
             item {
             Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-                FreshHeader()
-
-                Spacer(Modifier.height(14.dp))
-
                 if (issues.isNotEmpty()) {
                     FreshIssueList(
                         issues = issues,
@@ -249,6 +286,9 @@ fun HomePagerFresh(
                         containerColor = cardColor,
                         contentColor = cardContent,
                         accentColor = cardAccent,
+                        imageUri = custom.kpiImages.getOrNull(0),
+                        imageAlpha = custom.kpiAlphas.getOrNull(0) ?: 0.7f,
+                        onLongPress = { kpiMenuIndex = 0 },
                         onClick = null,
                     )
                     FreshKpiCard(
@@ -260,6 +300,9 @@ fun HomePagerFresh(
                         containerColor = cardColor,
                         contentColor = cardContent,
                         accentColor = cardAccent,
+                        imageUri = custom.kpiImages.getOrNull(1),
+                        imageAlpha = custom.kpiAlphas.getOrNull(1) ?: 0.7f,
+                        onLongPress = { kpiMenuIndex = 1 },
                         onClick = { showStylePicker = true },
                     )
                 }
@@ -279,6 +322,9 @@ fun HomePagerFresh(
                         containerColor = cardColor,
                         contentColor = cardContent,
                         accentColor = cardAccent,
+                        imageUri = custom.kpiImages.getOrNull(2),
+                        imageAlpha = custom.kpiAlphas.getOrNull(2) ?: 0.7f,
+                        onLongPress = { kpiMenuIndex = 2 },
                         onClick = { onOpenTab(1) },
                     )
                     FreshKpiCard(
@@ -290,6 +336,9 @@ fun HomePagerFresh(
                         containerColor = cardColor,
                         contentColor = cardContent,
                         accentColor = cardAccent,
+                        imageUri = custom.kpiImages.getOrNull(3),
+                        imageAlpha = custom.kpiAlphas.getOrNull(3) ?: 0.7f,
+                        onLongPress = { kpiMenuIndex = 3 },
                         onClick = { onOpenTab(2) },
                     )
                 }
@@ -349,11 +398,18 @@ fun HomePagerFresh(
                 )
             }
         }
+        }
     }
 
     if (showHeroMenu) {
-        FreshHeroDialog(
+        FreshBackdropDialog(
+            title = stringResource(R.string.fresh_home_hero_title),
+            description = stringResource(R.string.fresh_home_hero_desc),
             hasImage = heroOn,
+            alpha = custom.heroDim,
+            alphaRange = 0f..0.8f,
+            alphaLabel = stringResource(R.string.customization_dim),
+            onAlphaChange = CustomizationStore::setHeroDim,
             onPick = {
                 showHeroMenu = false
                 heroPicker.launch(
@@ -365,6 +421,31 @@ fun HomePagerFresh(
                 CustomizationStore.setHeroWallpaper(null)
             },
             onDismiss = { showHeroMenu = false },
+        )
+    }
+
+    val kpiIndex = kpiMenuIndex
+    if (kpiIndex >= 0) {
+        FreshBackdropDialog(
+            title = stringResource(R.string.fresh_home_kpi_bg_title),
+            description = stringResource(R.string.fresh_home_kpi_bg_desc),
+            hasImage = custom.kpiImages.getOrNull(kpiIndex) != null,
+            alpha = custom.kpiAlphas.getOrNull(kpiIndex) ?: 0.7f,
+            alphaRange = 0.2f..1f,
+            alphaLabel = stringResource(R.string.fresh_home_kpi_alpha),
+            onAlphaChange = { CustomizationStore.setKpiAlpha(kpiIndex, it) },
+            onPick = {
+                kpiPickIndex = kpiIndex
+                kpiMenuIndex = -1
+                kpiPicker.launch(
+                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                )
+            },
+            onRemove = {
+                CustomizationStore.setKpiImage(kpiIndex, null)
+                kpiMenuIndex = -1
+            },
+            onDismiss = { kpiMenuIndex = -1 },
         )
     }
 
@@ -806,8 +887,14 @@ private fun BoxScope.FreshHeroBackdrop(hero: Customization, bitmap: ImageBitmap?
 
 /** Long-press menu offering to pick / remove the hero card picture. */
 @Composable
-private fun FreshHeroDialog(
+private fun FreshBackdropDialog(
+    title: String,
+    description: String,
     hasImage: Boolean,
+    alpha: Float,
+    alphaRange: ClosedFloatingPointRange<Float>,
+    alphaLabel: String,
+    onAlphaChange: (Float) -> Unit,
     onPick: () -> Unit,
     onRemove: () -> Unit,
     onDismiss: () -> Unit,
@@ -819,14 +906,14 @@ private fun FreshHeroDialog(
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 Text(
-                    text = stringResource(R.string.fresh_home_hero_title),
+                    text = title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = stringResource(R.string.fresh_home_hero_desc),
+                    text = description,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -843,6 +930,26 @@ private fun FreshHeroDialog(
                         icon = Icons.Filled.Delete,
                         text = stringResource(R.string.customization_clear),
                         onClick = onRemove,
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = alphaLabel,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Text(
+                            text = "${(alpha * 100).toInt()}%",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                    Slider(
+                        value = alpha,
+                        onValueChange = onAlphaChange,
+                        valueRange = alphaRange,
+                        modifier = Modifier.padding(horizontal = 2.dp),
                     )
                 }
 
@@ -913,6 +1020,7 @@ private fun FreshTag(text: String, container: Color, content: Color) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun FreshKpiCard(
     icon: ImageVector,
@@ -922,73 +1030,100 @@ private fun FreshKpiCard(
     containerColor: Color,
     contentColor: Color,
     accentColor: Color,
-    onClick: (() -> Unit)?,
+    imageUri: String?,
+    imageAlpha: Float,
+    onLongPress: () -> Unit,
+    onClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
-    val clickModifier = if (onClick != null) {
-        Modifier.clickable(onClick = onClick)
-    } else {
-        Modifier
-    }
+    val bitmap = rememberWallpaper(imageUri)
+    val showImage = bitmap != null && imageAlpha > 0.02f
+    // 图片足够不透明时文字转白，否则沿用卡面配色
+    val onPhoto = showImage && imageAlpha > 0.45f
+    val textColor = if (onPhoto) Color.White else contentColor
+    val valueColor = if (onPhoto) Color.White else accentColor
 
     Surface(
         modifier = modifier
             .height(148.dp)
             .clip(RoundedCornerShape(22.dp))
-            .then(clickModifier),
+            .combinedClickable(
+                onClick = { onClick?.invoke() },
+                onLongClick = onLongPress,
+            ),
         shape = RoundedCornerShape(22.dp),
         color = containerColor,
-        contentColor = contentColor,
+        contentColor = textColor,
         shadowElevation = 1.dp,
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(14.dp),
-        ) {
-            Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = accentColor.copy(alpha = 0.14f),
-                contentColor = accentColor,
-                modifier = Modifier.size(30.dp),
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
+        Box {
+            if (bitmap != null && imageAlpha > 0.02f) {
+                Image(
+                    bitmap = bitmap,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .matchParentSize()
+                        .graphicsLayer { alpha = imageAlpha },
+                )
+                if (onPhoto) {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .background(Color.Black.copy(alpha = 0.32f)),
                     )
                 }
             }
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = title,
-                fontSize = 13.sp,
-                lineHeight = 16.sp,
-                fontWeight = FontWeight.Medium,
-                color = contentColor,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = value,
-                fontSize = 18.sp,
-                lineHeight = 21.sp,
-                fontWeight = FontWeight.Bold,
-                color = accentColor,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Spacer(Modifier.weight(1f))
-            Text(
-                text = caption,
-                fontSize = 11.sp,
-                lineHeight = 14.sp,
-                color = contentColor.copy(alpha = 0.65f),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(14.dp),
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = valueColor.copy(alpha = 0.16f),
+                    contentColor = valueColor,
+                    modifier = Modifier.size(30.dp),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = title,
+                    fontSize = 13.sp,
+                    lineHeight = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = textColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = value,
+                    fontSize = 18.sp,
+                    lineHeight = 21.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = valueColor,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(Modifier.weight(1f))
+                Text(
+                    text = caption,
+                    fontSize = 11.sp,
+                    lineHeight = 14.sp,
+                    color = textColor.copy(alpha = 0.65f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }

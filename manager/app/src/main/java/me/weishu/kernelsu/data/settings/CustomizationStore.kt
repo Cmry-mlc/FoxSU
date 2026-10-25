@@ -30,6 +30,10 @@ data class Customization(
     val heroOffsetY: Float = 0f,
     /** 0f..0.8f black scrim over the hero picture, keeps text readable. */
     val heroDim: Float = 0.35f,
+    /** Pictures for the four home KPI cards, index 0..3, null = follow the card surface. */
+    val kpiImages: List<String?> = List(KPI_CARD_COUNT) { null },
+    /** Opacity of each KPI card picture, 0.2f..1f. */
+    val kpiAlphas: List<Float> = List(KPI_CARD_COUNT) { 0.7f },
     /** 0 = follow the theme scheme, otherwise an ARGB color. */
     val cardColor: Int = 0,
     /** 0.2f..1f, applied on top of [cardColor] (or the themed card surface). */
@@ -37,6 +41,9 @@ data class Customization(
     /** 0 = FoxSu icon, 1 = original KernelSU icon. */
     val iconStyle: Int = 0,
 )
+
+/** Number of equal-sized KPI cards on the ColorUI home screen. */
+const val KPI_CARD_COUNT = 4
 
 object CustomizationStore {
     private const val PREFS = "customization"
@@ -50,6 +57,8 @@ object CustomizationStore {
     private const val KEY_HERO_OFFSET_X = "hero_wallpaper_offset_x"
     private const val KEY_HERO_OFFSET_Y = "hero_wallpaper_offset_y"
     private const val KEY_HERO_DIM = "hero_wallpaper_dim"
+    private const val KEY_KPI_IMAGE = "kpi_image_"
+    private const val KEY_KPI_ALPHA = "kpi_alpha_"
     private const val KEY_CARD_COLOR = "card_color"
     private const val KEY_CARD_ALPHA = "card_alpha"
     private const val KEY_ICON_STYLE = "icon_style"
@@ -86,6 +95,8 @@ object CustomizationStore {
             heroOffsetX = getFloat(KEY_HERO_OFFSET_X, 0f),
             heroOffsetY = getFloat(KEY_HERO_OFFSET_Y, 0f),
             heroDim = getFloat(KEY_HERO_DIM, 0.35f),
+            kpiImages = List(KPI_CARD_COUNT) { getString(KEY_KPI_IMAGE + it, null) },
+            kpiAlphas = List(KPI_CARD_COUNT) { getFloat(KEY_KPI_ALPHA + it, 0.7f) },
             cardColor = getInt(KEY_CARD_COLOR, 0),
             cardAlpha = getFloat(KEY_CARD_ALPHA, 1f),
             iconStyle = getInt(KEY_ICON_STYLE, 0),
@@ -102,6 +113,18 @@ object CustomizationStore {
     fun setHeroOffsetX(offset: Float) = update { it.copy(heroOffsetX = offset) }
     fun setHeroOffsetY(offset: Float) = update { it.copy(heroOffsetY = offset) }
     fun setHeroDim(dim: Float) = update { it.copy(heroDim = dim) }
+    fun setKpiImage(index: Int, uri: String?) = update {
+        if (index !in 0 until KPI_CARD_COUNT) it else it.copy(
+            kpiImages = it.kpiImages.toMutableList().also { list -> list[index] = uri }
+        )
+    }
+
+    fun setKpiAlpha(index: Int, alpha: Float) = update {
+        if (index !in 0 until KPI_CARD_COUNT) it else it.copy(
+            kpiAlphas = it.kpiAlphas.toMutableList().also { list -> list[index] = alpha }
+        )
+    }
+
     fun setCardColor(color: Int) = update { it.copy(cardColor = color) }
     fun setCardAlpha(alpha: Float) = update { it.copy(cardAlpha = alpha) }
     fun setIconStyle(style: Int) = update { it.copy(iconStyle = style) }
@@ -121,6 +144,10 @@ object CustomizationStore {
             putFloat(KEY_HERO_OFFSET_X, next.heroOffsetX)
             putFloat(KEY_HERO_OFFSET_Y, next.heroOffsetY)
             putFloat(KEY_HERO_DIM, next.heroDim)
+            repeat(KPI_CARD_COUNT) { index ->
+                putString(KEY_KPI_IMAGE + index, next.kpiImages.getOrNull(index))
+                putFloat(KEY_KPI_ALPHA + index, next.kpiAlphas.getOrNull(index) ?: 0.7f)
+            }
             putInt(KEY_CARD_COLOR, next.cardColor)
             putFloat(KEY_CARD_ALPHA, next.cardAlpha)
             putInt(KEY_ICON_STYLE, next.iconStyle)
