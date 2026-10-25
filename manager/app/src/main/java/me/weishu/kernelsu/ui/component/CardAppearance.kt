@@ -59,6 +59,20 @@ data class CardSurface(
     val border: BorderStroke?,
 )
 
+/** One entry of the built-in home palette. */
+private class PaletteStyle(val bg: Int, val fg: Int, val accent: Int)
+
+/**
+ * Default look of the four KPI cards in light mode: a deep blue lead card, then three soft
+ * tints. Values are ARGB ints so they can be stored the same way as user overrides.
+ */
+private val HomePalette: Map<Int, PaletteStyle> = mapOf(
+    1 to PaletteStyle(0xFF37586F.toInt(), 0xFFFFFFFF.toInt(), 0xFFB9D7EA.toInt()),
+    2 to PaletteStyle(0xFFE9E2FA.toInt(), 0xFF2E1E5C.toInt(), 0xFF6A48D1.toInt()),
+    3 to PaletteStyle(0xFFE4F4EA.toInt(), 0xFF123A1E.toInt(), 0xFF128A31.toInt()),
+    4 to PaletteStyle(0xFFFCEBDD.toInt(), 0xFF4B2A15.toInt(), 0xFFC06A25.toInt()),
+)
+
 /**
  * Slot 0 is the hero card, 1..4 are the KPI cards, 5 is the module list.
  * A card either follows the global card colour / opacity or overrides it from the
@@ -72,6 +86,18 @@ fun resolveCardSurface(slot: Int): CardSurface {
     val effectiveColor = if (overrideColor != 0) overrideColor else if (night) 0 else custom.cardColor
     val alphaOverride = custom.surfaceAlphas.getOrNull(slot) ?: -1f
     val alpha = if (alphaOverride >= 0f) alphaOverride else custom.cardAlpha
+
+    // Light mode: use the curated palette until the user overrides a card or turns it off.
+    if (!night && overrideColor == 0 && custom.homePalette) {
+        HomePalette[slot]?.let { style ->
+            return CardSurface(
+                container = Color(style.bg).copy(alpha = alpha),
+                content = Color(style.fg),
+                accent = Color(style.accent),
+                border = null,
+            )
+        }
+    }
 
     val base = if (effectiveColor == 0) freshCardColor() else Color(effectiveColor)
     val content = when {

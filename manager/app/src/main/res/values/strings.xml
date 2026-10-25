@@ -298,6 +298,8 @@
     <string name="customization_dim">Dim</string>
     <string name="customization_card">Card surface</string>
     <string name="customization_card_color">Card color</string>
+    <string name="customization_home_palette">Colourful home cards</string>
+    <string name="customization_home_palette_sum">Blue / lavender / mint / peach for the four KPI cards (light mode)</string>
     <string name="customization_card_alpha">Card opacity</string>
     <string name="customization_bottom_bar">Bottom bar</string>
     <string name="customization_bottom_bar_sub">Corner radius of the floating navigation bar</string>
