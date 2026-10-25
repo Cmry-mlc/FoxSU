@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DeveloperBoard
 import androidx.compose.material.icons.filled.DeveloperMode
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Extension
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.PowerSettingsNew
@@ -66,6 +67,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import me.weishu.kernelsu.Natives
 import me.weishu.kernelsu.R
@@ -106,7 +108,6 @@ fun HomePagerFresh(
     bottomInnerPadding: Dp,
     navigationBadge: NavigationBadgeState,
     onOpenTab: (Int) -> Unit,
-    onOpenModuleRepo: () -> Unit,
     onOpenLog: () -> Unit,
 ) {
     val issues = state.freshIssues()
@@ -159,7 +160,7 @@ fun HomePagerFresh(
                         icon = Icons.Filled.Smartphone,
                         title = stringResource(R.string.home_device_model),
                         value = state.systemInfo.deviceModel,
-                        subtitle = null,
+                        caption = stringResource(R.string.fresh_home_device_sub),
                         onClick = null,
                     )
                     FreshKpiCard(
@@ -167,7 +168,7 @@ fun HomePagerFresh(
                         icon = Icons.Filled.Tag,
                         title = stringResource(R.string.home_manager_version),
                         value = state.systemInfo.managerVersion,
-                        subtitle = null,
+                        caption = stringResource(R.string.fresh_home_manager_sub),
                         onClick = null,
                     )
                 }
@@ -183,16 +184,16 @@ fun HomePagerFresh(
                         icon = Icons.Filled.Shield,
                         title = stringResource(R.string.superuser),
                         value = navigationBadge.superuserCount.toString(),
-                        subtitle = stringResource(R.string.fresh_home_superuser_sub),
+                        caption = stringResource(R.string.fresh_home_superuser_sub),
                         onClick = { onOpenTab(1) },
                     )
                     FreshKpiCard(
                         modifier = Modifier.weight(1f),
-                        icon = Icons.Filled.Storefront,
-                        title = stringResource(R.string.fresh_home_tool_repo),
+                        icon = Icons.Filled.Extension,
+                        title = stringResource(R.string.module),
                         value = navigationBadge.moduleEnabledCount.toString(),
-                        subtitle = stringResource(R.string.fresh_home_repo_sub),
-                        onClick = onOpenModuleRepo,
+                        caption = stringResource(R.string.fresh_home_module_sub),
+                        onClick = { onOpenTab(2) },
                     )
                 }
 
@@ -566,7 +567,7 @@ private fun FreshKpiCard(
     icon: ImageVector,
     title: String,
     value: String,
-    subtitle: String?,
+    caption: String,
     onClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
@@ -578,53 +579,61 @@ private fun FreshKpiCard(
 
     Surface(
         modifier = modifier
+            .height(148.dp)
             .clip(RoundedCornerShape(22.dp))
             .then(clickModifier),
         shape = RoundedCornerShape(22.dp),
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
         shadowElevation = 1.dp,
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(14.dp),
+        ) {
             Surface(
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(10.dp),
                 color = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(36.dp),
+                modifier = Modifier.size(30.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(18.dp),
                     )
                 }
             }
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(8.dp))
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
+                fontSize = 13.sp,
+                lineHeight = 16.sp,
+                fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
             Spacer(Modifier.height(4.dp))
             Text(
                 text = value,
-                style = MaterialTheme.typography.titleLarge,
+                fontSize = 18.sp,
+                lineHeight = 21.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
-            if (subtitle != null) {
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
+            Spacer(Modifier.weight(1f))
+            Text(
+                text = caption,
+                fontSize = 11.sp,
+                lineHeight = 14.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }
