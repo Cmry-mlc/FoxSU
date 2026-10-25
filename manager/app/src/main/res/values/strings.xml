@@ -255,6 +255,9 @@
     <string name="customization_title">Customization</string>
     <string name="customization_entry_summary">Wallpaper, card style and launcher icon</string>
     <string name="customization_wallpaper">Wallpaper</string>
+    <string name="customization_wallpaper_sub">Applies to every page, behind the cards</string>
+    <string name="customization_card_sub">Independent from the wallpaper</string>
+    <string name="customization_offset_x">Horizontal position</string>
     <string name="customization_pick_image">Choose image</string>
     <string name="customization_clear">Remove</string>
     <string name="customization_scale">Zoom</string>

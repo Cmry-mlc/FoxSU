@@ -16,18 +16,22 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
+import me.weishu.kernelsu.ui.component.rememberCardContentColor
+import me.weishu.kernelsu.ui.component.rememberCardSurface
 import me.weishu.kernelsu.ui.theme.isFreshStyle
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TonalCard(
     modifier: Modifier = Modifier,
-    containerColor: Color = if (isFreshStyle()) {
-        MaterialTheme.colorScheme.surfaceContainerLowest
-    } else {
-        MaterialTheme.colorScheme.surfaceBright
-    },
-    contentColor: Color = contentColorFor(containerColor),
+    containerColor: Color = rememberCardSurface(
+        if (isFreshStyle()) {
+            MaterialTheme.colorScheme.surfaceContainerLowest
+        } else {
+            MaterialTheme.colorScheme.surfaceBright
+        }
+    ),
+    contentColor: Color = rememberCardContentColor(contentColorFor(containerColor)),
     shape: Shape = if (isFreshStyle()) RoundedCornerShape(22.dp) else MaterialTheme.shapes.large,
     enabled: Boolean = true,
     onClick: (() -> Unit)? = null,

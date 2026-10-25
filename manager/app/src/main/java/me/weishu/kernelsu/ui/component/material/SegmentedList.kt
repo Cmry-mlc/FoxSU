@@ -71,6 +71,7 @@ import androidx.compose.ui.unit.round
 import androidx.compose.ui.zIndex
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import me.weishu.kernelsu.ui.component.rememberCardSurface
 import me.weishu.kernelsu.ui.theme.isFreshStyle
 
 val LocalListItemShapes = compositionLocalOf<ListItemShapes?> { null }
@@ -84,7 +85,9 @@ annotation class SegmentedColumnDsl
 
 @Composable
 private fun defaultSegmentedColors(): ListItemColors = ListItemDefaults.segmentedColors(
-    containerColor = if (isFreshStyle()) colorScheme.surfaceContainerLowest else colorScheme.surfaceBright,
+    containerColor = rememberCardSurface(
+        if (isFreshStyle()) colorScheme.surfaceContainerLowest else colorScheme.surfaceBright
+    ),
     disabledContainerColor = colorScheme.surfaceBright,
     supportingContentColor = colorScheme.onSurfaceVariant
 )

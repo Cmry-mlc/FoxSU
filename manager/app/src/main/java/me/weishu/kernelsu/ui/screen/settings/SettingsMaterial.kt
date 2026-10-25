@@ -66,6 +66,7 @@ import me.weishu.kernelsu.ui.component.material.expressiveTopAppBarColors
 import me.weishu.kernelsu.ui.component.uninstalldialog.UninstallDialog
 import me.weishu.kernelsu.ui.navigation3.LocalNavigator
 import me.weishu.kernelsu.ui.navigation3.Route
+import me.weishu.kernelsu.ui.component.scaffoldBackgroundColor
 import me.weishu.kernelsu.ui.theme.isFreshStyle
 
 /**
@@ -93,11 +94,13 @@ fun SettingPagerMaterial(
         topBar = {
             TopBar(scrollBehavior = scrollBehavior)
         },
-        containerColor = if (isFreshStyle()) {
-            MaterialTheme.colorScheme.surface
-        } else {
-            MaterialTheme.colorScheme.surfaceContainer
-        },
+        containerColor = scaffoldBackgroundColor(
+            if (isFreshStyle()) {
+                MaterialTheme.colorScheme.surface
+            } else {
+                MaterialTheme.colorScheme.surfaceContainer
+            }
+        ),
         snackbarHost = { SnackBarHost(hostState = snackBarHost, modifier = Modifier.padding(bottom = bottomInnerPadding)) },
         contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
     ) { paddingValues ->

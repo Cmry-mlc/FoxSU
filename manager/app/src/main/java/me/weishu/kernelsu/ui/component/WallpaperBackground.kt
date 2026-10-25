@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -14,6 +15,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import me.weishu.kernelsu.data.settings.Customization
+import me.weishu.kernelsu.data.settings.CustomizationStore
 import java.io.File
 
 /** Loads the wallpaper with a sampled decode so a 4K photo does not blow up the heap. */
@@ -54,6 +56,7 @@ fun WallpaperBackground(
                     val scale = customization.wallpaperScale
                     scaleX = scale
                     scaleY = scale
+                    translationX = customization.wallpaperOffsetX * size.width
                     translationY = customization.wallpaperOffsetY * size.height
                 },
         )
@@ -66,3 +69,34 @@ fun WallpaperBackground(
         }
     }
 }
+
+/**
+ * Paints the wallpaper (if any) behind [content]; used by every main screen so the chosen
+ * background is not limited to the home tab.
+ */
+@Composable
+fun WallpaperBackdrop(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    val custom = CustomizationStore.current
+    if (custom.wallpaperUri == null) {
+        content()
+        return
+    }
+    Box(modifier = modifier.fillMaxSize()) {
+        WallpaperBackground(customization = custom)
+        content()
+    }
+}
+
+/** True when the user picked a wallpaper, so scaffolds can go transparent. */
+@Composable
+@ReadOnlyComposable
+fun hasCustomWallpaper(): Boolean = CustomizationStore.current.wallpaperUri != null
+
+/** Scaffold container that is transparent while a wallpaper is in use. */
+@Composable
+@ReadOnlyComposable
+fun scaffoldBackgroundColor(fallback: Color): Color =
+    if (hasCustomWallpaper()) Color.Transparent else fallback

@@ -43,10 +43,12 @@ fun FreshKernelSUTheme(
     val context = LocalContext.current
     val systemDarkTheme = isSystemInDarkTheme()
     val darkTheme = appSettings.colorMode.isDark || (appSettings.colorMode.isSystem && systemDarkTheme)
-    val dynamicColor = appSettings.keyColor == 0
+    // ColorUI keeps the original green as its identity, but still follows the key color
+    // picked in 设置 → 主题 (or the system color on ROMs without one).
+    val seedColor = if (appSettings.keyColor == 0) Color(0xFF00B00E) else Color(appSettings.keyColor)
 
     val colorScheme = rememberKernelSUColorScheme(
-        seedColor = if (dynamicColor) Color.Unspecified else Color(appSettings.keyColor),
+        seedColor = seedColor,
         isDark = darkTheme,
         isAmoled = appSettings.colorMode.isAmoled,
         paletteStyle = appSettings.paletteStyle,

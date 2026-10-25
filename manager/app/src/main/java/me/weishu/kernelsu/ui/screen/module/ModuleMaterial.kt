@@ -141,6 +141,7 @@ import me.weishu.kernelsu.ui.component.material.SnackBarHost
 import me.weishu.kernelsu.ui.component.material.TonalCard
 import me.weishu.kernelsu.ui.component.statustag.StatusTag
 import me.weishu.kernelsu.ui.theme.LocalModuleDescriptionMaxLines
+import me.weishu.kernelsu.ui.component.scaffoldBackgroundColor
 import me.weishu.kernelsu.ui.theme.isFreshStyle
 import me.weishu.kernelsu.ui.util.reboot
 import top.yukonga.miuix.kmp.nav.gesture.WindowNavigationEventBridge
@@ -272,7 +273,7 @@ fun ModulePagerMaterial(
     }
 
     ExpressiveScaffold(
-        containerColor = if (isFreshStyle()) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer,
+        containerColor = scaffoldBackgroundColor(if (isFreshStyle()) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer),
         topBar = {
             SearchAppBar(
                 title = {

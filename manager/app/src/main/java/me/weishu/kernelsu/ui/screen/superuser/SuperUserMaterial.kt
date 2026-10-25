@@ -73,6 +73,7 @@ import me.weishu.kernelsu.ui.component.material.SegmentedColumn
 import me.weishu.kernelsu.ui.component.material.SegmentedItem
 import me.weishu.kernelsu.ui.component.material.SegmentedListItem
 import me.weishu.kernelsu.ui.component.statustag.StatusTag
+import me.weishu.kernelsu.ui.component.scaffoldBackgroundColor
 import me.weishu.kernelsu.ui.theme.isFreshStyle
 import me.weishu.kernelsu.ui.util.ownerNameForUid
 import me.weishu.kernelsu.ui.viewmodel.AppSortType
@@ -98,7 +99,7 @@ fun SuperUserPagerMaterial(
     val snackbarHostState = remember { SnackbarHostState() }
 
     ExpressiveScaffold(
-        containerColor = if (isFreshStyle()) colorScheme.surface else colorScheme.surfaceContainer,
+        containerColor = scaffoldBackgroundColor(if (isFreshStyle()) colorScheme.surface else colorScheme.surfaceContainer),
         topBar = {
             SearchAppBar(
                 snackbarHostState = snackbarHostState,

@@ -60,7 +60,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -82,7 +81,6 @@ import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.UiMode
 import me.weishu.kernelsu.ui.component.KsuIsValid
-import me.weishu.kernelsu.ui.component.WallpaperBackground
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
 import me.weishu.kernelsu.ui.component.rebootlistpopup.RebootListOption
 import me.weishu.kernelsu.ui.component.rebootlistpopup.getRebootListOption
@@ -125,7 +123,7 @@ fun HomePagerFresh(
     var showStylePicker by remember { mutableStateOf(false) }
     val currentUiMode = LocalUiMode.current
 
-    val custom by CustomizationStore.state.collectAsStateWithLifecycle()
+    val custom = CustomizationStore.current
     val cardColor = if (custom.cardColor == 0) {
         MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = custom.cardAlpha)
     } else {
@@ -150,18 +148,7 @@ fun HomePagerFresh(
         0.dp
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        if (custom.wallpaperUri != null) {
-            WallpaperBackground(customization = custom)
-        } else {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surface),
-            )
-        }
-
-        LazyColumn(
+    LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
             top = WindowInsets.systemBars.asPaddingValues().calculateTopPadding() + 8.dp,
@@ -304,7 +291,6 @@ fun HomePagerFresh(
                     onClick = onOpenLog,
                 )
             }
-        }
         }
     }
 
