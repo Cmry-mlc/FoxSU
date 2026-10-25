@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -68,6 +69,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -79,10 +81,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -106,6 +110,9 @@ import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.UiMode
 import me.weishu.kernelsu.ui.component.KsuIsValid
+import me.weishu.kernelsu.ui.component.freshCardBorder
+import me.weishu.kernelsu.ui.component.freshCardColor
+import me.weishu.kernelsu.ui.component.supportingTextAlpha
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
 import me.weishu.kernelsu.ui.component.rememberWallpaper
 import me.weishu.kernelsu.ui.component.rebootlistpopup.RebootListOption
@@ -115,7 +122,12 @@ import me.weishu.kernelsu.ui.uiModeLabelRes
 import me.weishu.kernelsu.ui.util.savePickedImage
 
 /** Resolved colours for one card: global settings with optional per-card override. */
-private data class CardSurface(val container: Color, val content: Color, val accent: Color)
+private data class CardSurface(
+    val container: Color,
+    val content: Color,
+    val accent: Color,
+    val border: BorderStroke?,
+)
 
 /**
  * Slot 0 is the hero card, 1..4 are the KPI cards. A card either follows the global card
@@ -130,7 +142,7 @@ private fun resolveCardSurface(slot: Int): CardSurface {
     val alpha = if (alphaOverride >= 0f) alphaOverride else custom.cardAlpha
 
     val base = if (effectiveColor == 0) {
-        MaterialTheme.colorScheme.surfaceContainerLowest
+        freshCardColor()
     } else {
         Color(effectiveColor)
     }
@@ -140,7 +152,8 @@ private fun resolveCardSurface(slot: Int): CardSurface {
         else -> Color.White
     }
     val accent = if (effectiveColor == 0) MaterialTheme.colorScheme.primary else content
-    return CardSurface(base.copy(alpha = alpha), content, accent)
+    val border = if (effectiveColor == 0) freshCardBorder() else null
+    return CardSurface(base.copy(alpha = alpha), content, accent, border)
 }
 
 /** Things worth telling the user about, all derived from real state. */
@@ -227,7 +240,7 @@ fun HomePagerFresh(
 
     val custom = CustomizationStore.current
     val cardColor = if (custom.cardColor == 0) {
-        MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = custom.cardAlpha)
+        freshCardColor().copy(alpha = custom.cardAlpha)
     } else {
         Color(custom.cardColor).copy(alpha = custom.cardAlpha)
     }
@@ -310,6 +323,7 @@ fun HomePagerFresh(
                     contentColor = heroContent,
                     hero = heroCustom,
                     heroBitmap = heroBitmap,
+                    cardBorder = heroSurface.border,
                     onLongPress = { showHeroMenu = true },
                 )
 
@@ -328,6 +342,7 @@ fun HomePagerFresh(
                         containerColor = surface1.container,
                         contentColor = surface1.content,
                         accentColor = surface1.accent,
+                        cardBorder = surface1.border,
                         imageUri = custom.kpiImages.getOrNull(0),
                         imageAlpha = custom.kpiAlphas.getOrNull(0) ?: 0.7f,
                         onLongPress = { kpiMenuIndex = 0 },
@@ -342,6 +357,7 @@ fun HomePagerFresh(
                         containerColor = surface2.container,
                         contentColor = surface2.content,
                         accentColor = surface2.accent,
+                        cardBorder = surface2.border,
                         imageUri = custom.kpiImages.getOrNull(1),
                         imageAlpha = custom.kpiAlphas.getOrNull(1) ?: 0.7f,
                         onLongPress = { kpiMenuIndex = 1 },
@@ -364,6 +380,7 @@ fun HomePagerFresh(
                         containerColor = surface3.container,
                         contentColor = surface3.content,
                         accentColor = surface3.accent,
+                        cardBorder = surface3.border,
                         imageUri = custom.kpiImages.getOrNull(2),
                         imageAlpha = custom.kpiAlphas.getOrNull(2) ?: 0.7f,
                         onLongPress = { kpiMenuIndex = 2 },
@@ -378,6 +395,7 @@ fun HomePagerFresh(
                         containerColor = surface4.container,
                         contentColor = surface4.content,
                         accentColor = surface4.accent,
+                        cardBorder = surface4.border,
                         imageUri = custom.kpiImages.getOrNull(3),
                         imageAlpha = custom.kpiAlphas.getOrNull(3) ?: 0.7f,
                         onLongPress = { kpiMenuIndex = 3 },
@@ -519,7 +537,7 @@ private fun FreshStylePickerDialog(
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(28.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerLowest,
+            color = freshCardColor(),
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 Text(
@@ -610,7 +628,8 @@ private fun FreshHeader() {
         KsuIsValid {
             Surface(
                 shape = CircleShape,
-                color = MaterialTheme.colorScheme.surfaceContainerLowest,
+                color = freshCardColor(),
+                border = freshCardBorder(),
                 shadowElevation = 2.dp,
                 modifier = Modifier
                     .size(44.dp)
@@ -642,7 +661,7 @@ private fun FreshRebootDialog(onDismiss: () -> Unit) {
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(28.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerLowest,
+            color = freshCardColor(),
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 Text(
@@ -759,6 +778,7 @@ private fun FreshStatusCard(
     contentColor: Color,
     hero: Customization?,
     heroBitmap: ImageBitmap?,
+    cardBorder: BorderStroke?,
     onLongPress: () -> Unit,
 ) {
     val ksuActive = state.ksuVersion != null
@@ -801,7 +821,8 @@ private fun FreshStatusCard(
         shape = RoundedCornerShape(22.dp),
         color = containerColor,
         contentColor = contentColor,
-        shadowElevation = if (hasHero) 0.dp else 1.dp,
+        border = if (hasHero) null else cardBorder,
+        shadowElevation = if (hasHero || cardBorder != null) 0.dp else 1.dp,
     ) {
         Box {
             if (hero != null && heroBitmap != null) {
@@ -841,7 +862,7 @@ private fun FreshStatusCard(
                         Text(
                             text = statusSummary,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = contentColor.copy(alpha = 0.78f),
+                            color = contentColor.copy(alpha = if (supportingTextAlpha() > 0.7f) 0.88f else 0.78f),
                         )
                         if (state.showCustomLkmBadge) {
                             Spacer(Modifier.width(8.dp))
@@ -865,7 +886,7 @@ private fun FreshStatusCard(
                                 Text(
                                     text = stringResource(R.string.fresh_home_flash_hint),
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = contentColor.copy(alpha = 0.6f),
+                                    color = contentColor.copy(alpha = 0.72f),
                                 )
                             }
                         }
@@ -875,7 +896,7 @@ private fun FreshStatusCard(
                         Text(
                             text = stringResource(R.string.fresh_home_hero_hint),
                             style = MaterialTheme.typography.labelSmall,
-                            color = contentColor.copy(alpha = 0.45f),
+                            color = contentColor.copy(alpha = 0.6f),
                         )
                     }
                     if (canJailbreak) {
@@ -958,7 +979,7 @@ private fun FreshBackdropDialog(
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(28.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerLowest,
+            color = freshCardColor(),
         ) {
             Column(
                 modifier = Modifier
@@ -975,17 +996,17 @@ private fun FreshBackdropDialog(
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.78f),
                 )
 
                 Spacer(Modifier.height(14.dp))
                 Text(
                     text = stringResource(R.string.fresh_home_card_color),
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                 )
                 Spacer(Modifier.height(8.dp))
-                FreshColorSwatches(selected = surfaceColor, onSelect = onSurfaceColorChange)
+                FreshCardColorSection(selected = surfaceColor, onSelect = onSurfaceColorChange)
 
                 DialogSliderRow(
                     label = stringResource(R.string.fresh_home_card_alpha),
@@ -998,7 +1019,7 @@ private fun FreshBackdropDialog(
                 Text(
                     text = stringResource(R.string.customization_wallpaper),
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                 )
                 Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1063,7 +1084,7 @@ private fun DialogSliderRow(
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.82f),
                 modifier = Modifier.weight(1f),
             )
             Text(
@@ -1082,18 +1103,165 @@ private fun DialogSliderRow(
 }
 
 @Composable
-private fun FreshColorSwatches(selected: Int, onSelect: (Int) -> Unit) {
+private fun FreshCardColorSection(selected: Int, onSelect: (Int) -> Unit) {
+    val presets = CustomizationStore.cardColorOptions
+    val isPreset = selected == 0 || presets.contains(selected)
+    var customOpen by remember { mutableStateOf(!isPreset) }
+    val themeSeed = MaterialTheme.colorScheme.primary.toArgb()
+    var hsv by remember {
+        mutableStateOf(argbToHsv(if (selected == 0) themeSeed else selected))
+    }
+
+    FreshColorSwatches(
+        selected = selected,
+        onSelect = {
+            customOpen = false
+            onSelect(it)
+        },
+        customColor = if (isPreset) null else selected,
+        customOpen = customOpen,
+        onCustomClick = {
+            customOpen = !customOpen
+            if (!isPreset) hsv = argbToHsv(selected)
+        },
+    )
+
+    if (!customOpen) return
+
+    Spacer(Modifier.height(12.dp))
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color(hsvToArgb(hsv)))
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp)),
+        )
+        Spacer(Modifier.width(12.dp))
+        Text(
+            text = "#" + Integer.toHexString(hsvToArgb(hsv) and 0xFFFFFF)
+                .uppercase()
+                .padStart(6, '0'),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+    }
+
+    Spacer(Modifier.height(6.dp))
+    GradientColorSlider(
+        label = stringResource(R.string.fresh_home_hue),
+        value = hsv[0],
+        range = 0f..360f,
+        gradient = Brush.horizontalGradient(
+            listOf(
+                Color.Red, Color.Yellow, Color.Green, Color.Cyan, Color.Blue, Color.Magenta, Color.Red,
+            )
+        ),
+        onChange = {
+            hsv = floatArrayOf(it, hsv[1], hsv[2])
+            onSelect(hsvToArgb(hsv))
+        },
+    )
+    GradientColorSlider(
+        label = stringResource(R.string.fresh_home_saturation),
+        value = hsv[1],
+        range = 0f..1f,
+        gradient = Brush.horizontalGradient(
+            listOf(
+                Color(android.graphics.Color.HSVToColor(floatArrayOf(hsv[0], 0f, 1f))),
+                Color(android.graphics.Color.HSVToColor(floatArrayOf(hsv[0], 1f, 1f))),
+            )
+        ),
+        onChange = {
+            hsv = floatArrayOf(hsv[0], it, hsv[2])
+            onSelect(hsvToArgb(hsv))
+        },
+    )
+    GradientColorSlider(
+        label = stringResource(R.string.fresh_home_brightness),
+        value = hsv[2],
+        range = 0.05f..1f,
+        gradient = Brush.horizontalGradient(
+            listOf(
+                Color.Black,
+                Color(android.graphics.Color.HSVToColor(floatArrayOf(hsv[0], hsv[1], 1f))),
+                Color.White,
+            )
+        ),
+        onChange = {
+            hsv = floatArrayOf(hsv[0], hsv[1], it)
+            onSelect(hsvToArgb(hsv))
+        },
+    )
+}
+
+@Composable
+private fun GradientColorSlider(
+    label: String,
+    value: Float,
+    range: ClosedFloatingPointRange<Float>,
+    gradient: Brush,
+    onChange: (Float) -> Unit,
+) {
+    Column(modifier = Modifier.padding(top = 6.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = (value * 100).toInt().toString() + "%",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(34.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp)
+                    .height(12.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(gradient),
+            )
+            Slider(
+                value = value,
+                onValueChange = onChange,
+                valueRange = range,
+                colors = SliderDefaults.colors(
+                    thumbColor = Color.White,
+                    activeTrackColor = Color.Transparent,
+                    inactiveTrackColor = Color.Transparent,
+                    activeTickColor = Color.Transparent,
+                    inactiveTickColor = Color.Transparent,
+                ),
+            )
+        }
+    }
+}
+
+@Composable
+private fun FreshColorSwatches(
+    selected: Int,
+    onSelect: (Int) -> Unit,
+    customColor: Int?,
+    customOpen: Boolean,
+    onCustomClick: () -> Unit,
+) {
     Row(
         modifier = Modifier.horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         CustomizationStore.cardColorOptions.forEach { value ->
             val isSelected = value == selected
-            val color = if (value == 0) {
-                MaterialTheme.colorScheme.surfaceContainerLowest
-            } else {
-                Color(value)
-            }
+            val color = if (value == 0) freshCardColor() else Color(value)
             Box(
                 modifier = Modifier
                     .size(38.dp)
@@ -1128,8 +1296,61 @@ private fun FreshColorSwatches(selected: Int, onSelect: (Int) -> Unit) {
                 }
             }
         }
+
+        // 自定义颜色
+        val rainbow = listOf(
+            Color(0xFFEF4444), Color(0xFFF59E0B), Color(0xFF22C55E),
+            Color(0xFF06B6D4), Color(0xFF3B82F6), Color(0xFFA855F7), Color(0xFFEF4444),
+        )
+        val active = customColor != null || customOpen
+        Box(
+            modifier = Modifier
+                .size(38.dp)
+                .clip(CircleShape)
+                .then(
+                    if (customColor != null) {
+                        Modifier.background(Color(customColor))
+                    } else {
+                        Modifier.background(Brush.sweepGradient(rainbow))
+                    }
+                )
+                .border(
+                    width = if (active) 3.dp else 1.dp,
+                    color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                    shape = CircleShape,
+                )
+                .clickable(onClick = onCustomClick),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (customColor == null) {
+                Icon(
+                    imageVector = Icons.Filled.Palette,
+                    contentDescription = stringResource(R.string.fresh_home_custom_color),
+                    tint = Color.White,
+                    modifier = Modifier.size(17.dp),
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Filled.Check,
+                    contentDescription = null,
+                    tint = if (Color(customColor).luminance() > 0.55f) Color(0xFF141A14) else Color.White,
+                    modifier = Modifier.size(17.dp),
+                )
+            }
+        }
     }
 }
+
+private fun argbToHsv(argb: Int): FloatArray {
+    val hsv = FloatArray(3)
+    android.graphics.Color.colorToHSV(argb, hsv)
+    return hsv
+}
+
+private fun hsvToArgb(hsv: FloatArray): Int =
+    android.graphics.Color.HSVToColor(
+        floatArrayOf(hsv[0], hsv[1].coerceIn(0f, 1f), hsv[2].coerceIn(0.05f, 1f))
+    )
 
 @Composable
 private fun FreshPillButton(
@@ -1220,6 +1441,7 @@ private fun FreshKpiCard(
     containerColor: Color,
     contentColor: Color,
     accentColor: Color,
+    cardBorder: BorderStroke?,
     imageUri: String?,
     imageAlpha: Float,
     onLongPress: () -> Unit,
@@ -1244,7 +1466,8 @@ private fun FreshKpiCard(
         shape = RoundedCornerShape(22.dp),
         color = containerColor,
         contentColor = textColor,
-        shadowElevation = 1.dp,
+        border = cardBorder,
+        shadowElevation = if (cardBorder != null) 0.dp else 1.dp,
     ) {
         Box {
             if (bitmap != null && imageAlpha > 0.02f) {
@@ -1387,7 +1610,8 @@ private fun FreshCardGroup(
         shape = RoundedCornerShape(22.dp),
         color = containerColor,
         contentColor = contentColor,
-        shadowElevation = 1.dp,
+        border = freshCardBorder(),
+        shadowElevation = if (freshCardBorder() != null) 0.dp else 1.dp,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column { content() }
@@ -1431,7 +1655,7 @@ private fun FreshInfoRow(
             Text(
                 text = value,
                 style = MaterialTheme.typography.bodySmall,
-                color = LocalContentColor.current.copy(alpha = 0.65f),
+                color = LocalContentColor.current.copy(alpha = supportingTextAlpha()),
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -1470,7 +1694,7 @@ private fun FreshNavRow(
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodySmall,
-                color = LocalContentColor.current.copy(alpha = 0.65f),
+                color = LocalContentColor.current.copy(alpha = supportingTextAlpha()),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -1515,7 +1739,8 @@ private fun FreshIssueList(
                 shape = RoundedCornerShape(16.dp),
                 color = containerColor,
                 contentColor = contentColor,
-                shadowElevation = 1.dp,
+                border = freshCardBorder(),
+                shadowElevation = if (freshCardBorder() != null) 0.dp else 1.dp,
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
@@ -1568,7 +1793,8 @@ private fun FreshToolRow(
         shape = RoundedCornerShape(20.dp),
         color = containerColor,
         contentColor = contentColor,
-        shadowElevation = 1.dp,
+        border = freshCardBorder(),
+        shadowElevation = if (freshCardBorder() != null) 0.dp else 1.dp,
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
@@ -1604,7 +1830,7 @@ private fun FreshToolRow(
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = LocalContentColor.current.copy(alpha = 0.65f),
+                    color = LocalContentColor.current.copy(alpha = supportingTextAlpha()),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )

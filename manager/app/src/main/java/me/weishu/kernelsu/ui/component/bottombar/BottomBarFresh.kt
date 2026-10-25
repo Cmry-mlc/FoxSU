@@ -40,6 +40,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import me.weishu.kernelsu.ui.component.freshCardColor
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.Natives
 import me.weishu.kernelsu.R
@@ -77,7 +78,7 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
     ) {
         Surface(
             shape = RoundedCornerShape(30.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerLowest,
+            color = freshCardColor(),
             shadowElevation = 12.dp,
             modifier = Modifier.fillMaxWidth(),
         ) {

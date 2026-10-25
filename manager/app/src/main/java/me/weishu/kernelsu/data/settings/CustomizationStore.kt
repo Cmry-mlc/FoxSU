@@ -160,6 +160,8 @@ object CustomizationStore {
 
     private fun update(transform: (Customization) -> Customization) {
         val next = transform(current)
+        // Dragging a colour slider fires many identical values; skip the disk write for them.
+        if (next == current) return
         prefs.edit {
             putString(KEY_WALLPAPER, next.wallpaperUri)
             putFloat(KEY_SCALE, next.wallpaperScale)

@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
+import me.weishu.kernelsu.ui.component.freshCardColor
 import me.weishu.kernelsu.ui.component.rememberCardContentColor
 import me.weishu.kernelsu.ui.component.rememberCardSurface
 import me.weishu.kernelsu.ui.theme.isFreshStyle
@@ -25,11 +26,7 @@ import me.weishu.kernelsu.ui.theme.isFreshStyle
 fun TonalCard(
     modifier: Modifier = Modifier,
     containerColor: Color = rememberCardSurface(
-        if (isFreshStyle()) {
-            MaterialTheme.colorScheme.surfaceContainerLowest
-        } else {
-            MaterialTheme.colorScheme.surfaceBright
-        }
+        if (isFreshStyle()) freshCardColor() else MaterialTheme.colorScheme.surfaceBright
     ),
     contentColor: Color = rememberCardContentColor(contentColorFor(containerColor)),
     shape: Shape = if (isFreshStyle()) RoundedCornerShape(22.dp) else MaterialTheme.shapes.large,

@@ -265,6 +265,10 @@
     <string name="fresh_home_kpi_alpha">Background opacity</string>
     <string name="fresh_home_card_color">Card colour</string>
     <string name="fresh_home_card_alpha">Card opacity</string>
+    <string name="fresh_home_custom_color">Custom colour</string>
+    <string name="fresh_home_hue">Hue</string>
+    <string name="fresh_home_saturation">Saturation</string>
+    <string name="fresh_home_brightness">Brightness</string>
     <string name="fresh_home_hero_hint">Long-press to change colour, picture and opacity</string>
     <string name="customization_card_sub">Global default; long-press a home card to override it</string>
     <string name="customization_offset_x">Horizontal position</string>

@@ -241,6 +241,10 @@
     <string name="fresh_home_kpi_alpha">背景透明度</string>
     <string name="fresh_home_card_color">卡片背景色</string>
     <string name="fresh_home_card_alpha">卡片透明度</string>
+    <string name="fresh_home_custom_color">自定义颜色</string>
+    <string name="fresh_home_hue">色相</string>
+    <string name="fresh_home_saturation">饱和度</string>
+    <string name="fresh_home_brightness">亮度</string>
     <string name="fresh_home_hero_hint">长按可改颜色、背景图和透明度</string>
     <string name="customization_card_sub">全局默认；长按首页卡片可单独覆盖</string>
     <string name="customization_offset_x">左右位置</string>

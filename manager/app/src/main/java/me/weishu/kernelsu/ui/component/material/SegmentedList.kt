@@ -71,6 +71,7 @@ import androidx.compose.ui.unit.round
 import androidx.compose.ui.zIndex
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import me.weishu.kernelsu.ui.component.freshCardColor
 import me.weishu.kernelsu.ui.component.rememberCardSurface
 import me.weishu.kernelsu.ui.theme.isFreshStyle
 
@@ -86,7 +87,7 @@ annotation class SegmentedColumnDsl
 @Composable
 private fun defaultSegmentedColors(): ListItemColors = ListItemDefaults.segmentedColors(
     containerColor = rememberCardSurface(
-        if (isFreshStyle()) colorScheme.surfaceContainerLowest else colorScheme.surfaceBright
+        if (isFreshStyle()) freshCardColor() else colorScheme.surfaceBright
     ),
     disabledContainerColor = colorScheme.surfaceBright,
     supportingContentColor = colorScheme.onSurfaceVariant

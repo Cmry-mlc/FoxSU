@@ -64,6 +64,7 @@ import me.weishu.kernelsu.data.settings.Customization
 import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.component.WallpaperBackground
 import me.weishu.kernelsu.ui.component.WallpaperBackdrop
+import me.weishu.kernelsu.ui.component.freshCardColor
 import me.weishu.kernelsu.ui.component.rememberCardSurface
 import me.weishu.kernelsu.ui.component.scaffoldBackgroundColor
 import me.weishu.kernelsu.ui.navigation3.LocalNavigator
@@ -262,7 +263,7 @@ fun CustomizationScreen() {
                                 val value = CustomizationStore.cardColorOptions[index]
                                 val selected = custom.cardColor == value
                                 val color = if (value == 0) {
-                                    MaterialTheme.colorScheme.surfaceContainerLowest
+                                    freshCardColor()
                                 } else {
                                     Color(value)
                                 }
@@ -368,7 +369,7 @@ fun CustomizationScreen() {
 @Composable
 private fun PreviewCard(custom: Customization) {
     val cardColor = if (custom.cardColor == 0) {
-        MaterialTheme.colorScheme.surfaceContainerLowest
+        freshCardColor()
     } else {
         Color(custom.cardColor)
     }.copy(alpha = custom.cardAlpha)
@@ -456,7 +457,7 @@ private fun SectionCard(
 ) {
     Surface(
         shape = RoundedCornerShape(22.dp),
-        color = rememberCardSurface(MaterialTheme.colorScheme.surfaceContainerLowest),
+        color = rememberCardSurface(freshCardColor()),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
