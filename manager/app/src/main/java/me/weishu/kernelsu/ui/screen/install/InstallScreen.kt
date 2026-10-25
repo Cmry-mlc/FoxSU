@@ -112,7 +112,7 @@ fun InstallScreen() {
 
     fun showMessage(message: String) {
         scope.launch {
-            if (uiMode == UiMode.Material) {
+            if (uiMode != UiMode.Miuix) {
                 snackbarHost.showSnackbar(message)
             } else {
                 miuixSnackbarHost.showSnackbar(message)
@@ -290,6 +290,6 @@ fun InstallScreen() {
 
     when (LocalUiMode.current) {
         UiMode.Miuix -> InstallScreenMiuix(state, actions, miuixSnackbarHost)
-        UiMode.Material -> InstallScreenMaterial(state, actions, snackbarHost)
+        UiMode.Material, UiMode.Fresh -> InstallScreenMaterial(state, actions, snackbarHost)
     }
 }

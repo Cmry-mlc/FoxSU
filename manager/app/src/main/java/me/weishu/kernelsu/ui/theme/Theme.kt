@@ -117,6 +117,11 @@ fun KernelSUTheme(
             appSettings = appSettings,
             content = content
         )
+
+        UiMode.Fresh -> FreshKernelSUTheme(
+            appSettings = appSettings,
+            content = content
+        )
     }
 }
 

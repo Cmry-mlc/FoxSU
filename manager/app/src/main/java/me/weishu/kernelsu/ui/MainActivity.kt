@@ -262,6 +262,10 @@ class MainActivity : ComponentActivity() {
                         ) { navDisplay() }
 
                         UiMode.Miuix -> Scaffold { navDisplay() }
+
+                        UiMode.Fresh -> androidx.compose.material3.Scaffold(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        ) { navDisplay() }
                     }
                     SideEffect { contentReady = true }
                 }
@@ -360,6 +364,7 @@ fun MainScreen(
     val surfaceColor = when (uiMode) {
         UiMode.Material -> MaterialTheme.colorScheme.surface // Blur is not used in Material, this is just a placeholder
         UiMode.Miuix -> MiuixTheme.colorScheme.surface
+        UiMode.Fresh -> MaterialTheme.colorScheme.surface
     }
     val blurBackdrop = rememberBlurBackdrop(enableBlur)
 
@@ -413,7 +418,7 @@ fun MainScreen(
                 ) { page ->
                     val isCurrentPage = page == settledPage
                     when (page) {
-                        0 -> if (contentReady || isCurrentPage) HomePager(navController, bottomInnerPadding, isCurrentPage)
+                        0 -> if (contentReady || isCurrentPage) HomePager(navController, bottomInnerPadding, isCurrentPage, navigationBadge)
                         1 -> if (contentReady || isCurrentPage) SuperUserPager(navController, bottomInnerPadding, isCurrentPage)
                         2 -> if (contentReady || isCurrentPage) ModulePager(bottomInnerPadding, isCurrentPage)
                         3 -> if (contentReady || isCurrentPage) SettingPager(navController, bottomInnerPadding, isCurrentPage)
@@ -455,6 +460,21 @@ fun MainScreen(
                         }
                     }
                 }
+
+                UiMode.Fresh -> androidx.compose.material3.Scaffold(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ) {
+                    Row {
+                        SideRail(navigationBadge)
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .consumeWindowInsets(startInsets)
+                        ) {
+                            pagerContent(navBarBottomPadding)
+                        }
+                    }
+                }
             }
         } else {
             val bottomBar = @Composable {
@@ -479,6 +499,13 @@ fun MainScreen(
                 }
 
                 UiMode.Miuix -> Scaffold(bottomBar = bottomBar) { innerPadding ->
+                    pagerContent(innerPadding.calculateBottomPadding())
+                }
+
+                UiMode.Fresh -> androidx.compose.material3.Scaffold(
+                    bottomBar = bottomBar,
+                    containerColor = MaterialTheme.colorScheme.surface
+                ) { innerPadding ->
                     pagerContent(innerPadding.calculateBottomPadding())
                 }
             }

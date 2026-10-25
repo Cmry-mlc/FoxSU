@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.UiMode
+import me.weishu.kernelsu.ui.uiModeLabelRes
 import me.weishu.kernelsu.ui.component.KsuIsValid
 import me.weishu.kernelsu.ui.component.dialog.rememberLoadingDialog
 import me.weishu.kernelsu.ui.component.miuix.SendLogDialog
@@ -152,7 +153,7 @@ fun SettingPagerMiuix(
                         OverlayDropdownPreference(
                             title = stringResource(id = R.string.settings_ui_mode),
                             summary = stringResource(id = R.string.settings_ui_mode_summary),
-                            items = UiMode.entries.map { it.name },
+                            items = UiMode.entries.map { stringResource(uiModeLabelRes(it)) },
                             startAction = {
                                 Icon(
                                     Icons.Rounded.DisplaySettings,
@@ -161,7 +162,9 @@ fun SettingPagerMiuix(
                                     tint = colorScheme.onBackground
                                 )
                             },
-                            selectedIndex = if (uiState.uiMode == UiMode.Material.value) 1 else 0,
+                            selectedIndex = UiMode.entries
+                                .indexOfFirst { it.value == uiState.uiMode }
+                                .coerceAtLeast(0),
                             onSelectedIndexChange = actions.onSetUiModeIndex
                         )
                         ArrowPreference(
