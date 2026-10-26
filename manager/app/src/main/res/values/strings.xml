@@ -330,6 +330,10 @@
     <string name="customization_bottom_immersive_sum">HarmonyOS-style soft light: more transparent with a glassy highlight</string>
     <string name="customization_bottom_liquid_glass">Liquid glass bar</string>
     <string name="customization_bottom_liquid_glass_sum">Real-time blurred glass bar with a draggable highlight — drag left or right on the bar</string>
+    <string name="customization_nav_rainbow">Rainbow nav icons</string>
+    <string name="customization_nav_rainbow_sum">Give each bottom-bar tab its own random colour</string>
+    <string name="customization_nav_monet">Monet nav icons</string>
+    <string name="customization_nav_monet_sum">Tint the bottom-bar tabs with the system dynamic colour</string>
     <string name="customization_bottom_alpha">Bar opacity</string>
     <string name="customization_radius">Radius</string>
     <string name="customization_icon">Launcher icon</string>
