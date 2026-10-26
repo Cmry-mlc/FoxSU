@@ -113,6 +113,12 @@ fun cardNeedsLightText(): Boolean {
     return isNightScheme()
 }
 
+/** 顶栏底色：玻璃模式下透明，让壁纸透上来。 */
+@Composable
+@ReadOnlyComposable
+fun freshTopBarColor(): Color =
+    if (CustomizationStore.current.cardGlass) Color.Transparent else MaterialTheme.colorScheme.surface
+
 /** 卡片内容的文字色：跟着卡片本身的明暗，白卡用墨色、深卡用白色。 */
 @Composable
 @ReadOnlyComposable

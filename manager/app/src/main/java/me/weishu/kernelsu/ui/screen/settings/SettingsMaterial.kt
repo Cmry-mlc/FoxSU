@@ -57,6 +57,7 @@ import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.UiMode
 import me.weishu.kernelsu.ui.uiModeLabelRes
 import me.weishu.kernelsu.ui.component.KsuIsValid
+import me.weishu.kernelsu.ui.component.freshTopBarColor
 import me.weishu.kernelsu.ui.component.material.ExpressiveScaffold
 import me.weishu.kernelsu.ui.component.material.SegmentedColumn
 import me.weishu.kernelsu.ui.component.material.SegmentedDropdownItem
@@ -471,7 +472,7 @@ private fun TopBar(
         },
         colors = expressiveTopAppBarColors(
             containerColor = if (isFreshStyle()) {
-                MaterialTheme.colorScheme.surface
+                freshTopBarColor()
             } else {
                 MaterialTheme.colorScheme.surfaceContainer
             }

@@ -14,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -220,12 +221,23 @@ fun WallpaperBackground(
                     translationY = customization.wallpaperOffsetY * size.height
                 },
         )
-        // 玻璃模式：只留一层很淡的雾，保留照片的通透感（文字由卡片本身的白描边撑住）
+        // 玻璃模式：整体暗雾 + 顶部更强的渐变，保证状态栏/标题区的白字清晰
         if (glass) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.30f)),
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            0f to Color.Black.copy(alpha = 0.55f),
+                            0.22f to Color.Black.copy(alpha = 0.22f),
+                            0.40f to Color.Transparent,
+                        )
+                    ),
             )
         }
         if (customization.wallpaperDim > 0f) {

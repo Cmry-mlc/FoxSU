@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import me.weishu.kernelsu.Natives
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.component.AppIconImage
+import me.weishu.kernelsu.ui.component.freshTopBarColor
 import me.weishu.kernelsu.ui.component.material.ExpressiveScaffold
 import me.weishu.kernelsu.ui.component.material.ExpressiveToggleButton
 import me.weishu.kernelsu.ui.component.material.SegmentedColumn
@@ -420,7 +421,7 @@ private fun TopBar(
         },
         colors = expressiveTopAppBarColors(
             containerColor = if (isFreshStyle()) {
-                MaterialTheme.colorScheme.surface
+                freshTopBarColor()
             } else {
                 MaterialTheme.colorScheme.surfaceContainer
             }
