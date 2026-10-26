@@ -74,7 +74,6 @@ import me.weishu.kernelsu.ui.component.hasWallpaperBackdrop
 import me.weishu.kernelsu.ui.component.isNightScheme
 import me.weishu.kernelsu.ui.component.liquid.lens
 import me.weishu.kernelsu.ui.component.liquid.vibrancy
-import me.weishu.kernelsu.ui.theme.LaunchTint
 import top.yukonga.miuix.kmp.blur.blur
 import top.yukonga.miuix.kmp.blur.drawBackdrop
 
@@ -85,10 +84,10 @@ private data class FreshNavItem(
 )
 
 /** 底栏胶囊宽度上限：宽屏上不再拉满，两侧留出空气。 */
-private val BarMaxWidth = 340.dp
+private val BarMaxWidth = 300.dp
 
 /** 胶囊外侧留白，决定底栏的「长度」。 */
-private val CapsuleSidePadding = 24.dp
+private val CapsuleSidePadding = 40.dp
 
 /**
  * 按下反馈：整条胶囊朝按下的那一侧收一收，纵向也跟着压扁一点点，松手弹回。
@@ -317,7 +316,6 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
                                 item = item,
                                 selected = selected,
                                 badge = badgeFor(index, navigationBadge),
-                                accent = LaunchTint.navColor(index),
                                 onClick = {
                                     if (!selected) mainPagerState.animateToPage(index)
                                 },
@@ -328,7 +326,6 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
                                 item = item,
                                 selected = selected,
                                 badge = badgeFor(index, navigationBadge),
-                                accent = LaunchTint.navColor(index),
                                 onClick = {
                                     if (!selected) mainPagerState.animateToPage(index)
                                 },
@@ -361,9 +358,10 @@ private fun DrawerNavItem(
     item: FreshNavItem,
     selected: Boolean,
     badge: NavBadge?,
-    accent: Color,
     onClick: () -> Unit,
 ) {
+    // 与参考视频一致：选中纯黑，未选中半透明黑；夜间整体反白
+    val tint = navTint()
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
 
@@ -377,12 +375,12 @@ private fun DrawerNavItem(
         label = "drawerWidth",
     )
     val pillColor by animateColorAsState(
-        targetValue = if (selected) accent.copy(alpha = 0.16f) else Color.Transparent,
+        targetValue = if (selected) tint.copy(alpha = 0.10f) else Color.Transparent,
         animationSpec = tween(durationMillis = 240),
         label = "drawerPill",
     )
     val contentColor by animateColorAsState(
-        targetValue = if (selected) accent else accent.copy(alpha = 0.78f),
+        targetValue = if (selected) tint else tint.copy(alpha = 0.58f),
         animationSpec = tween(durationMillis = 240),
         label = "drawerContent",
     )
@@ -410,7 +408,7 @@ private fun DrawerNavItem(
                         containerColor = if (badge.tone == BadgeTone.Alert) {
                             MaterialTheme.colorScheme.error
                         } else {
-                            accent
+                            MaterialTheme.colorScheme.primary
                         },
                         contentColor = Color.White,
                     ) {
@@ -466,16 +464,16 @@ private fun FreshNavItemView(
     item: FreshNavItem,
     selected: Boolean,
     badge: NavBadge?,
-    accent: Color,
     onClick: () -> Unit,
     onPressChange: (Boolean) -> Unit,
 ) {
+    val tint = navTint()
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     LaunchedEffect(pressed) { onPressChange(pressed) }
 
     val contentColor by animateColorAsState(
-        targetValue = if (selected) accent else accent.copy(alpha = 0.72f),
+        targetValue = if (selected) tint else tint.copy(alpha = 0.58f),
         animationSpec = tween(durationMillis = 200),
         label = "navContent",
     )
@@ -496,7 +494,7 @@ private fun FreshNavItemView(
                         containerColor = if (badge.tone == BadgeTone.Alert) {
                             MaterialTheme.colorScheme.error
                         } else {
-                            accent
+                            MaterialTheme.colorScheme.primary
                         },
                         contentColor = Color.White,
                     ) {
@@ -527,5 +525,18 @@ private fun FreshNavItemView(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+    }
+}
+
+/**
+ * 底栏单色：参考视频里图标/文字是纯黑（选中）与深灰（未选中），
+ * 夜间反成纯白 / 半透明白。不再给每个 tab 上各自的彩色。
+ */
+@Composable
+private fun navTint(): Color {
+    return if (isNightScheme() || CustomizationStore.current.cardGlass) {
+        Color.White
+    } else {
+        Color(0xFF1A1A1A)
     }
 }
