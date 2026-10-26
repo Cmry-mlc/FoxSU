@@ -73,6 +73,11 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -1081,13 +1086,19 @@ private fun FreshStatusCard(
     val badgeTint = when {
         !ksuActive -> MaterialTheme.colorScheme.error
         hasHero || isNightScheme() -> Color.White
-        else -> contentColor.copy(alpha = 0.86f)
+        else -> contentColor
     }
-    val badgeBackdrop = if (ksuActive) {
-        badgeTint.copy(alpha = if (hasHero) 0.16f else 0.07f)
-    } else {
-        MaterialTheme.colorScheme.error.copy(alpha = 0.10f)
-    }
+    // 呼吸光圈：复用项目现有的 Compose 动画体系，缓慢明暗缩放，不抢文字
+    val badgeTransition = rememberInfiniteTransition(label = "statusBadge")
+    val badgePulse by badgeTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2600, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "statusBadgePulse",
+    )
 
     Surface(
         modifier = Modifier
@@ -1208,21 +1219,38 @@ private fun FreshStatusCard(
                 }
             }
 
-            // 状态徽章：柔光圆底 + 同色系线性环勾，和卡片里的其他图标同一套语言
+            // 状态徽章：呼吸光圈 + 柔光盘 + 锯齿徽章
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
                     .padding(end = 14.dp)
-                    .size(80.dp)
-                    .clip(CircleShape)
-                    .background(badgeBackdrop),
+                    .size(76.dp),
                 contentAlignment = Alignment.Center,
             ) {
+                // 外层呼吸光晕
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .graphicsLayer {
+                            scaleX = 0.90f + 0.16f * badgePulse
+                            scaleY = scaleX
+                            alpha = 1f - 0.55f * badgePulse
+                        }
+                        .clip(CircleShape)
+                        .background(badgeTint.copy(alpha = 0.12f)),
+                )
+                // 内层柔光盘
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(CircleShape)
+                        .background(badgeTint.copy(alpha = 0.07f)),
+                )
                 Icon(
                     painter = statusIcon,
                     contentDescription = null,
-                    tint = badgeTint.copy(alpha = if (ksuActive) 0.88f else 0.9f),
-                    modifier = Modifier.size(56.dp),
+                    tint = badgeTint.copy(alpha = 0.9f),
+                    modifier = Modifier.size(44.dp),
                 )
             }
         }

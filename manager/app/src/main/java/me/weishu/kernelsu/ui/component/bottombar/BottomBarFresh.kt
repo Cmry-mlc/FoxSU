@@ -109,10 +109,14 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
         // 用户设置的底栏不透明度（默认 1f = 完全不透明）
         val userAlpha = custom.bottomBarAlpha
         val barColor = when {
-            // 玻璃模式：跟着卡片的通透度走
-            custom.cardGlass -> Color.White.copy(
-                alpha = (if (glassNeedsLightText()) 0.14f else 0.46f) * userAlpha
-            )
+            // 玻璃模式：夜间用深色玻璃条，白天按壁纸明暗决定薄白片厚度
+            custom.cardGlass -> if (nightBar) {
+                Color(0xFF17181A).copy(alpha = 0.92f * userAlpha)
+            } else {
+                Color.White.copy(
+                    alpha = (if (glassNeedsLightText()) 0.14f else 0.46f) * userAlpha
+                )
+            }
             nightBar -> Color(if (immersive) 0xFF17181A else 0xFF1B1C1E)
                 .copy(alpha = (if (immersive) 0.86f else 1f) * userAlpha)
             immersive -> freshCardColor().copy(alpha = 0.66f * userAlpha)
@@ -126,7 +130,7 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
             modifier = if (capsule) Modifier else Modifier.fillMaxWidth(),
         ) {
             Box {
-                if (immersive || custom.cardGlass) {
+                if ((immersive || custom.cardGlass) && !nightBar) {
                     // 鸿蒙式柔光：上半部一层白高光，底部自然淡出
                     Box(
                         modifier = Modifier

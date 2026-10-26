@@ -92,6 +92,20 @@ fun freshCardBorder(): BorderStroke? {
     }
 }
 
+/**
+ * 全局文字明暗：先看用户自定义的卡片颜色（卡片白 → 深字），
+ * 否则交给玻璃/夜间逻辑判断。
+ */
+@Composable
+@ReadOnlyComposable
+fun cardNeedsLightText(): Boolean {
+    val custom = CustomizationStore.current
+    if (custom.cardColor != 0 && custom.cardAlpha >= 0.55f) {
+        return Color(custom.cardColor).luminance() < 0.5f
+    }
+    return glassNeedsLightText()
+}
+
 /** Supporting text on a card: a bit brighter in dark mode so it stays legible. */
 @Composable
 @ReadOnlyComposable
