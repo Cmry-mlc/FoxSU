@@ -232,9 +232,9 @@ private fun DrawerNavItem(
                         containerColor = if (badge.tone == BadgeTone.Alert) {
                             MaterialTheme.colorScheme.error
                         } else {
-                            MaterialTheme.colorScheme.primary
+                            accent
                         },
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        contentColor = Color.White,
                     ) {
                         Text(badge.count.toString())
                     }
@@ -320,9 +320,9 @@ private fun FreshNavItemView(
                         containerColor = if (badge.tone == BadgeTone.Alert) {
                             MaterialTheme.colorScheme.error
                         } else {
-                            MaterialTheme.colorScheme.primary
+                            accent
                         },
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        contentColor = Color.White,
                     ) {
                         Text(badge.count.toString())
                     }

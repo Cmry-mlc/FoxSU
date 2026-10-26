@@ -629,10 +629,10 @@ private fun FreshHeader() {
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_launcher_monochrome),
+                    painter = painterResource(R.drawable.ic_fox_glyph),
                     contentDescription = null,
                     tint = glyphTint,
-                    modifier = Modifier.size(22.dp),
+                    modifier = Modifier.size(26.dp),
                 )
             }
         }
