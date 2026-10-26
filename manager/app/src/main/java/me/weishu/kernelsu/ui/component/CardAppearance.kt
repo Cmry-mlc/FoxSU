@@ -110,13 +110,14 @@ fun resolveCardSurface(slot: Int): CardSurface {
         )
     }
 
-    // 七彩卡片：所有槽位逐一上色，文字用配套的深色
-    if (!night && overrideColor == 0 && custom.rainbowCards && !custom.cardGlass) {
-        val (bg, fg) = LaunchTint.rainbowPair(slot)
+    // 七彩卡片：所有槽位逐一上色，文字用配套的深色；
+    // 夜间走深底 + 亮字那一套，保证在纯黑画布上也看得出「这张卡是彩色的」
+    if (overrideColor == 0 && custom.rainbowCards && !custom.cardGlass) {
+        val pair = if (night) LaunchTint.rainbowPairDark(slot) else LaunchTint.rainbowPair(slot)
         return CardSurface(
-            container = Color(bg).copy(alpha = alpha * 0.9f),
-            content = Color(fg),
-            accent = Color(fg),
+            container = Color(pair.first).copy(alpha = alpha * 0.9f),
+            content = Color(pair.second),
+            accent = Color(pair.second),
             border = null,
         )
     }
