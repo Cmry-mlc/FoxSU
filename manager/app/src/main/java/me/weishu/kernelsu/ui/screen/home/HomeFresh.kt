@@ -1127,6 +1127,25 @@ private fun FreshStatusCard(
         ),
         label = "statusBadgePulse",
     )
+    // 扩散涟漪圈：从白圈边缘向外扩散并淡出，错开半个周期形成连续波纹
+    val rippleTransition = rememberInfiniteTransition(label = "statusRipple")
+    val ripple1 by rippleTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3000, easing = FastOutSlowInEasing),
+        ),
+        label = "ripple1",
+    )
+    val ripple2 by rippleTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3000, easing = FastOutSlowInEasing),
+            initialStartOffset = androidx.compose.animation.core.StartOffset(1500),
+        ),
+        label = "ripple2",
+    )
 
     Surface(
         modifier = Modifier
@@ -1254,14 +1273,23 @@ private fun FreshStatusCard(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
                     .padding(end = 16.dp)
-                    .size(64.dp)
-                    .graphicsLayer {
-                        scaleX = 0.96f + 0.06f * badgePulse
-                        scaleY = scaleX
-                        alpha = 0.82f + 0.18f * badgePulse
-                    },
+                    .size(64.dp),
                 contentAlignment = Alignment.Center,
             ) {
+                // 两道透明涟漪：从白圈边缘向外扩散、变透明，颜色跟徽章色
+                listOf(ripple1, ripple2).forEach { ripple ->
+                    Box(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .graphicsLayer {
+                                scaleX = 1f + 0.45f * ripple
+                                scaleY = scaleX
+                                alpha = (1f - ripple) * 0.32f
+                            }
+                            .clip(CircleShape)
+                            .background(badgeTint.copy(alpha = 0.30f)),
+                    )
+                }
                 // 白底圆（深色壁纸下用半透明白）
                 Box(
                     modifier = Modifier
