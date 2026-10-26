@@ -52,6 +52,7 @@ import me.weishu.kernelsu.R
 import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.data.settings.HERO_SLOT
 import me.weishu.kernelsu.ui.theme.LaunchTint
+import me.weishu.kernelsu.ui.theme.UiPalette
 
 /** Resolved colours for one card: global settings with an optional per-card override. */
 data class CardSurface(
@@ -129,6 +130,38 @@ fun resolveCardSurface(slot: Int): CardSurface {
                 container = Color(style.bg).copy(alpha = alpha * 0.84f),
                 content = Color(style.fg),
                 accent = Color(style.accent),
+                border = null,
+            )
+        }
+    }
+
+    // 参考图风格：主卡是淡薰衣草紫，四张 KPI 卡各一个柔和马卡龙色。
+    // 用户手动指定过颜色（overrideColor）时不参与，让位给用户选择。
+    if (overrideColor == 0 && !custom.rainbowCards && !custom.cardGlass) {
+        val ref = if (night) {
+            when (slot) {
+                HERO_SLOT -> UiPalette.HeroSurfaceDark to UiPalette.HeroContentDark
+                1 -> UiPalette.KpiMintDark
+                2 -> UiPalette.KpiCreamDark
+                3 -> UiPalette.KpiLilacDark
+                4 -> UiPalette.KpiRoseDark
+                else -> null
+            }
+        } else {
+            when (slot) {
+                HERO_SLOT -> UiPalette.HeroSurface to UiPalette.HeroContent
+                1 -> UiPalette.KpiMint
+                2 -> UiPalette.KpiCream
+                3 -> UiPalette.KpiLilac
+                4 -> UiPalette.KpiRose
+                else -> null
+            }
+        }
+        ref?.let { (bg, fg) ->
+            return CardSurface(
+                container = bg.copy(alpha = alpha),
+                content = fg,
+                accent = fg,
                 border = null,
             )
         }

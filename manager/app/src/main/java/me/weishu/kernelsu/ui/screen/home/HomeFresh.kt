@@ -146,6 +146,7 @@ import me.weishu.kernelsu.ui.component.frostedChromeColor
 import me.weishu.kernelsu.ui.component.hasWallpaperBackdrop
 import me.weishu.kernelsu.ui.component.isNightScheme
 import me.weishu.kernelsu.ui.theme.LaunchTint
+import me.weishu.kernelsu.ui.theme.UiPalette
 import me.weishu.kernelsu.ui.component.resolveCardSurface
 import me.weishu.kernelsu.ui.component.supportingTextAlpha
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
@@ -296,10 +297,10 @@ fun HomePagerFresh(
                     .fillMaxWidth()
                     .background(frostedChromeColor(MaterialTheme.colorScheme.surface))
                     .padding(
-                        start = 20.dp,
-                        end = 20.dp,
+                        start = 16.dp,
+                        end = 16.dp,
                         top = WindowInsets.systemBars.asPaddingValues().calculateTopPadding() + 8.dp,
-                        bottom = 12.dp,
+                        bottom = 10.dp,
                     ),
             ) {
                 FreshHeader()
@@ -316,7 +317,7 @@ fun HomePagerFresh(
             ),
         ) {
             item {
-            Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                 if (issues.isNotEmpty()) {
                     FreshIssueList(
                         issues = issues,
@@ -328,7 +329,7 @@ fun HomePagerFresh(
                         currentVersion = BuildConfig.VERSION_NAME,
                         onLongPress = { showHeroMenu = true },
                     )
-                    Spacer(Modifier.height(14.dp))
+                    Spacer(Modifier.height(12.dp))
                 }
 
                 // 状态卡：运行模式 + 版本 + 刷入入口（原「运行模式 / 刷入镜像」合并在此）
@@ -420,7 +421,7 @@ fun HomePagerFresh(
                     )
                 }
 
-                Spacer(Modifier.height(14.dp))
+                Spacer(Modifier.height(12.dp))
 
                 FreshSecurityGroup(
                     systemInfo = state.systemInfo,
@@ -428,7 +429,7 @@ fun HomePagerFresh(
                     contentColor = cardContent,
                 )
 
-                Spacer(Modifier.height(14.dp))
+                Spacer(Modifier.height(12.dp))
 
                 FreshSupportGroup(
                     onOpenUrl = actions.onOpenUrl,
@@ -436,7 +437,7 @@ fun HomePagerFresh(
                     contentColor = cardContent,
                 )
 
-                Spacer(Modifier.height(14.dp))
+                Spacer(Modifier.height(12.dp))
 
                 val (kc1, kt1) = rainbowPair(5)
                 FreshKernelCard(
@@ -632,26 +633,25 @@ private fun FreshHeader() {
         }
     }
 
-    // 与底栏共用同一套随机色（深色模式 / 壁纸模式沿用卡面）
-    val chipColor = if (isNightScheme() || hasWallpaperBackdrop()) freshCardColor() else LaunchTint.chip
-    val glyphTint = if (isNightScheme() || hasWallpaperBackdrop()) {
-        MaterialTheme.colorScheme.onSurface
-    } else {
-        Color(0xFF1B1F1A)
-    }
+    // 参考图：左侧深墨圆底 + 白色狐标，右侧白色圆按钮
+    val night = isNightScheme()
+    val logoBg = if (night) Color(0xFF2A2A30) else Color(0xFF23232A)
+    val glyphTint = Color.White
+    val buttonBg = if (night) Color(0xFF2A2A30) else Color.White
+    val buttonTint = if (night) Color.White else Color(0xFF1B1B1F)
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 12.dp),
+            .padding(top = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // 白圆底 + 黑色小狐
+        // 深色圆底 + 白色小狐
         Surface(
             shape = CircleShape,
-            color = chipColor,
+            color = logoBg,
             shadowElevation = 0.dp,
-            modifier = Modifier.size(44.dp),
+            modifier = Modifier.size(46.dp),
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
@@ -670,22 +670,20 @@ private fun FreshHeader() {
             val titleColor = LocalContentColor.current
             Text(
                 text = customTitle.ifBlank { stringResource(R.string.app_name) },
-                fontSize = 25.sp,
-                lineHeight = 30.sp,
-                fontWeight = FontWeight.SemiBold,
-                // 字距收紧一点，标题更像品牌字而不像普通正文
-                letterSpacing = (-0.3).sp,
+                fontSize = 24.sp,
+                lineHeight = 28.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = (-0.4).sp,
                 color = titleColor,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            // 标题下方自动轮换的一句话：不做投影，靠透明度区分层级
             androidx.compose.animation.Crossfade(targetState = phraseIndex, label = "witty") { index ->
                 Text(
                     text = phrases.getOrElse(index) { "" },
-                    fontSize = 12.sp,
+                    fontSize = 11.5.sp,
                     letterSpacing = 0.1.sp,
-                    color = titleColor.copy(alpha = if (cardNeedsLightText()) 0.74f else 0.6f),
+                    color = titleColor.copy(alpha = if (cardNeedsLightText()) 0.72f else 0.55f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -694,45 +692,43 @@ private fun FreshHeader() {
 
         Spacer(Modifier.width(10.dp))
 
-        // 白色胶囊：作者 + 电源
+        // 两个白色圆按钮（参考图是分离的独立圆，而不是一条胶囊）
         Surface(
-            shape = RoundedCornerShape(50),
-            color = chipColor,
+            shape = CircleShape,
+            color = buttonBg,
             shadowElevation = 0.dp,
-            modifier = Modifier.height(44.dp),
+            modifier = Modifier.size(40.dp),
         ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 2.dp),
-                verticalAlignment = Alignment.CenterVertically,
+            IconButton(
+                onClick = { navigator.push(Route.Author) },
+                modifier = Modifier.fillMaxSize(),
             ) {
-                // 圆形波纹裁切，按压阴影/水波都跟着圆角走
+                Icon(
+                    painter = painterResource(R.drawable.ic_author),
+                    contentDescription = stringResource(R.string.author_title),
+                    tint = buttonTint,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+        }
+        KsuIsValid {
+            Spacer(Modifier.width(8.dp))
+            Surface(
+                shape = CircleShape,
+                color = buttonBg,
+                shadowElevation = 0.dp,
+                modifier = Modifier.size(40.dp),
+            ) {
                 IconButton(
-                    onClick = { navigator.push(Route.Author) },
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape),
+                    onClick = { showRebootDialog = true },
+                    modifier = Modifier.fillMaxSize(),
                 ) {
                     Icon(
-                        painter = painterResource(R.drawable.ic_author),
-                        contentDescription = stringResource(R.string.author_title),
-                        tint = glyphTint,
-                        modifier = Modifier.size(21.dp),
+                        painter = painterResource(R.drawable.ic_power),
+                        contentDescription = stringResource(R.string.reboot),
+                        tint = buttonTint,
+                        modifier = Modifier.size(20.dp),
                     )
-                }
-                KsuIsValid {
-                    IconButton(
-                        onClick = { showRebootDialog = true },
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape),
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_power),
-                            contentDescription = stringResource(R.string.reboot),
-                            tint = glyphTint,
-                            modifier = Modifier.size(21.dp),
-                        )
-                    }
                 }
             }
         }
@@ -765,7 +761,7 @@ private fun FreshRebootDialog(onDismiss: () -> Unit) {
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
-            shape = RoundedCornerShape(32.dp),
+            shape = RoundedCornerShape(30.dp),
             color = sheetColor,
             border = BorderStroke(1.dp, Color.White.copy(alpha = if (night) 0.12f else 0.55f)),
             shadowElevation = 0.dp,
@@ -774,21 +770,22 @@ private fun FreshRebootDialog(onDismiss: () -> Unit) {
                 modifier = Modifier.padding(horizontal = 18.dp, vertical = 20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+                // 参考图：浅紫圆底 + 薰衣草色图标
                 Surface(
                     shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                    contentColor = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(40.dp),
+                    color = if (night) Color(0xFF3A2E5C) else UiPalette.HeroSurface,
+                    contentColor = if (night) Color(0xFFC4ACF5) else UiPalette.HeroAccent,
+                    modifier = Modifier.size(46.dp),
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            imageVector = Icons.Filled.RestartAlt,
+                            painter = painterResource(R.drawable.ic_power),
                             contentDescription = null,
-                            modifier = Modifier.size(20.dp),
+                            modifier = Modifier.size(22.dp),
                         )
                     }
                 }
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(10.dp))
                 Text(
                     text = stringResource(R.string.reboot),
                     style = MaterialTheme.typography.titleMedium,
@@ -801,20 +798,25 @@ private fun FreshRebootDialog(onDismiss: () -> Unit) {
                     fontSize = 11.5.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 )
-                Spacer(Modifier.height(14.dp))
+                Spacer(Modifier.height(16.dp))
 
                 rowOptions.chunked(2).forEachIndexed { rowIndex, rowChunk ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         rowChunk.forEachIndexed { colIndex, option ->
-                            val pair = LaunchTint.rainbowPair(rowIndex * 2 + colIndex)
+                            val tone = UiPalette.RebootTones[(rowIndex * 2 + colIndex) % UiPalette.RebootTones.size]
+                            val pair = if (night) {
+                                UiPalette.RebootTones[(rowIndex * 2 + colIndex) % UiPalette.RebootTones.size]
+                            } else {
+                                tone
+                            }
                             RebootRow(
                                 option = option,
                                 containerColor = if (night) {
                                     MaterialTheme.colorScheme.surfaceContainerHigh
                                 } else {
-                                    Color(pair.first)
+                                    pair.first
                                 },
-                                contentColor = if (night) MaterialTheme.colorScheme.onSurface else Color(pair.second),
+                                contentColor = if (night) MaterialTheme.colorScheme.onSurface else pair.second,
                                 onClick = {
                                     onDismiss()
                                     onReboot(option.reason)
@@ -824,7 +826,7 @@ private fun FreshRebootDialog(onDismiss: () -> Unit) {
                         }
                         if (rowChunk.size == 1) Spacer(Modifier.weight(1f))
                     }
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(10.dp))
                 }
 
                 Spacer(Modifier.height(2.dp))
@@ -834,14 +836,15 @@ private fun FreshRebootDialog(onDismiss: () -> Unit) {
                         containerColor = if (night) {
                             MaterialTheme.colorScheme.surfaceContainerHigh
                         } else {
-                            LaunchTint.rainbowSurface(index)
+                            // 滑动确认条用主卡淡紫，和整体一套色
+                            UiPalette.HeroSurface
                         },
                         onConfirm = {
                             onDismiss()
                             onReboot(option.reason)
                         },
                     )
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(10.dp))
                 }
 
                 Spacer(Modifier.height(2.dp))
@@ -1106,11 +1109,11 @@ private fun FreshStatusCard(
     val canJailbreak = notInstalled && state.isSELinuxPermissive
     val glassBackdrop = CustomizationStore.current.cardGlass
     val hasHero = !glassBackdrop && hero != null && heroBitmap != null
-    // 徽章：中性深墨（跟随卡片文字色），实心锯齿徽章上更克制、更融合
+    // 状态徽章：参考图是「圆形浅底 + 细描边徽章图标」，不用实心锯齿
     val badgeTint = when {
         !ksuActive -> MaterialTheme.colorScheme.error
         hasHero || isNightScheme() -> Color.White
-        else -> contentColor
+        else -> contentColor.copy(alpha = 0.9f)
     }
     // 呼吸光圈：复用项目现有的 Compose 动画体系，缓慢明暗缩放，不抢文字
     val badgeTransition = rememberInfiniteTransition(label = "statusBadge")
@@ -1243,38 +1246,29 @@ private fun FreshStatusCard(
                 }
             }
 
-            // 状态徽章：呼吸光圈 + 柔光盘 + 锯齿徽章
+            // 状态徽章：参考图是右侧一枚白底圆 + 细描边徽章，干净不抢眼
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .padding(end = 14.dp)
-                    .size(76.dp),
+                    .padding(end = 16.dp)
+                    .size(64.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                // 外层呼吸光晕
+                // 白底圆（深色壁纸下用半透明白）
                 Box(
                     modifier = Modifier
                         .matchParentSize()
-                        .graphicsLayer {
-                            scaleX = 0.90f + 0.16f * badgePulse
-                            scaleY = scaleX
-                            alpha = 1f - 0.55f * badgePulse
-                        }
                         .clip(CircleShape)
-                        .background(badgeTint.copy(alpha = 0.12f)),
-                )
-                // 内层柔光盘
-                Box(
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(CircleShape)
-                        .background(badgeTint.copy(alpha = 0.07f)),
+                        .background(
+                            if (hasHero) Color.White.copy(alpha = 0.22f)
+                            else Color.White.copy(alpha = if (isNightScheme()) 0.10f else 0.72f)
+                        ),
                 )
                 Icon(
                     painter = statusIcon,
                     contentDescription = null,
-                    tint = badgeTint.copy(alpha = 0.9f),
-                    modifier = Modifier.size(44.dp),
+                    tint = badgeTint,
+                    modifier = Modifier.size(34.dp),
                 )
             }
         }
@@ -1417,37 +1411,43 @@ private fun FreshKpiCard(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(14.dp),
+                    .padding(horizontal = 14.dp, vertical = 14.dp),
             ) {
+                // 参考图：左上角一枚白底圆角图标块，图标用卡片自己的深色
                 Surface(
-                    shape = RoundedCornerShape(10.dp),
-                    color = valueColor.copy(alpha = 0.16f),
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color.White.copy(
+                        alpha = if (onPhoto) 0.24f else if (isNightScheme()) 0.10f else 0.66f
+                    ),
                     contentColor = valueColor,
-                    modifier = Modifier.size(30.dp),
+                    modifier = Modifier.size(34.dp),
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = icon,
                             contentDescription = null,
+                            tint = valueColor.copy(alpha = 0.85f),
                             modifier = Modifier.size(18.dp),
                         )
                     }
                 }
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(10.dp))
+                // 标题：小号、半透明
                 Text(
                     text = title,
-                    fontSize = 13.sp,
-                    lineHeight = 16.sp,
+                    fontSize = 12.5.sp,
+                    lineHeight = 15.sp,
                     fontWeight = FontWeight.Medium,
-                    color = textColor,
+                    color = textColor.copy(alpha = 0.72f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(3.dp))
+                // 值：大号粗体、卡片主色（参考图里是紫色 / 墨绿那种有色彩的粗字）
                 Text(
                     text = value,
-                    fontSize = 18.sp,
-                    lineHeight = 21.sp,
+                    fontSize = 20.sp,
+                    lineHeight = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = valueColor,
                     maxLines = 2,
@@ -1456,9 +1456,9 @@ private fun FreshKpiCard(
                 Spacer(Modifier.weight(1f))
                 Text(
                     text = caption,
-                    fontSize = 11.sp,
-                    lineHeight = 14.sp,
-                    color = textColor.copy(alpha = 0.65f),
+                    fontSize = 10.5.sp,
+                    lineHeight = 13.sp,
+                    color = textColor.copy(alpha = 0.55f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -1548,7 +1548,7 @@ private fun FreshSupportGroup(
     }
 }
 
-/** 胶囊卡：左侧图标 + 标题/说明，对应参考图里的“常用工具”样式。 */
+/** 胶囊卡：左侧圆形图标 + 标题/说明，对应参考图里的「SELinux 状态 / 支持开发」样式。 */
 @Composable
 private fun FreshPillTile(
     icon: ImageVector,
@@ -1560,11 +1560,11 @@ private fun FreshPillTile(
     accent: Boolean = false,
     onClick: (() -> Unit)? = null,
 ) {
-    val shape = RoundedCornerShape(26.dp)
-    // 图标跟着卡片自己的文字色走（不再固定主题绿），并加一层同色淡底，和七彩卡面更搭
-    val tint = if (accent) contentColor else contentColor.copy(alpha = 0.72f)
+    val shape = UiPalette.PillShape
+    // 图标跟着卡片自己的文字色走，并加一层同色淡底，和柔和卡面更搭
+    val tint = if (accent) contentColor else contentColor.copy(alpha = 0.78f)
     val base = modifier
-        .height(78.dp)
+        .height(82.dp)
         .clip(shape)
         .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
     Surface(
@@ -1581,11 +1581,14 @@ private fun FreshPillTile(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            // 参考图：左侧白底圆（半透明白），图标是卡片深色
             Box(
                 modifier = Modifier
-                    .size(30.dp)
+                    .size(34.dp)
                     .clip(CircleShape)
-                    .background(tint.copy(alpha = if (accent) 0.16f else 0.08f)),
+                    .background(
+                        Color.White.copy(alpha = if (isNightScheme()) 0.10f else 0.66f)
+                    ),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -1600,19 +1603,19 @@ private fun FreshPillTile(
                 Text(
                     text = title,
                     fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     color = contentColor,
                 )
-                Spacer(Modifier.height(2.dp))
+                Spacer(Modifier.height(3.dp))
                 Text(
                     text = caption,
-                    fontSize = 11.sp,
+                    fontSize = 10.5.sp,
                     lineHeight = 13.sp,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    color = contentColor.copy(alpha = supportingTextAlpha()),
+                    color = contentColor.copy(alpha = 0.62f),
                 )
             }
         }
@@ -1621,18 +1624,34 @@ private fun FreshPillTile(
 }
 
 
-/** 次级卡片的配色：七彩开启时取对应色；玻璃/壁纸模式一律走磨砂卡面。 */
+/** 次级卡片的配色：参考图里每张卡片一个柔和的马卡龙色，而不是同一张白卡。
+ *  七彩开关打开时仍走七彩表；壁纸/玻璃模式让位给磨砂卡面。
+ */
 @Composable
 private fun rainbowPair(index: Int): Pair<Color, Color> {
     val custom = CustomizationStore.current
-    if (!custom.cardGlass && !hasWallpaperBackdrop() && !isNightScheme() && custom.rainbowCards) {
-        val (bg, fg) = LaunchTint.rainbowPair(index)
-        return Color(bg) to Color(fg)
-    }
     if (hasWallpaperBackdrop()) {
         return freshCardColor() to Color.White
     }
-    return freshCardColor() to cardContentColor()
+    val night = isNightScheme()
+    if (custom.rainbowCards) {
+        val (bg, fg) = if (night) LaunchTint.rainbowPairDark(index) else LaunchTint.rainbowPair(index)
+        return Color(bg) to Color(fg)
+    }
+    // 默认：参考图的四色柔和卡（薄荷 / 奶油 / 淡紫 / 淡粉），循环取用
+    val tones = if (night) {
+        listOf(
+            UiPalette.KpiMintDark, UiPalette.KpiCreamDark,
+            UiPalette.KpiLilacDark, UiPalette.KpiRoseDark,
+        )
+    } else {
+        listOf(
+            UiPalette.KpiMint, UiPalette.KpiCream,
+            UiPalette.KpiLilac, UiPalette.KpiRose,
+        )
+    }
+    val (bg, fg) = tones[index.mod(tones.size)]
+    return bg to fg
 }
 
 /** 内核信息卡：左侧圆角图标块 + 标题/详情，对应参考图里的单行工具卡。 */

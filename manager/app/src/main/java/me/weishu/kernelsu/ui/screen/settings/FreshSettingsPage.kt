@@ -62,7 +62,9 @@ import me.weishu.kernelsu.ui.component.GlassSheen
 import me.weishu.kernelsu.ui.component.cardContentColor
 import me.weishu.kernelsu.ui.component.freshCardColor
 import me.weishu.kernelsu.ui.theme.LaunchTint
+import me.weishu.kernelsu.ui.theme.UiPalette
 import me.weishu.kernelsu.ui.component.isNightScheme
+import me.weishu.kernelsu.ui.component.hasWallpaperBackdrop
 import me.weishu.kernelsu.ui.uiModeLabelRes
 
 private enum class TileState { On, Off, Link, Disabled }
@@ -342,7 +344,22 @@ private fun FreshTileGrid(tiles: List<SettingsTile>) {
         }
     }
     val custom = CustomizationStore.current
-    val rainbow = custom.rainbowCards && !custom.cardGlass && !isNightScheme()
+    val night = isNightScheme()
+    val rainbow = custom.rainbowCards && !custom.cardGlass && !night
+    // 参考图配色：每格一个柔和马卡龙色；开七彩时走七彩表；壁纸/玻璃走磨砂
+    val tones = if (night) {
+        listOf(
+            UiPalette.KpiMintDark, UiPalette.KpiCreamDark,
+            UiPalette.KpiLilacDark, UiPalette.KpiRoseDark,
+            UiPalette.PillLilacDark, UiPalette.PillSandDark,
+        )
+    } else {
+        listOf(
+            UiPalette.KpiMint, UiPalette.KpiCream,
+            UiPalette.KpiLilac, UiPalette.KpiRose,
+            UiPalette.PillLilac, UiPalette.PillSand,
+        )
+    }
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         var index = 0
         rows.forEach { row ->
@@ -351,12 +368,16 @@ private fun FreshTileGrid(tiles: List<SettingsTile>) {
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 row.forEach { tile ->
-                    val pair = if (rainbow) LaunchTint.rainbowPair(index) else null
+                    val pair = when {
+                        rainbow -> LaunchTint.rainbowPair(index).let { Color(it.first) to Color(it.second) }
+                        custom.cardGlass || hasWallpaperBackdrop() -> null
+                        else -> tones[index % tones.size]
+                    }
                     index++
                     SettingsTileView(
                         tile = tile,
-                        containerColor = pair?.let { Color(it.first) },
-                        contentColor = pair?.let { Color(it.second) },
+                        containerColor = pair?.first,
+                        contentColor = pair?.second,
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -373,26 +394,29 @@ private fun SettingsTileView(
     containerColor: Color? = null,
     contentColor: Color? = null,
 ) {
-    val accent = when (tile.state) {
-        TileState.On, TileState.Link -> MaterialTheme.colorScheme.primary
-        TileState.Off -> MaterialTheme.colorScheme.onSurfaceVariant
-        TileState.Disabled -> MaterialTheme.colorScheme.outline
+    val onCard = containerColor != null && contentColor != null
+    // 参考图：图标在卡片自身文字色的白底圆里，状态用透明度区分，不再用主题蓝红
+    val accent = when {
+        onCard -> contentColor!!
+        tile.state == TileState.On || tile.state == TileState.Link -> MaterialTheme.colorScheme.primary
+        tile.state == TileState.Off -> MaterialTheme.colorScheme.onSurfaceVariant
+        else -> MaterialTheme.colorScheme.outline
     }
-    val captionColor = if (tile.state == TileState.On) {
-        MaterialTheme.colorScheme.primary
-    } else {
-        MaterialTheme.colorScheme.onSurfaceVariant
+    val captionColor = when {
+        onCard -> contentColor!!.copy(alpha = 0.6f)
+        tile.state == TileState.On -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
     Surface(
         modifier = modifier
-            .height(96.dp)
-            .clip(RoundedCornerShape(20.dp))
+            .height(100.dp)
+            .clip(RoundedCornerShape(22.dp))
             .clickable(enabled = tile.state != TileState.Disabled, onClick = tile.onClick),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(22.dp),
         color = containerColor ?: freshCardColor(),
         contentColor = contentColor ?: cardContentColor(),
-        border = freshCardBorder(),
+        border = if (onCard) null else freshCardBorder(),
         shadowElevation = 0.dp,
     ) {
         Box {
@@ -400,25 +424,29 @@ private fun SettingsTileView(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 6.dp, vertical = 11.dp),
+                .padding(horizontal = 6.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Surface(
                 shape = CircleShape,
-                color = accent.copy(alpha = if (tile.state == TileState.On) 0.18f else 0.10f),
+                color = if (onCard) {
+                    Color.White.copy(alpha = if (isNightScheme()) 0.10f else 0.66f)
+                } else {
+                    accent.copy(alpha = if (tile.state == TileState.On) 0.18f else 0.10f)
+                },
                 contentColor = accent,
-                modifier = Modifier.size(34.dp),
+                modifier = Modifier.size(36.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(tile.icon, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Icon(tile.icon, contentDescription = null, modifier = Modifier.size(19.dp))
                 }
             }
-            Spacer(Modifier.height(7.dp))
+            Spacer(Modifier.height(8.dp))
             Text(
                 text = tile.title,
                 fontSize = 11.5.sp,
                 lineHeight = 14.sp,
-                fontWeight = FontWeight.Medium,
+                fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
@@ -427,7 +455,7 @@ private fun SettingsTileView(
                 },
             )
             if (tile.caption != null) {
-                Spacer(Modifier.height(2.dp))
+                Spacer(Modifier.height(3.dp))
                 Text(
                     text = tile.caption,
                     fontSize = 9.5.sp,

@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -36,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,6 +59,9 @@ import me.weishu.kernelsu.ui.component.material.ExpressiveScaffold
 import me.weishu.kernelsu.ui.component.material.TopBarBackButton
 import me.weishu.kernelsu.ui.component.material.expressiveTopAppBarColors
 import me.weishu.kernelsu.ui.navigation3.LocalNavigator
+import me.weishu.kernelsu.ui.theme.UiPalette
+import me.weishu.kernelsu.ui.component.isNightScheme
+import androidx.compose.foundation.BorderStroke
 
 /**
  * ColorUI 的「关于作者」页：头像 + 维护者信息，圆角头像卡与页面其他卡片同语言。
@@ -99,9 +104,12 @@ fun AuthorScreen() {
 
             // 头像：大圆角卡片 + 细边ring，比正圆更有质感
             Surface(
-                shape = RoundedCornerShape(32.dp),
-                color = freshCardColor(),
-                border = freshCardBorder(),
+                shape = RoundedCornerShape(34.dp),
+                color = if (isNightScheme()) UiPalette.HeroSurfaceDark else UiPalette.HeroSurface,
+                border = BorderStroke(
+                    1.dp,
+                    (if (isNightScheme()) UiPalette.HeroAccentDark else UiPalette.HeroAccent).copy(alpha = 0.25f),
+                ),
                 modifier = Modifier.size(120.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
@@ -134,9 +142,9 @@ fun AuthorScreen() {
             Spacer(Modifier.height(22.dp))
 
             Surface(
-                shape = RoundedCornerShape(24.dp),
-                color = freshCardColor(),
-                border = freshCardBorder(),
+                shape = UiPalette.CardShape,
+                color = if (isNightScheme()) UiPalette.KpiMintDark.first else UiPalette.KpiMint.first,
+                border = null,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(
@@ -144,7 +152,8 @@ fun AuthorScreen() {
                     fontSize = 13.sp,
                     lineHeight = 20.sp,
                     textAlign = TextAlign.Start,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
+                    color = (if (isNightScheme()) UiPalette.KpiMintDark.second else UiPalette.KpiMint.second)
+                        .copy(alpha = 0.9f),
                     modifier = Modifier.padding(18.dp),
                 )
             }
@@ -197,10 +206,25 @@ private fun InfoRow(
     value: String,
     onClick: (() -> Unit)? = null,
 ) {
+    // 参考图配色：每行一个柔和马卡龙底，图标底板用半透明白
+    val night = isNightScheme()
+    val tones = if (night) {
+        listOf(
+            UiPalette.PillLilacDark, UiPalette.KpiMintDark,
+            UiPalette.KpiCreamDark, UiPalette.KpiRoseDark, UiPalette.PillSkyDark,
+        )
+    } else {
+        listOf(
+            UiPalette.PillLilac, UiPalette.KpiMint,
+            UiPalette.KpiCream, UiPalette.KpiRose, UiPalette.PillSky,
+        )
+    }
+    val tone = tones[infoRowSlot(icon)]
     Surface(
-        shape = RoundedCornerShape(24.dp),
-        color = freshCardColor(),
-        border = freshCardBorder(),
+        shape = UiPalette.CardShape,
+        color = tone.first,
+        contentColor = tone.second,
+        border = null,
         modifier = Modifier
             .fillMaxWidth()
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
@@ -212,39 +236,50 @@ private fun InfoRow(
         ) {
             Box(
                 modifier = Modifier
-                    .size(34.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(Color.White.copy(alpha = if (night) 0.10f else 0.66f)),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = tone.second,
                     modifier = Modifier.size(18.dp),
                 )
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = label,
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    fontSize = 11.5.sp,
+                    color = tone.second.copy(alpha = 0.62f),
                 )
+                Spacer(Modifier.height(2.dp))
                 Text(
                     text = value,
                     fontSize = 13.5.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.SemiBold,
+                    color = tone.second,
                 )
             }
             if (onClick != null) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = stringResource(R.string.author_tap_hint),
-                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f),
+                    tint = tone.second.copy(alpha = 0.38f),
                     modifier = Modifier.size(20.dp),
                 )
             }
         }
     }
+}
+
+/** 按图标给每行分配一个固定的色槽，保证「版本 / 项目 / 联系 / QQ / 上游」各不相同。 */
+private fun infoRowSlot(icon: androidx.compose.ui.graphics.vector.ImageVector): Int = when (icon) {
+    Icons.Filled.Info -> 0
+    Icons.Filled.Code -> 1
+    Icons.Filled.Favorite -> 2
+    Icons.Filled.Groups -> 3
+    Icons.Filled.Public -> 4
+    else -> 0
 }
