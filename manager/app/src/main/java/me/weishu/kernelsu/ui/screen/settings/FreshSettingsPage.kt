@@ -321,12 +321,16 @@ private fun FreshSettingsSection(title: String, content: @Composable () -> Unit)
 
 @Composable
 private fun FreshTileGrid(tiles: List<SettingsTile>) {
-    // Rows of three, except a leftover pair fills the whole row (two wide cards per row).
+    // Rows of three; a leftover pair fills the whole row; exactly four tiles become a 2x2 grid.
     val rows = buildList {
         var i = 0
         while (i < tiles.size) {
             val remaining = tiles.size - i
-            val take = if (remaining == 2 || remaining == 1) remaining else 3
+            val take = when {
+                tiles.size == 4 -> 2
+                remaining == 2 || remaining == 1 -> remaining
+                else -> 3
+            }
             add(tiles.subList(i, i + take))
             i += take
         }
