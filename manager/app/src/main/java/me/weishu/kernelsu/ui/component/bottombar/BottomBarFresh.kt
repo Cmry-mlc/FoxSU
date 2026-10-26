@@ -12,6 +12,8 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -94,9 +96,11 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
     ) {
         val barShape = RoundedCornerShape(custom.bottomBarRadius.dp)
         val capsule = custom.bottomBarStyle != 1
+        // 视频样式：半透明悬浮条（自定义卡片色也保持通透）
+        val barColor = freshCardColor().let { if (it.alpha > 0.9f) it.copy(alpha = 0.84f) else it }
         Surface(
             shape = barShape,
-            color = freshCardColor(),
+            color = barColor,
             border = freshCardBorder(),
             shadowElevation = 12.dp,
             modifier = if (capsule) Modifier else Modifier.fillMaxWidth(),
@@ -104,7 +108,7 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
             Row(
                 modifier = Modifier
                     .then(if (capsule) Modifier else Modifier.fillMaxWidth())
-                    .padding(horizontal = if (capsule) 10.dp else 8.dp, vertical = 6.dp),
+                    .padding(horizontal = if (capsule) 10.dp else 8.dp, vertical = 5.dp),
                 horizontalArrangement = if (custom.bottomBarStyle == 1) {
                     Arrangement.Center
                 } else {
@@ -243,6 +247,9 @@ private fun FreshNavItemView(
     badge: NavBadge?,
     onClick: () -> Unit,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+
     val contentColor by animateColorAsState(
         targetValue = if (selected) {
             MaterialTheme.colorScheme.primary
@@ -252,76 +259,64 @@ private fun FreshNavItemView(
         animationSpec = tween(durationMillis = 220),
         label = "navContent",
     )
-    val pillColor by animateColorAsState(
-        targetValue = if (selected) {
-            MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
-        } else {
-            Color.Transparent
-        },
-        animationSpec = tween(durationMillis = 220),
-        label = "navPill",
-    )
+    // 视频样式：无选中底色，用按压缩放 + 选中弹性缩放表达状态
+    val targetScale = when {
+        pressed -> 0.86f
+        selected -> 1.06f
+        else -> 1f
+    }
     val iconScale by animateFloatAsState(
-        targetValue = if (selected) 1.08f else 1f,
-        animationSpec = spring(dampingRatio = 0.55f, stiffness = 480f),
+        targetValue = targetScale,
+        animationSpec = spring(dampingRatio = if (selected) 0.45f else 0.6f, stiffness = 480f),
         label = "navScale",
     )
 
     Column(
         modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 2.dp),
+            .clip(RoundedCornerShape(18.dp))
+            .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 3.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Box(
-            modifier = Modifier
-                .width(52.dp)
-                .height(28.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(pillColor),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (badge != null) {
-                BadgedBox(
-                    badge = {
-                        Badge(
-                            containerColor = if (badge.tone == BadgeTone.Alert) {
-                                MaterialTheme.colorScheme.error
-                            } else {
-                                MaterialTheme.colorScheme.primary
-                            },
-                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                        ) {
-                            Text(badge.count.toString())
-                        }
+        if (badge != null) {
+            BadgedBox(
+                badge = {
+                    Badge(
+                        containerColor = if (badge.tone == BadgeTone.Alert) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.primary
+                        },
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                    ) {
+                        Text(badge.count.toString())
                     }
-                ) {
-                    Icon(
-                        imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
-                        contentDescription = stringResource(item.label),
-                        tint = contentColor,
-                        modifier = Modifier
-                            .size(22.dp)
-                            .graphicsLayer {
-                                scaleX = iconScale
-                                scaleY = iconScale
-                            },
-                    )
                 }
-            } else {
+            ) {
                 Icon(
                     imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
                     contentDescription = stringResource(item.label),
                     tint = contentColor,
                     modifier = Modifier
-                        .size(22.dp)
+                        .size(23.dp)
                         .graphicsLayer {
                             scaleX = iconScale
                             scaleY = iconScale
                         },
                 )
             }
+        } else {
+            Icon(
+                imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
+                contentDescription = stringResource(item.label),
+                tint = contentColor,
+                modifier = Modifier
+                    .size(23.dp)
+                    .graphicsLayer {
+                        scaleX = iconScale
+                        scaleY = iconScale
+                    },
+            )
         }
         Text(
             text = stringResource(item.label),
@@ -330,6 +325,10 @@ private fun FreshNavItemView(
             color = contentColor,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.graphicsLayer {
+                scaleX = iconScale.coerceAtMost(1f)
+                scaleY = iconScale.coerceAtMost(1f)
+            },
         )
     }
 }
