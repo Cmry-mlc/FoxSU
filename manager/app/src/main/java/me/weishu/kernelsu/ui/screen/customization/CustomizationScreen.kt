@@ -411,6 +411,30 @@ fun CustomizationScreen() {
                             )
                         }
 
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = stringResource(R.string.customization_bottom_liquid_glass),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = LocalContentColor.current,
+                                )
+                                Text(
+                                    text = stringResource(R.string.customization_bottom_liquid_glass_sum),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = LocalContentColor.current.copy(alpha = 0.62f),
+                                )
+                            }
+                            Switch(
+                                checked = custom.bottomBarLiquidGlass,
+                                onCheckedChange = CustomizationStore::setBottomBarLiquidGlass,
+                            )
+                        }
+
                         SliderRow(
                             label = stringResource(R.string.customization_bottom_alpha),
                             value = custom.bottomBarAlpha,
