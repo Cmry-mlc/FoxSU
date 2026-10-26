@@ -100,24 +100,6 @@ fun resolveCardSurface(slot: Int): CardSurface {
         )
     }
 
-    // 跟随系统壁纸：用动态取色得到的容器颜色，文字用对应的 on* 颜色
-    if (!night && overrideColor == 0 && custom.homePalette && custom.homeAdaptive) {
-        val scheme = MaterialTheme.colorScheme
-        val pair = when (slot) {
-            HERO_SLOT -> scheme.primaryContainer to scheme.onPrimaryContainer
-            1 -> scheme.secondaryContainer to scheme.onSecondaryContainer
-            2 -> scheme.tertiaryContainer to scheme.onTertiaryContainer
-            3 -> scheme.surfaceContainerHigh to scheme.onSurface
-            else -> scheme.primaryContainer to scheme.onPrimaryContainer
-        }
-        return CardSurface(
-            container = pair.first.copy(alpha = alpha * 0.92f),
-            content = pair.second,
-            accent = pair.second,
-            border = null,
-        )
-    }
-
     // Light mode: use the curated palette until the user overrides a card or turns it off.
     if (!night && overrideColor == 0 && custom.homePalette) {
         HomePalette[slot]?.let { style ->

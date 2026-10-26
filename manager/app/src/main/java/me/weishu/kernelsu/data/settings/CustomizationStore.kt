@@ -63,8 +63,6 @@ data class Customization(
     val cardGlass: Boolean = false,
     /** 是否启用全局背景图。 */
     val wallpaperEnabled: Boolean = true,
-    /** 首页卡片取色跟随系统壁纸（动态取色）。 */
-    val homeAdaptive: Boolean = false,
     /** 七彩卡片：首页/模块卡全部换成柔和的七彩配色。 */
     val rainbowCards: Boolean = true,
     /** 0 = 系统默认，1 = 衬线，2 = 等宽，3 = 手写圆体。 */
@@ -118,7 +116,6 @@ object CustomizationStore {
     private const val KEY_BOTTOM_IMMERSIVE = "bottom_bar_immersive"
     private const val KEY_CARD_GLASS = "card_glass"
     private const val KEY_WALLPAPER_ENABLED = "wallpaper_enabled"
-    private const val KEY_HOME_ADAPTIVE = "home_adaptive"
     private const val KEY_RAINBOW = "rainbow_cards"
     private const val KEY_FONT_STYLE = "font_style"
     private const val KEY_ICON_STYLE = "icon_style"
@@ -172,7 +169,6 @@ object CustomizationStore {
             bottomBarImmersive = getBoolean(KEY_BOTTOM_IMMERSIVE, false),
             cardGlass = getBoolean(KEY_CARD_GLASS, false),
             wallpaperEnabled = getBoolean(KEY_WALLPAPER_ENABLED, true),
-            homeAdaptive = getBoolean(KEY_HOME_ADAPTIVE, false),
             rainbowCards = getBoolean(KEY_RAINBOW, true),
             fontStyle = getInt(KEY_FONT_STYLE, 0),
             iconStyle = getInt(KEY_ICON_STYLE, 0),
@@ -229,7 +225,6 @@ object CustomizationStore {
     fun setBottomBarImmersive(enabled: Boolean) = update { it.copy(bottomBarImmersive = enabled) }
     fun setCardGlass(enabled: Boolean) = update { it.copy(cardGlass = enabled) }
     fun setWallpaperEnabled(enabled: Boolean) = update { it.copy(wallpaperEnabled = enabled) }
-    fun setHomeAdaptive(enabled: Boolean) = update { it.copy(homeAdaptive = enabled) }
     fun setRainbowCards(enabled: Boolean) = update { it.copy(rainbowCards = enabled) }
     fun setFontStyle(style: Int) = update { it.copy(fontStyle = style) }
     fun setIconStyle(style: Int) = update { it.copy(iconStyle = style) }
@@ -273,7 +268,6 @@ object CustomizationStore {
             putBoolean(KEY_BOTTOM_IMMERSIVE, next.bottomBarImmersive)
             putBoolean(KEY_CARD_GLASS, next.cardGlass)
             putBoolean(KEY_WALLPAPER_ENABLED, next.wallpaperEnabled)
-            putBoolean(KEY_HOME_ADAPTIVE, next.homeAdaptive)
             putBoolean(KEY_RAINBOW, next.rainbowCards)
             putInt(KEY_FONT_STYLE, next.fontStyle)
             putInt(KEY_ICON_STYLE, next.iconStyle)

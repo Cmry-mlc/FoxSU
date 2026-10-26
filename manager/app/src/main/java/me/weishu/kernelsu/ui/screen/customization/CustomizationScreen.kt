@@ -286,12 +286,6 @@ fun CustomizationScreen() {
                             checked = custom.rainbowCards,
                             onChange = CustomizationStore::setRainbowCards,
                         )
-                        ToggleRow(
-                            title = stringResource(R.string.customization_home_adaptive),
-                            subtitle = stringResource(R.string.customization_home_adaptive_sum),
-                            checked = custom.homeAdaptive,
-                            onChange = CustomizationStore::setHomeAdaptive,
-                        )
                         Spacer(Modifier.height(6.dp))
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             items(CustomizationStore.cardColorOptions.size) { index ->

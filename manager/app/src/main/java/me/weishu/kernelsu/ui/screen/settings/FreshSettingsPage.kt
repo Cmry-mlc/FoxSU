@@ -45,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -56,7 +57,10 @@ import androidx.compose.ui.window.Dialog
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.UiMode
 import me.weishu.kernelsu.ui.component.freshCardBorder
+import me.weishu.kernelsu.data.settings.CustomizationStore
+import me.weishu.kernelsu.data.settings.RainbowCards
 import me.weishu.kernelsu.ui.component.freshCardColor
+import me.weishu.kernelsu.ui.component.isNightScheme
 import me.weishu.kernelsu.ui.uiModeLabelRes
 
 private enum class TileState { On, Off, Link, Disabled }
@@ -335,14 +339,24 @@ private fun FreshTileGrid(tiles: List<SettingsTile>) {
             i += take
         }
     }
+    val custom = CustomizationStore.current
+    val rainbow = custom.rainbowCards && !custom.cardGlass && !isNightScheme()
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        var index = 0
         rows.forEach { row ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 row.forEach { tile ->
-                    SettingsTileView(tile = tile, modifier = Modifier.weight(1f))
+                    val pair = if (rainbow) RainbowCards[index % RainbowCards.size] else null
+                    index++
+                    SettingsTileView(
+                        tile = tile,
+                        containerColor = pair?.let { Color(it.first) },
+                        contentColor = pair?.let { Color(it.second) },
+                        modifier = Modifier.weight(1f),
+                    )
                 }
                 if (row.size == 1) { Spacer(Modifier.weight(1f)); Spacer(Modifier.weight(1f)) }
             }
@@ -351,7 +365,12 @@ private fun FreshTileGrid(tiles: List<SettingsTile>) {
 }
 
 @Composable
-private fun SettingsTileView(tile: SettingsTile, modifier: Modifier = Modifier) {
+private fun SettingsTileView(
+    tile: SettingsTile,
+    modifier: Modifier = Modifier,
+    containerColor: Color? = null,
+    contentColor: Color? = null,
+) {
     val accent = when (tile.state) {
         TileState.On, TileState.Link -> MaterialTheme.colorScheme.primary
         TileState.Off -> MaterialTheme.colorScheme.onSurfaceVariant
@@ -369,8 +388,8 @@ private fun SettingsTileView(tile: SettingsTile, modifier: Modifier = Modifier) 
             .clip(RoundedCornerShape(20.dp))
             .clickable(enabled = tile.state != TileState.Disabled, onClick = tile.onClick),
         shape = RoundedCornerShape(20.dp),
-        color = freshCardColor(),
-        contentColor = MaterialTheme.colorScheme.onSurface,
+        color = containerColor ?: freshCardColor(),
+        contentColor = contentColor ?: MaterialTheme.colorScheme.onSurface,
         border = freshCardBorder(),
         shadowElevation = 0.dp,
     ) {
@@ -400,9 +419,9 @@ private fun SettingsTileView(tile: SettingsTile, modifier: Modifier = Modifier) 
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 color = if (tile.state == TileState.Disabled) {
-                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f)
+                    (contentColor ?: MaterialTheme.colorScheme.onSurface).copy(alpha = 0.45f)
                 } else {
-                    MaterialTheme.colorScheme.onSurface
+                    contentColor ?: MaterialTheme.colorScheme.onSurface
                 },
             )
             if (tile.caption != null) {
