@@ -563,10 +563,13 @@ private fun GroupItem(
             }
         },
         leadingContent = {
+            // 设计稿 .uico：42dp、圆角13
             AppIconImage(
                 packageInfo = group.primary.packageInfo,
                 label = group.primary.label,
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier
+                    .size(42.dp)
+                    .clip(RoundedCornerShape(13.dp))
             )
         },
     )

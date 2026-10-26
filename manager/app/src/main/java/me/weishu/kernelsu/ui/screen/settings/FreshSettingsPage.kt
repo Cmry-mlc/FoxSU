@@ -1,6 +1,7 @@
 package me.weishu.kernelsu.ui.screen.settings
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -45,6 +47,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
@@ -323,7 +326,7 @@ private fun FreshSettingsSection(title: String, content: @Composable () -> Unit)
             fontSize = 12.sp,
             fontWeight = FontWeight.ExtraBold,
             letterSpacing = 1.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = if (isNightScheme()) Color(0xFF9A97AB) else Color(0xFF8E8B9C),
             modifier = Modifier.padding(start = 6.dp, top = 16.dp, bottom = 9.dp),
         )
         content()
@@ -367,12 +370,12 @@ private fun FreshTileGrid(tiles: List<SettingsTile>) {
             UiPalette.PillSky,
         )
     }
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
         var index = 0
         rows.forEach { row ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(11.dp),
             ) {
                 row.forEach { tile ->
                     val pair = when {
@@ -413,24 +416,26 @@ private fun SettingsTileView(
         tile.state == TileState.Off -> MaterialTheme.colorScheme.onSurfaceVariant
         else -> MaterialTheme.colorScheme.outline
     }
+    // 设计稿：sT 用卡片深彩色全不透明；sS opacity .65（未支持态再降到 .55，但仍须可读）
     val titleColor = (contentColor ?: cardContentColor()).let {
-        if (tile.state == TileState.Disabled) it.copy(alpha = 0.6f) else it
+        if (tile.state == TileState.Disabled) it.copy(alpha = 0.72f) else it
     }
     val captionColor = when {
-        onCard -> contentColor!!.copy(alpha = if (tile.state == TileState.Disabled) 0.5f else 0.72f)
+        onCard -> contentColor!!.copy(alpha = if (tile.state == TileState.Disabled) 0.6f else 0.75f)
         tile.state == TileState.On -> freshAccent()
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
     Surface(
         modifier = modifier
-            .height(118.dp)
+            .heightIn(min = 112.dp)
             .clip(RoundedCornerShape(22.dp))
             .clickable(enabled = tile.state != TileState.Disabled, onClick = tile.onClick),
         shape = RoundedCornerShape(22.dp),
         color = containerColor ?: freshCardColor(),
         contentColor = contentColor ?: cardContentColor(),
         border = if (onCard) null else freshCardBorder(),
+        // 设计稿 .scard 无投影（靠色块区分），未上图时靠边框
         shadowElevation = 0.dp,
     ) {
         Box {
@@ -441,25 +446,27 @@ private fun SettingsTileView(
                 .padding(horizontal = 6.dp, vertical = 15.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            // 设计稿 chip：40dp 白底、13dp 圆角、彩色描边图标
-            Surface(
-                shape = RoundedCornerShape(13.dp),
-                color = if (onCard) {
-                    Color.White.copy(alpha = if (isNightScheme()) 0.10f else 1f)
-                } else {
-                    accent.copy(alpha = if (tile.state == TileState.On) 0.18f else 0.10f)
-                },
-                contentColor = accent,
-                modifier = Modifier.size(40.dp),
+            // 设计稿 chip：40dp 白底、13dp 圆角、0 2px 6px 投影、彩色描边图标
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .shadow(if (isNightScheme()) 0.dp else 2.dp, RoundedCornerShape(13.dp))
+                    .clip(RoundedCornerShape(13.dp))
+                    .background(
+                        if (onCard) {
+                            Color.White.copy(alpha = if (isNightScheme()) 0.10f else 1f)
+                        } else {
+                            accent.copy(alpha = if (tile.state == TileState.On) 0.18f else 0.10f)
+                        }
+                    ),
+                contentAlignment = Alignment.Center,
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        painter = painterResource(tile.iconRes),
-                        contentDescription = null,
-                        tint = accent,
-                        modifier = Modifier.size(19.dp),
-                    )
-                }
+                Icon(
+                    painter = painterResource(tile.iconRes),
+                    contentDescription = null,
+                    tint = accent,
+                    modifier = Modifier.size(19.dp),
+                )
             }
             Spacer(Modifier.height(8.dp))
             Text(

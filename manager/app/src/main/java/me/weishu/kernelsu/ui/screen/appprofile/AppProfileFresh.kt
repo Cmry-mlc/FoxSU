@@ -187,7 +187,7 @@ fun FreshModeSelector(
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                     color = if (!enabled) {
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                     } else if (selected) {
                         accent
                     } else {
@@ -201,7 +201,7 @@ fun FreshModeSelector(
                     Text(
                         text = "—",
                         fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                     )
                 } else if (selected) {
                     FreshDot()

@@ -43,7 +43,11 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.ui.text.style.TextOverflow
@@ -59,6 +63,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -165,15 +170,37 @@ fun CustomizationScreen() {
     Scaffold(
         containerColor = scaffoldBackgroundColor(MaterialTheme.colorScheme.surface),
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.customization_title)) },
-                navigationIcon = {
-                    IconButton(onClick = dropUnlessResumed { navigator.pop() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
-            )
+            // 设计稿 .phead：40dp 白圆返回钮（带投影）+ 24/800 标题，padding 20x(20/10)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .shadow(if (isNightScheme()) 0.dp else 2.dp, CircleShape)
+                        .clip(CircleShape)
+                        .background(freshCardColor())
+                        .clickable(onClick = dropUnlessResumed { navigator.pop() }),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = LocalContentColor.current,
+                    )
+                }
+                Spacer(Modifier.width(14.dp))
+                Text(
+                    text = stringResource(R.string.customization_title),
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = cardContentColor(),
+                )
+            }
         },
     ) { padding ->
         WallpaperBackdrop {
@@ -297,11 +324,29 @@ fun CustomizationScreen() {
                         title = stringResource(R.string.customization_title_bar),
                         subtitle = stringResource(R.string.customization_title_bar_sub),
                     ) {
+                        // 设计稿：1.5px #e4e2ee 描边、圆角14、13px 字号、占位用 sub 色
                         OutlinedTextField(
                             value = custom.homeTitle,
                             onValueChange = CustomizationStore::setHomeTitle,
                             singleLine = true,
-                            placeholder = { Text(stringResource(R.string.customization_title_placeholder)) },
+                            textStyle = LocalTextStyle.current.copy(fontSize = 13.sp),
+                            placeholder = {
+                                Text(
+                                    text = stringResource(R.string.customization_title_placeholder),
+                                    fontSize = 13.sp,
+                                    color = LocalContentColor.current.copy(alpha = 0.5f),
+                                )
+                            },
+                            shape = RoundedCornerShape(14.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedBorderColor = freshAccent(),
+                                unfocusedBorderColor = if (isNightScheme()) Color(0xFF3A3A48) else Color(0xFFE4E2EE),
+                                focusedTextColor = LocalContentColor.current,
+                                unfocusedTextColor = LocalContentColor.current,
+                                cursorColor = freshAccent(),
+                            ),
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
@@ -393,101 +438,33 @@ fun CustomizationScreen() {
                                 onClick = { CustomizationStore.setBottomBarStyle(1) },
                             )
                         }
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = stringResource(R.string.customization_bottom_immersive),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = LocalContentColor.current,
-                                )
-                                Text(
-                                    text = stringResource(R.string.customization_bottom_immersive_sum),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = LocalContentColor.current.copy(alpha = 0.62f),
-                                )
-                            }
-                            Switch(
-                                checked = custom.bottomBarImmersive,
-                                onCheckedChange = CustomizationStore::setBottomBarImmersive,
-                            )
-                        }
+                        ToggleRow(
+                            title = stringResource(R.string.customization_bottom_immersive),
+                            subtitle = stringResource(R.string.customization_bottom_immersive_sum),
+                            checked = custom.bottomBarImmersive,
+                            onChange = CustomizationStore::setBottomBarImmersive,
+                        )
 
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = stringResource(R.string.customization_bottom_liquid_glass),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = LocalContentColor.current,
-                                )
-                                Text(
-                                    text = stringResource(R.string.customization_bottom_liquid_glass_sum),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = LocalContentColor.current.copy(alpha = 0.62f),
-                                )
-                            }
-                            Switch(
-                                checked = custom.bottomBarLiquidGlass,
-                                onCheckedChange = CustomizationStore::setBottomBarLiquidGlass,
-                            )
-                        }
+                        ToggleRow(
+                            title = stringResource(R.string.customization_bottom_liquid_glass),
+                            subtitle = stringResource(R.string.customization_bottom_liquid_glass_sum),
+                            checked = custom.bottomBarLiquidGlass,
+                            onChange = CustomizationStore::setBottomBarLiquidGlass,
+                        )
 
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = stringResource(R.string.customization_nav_rainbow),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = LocalContentColor.current,
-                                )
-                                Text(
-                                    text = stringResource(R.string.customization_nav_rainbow_sum),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = LocalContentColor.current.copy(alpha = 0.62f),
-                                )
-                            }
-                            Switch(
-                                checked = custom.navRainbow,
-                                onCheckedChange = CustomizationStore::setNavRainbow,
-                            )
-                        }
+                        ToggleRow(
+                            title = stringResource(R.string.customization_nav_rainbow),
+                            subtitle = stringResource(R.string.customization_nav_rainbow_sum),
+                            checked = custom.navRainbow,
+                            onChange = CustomizationStore::setNavRainbow,
+                        )
 
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = stringResource(R.string.customization_nav_monet),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = LocalContentColor.current,
-                                )
-                                Text(
-                                    text = stringResource(R.string.customization_nav_monet_sum),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = LocalContentColor.current.copy(alpha = 0.62f),
-                                )
-                            }
-                            Switch(
-                                checked = custom.navMonet,
-                                onCheckedChange = CustomizationStore::setNavMonet,
-                            )
-                        }
+                        ToggleRow(
+                            title = stringResource(R.string.customization_nav_monet),
+                            subtitle = stringResource(R.string.customization_nav_monet_sum),
+                            checked = custom.navMonet,
+                            onChange = CustomizationStore::setNavMonet,
+                        )
 
                         SliderRow(
                             label = stringResource(R.string.customization_bottom_alpha),
@@ -615,77 +592,75 @@ private fun freshAccentContent(): Color = if (isNightScheme()) Color(0xFF1F2F26)
 
 @Composable
 private fun PreviewCard(custom: Customization) {
-    val cardColor = if (custom.cardColor == 0) {
-        freshCardColor()
-    } else {
-        Color(custom.cardColor)
-    }.copy(alpha = custom.cardAlpha)
-
-    val onCard = cardContentColor()
-
-    Surface(
-        shape = RoundedCornerShape(28.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        modifier = Modifier.fillMaxWidth(),
+    // 设计稿：26 圆角容器，薄荷渐变 135° #ddefda → #bfe0c9，padding 30x22
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(26.dp))
+            .background(
+                if (isNightScheme()) {
+                    Brush.linearGradient(listOf(Color(0xFF20301F), Color(0xFF2C3F2E)))
+                } else {
+                    Brush.linearGradient(listOf(Color(0xFFDDEFDA), Color(0xFFBFE0C9)))
+                }
+            )
+            .padding(horizontal = 22.dp, vertical = 30.dp),
+        contentAlignment = Alignment.Center,
     ) {
-        Box(modifier = Modifier.height(220.dp)) {
-            if (custom.wallpaperUri != null) {
-                WallpaperBackground(customization = custom)
-            } else {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.linearGradient(
-                                listOf(
-                                    freshAccentContainer(),
-                                    MaterialTheme.colorScheme.surface,
-                                )
-                            )
-                        ),
-                )
-            }
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            // 白卡：圆角20、padding 16x22、0 6 18 投影
             Column(
                 modifier = Modifier
-                    .align(Alignment.Center)
-                    .padding(horizontal = 26.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                    .shadow(if (isNightScheme()) 0.dp else 6.dp, RoundedCornerShape(20.dp))
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(if (isNightScheme()) Color(0xFF2A2A36) else Color.White)
+                    .padding(horizontal = 22.dp, vertical = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Surface(shape = RoundedCornerShape(18.dp), color = cardColor, contentColor = onCard) {
-                    Column(modifier = Modifier.padding(14.dp)) {
-                        Text(
-                            text = stringResource(R.string.app_name),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = freshAccent(),
+                Text(
+                    text = stringResource(R.string.app_name),
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = freshAccent(),
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = stringResource(R.string.customization_preview_hint),
+                    fontSize = 10.5.sp,
+                    color = if (isNightScheme()) Color(0xFF9A97AB) else Color(0xFF8E8B9C),
+                )
+            }
+            // 白胶囊：圆角99、padding 12x20，内嵌 LKM 徽章 + 工作模式
+            Row(
+                modifier = Modifier
+                    .shadow(if (isNightScheme()) 0.dp else 6.dp, RoundedCornerShape(99.dp))
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(if (isNightScheme()) Color(0xFF2A2A36) else Color.White)
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = "LKM",
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = freshAccent(),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(
+                            if (isNightScheme()) Color(0xFF1F2F26) else Color(0xFFDDEEDC)
                         )
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            text = stringResource(R.string.customization_preview_hint),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = onCard.copy(alpha = 0.7f),
-                        )
-                    }
-                }
-                Surface(shape = RoundedCornerShape(18.dp), color = cardColor, contentColor = onCard) {
-                    Row(
-                        modifier = Modifier.padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = "LKM",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = freshAccent(),
-                        )
-                        Spacer(Modifier.width(10.dp))
-                        Text(
-                            text = stringResource(R.string.customization_preview_card),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = onCard.copy(alpha = 0.7f),
-                        )
-                    }
-                }
+                        .padding(horizontal = 9.dp, vertical = 4.dp),
+                )
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    text = stringResource(R.string.customization_preview_card),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isNightScheme()) Color(0xFFECEAF2) else Color(0xFF2B2B33),
+                )
             }
         }
     }
@@ -702,44 +677,51 @@ private fun SectionCard(
     // 卡片自身决定文字明暗：白卡深字、深卡白字，避免白卡白字
     val cardContent = cardContentColor()
     Surface(
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(24.dp),
         color = rememberCardSurface(freshCardColor()),
         contentColor = cardContent,
         border = freshCardBorder(),
+        shadowElevation = if (isNightScheme()) 0.dp else 2.dp,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Box {
             GlassSheen(Modifier.matchParentSize())
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // 设计稿 .whead：白底 40 圆角13 chip，图标用分组彩色
-                Surface(
-                    shape = RoundedCornerShape(13.dp),
-                    color = Color.White.copy(alpha = if (isNightScheme()) 0.10f else 1f),
-                    contentColor = accent,
-                    modifier = Modifier.size(40.dp),
+                // 设计稿 .whead .chip：40dp 白底、圆角13、带 0 2px 6px rgba(60,55,90,.10) 投影
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .shadow(if (isNightScheme()) 0.dp else 2.dp, RoundedCornerShape(13.dp))
+                        .clip(RoundedCornerShape(13.dp))
+                        .background(Color.White.copy(alpha = if (isNightScheme()) 0.10f else 1f)),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(icon, contentDescription = null, modifier = Modifier.size(19.dp))
-                    }
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = accent,
+                        modifier = Modifier.size(19.dp),
+                    )
                 }
                 Spacer(Modifier.width(12.dp))
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = title,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = LocalContentColor.current,
                     )
+                    Spacer(Modifier.height(2.dp))
                     Text(
                         text = subtitle,
                         fontSize = 10.5.sp,
                         lineHeight = 14.sp,
-                        color = LocalContentColor.current.copy(alpha = 0.62f),
+                        color = LocalContentColor.current.copy(alpha = 0.55f),
                     )
                 }
             }
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(12.dp))
             content()
         }
         }
@@ -754,17 +736,23 @@ private fun SliderRow(
     display: String,
     onChange: (Float) -> Unit,
 ) {
-    Column(modifier = Modifier.padding(top = 6.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+    // 设计稿 .slabel（12/700 左右分栏，% 薄荷色）+ .slider（10px 高圆角99 轨道）
+    Column(modifier = Modifier.padding(top = 8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(
                 text = label,
-                style = MaterialTheme.typography.bodyMedium,
-                color = LocalContentColor.current.copy(alpha = 0.62f),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = LocalContentColor.current,
                 modifier = Modifier.weight(1f),
             )
             Text(
                 text = display,
-                style = MaterialTheme.typography.labelMedium,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
                 color = freshAccent(),
             )
         }
@@ -772,6 +760,16 @@ private fun SliderRow(
             value = value,
             onValueChange = onChange,
             valueRange = range,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 2.dp),
+            colors = SliderDefaults.colors(
+                thumbColor = Color.White,
+                activeTrackColor = freshAccent(),
+                inactiveTrackColor = if (isNightScheme()) Color(0xFF2A2A36) else Color(0xFFECECF2),
+                activeTickColor = Color.Transparent,
+                inactiveTickColor = Color.Transparent,
+            ),
         )
     }
 }
@@ -803,12 +801,12 @@ private fun PillButton(
             .clickable(enabled = enabled, onClick = onClick),
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(18.dp))
-            Spacer(Modifier.width(6.dp))
-            Text(text = text, style = MaterialTheme.typography.labelLarge)
+            Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(14.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(text = text, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -816,25 +814,26 @@ private fun PillButton(
 @Composable
 private fun StyleChip(label: String, selected: Boolean, onClick: () -> Unit) {
     Surface(
-        shape = RoundedCornerShape(50),
+        shape = RoundedCornerShape(14.dp),
         color = if (selected) {
             freshAccent()
         } else {
-            MaterialTheme.colorScheme.surfaceContainer
+            if (isNightScheme()) Color(0xFF24242E) else Color(0xFFECECF2)
         },
         contentColor = if (selected) {
             freshAccentContent()
         } else {
-            MaterialTheme.colorScheme.onSurfaceVariant
+            if (isNightScheme()) Color(0xFFB5B2C2) else Color(0xFF55525F)
         },
         modifier = Modifier
-            .clip(RoundedCornerShape(50))
+            .clip(RoundedCornerShape(14.dp))
             .clickable(onClick = onClick),
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 9.dp),
+            fontSize = 12.5.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 9.dp),
         )
     }
 }
@@ -857,9 +856,14 @@ private fun IconOption(
     Surface(
         shape = RoundedCornerShape(18.dp),
         color = if (selected) {
-            freshAccentContainer().copy(alpha = 0.55f)
+            freshAccentContainer()
         } else {
-            MaterialTheme.colorScheme.surfaceContainer
+            if (isNightScheme()) Color(0xFF24242E) else Color.White
+        },
+        border = if (selected) {
+            BorderStroke(1.5.dp, freshAccent())
+        } else {
+            BorderStroke(1.dp, if (isNightScheme()) Color(0xFF3A3A48) else Color(0xFFEDEBF3))
         },
         modifier = Modifier
             .fillMaxWidth()
@@ -886,8 +890,9 @@ private fun IconOption(
             Spacer(Modifier.width(12.dp))
             Text(
                 text = label,
-                style = MaterialTheme.typography.bodyLarge,
-                color = LocalContentColor.current,
+                fontSize = 12.5.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (selected) freshAccent() else LocalContentColor.current,
                 modifier = Modifier.weight(1f),
             )
             if (selected) {
@@ -895,6 +900,7 @@ private fun IconOption(
                     imageVector = Icons.Filled.Check,
                     contentDescription = null,
                     tint = freshAccent(),
+                    modifier = Modifier.size(18.dp),
                 )
             }
         }
@@ -902,6 +908,7 @@ private fun IconOption(
 }
 
 /** 通用开关行：标题 + 说明 + 右侧开关。 */
+/** 设计稿 .rowline：开关行，上边 1px 分隔线，标题 13.5/700，说明 10.5 sub 色。 */
 @Composable
 private fun ToggleRow(
     title: String,
@@ -909,29 +916,36 @@ private fun ToggleRow(
     checked: Boolean,
     onChange: (Boolean) -> Unit,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                color = LocalContentColor.current,
-            )
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = LocalContentColor.current.copy(alpha = 0.62f),
-            )
+    Column(modifier = Modifier.fillMaxWidth()) {
+        HorizontalDivider(color = if (isNightScheme()) Color(0xFF2A2A36) else Color(0xFFF2F0F6))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 11.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    fontSize = 13.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = LocalContentColor.current,
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = subtitle,
+                    fontSize = 10.5.sp,
+                    lineHeight = 15.sp,
+                    color = LocalContentColor.current.copy(alpha = 0.55f),
+                )
+            }
+            Spacer(Modifier.width(12.dp))
+            Switch(checked = checked, onCheckedChange = onChange)
         }
-        Switch(checked = checked, onCheckedChange = onChange)
     }
 }
 
-/** 九宫格胶囊：小图标 + 名称，选中时描边 + 主题色底。 */
+/** 启动器图标选项：设计稿 18 圆角、选中薄荷底 + 2dp 薄荷描边、40dp 白底圆角14 图标块。 */
 @Composable
 private fun IconChip(
     label: String,
@@ -942,43 +956,45 @@ private fun IconChip(
     modifier: Modifier = Modifier,
 ) {
     Surface(
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(18.dp),
         color = if (selected) {
-            freshAccentContainer().copy(alpha = 0.55f)
+            if (isNightScheme()) Color(0xFF1F2F26) else Color(0xFFDDEEDC)
         } else {
             freshCardColor()
         },
         contentColor = cardContentColor(),
         border = if (selected) {
-            BorderStroke(1.5.dp, freshAccent())
+            BorderStroke(2.dp, freshAccent())
         } else {
-            freshCardBorder()
+            BorderStroke(1.5.dp, if (isNightScheme()) Color(0xFF2F2F3C) else Color(0xFFECECF2))
         },
         modifier = modifier
-            .clip(RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(18.dp))
             .clickable(onClick = onSelect),
     ) {
         Column(
-            modifier = Modifier.padding(vertical = 10.dp),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 14.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Box(
                 modifier = Modifier
-                    .size(38.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                    .size(40.dp)
+                    .shadow(if (isNightScheme()) 0.dp else 2.dp, RoundedCornerShape(14.dp))
+                    .clip(RoundedCornerShape(14.dp))
                     .background(background),
                 contentAlignment = Alignment.Center,
             ) {
                 Image(
                     painter = painterResource(iconRes),
                     contentDescription = null,
-                    modifier = Modifier.size(30.dp),
+                    modifier = Modifier.size(32.dp),
                 )
             }
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(8.dp))
             Text(
                 text = label,
-                fontSize = 11.sp,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 color = if (selected) {
