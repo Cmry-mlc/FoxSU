@@ -289,6 +289,7 @@ fun HomePagerFresh(
                 .fillMaxWidth()
                 .weight(1f),
             contentPadding = PaddingValues(
+                top = 14.dp,
                 bottom = bottomInnerPadding + navigationBarPadding + 16.dp,
             ),
         ) {

@@ -32,8 +32,8 @@
     <group
         android:pivotX="54"
         android:pivotY="56"
-        android:scaleX="0.46"
-        android:scaleY="0.46">
+        android:scaleX="0.36"
+        android:scaleY="0.36">
         <path
                     android:fillColor="#FFFBEEDC"
                     android:pathData="M34,43 C28,29 33,19 42,26 L49,33 Z" />

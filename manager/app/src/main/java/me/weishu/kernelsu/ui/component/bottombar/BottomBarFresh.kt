@@ -52,6 +52,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -69,8 +70,8 @@ import me.weishu.kernelsu.ui.LocalMainPagerState
 
 private data class FreshNavItem(
     val label: Int,
-    val selectedIcon: ImageVector,
-    val unselectedIcon: ImageVector,
+    val selectedIcon: Int,
+    val unselectedIcon: Int,
 )
 
 @Composable
@@ -81,10 +82,10 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
     val custom = CustomizationStore.current
 
     val items = listOf(
-        FreshNavItem(R.string.home, Icons.Filled.Home, Icons.Outlined.Home),
-        FreshNavItem(R.string.superuser, Icons.Filled.Shield, Icons.Outlined.Shield),
-        FreshNavItem(R.string.module, Icons.Filled.Extension, Icons.Outlined.Extension),
-        FreshNavItem(R.string.settings, Icons.Filled.Settings, Icons.Outlined.Settings),
+        FreshNavItem(R.string.home, R.drawable.ic_nav_home_fill, R.drawable.ic_nav_home),
+        FreshNavItem(R.string.superuser, R.drawable.ic_nav_shield_fill, R.drawable.ic_nav_shield),
+        FreshNavItem(R.string.module, R.drawable.ic_nav_module_fill, R.drawable.ic_nav_module),
+        FreshNavItem(R.string.settings, R.drawable.ic_nav_settings_fill, R.drawable.ic_nav_settings),
     )
 
     // 与标题栏同一套随机色，保证上下呼应
@@ -240,7 +241,7 @@ private fun DrawerNavItem(
                 }
             ) {
                 Icon(
-                    imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
+                    painter = painterResource(if (selected) item.selectedIcon else item.unselectedIcon),
                     contentDescription = stringResource(item.label),
                     tint = contentColor,
                     modifier = Modifier.size(22.dp),
@@ -248,7 +249,7 @@ private fun DrawerNavItem(
             }
         } else {
             Icon(
-                imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
+                painter = painterResource(if (selected) item.selectedIcon else item.unselectedIcon),
                 contentDescription = stringResource(item.label),
                 tint = contentColor,
                 modifier = Modifier.size(22.dp),
@@ -328,7 +329,7 @@ private fun FreshNavItemView(
                 }
             ) {
                 Icon(
-                    imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
+                    painter = painterResource(if (selected) item.selectedIcon else item.unselectedIcon),
                     contentDescription = stringResource(item.label),
                     tint = contentColor,
                     modifier = Modifier
@@ -341,7 +342,7 @@ private fun FreshNavItemView(
             }
         } else {
             Icon(
-                imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
+                painter = painterResource(if (selected) item.selectedIcon else item.unselectedIcon),
                 contentDescription = stringResource(item.label),
                 tint = contentColor,
                 modifier = Modifier

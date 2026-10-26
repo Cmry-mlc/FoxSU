@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.theme.isFreshStyle
 import top.yukonga.miuix.kmp.nav.gesture.WindowNavigationEventBridge
 
@@ -209,8 +210,13 @@ fun SearchAppBar(
                 scrollBehavior = scrollBehavior
             )
 
+            val glass = CustomizationStore.current.cardGlass
             val searchBarColors = SearchBarDefaults.colors(
-                containerColor = if (fresh) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainerHighest
+                containerColor = when {
+                    glass -> Color.White.copy(alpha = 0.16f)
+                    fresh -> MaterialTheme.colorScheme.surface
+                    else -> MaterialTheme.colorScheme.surfaceContainerHighest
+                }
             )
             val barModifier = if (fresh) {
                 Modifier
@@ -221,7 +227,11 @@ fun SearchAppBar(
                     .height(48.dp)
                     .shadow(0.dp, CircleShape, clip = false)
                     .border(
-                        BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)),
+                        BorderStroke(
+                            1.dp,
+                            if (glass) Color.White.copy(alpha = 0.22f)
+                            else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f),
+                        ),
                         CircleShape
                     )
             } else {

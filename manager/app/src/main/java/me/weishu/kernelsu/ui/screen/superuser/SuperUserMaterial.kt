@@ -52,7 +52,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -273,6 +275,7 @@ fun SuperUserPagerMaterial(
                         contentPadding = PaddingValues(
                             start = 16.dp,
                             end = 16.dp,
+                            top = 14.dp,
                             bottom = 16.dp + bottomPadding
                         ),
                     ) {
@@ -307,7 +310,7 @@ fun SuperUserPagerMaterial(
                         contentPadding = PaddingValues(
                             start = 16.dp,
                             end = 16.dp,
-                            top = 0.dp,
+                            top = 14.dp,
                             bottom = 16.dp + bottomPadding
                         ),
                     ) {
@@ -458,7 +461,9 @@ private fun SimpleAppItem(
 
     ListItem(
         onClick = onNavigate,
-        modifier = Modifier.padding(horizontal = 4.dp),
+        modifier = Modifier
+            .padding(horizontal = 2.dp)
+            .clip(RoundedCornerShape(20.dp)),
         colors = ListItemDefaults.colors(
             containerColor = rowContainer,
             contentColor = rowContent,
