@@ -89,6 +89,17 @@ fun resolveCardSurface(slot: Int): CardSurface {
     val alphaOverride = custom.surfaceAlphas.getOrNull(slot) ?: -1f
     val alpha = if (alphaOverride >= 0f) alphaOverride else custom.cardAlpha
 
+    // 玻璃卡面：所有卡片统一成磨砂薄片，文字按壁纸明暗自动取色
+    if (custom.cardGlass) {
+        val lightText = glassNeedsLightText()
+        return CardSurface(
+            container = freshCardColor().copy(alpha = freshCardColor().alpha * alpha),
+            content = if (lightText) Color.White else MaterialTheme.colorScheme.onSurface,
+            accent = if (lightText) Color.White else MaterialTheme.colorScheme.primary,
+            border = freshCardBorder(),
+        )
+    }
+
     // 七彩卡片：所有槽位逐一上色，文字用配套的深色
     if (!night && overrideColor == 0 && custom.rainbowCards && !custom.cardGlass) {
         val (bg, fg) = RainbowCards[slot % RainbowCards.size]

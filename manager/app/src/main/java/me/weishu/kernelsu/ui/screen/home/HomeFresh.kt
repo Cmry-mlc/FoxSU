@@ -75,6 +75,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -109,6 +110,7 @@ import me.weishu.kernelsu.data.settings.RainbowCards
 import me.weishu.kernelsu.data.settings.HERO_SLOT
 import me.weishu.kernelsu.data.repository.SettingsRepositoryImpl
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringArrayResource
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.UiMode
@@ -585,56 +587,85 @@ private fun FreshHeader() {
     val navigator = LocalNavigator.current
     var showRebootDialog by remember { mutableStateOf(false) }
 
+    val phrases = stringArrayResource(R.array.home_witty_phrases)
+    var phraseIndex by remember { mutableStateOf((0 until phrases.size).random()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            kotlinx.coroutines.delay(9000)
+            phraseIndex = (phraseIndex + 1) % phrases.size
+        }
+    }
+
+    val chipColor = if (isNightScheme()) freshCardColor() else Color.White
+    val glyphTint = MaterialTheme.colorScheme.onSurface
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val customTitle = CustomizationStore.current.homeTitle
-        Text(
-            text = customTitle.ifBlank { stringResource(R.string.app_name) },
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f),
-        )
-
-        // 关于作者：和电源键同款的圆形描边按钮
-        IconButton(
-            onClick = { navigator.push(Route.Author) },
-            modifier = Modifier
-                .padding(end = 8.dp)
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(freshCardColor()),
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_author),
-                contentDescription = stringResource(R.string.author_title),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(21.dp),
-            )
+        // 白圆底 + 黑色小狐
+        Surface(shape = CircleShape, color = chipColor, modifier = Modifier.size(46.dp)) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_launcher_monochrome),
+                    contentDescription = null,
+                    tint = glyphTint,
+                    modifier = Modifier.size(28.dp),
+                )
+            }
         }
 
-        KsuIsValid {
-            Surface(
-                shape = CircleShape,
-                color = freshCardColor(),
-                border = freshCardBorder(),
-                shadowElevation = 0.dp,
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .clickable { showRebootDialog = true },
+        Spacer(Modifier.width(12.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            val customTitle = CustomizationStore.current.homeTitle
+            Text(
+                text = customTitle.ifBlank { stringResource(R.string.app_name) },
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            // 标题下方自动轮换的一句话
+            androidx.compose.animation.Crossfade(targetState = phraseIndex, label = "witty") { index ->
+                Text(
+                    text = phrases.getOrElse(index) { "" },
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+
+        Spacer(Modifier.width(10.dp))
+
+        // 白色胶囊：作者 + 电源
+        Surface(shape = RoundedCornerShape(50), color = chipColor) {
+            Row(
+                modifier = Modifier.padding(horizontal = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(contentAlignment = Alignment.Center) {
+                IconButton(onClick = { navigator.push(Route.Author) }, modifier = Modifier.size(40.dp)) {
                     Icon(
-                        painter = painterResource(R.drawable.ic_power),
-                        contentDescription = stringResource(R.string.reboot),
-                        tint = MaterialTheme.colorScheme.onSurface,
+                        painter = painterResource(R.drawable.ic_author),
+                        contentDescription = stringResource(R.string.author_title),
+                        tint = glyphTint,
                         modifier = Modifier.size(20.dp),
                     )
+                }
+                KsuIsValid {
+                    IconButton(onClick = { showRebootDialog = true }, modifier = Modifier.size(40.dp)) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_power),
+                            contentDescription = stringResource(R.string.reboot),
+                            tint = glyphTint,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
                 }
             }
         }

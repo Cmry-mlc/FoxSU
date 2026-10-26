@@ -495,4 +495,14 @@
     <string name="script_param_below_min">Must be at least %d</string>
     <string name="script_param_above_max">Must be at most %d</string>
     <string name="script_param_invalid">Invalid value</string>
+    <string-array name="home_witty_phrases">
+        <item>Root in hand, world in reach</item>
+        <item>Kernel temp: just right</item>
+        <item>More modules, more care</item>
+        <item>One clean flash beats ten reboots</item>
+        <item>Quietly running, silently powerful</item>
+        <item>Clean system, clear mind</item>
+        <item>Tinkering is romance, stability is confidence</item>
+        <item>Updates come to those who wait</item>
+    </string-array>
 </resources>

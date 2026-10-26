@@ -489,4 +489,14 @@
     <string name="script_param_below_min">不能小于 %d</string>
     <string name="script_param_above_max">不能大于 %d</string>
     <string name="script_param_invalid">无效的值</string>
+    <string-array name="home_witty_phrases">
+        <item>Root 在手，天下我有</item>
+        <item>今日内核温度：恰到好处</item>
+        <item>模块不嫌多，稳定最重要</item>
+        <item>一次成功刷入，胜过十次重启</item>
+        <item>低调运行，安静提权</item>
+        <item>系统干净，心里也干净</item>
+        <item>折腾是浪漫，稳定是底气</item>
+        <item>该更新的总会更新</item>
+    </string-array>
 </resources>
