@@ -42,7 +42,6 @@ import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Cached
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DeveloperBoard
 import androidx.compose.material.icons.filled.DeveloperMode
 import androidx.compose.material.icons.filled.Download
@@ -107,6 +106,7 @@ import me.weishu.kernelsu.data.settings.Customization
 import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.data.settings.HERO_SLOT
 import me.weishu.kernelsu.data.repository.SettingsRepositoryImpl
+import androidx.compose.ui.res.painterResource
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.UiMode
@@ -733,11 +733,13 @@ private fun FreshStatusCard(
     val ksuActive = state.ksuVersion != null
     val notInstalled = !ksuActive && state.kernelVersion.isGKI()
 
-    val statusIcon = when {
-        ksuActive -> Icons.Filled.CheckCircle
-        notInstalled -> Icons.Filled.Warning
-        else -> Icons.Filled.Block
-    }
+    val statusIcon = painterResource(
+        when {
+            ksuActive -> R.drawable.ic_home_status_ok
+            notInstalled -> R.drawable.ic_home_status_warn
+            else -> R.drawable.ic_home_status_fail
+        }
+    )
     val statusTitle = when {
         ksuActive -> stringResource(R.string.home_working)
         notInstalled -> stringResource(R.string.home_not_installed)
@@ -867,7 +869,7 @@ private fun FreshStatusCard(
                     }
                 }
                 Icon(
-                    imageVector = statusIcon,
+                    painter = statusIcon,
                     contentDescription = null,
                     tint = if (ksuActive) {
                         contentColor.copy(alpha = if (hasHero) 0.85f else 0.30f)
