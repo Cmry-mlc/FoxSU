@@ -128,10 +128,11 @@ fun FreshKernelSUTheme(
     MaterialExpressiveTheme(
         colorScheme = textScheme,
         motionScheme = MotionScheme.expressive(),
+        // 玻璃模式不再给文字加投影：字要“正常”，靠颜色和卡面明暗保可读
         typography = rememberTypography(
             CustomizationStore.current.fontStyle,
             CustomizationStore.current.fontPath,
-        ).let { if (glassLightText) it.withSoftShadow() else it },
+        ).let { if (glassLightText) it.withoutShadow() else it },
         shapes = FreshShapes,
         content = {
             MonetColorsProvider.UpdateCss(animatedColorScheme)
