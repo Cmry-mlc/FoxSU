@@ -134,6 +134,7 @@ import me.weishu.kernelsu.ui.component.KsuIsValid
 import me.weishu.kernelsu.ui.component.freshCardBorder
 import me.weishu.kernelsu.ui.component.freshCardColor
 import me.weishu.kernelsu.ui.component.isNightScheme
+import me.weishu.kernelsu.ui.theme.LaunchTint
 import me.weishu.kernelsu.ui.component.resolveCardSurface
 import me.weishu.kernelsu.ui.component.supportingTextAlpha
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
@@ -336,7 +337,7 @@ fun HomePagerFresh(
                         contentColor = surface1.content,
                         accentColor = surface1.accent,
                         cardBorder = surface1.border,
-                        imageUri = custom.kpiImages.getOrNull(0),
+                        imageUri = if (custom.cardGlass) null else custom.kpiImages.getOrNull(0),
                         imageAlpha = custom.kpiAlphas.getOrNull(0) ?: 0.7f,
                         onLongPress = { kpiMenuIndex = 0 },
                         onClick = null,
@@ -351,7 +352,7 @@ fun HomePagerFresh(
                         contentColor = surface2.content,
                         accentColor = surface2.accent,
                         cardBorder = surface2.border,
-                        imageUri = custom.kpiImages.getOrNull(1),
+                        imageUri = if (custom.cardGlass) null else custom.kpiImages.getOrNull(1),
                         imageAlpha = custom.kpiAlphas.getOrNull(1) ?: 0.7f,
                         onLongPress = { kpiMenuIndex = 1 },
                         onClick = { showStylePicker = true },
@@ -374,7 +375,7 @@ fun HomePagerFresh(
                         contentColor = surface3.content,
                         accentColor = surface3.accent,
                         cardBorder = surface3.border,
-                        imageUri = custom.kpiImages.getOrNull(2),
+                        imageUri = if (custom.cardGlass) null else custom.kpiImages.getOrNull(2),
                         imageAlpha = custom.kpiAlphas.getOrNull(2) ?: 0.7f,
                         onLongPress = { kpiMenuIndex = 2 },
                         onClick = { onOpenTab(1) },
@@ -389,7 +390,7 @@ fun HomePagerFresh(
                         contentColor = surface4.content,
                         accentColor = surface4.accent,
                         cardBorder = surface4.border,
-                        imageUri = custom.kpiImages.getOrNull(3),
+                        imageUri = if (custom.cardGlass) null else custom.kpiImages.getOrNull(3),
                         imageAlpha = custom.kpiAlphas.getOrNull(3) ?: 0.7f,
                         onLongPress = { kpiMenuIndex = 3 },
                         onClick = { onOpenTab(2) },
@@ -608,13 +609,8 @@ private fun FreshHeader() {
         }
     }
 
-    // 每次重新打开 App 随机一套柔色（深色模式沿用卡面，保证对比度）
-    val chipPalette = listOf(
-        Color(0xFFE2F5E6), Color(0xFFEFE6FB), Color(0xFFFFF3D2),
-        Color(0xFFFFE4E0), Color(0xFFDDEBFA), Color(0xFFDFF3F3),
-    )
-    val randomChip = remember { chipPalette.random() }
-    val chipColor = if (isNightScheme()) freshCardColor() else randomChip
+    // 与底栏共用同一套随机色（深色模式沿用卡面）
+    val chipColor = if (isNightScheme()) freshCardColor() else LaunchTint.chip
     val glyphTint = if (isNightScheme()) MaterialTheme.colorScheme.onSurface else Color(0xFF1B1F1A)
 
     Row(
@@ -793,13 +789,13 @@ private fun FreshRebootDialog(onDismiss: () -> Unit) {
                 }
 
                 Spacer(Modifier.height(2.dp))
-                slideOptions.forEach { option ->
+                slideOptions.forEachIndexed { index, option ->
                     SlideToConfirm(
                         label = stringResource(option.labelRes),
                         containerColor = if (night) {
                             MaterialTheme.colorScheme.surfaceContainerHigh
                         } else {
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
+                            Color(RainbowCards[index % RainbowCards.size].first)
                         },
                         onConfirm = {
                             onDismiss()
@@ -841,36 +837,39 @@ private fun RebootRow(
             .clip(RoundedCornerShape(27.dp))
             .background(containerColor)
             .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp),
+            .padding(start = 8.dp, end = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Surface(
             shape = CircleShape,
             color = contentColor.copy(alpha = 0.14f),
             contentColor = contentColor,
-            modifier = Modifier.size(36.dp),
+            modifier = Modifier.size(32.dp),
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     imageVector = rebootIcon(option.reason),
                     contentDescription = null,
-                    modifier = Modifier.size(18.dp),
+                    modifier = Modifier.size(16.dp),
                 )
             }
         }
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(10.dp))
         Text(
             text = stringResource(option.labelRes),
-            fontSize = 14.sp,
+            fontSize = 12.5.sp,
+            lineHeight = 15.sp,
             fontWeight = FontWeight.Medium,
             color = contentColor,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
         Icon(
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
             contentDescription = null,
-            tint = contentColor.copy(alpha = 0.55f),
-            modifier = Modifier.size(18.dp),
+            tint = contentColor.copy(alpha = 0.45f),
+            modifier = Modifier.size(16.dp),
         )
     }
 }
@@ -891,21 +890,17 @@ private fun SlideToConfirm(
     val maxOffset = (trackWidth - thumbPx).coerceAtLeast(0f)
     val progress = if (maxOffset > 0f) (offsetPx / maxOffset).coerceIn(0f, 1f) else 0f
 
-    // 动画：轨道染色 + 文字淡出 + 滑块着色
+    // 拖动进度动画：轨道自带七彩，滑动后逐渐转为确认色
     val animatedProgress by animateFloatAsState(progress, spring(stiffness = 700f), label = "slideFill")
-    val accent by animateColorAsState(
-        targetValue = if (progress > 0.02f) {
-            Color(0xFF3E9E5A).copy(alpha = 0.25f + 0.55f * animatedProgress)
-        } else {
-            Color.Transparent
-        },
-        animationSpec = tween(180),
-        label = "slideAccent",
+    val confirmColor = androidx.compose.ui.graphics.lerp(
+        containerColor,
+        Color(0xFF3E9E5A),
+        (animatedProgress * 0.85f).coerceIn(0f, 1f),
     )
-    val thumbColor by animateColorAsState(
-        targetValue = if (progress > 0.8f) Color(0xFF2E8B4F) else Color(0xFF3E9E5A),
-        animationSpec = tween(200),
-        label = "thumbColor",
+    val thumbColor = androidx.compose.ui.graphics.lerp(
+        Color(0xFF3E9E5A),
+        Color(0xFF2E8B4F),
+        (animatedProgress * 2f).coerceIn(0f, 1f),
     )
 
     Box(
@@ -922,7 +917,7 @@ private fun SlideToConfirm(
             modifier = Modifier
                 .fillMaxWidth(animatedProgress.coerceIn(0f, 1f))
                 .height(56.dp)
-                .background(accent),
+                .background(confirmColor),
         )
         Text(
             text = label,
@@ -1063,7 +1058,8 @@ private fun FreshStatusCard(
     } else ""
 
     val canJailbreak = notInstalled && state.isSELinuxPermissive
-    val hasHero = hero != null && heroBitmap != null
+    val glassBackdrop = CustomizationStore.current.cardGlass
+    val hasHero = !glassBackdrop && hero != null && heroBitmap != null
 
     Surface(
         modifier = Modifier

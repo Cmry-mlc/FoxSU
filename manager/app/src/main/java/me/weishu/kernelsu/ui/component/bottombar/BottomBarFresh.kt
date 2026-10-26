@@ -60,6 +60,7 @@ import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.component.freshCardBorder
 import me.weishu.kernelsu.ui.component.glassNeedsLightText
 import me.weishu.kernelsu.ui.component.isNightScheme
+import me.weishu.kernelsu.ui.theme.LaunchTint
 import me.weishu.kernelsu.ui.component.freshCardColor
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.Natives
@@ -86,12 +87,8 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
         FreshNavItem(R.string.settings, Icons.Filled.Settings, Icons.Outlined.Settings),
     )
 
-    // 每次启动随机一个强调色，图标/文字跟着变
-    val accentPalette = listOf(
-        Color(0xFF3E9E5A), Color(0xFF3B82F6), Color(0xFF8B5CF6),
-        Color(0xFFF08A24), Color(0xFFE0559B), Color(0xFF12A5A5),
-    )
-    val accentColor = remember { accentPalette.random() }
+    // 与标题栏同一套随机色，保证上下呼应
+    val accentColor = LaunchTint.accent
     val navigationBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
     Box(

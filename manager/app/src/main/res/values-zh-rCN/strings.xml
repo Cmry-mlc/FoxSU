@@ -502,4 +502,5 @@
         <item>折腾是浪漫，稳定是底气</item>
         <item>该更新的总会更新</item>
     </string-array>
+    <string name="fresh_profile_mode_title">运行配置</string>
 </resources>

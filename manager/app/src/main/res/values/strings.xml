@@ -508,4 +508,5 @@
         <item>Tinkering is romance, stability is confidence</item>
         <item>Updates come to those who wait</item>
     </string-array>
+    <string name="fresh_profile_mode_title">Run configuration</string>
 </resources>

@@ -62,8 +62,9 @@ fun FreshAppHeader(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+            .padding(horizontal = 16.dp)
+            .padding(top = 18.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Column(
             modifier = Modifier
@@ -79,7 +80,7 @@ fun FreshAppHeader(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = appLabel,
-                        style = MaterialTheme.typography.titleMedium,
+                        fontSize = 17.sp,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -141,6 +142,14 @@ fun FreshModeSelector(
     hasTemplate: Boolean,
     onModeChange: (Mode) -> Unit,
 ) {
+    Column(modifier = Modifier.padding(top = 4.dp)) {
+        Text(
+            text = stringResource(R.string.fresh_profile_mode_title),
+            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            modifier = Modifier.padding(start = 6.dp, bottom = 8.dp),
+        )
+    }
     val cardColor = freshCardColor()
     val border = freshCardBorder()
     val accent = MaterialTheme.colorScheme.primary

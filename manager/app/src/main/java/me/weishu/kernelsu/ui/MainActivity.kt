@@ -29,6 +29,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import me.weishu.kernelsu.R
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
@@ -265,8 +271,12 @@ class MainActivity : ComponentActivity() {
                     }
 
                     Box(modifier = Modifier.fillMaxSize()) {
-                        if (CustomizationStore.current.wallpaperUri != null) {
-                            WallpaperBackground(customization = CustomizationStore.current)
+                        // 玻璃卡面：全应用共用一张玻璃壁纸（自定义优先，其次内置日落图）
+                        val customNow = CustomizationStore.current
+                        if (customNow.cardGlass) {
+                            WallpaperBackground(
+                                customization = customNow.copy(wallpaperUri = customNow.glassWallpaper)
+                            )
                         }
                         when (uiMode) {
                             UiMode.Material -> androidx.compose.material3.Scaffold(
@@ -278,6 +288,42 @@ class MainActivity : ComponentActivity() {
                             UiMode.Fresh -> androidx.compose.material3.Scaffold(
                                 containerColor = scaffoldBackgroundColor(MaterialTheme.colorScheme.surface)
                             ) { navDisplay() }
+                        }
+
+                        // 启动动画：小狐从略小位置放大到居中后淡出
+                        var showIntro by remember { mutableStateOf(true) }
+                        LaunchedEffect(Unit) {
+                            kotlinx.coroutines.delay(780)
+                            showIntro = false
+                        }
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = showIntro,
+                            enter = androidx.compose.animation.fadeIn(
+                                androidx.compose.animation.core.tween(240)
+                            ) + androidx.compose.animation.scaleIn(
+                                initialScale = 0.55f,
+                                animationSpec = androidx.compose.animation.core.tween(420),
+                            ),
+                            exit = androidx.compose.animation.fadeOut(
+                                androidx.compose.animation.core.tween(260)
+                            ) + androidx.compose.animation.scaleOut(
+                                targetScale = 1.35f,
+                                animationSpec = androidx.compose.animation.core.tween(260),
+                            ),
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(MaterialTheme.colorScheme.surface),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_launcher_monochrome),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.size(72.dp),
+                                )
+                            }
                         }
                     }
                     SideEffect { contentReady = true }
