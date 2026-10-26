@@ -3,7 +3,8 @@ package me.weishu.kernelsu.ui.component.bottombar
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -30,7 +31,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -43,6 +44,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -88,9 +90,18 @@ private data class FreshNavItem(
     val unselectedIcon: Int,
 )
 
+/** 底栏胶囊宽度上限：宽屏上不再拉满，两侧留出空气。 */
+private val BarMaxWidth = 340.dp
+
 /** 液态高光手柄：比一个 tab 窄一圈，像一颗浮在玻璃上的水滴。 */
 private val HandleWidth = 34.dp
 private val HandleHeight = 40.dp
+
+/** 点击时的玻璃透镜：直径、扫过的距离。 */
+private val LensSize = 46.dp
+
+/** 胶囊外侧留白，决定底栏的「长度」。 */
+private val CapsuleSidePadding = 24.dp
 
 @Composable
 fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
@@ -113,14 +124,15 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(
-                start = 16.dp,
-                end = 16.dp,
-                bottom = navigationBarPadding + 12.dp,
+                start = CapsuleSidePadding,
+                end = CapsuleSidePadding,
+                bottom = navigationBarPadding + 10.dp,
             ),
         contentAlignment = Alignment.Center,
     ) {
-        val barShape = RoundedCornerShape(custom.bottomBarRadius.dp)
+        // 胶囊形态一律用全圆角（高度的一半），无论设置里的圆角是多少，出来的就是参考图那种药丸
         val capsule = !drawerStyle
+        val barShape = if (capsule) RoundedCornerShape(percent = 50) else RoundedCornerShape(custom.bottomBarRadius.dp)
         // 视频样式：半透明悬浮条（自定义卡片色也保持通透）；沉浸光感更透并叠柔光
         val immersive = custom.bottomBarImmersive
         val nightBar = isNightScheme()
@@ -177,8 +189,32 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
             stretch.animateTo(0f, spring(dampingRatio = 0.42f, stiffness = 420f))
         }
 
+        // ---- 点击透镜：点在哪个 tab 上，玻璃球就在那个 tab 里扫一下再收掉 ----
+        var lensIndex by remember { mutableIntStateOf(-1) }
+        var lensToken by remember { mutableIntStateOf(0) }
+        val lensTravel = remember { Animatable(0f) }
+        val lensFade = remember { Animatable(0f) }
+        val lensVisible = lensIndex >= 0
+        LaunchedEffect(lensToken) {
+            if (lensIndex >= 0) {
+                launch {
+                    lensTravel.snapTo(0f)
+                    lensTravel.animateTo(
+                        targetValue = 1f,
+                        animationSpec = tween(260, easing = LinearOutSlowInEasing),
+                    )
+                }
+                lensFade.snapTo(1f)
+                lensFade.animateTo(
+                    targetValue = 0f,
+                    animationSpec = tween(120, easing = FastOutLinearInEasing),
+                )
+            }
+        }
+        val lensSizePx = with(density) { LensSize.toPx() }
+
         val scope = rememberCoroutineScope()
-        val barModifier = (if (capsule) Modifier else Modifier.fillMaxWidth())
+        val barModifier = (if (capsule) Modifier.widthIn(max = BarMaxWidth) else Modifier.fillMaxWidth())
             .then(
                 // 液态玻璃的填充来自折射层，Surface 的投影要自己补一层，否则整条会“飘”起来
                 if (glass) {
@@ -328,7 +364,7 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
                                         Color.White.copy(alpha = 0.06f + 0.10f * lift),
                                     )
                                 ),
-                                CircleShape,
+                                RoundedCornerShape(percent = 50),
                             ),
                         contentAlignment = Alignment.Center,
                     ) {
@@ -354,7 +390,13 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
                 ) {
                     items.forEachIndexed { index, item ->
                         val selected = mainPagerState.selectedPage == index
-                        val onClick = { if (!selected) mainPagerState.animateToPage(index) }
+                        val onClick = {
+                            if (!selected) {
+                                lensIndex = index
+                                lensToken++
+                                mainPagerState.animateToPage(index)
+                            }
+                        }
                         if (drawerStyle) {
                             DrawerNavItem(
                                 item = item,
@@ -373,6 +415,44 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
                             )
                         }
                     }
+                }
+
+                // 玻璃透镜：等 tab 测完宽度后再画，保证能落在正确的 tab 中心
+                if (lensVisible && tabWidthPx > 0f && lensFade.value > 0.01f) {
+                    val center = horizontalPaddingPx + tabWidthPx * (lensIndex + 0.5f)
+                    val sweep = tabWidthPx * 0.22f
+                    val lensBrush = if (nightBar || custom.cardGlass) {
+                        Brush.radialGradient(
+                            0f to Color.White.copy(alpha = 0.20f),
+                            0.62f to Color.White.copy(alpha = 0.06f),
+                            1f to Color.White.copy(alpha = 0f),
+                        )
+                    } else {
+                        Brush.radialGradient(
+                            0f to Color.White.copy(alpha = 0.95f),
+                            0.55f to Color(0xFFF3F6FD).copy(alpha = 0.55f),
+                            0.88f to Color(0xFFDCE4F5).copy(alpha = 0.30f),
+                            1f to Color.Transparent,
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .offset(
+                                x = ((center + (lensTravel.value - 0.5f) * 2f * sweep -
+                                    lensSizePx / 2f) / density.density).dp,
+                                y = 3.dp,
+                            )
+                            .size(LensSize)
+                            .graphicsLayer {
+                                alpha = lensFade.value
+                                // 起手略小，扫到底时胀到最大，像一颗被推过镜面的水滴
+                                val s = 0.82f + 0.18f * lensTravel.value + 0.06f * lensFade.value
+                                scaleX = s
+                                scaleY = s
+                            }
+                            .clip(RoundedCornerShape(percent = 50))
+                            .background(lensBrush),
+                    )
                 }
             }
         }
@@ -414,30 +494,12 @@ private fun DrawerNavItem(
         animationSpec = tween(durationMillis = 240),
         label = "drawerContent",
     )
-    // 点击动画：按下时整颗胶囊内缩，松手带过冲弹回，像按了一颗软糖
-    val pressScale by animateFloatAsState(
-        targetValue = if (pressed) 0.90f else 1f,
-        animationSpec = spring(
-            dampingRatio = if (pressed) 0.85f else 0.40f,
-            stiffness = if (pressed) 900f else 360f,
-        ),
-        label = "drawerPressScale",
-    )
-    val iconScale by animateFloatAsState(
-        targetValue = if (pressed) 1.16f else 1f,
-        animationSpec = spring(dampingRatio = 0.5f, stiffness = 600f),
-        label = "drawerIconScale",
-    )
 
     Row(
         modifier = Modifier
             .padding(horizontal = 2.dp)
             .width(width)
             .height(52.dp)
-            .graphicsLayer {
-                scaleX = pressScale
-                scaleY = pressScale
-            }
             .clip(RoundedCornerShape(26.dp))
             .background(pillColor)
             .clickable(
@@ -448,12 +510,7 @@ private fun DrawerNavItem(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val iconModifier = Modifier
-            .size(22.dp)
-            .graphicsLayer {
-                scaleX = iconScale
-                scaleY = iconScale
-            }
+        val iconModifier = Modifier.size(22.dp)
         if (badge != null) {
             BadgedBox(
                 badge = {
@@ -507,6 +564,10 @@ private fun DrawerNavItem(
     }
 }
 
+/**
+ * 胶囊 tab：静息态只有图标 + 文字，没有任何缩放/光晕动画。
+ * 点击反馈交给底栏上那颗扫过的玻璃透镜，这里只做颜色过渡。
+ */
 @Composable
 private fun FreshNavItemView(
     item: FreshNavItem,
@@ -516,86 +577,37 @@ private fun FreshNavItemView(
     onClick: () -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    val pressed by interactionSource.collectIsPressedAsState()
 
     val contentColor by animateColorAsState(
         targetValue = if (selected) accent else accent.copy(alpha = 0.78f),
         animationSpec = tween(durationMillis = 220),
         label = "navContent",
     )
-    // 按压缩放 + 选中弹性缩放：按下收得紧、松手弹得开
-    val iconScale by animateFloatAsState(
-        targetValue = when {
-            pressed -> 0.82f
-            selected -> 1.06f
-            else -> 1f
-        },
-        animationSpec = spring(
-            dampingRatio = if (pressed) 0.85f else if (selected) 0.40f else 0.6f,
-            stiffness = if (pressed) 900f else 460f,
-        ),
-        label = "navScale",
-    )
-    // 点击动画：按下时图标后面浮起一圈同色柔光，松手快速淡出
-    val haloAlpha by animateFloatAsState(
-        targetValue = if (pressed) 0.26f else 0f,
-        animationSpec = tween(
-            durationMillis = if (pressed) 90 else 240,
-            easing = FastOutSlowInEasing,
-        ),
-        label = "navHalo",
-    )
 
     Column(
         modifier = Modifier
+            .width(64.dp)
             .clip(RoundedCornerShape(18.dp))
             .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 3.dp),
+            .padding(vertical = 3.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Box(contentAlignment = Alignment.Center) {
-            if (haloAlpha > 0.01f) {
-                Box(
-                    modifier = Modifier
-                        .size(38.dp)
-                        .graphicsLayer { alpha = haloAlpha }
-                        .background(
-                            Brush.radialGradient(
-                                listOf(accent.copy(alpha = 0.55f), Color.Transparent),
-                            ),
-                            CircleShape,
-                        )
-                )
-            }
-            val iconModifier = Modifier
-                .size(23.dp)
-                .graphicsLayer {
-                    scaleX = iconScale
-                    scaleY = iconScale
-                }
-            if (badge != null) {
-                BadgedBox(
-                    badge = {
-                        Badge(
-                            containerColor = if (badge.tone == BadgeTone.Alert) {
-                                MaterialTheme.colorScheme.error
-                            } else {
-                                accent
-                            },
-                            contentColor = Color.White,
-                        ) {
-                            Text(badge.count.toString())
-                        }
+        val iconModifier = Modifier.size(23.dp)
+        if (badge != null) {
+            BadgedBox(
+                badge = {
+                    Badge(
+                        containerColor = if (badge.tone == BadgeTone.Alert) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            accent
+                        },
+                        contentColor = Color.White,
+                    ) {
+                        Text(badge.count.toString())
                     }
-                ) {
-                    Icon(
-                        painter = painterResource(if (selected) item.selectedIcon else item.unselectedIcon),
-                        contentDescription = stringResource(item.label),
-                        tint = contentColor,
-                        modifier = iconModifier,
-                    )
                 }
-            } else {
+            ) {
                 Icon(
                     painter = painterResource(if (selected) item.selectedIcon else item.unselectedIcon),
                     contentDescription = stringResource(item.label),
@@ -603,6 +615,13 @@ private fun FreshNavItemView(
                     modifier = iconModifier,
                 )
             }
+        } else {
+            Icon(
+                painter = painterResource(if (selected) item.selectedIcon else item.unselectedIcon),
+                contentDescription = stringResource(item.label),
+                tint = contentColor,
+                modifier = iconModifier,
+            )
         }
         Text(
             text = stringResource(item.label),
@@ -611,11 +630,6 @@ private fun FreshNavItemView(
             color = contentColor,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.graphicsLayer {
-                val labelScale = if (iconScale < 1f) iconScale else 1f
-                scaleX = labelScale
-                scaleY = labelScale
-            },
         )
     }
 }
