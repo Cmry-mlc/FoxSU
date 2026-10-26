@@ -1,27 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="80dp"
-    android:height="80dp"
+    android:width="56dp"
+    android:height="56dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- 未安装：细外框三角 + 粗感叹号 -->
+    <!-- 未安装：锯齿徽章 + 挖空感叹号 -->
     <path
-        android:strokeColor="#FF000000"
-        android:strokeWidth="1.45"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:fillColor="#00000000"
-        android:pathData="M10.5,4.0 C11.3,2.65 12.7,2.65 13.5,4.0 L21.55,18.05 C22.35,19.4 21.65,20.95 20.05,20.95 L3.95,20.95 C2.35,20.95 1.65,19.4 2.45,18.05 Z" />
-    <path
-        android:strokeColor="#FF000000"
-        android:strokeWidth="2.6"
-        android:strokeLineCap="round"
-        android:fillColor="#00000000"
-        android:pathData="M12,8.9 L12,14.2" />
-    <path
-        android:strokeColor="#FF000000"
-        android:strokeWidth="2.9"
-        android:strokeLineCap="round"
-        android:fillColor="#00000000"
-        android:pathData="M12,17.3 L12,17.4" />
+        android:fillColor="#FF000000"
+        android:fillType="evenOdd"
+        android:pathData="M23,12l-2.44,-2.78l0.34,-3.68l-3.61,-0.82l-1.89,-3.18L12,3L8.6,1.54L6.71,4.72l-3.61,0.81l0.34,3.7L1,12l2.44,2.78l-0.34,3.69l3.61,0.82l1.89,3.18L12,21l3.4,1.46l1.89,-3.18l3.61,-0.82l-0.34,-3.68L23,12z M11.05,7.4 h1.9 v6.6 h-1.9 Z M11.05,16.0 h1.9 v1.9 h-1.9 Z" />
 </vector>

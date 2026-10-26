@@ -1077,11 +1077,11 @@ private fun FreshStatusCard(
     val canJailbreak = notInstalled && state.isSELinuxPermissive
     val glassBackdrop = CustomizationStore.current.cardGlass
     val hasHero = !glassBackdrop && hero != null && heroBitmap != null
-    // 徽章：深墨绿（与 LKM 标签同色系）而非高饱和绿，融入卡片又不失成功语义
+    // 徽章：中性深墨（跟随卡片文字色），实心锯齿徽章上更克制、更融合
     val badgeTint = when {
         !ksuActive -> MaterialTheme.colorScheme.error
         hasHero || isNightScheme() -> Color.White
-        else -> Color(0xFF1C5A36)
+        else -> contentColor.copy(alpha = 0.86f)
     }
     val badgeBackdrop = if (ksuActive) {
         badgeTint.copy(alpha = if (hasHero) 0.16f else 0.07f)
