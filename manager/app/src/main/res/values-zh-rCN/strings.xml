@@ -304,6 +304,8 @@
     <string name="customization_bottom_bar_sub">调整悬浮底栏的圆角大小</string>
     <string name="customization_bottom_immersive">沉浸光感</string>
     <string name="customization_bottom_immersive_sum">鸿蒙风格柔光：更通透并带玻璃质感高光</string>
+    <string name="customization_bottom_liquid_glass">底栏液态玻璃</string>
+    <string name="customization_bottom_liquid_glass_sum">实时折射的玻璃底栏，附带可左右拖动的液态高光</string>
     <string name="customization_bottom_alpha">底栏不透明度</string>
     <string name="customization_radius">圆角</string>
     <string name="customization_icon">启动器图标</string>
