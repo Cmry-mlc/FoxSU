@@ -2,15 +2,15 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp" android:height="24dp"
     android:viewportWidth="24" android:viewportHeight="24">
-    <!-- 新版首页：粗圆角小房子，线条加粗、转角全圆，贴近参考视频的厚实风格 -->
+    <!-- 全新一代：圆弧顶小屋（单段大弧线连左右两壁）+ 圆形舷窗 -->
     <path
-        android:strokeColor="#FF000000" android:strokeWidth="2.3"
+        android:strokeColor="#FF000000" android:strokeWidth="2.2"
         android:strokeLineCap="round" android:strokeLineJoin="round"
         android:fillColor="#00000000"
-        android:pathData="M4,10.4 L10.6,4.6 C11.4,3.9 12.6,3.9 13.4,4.6 L20,10.4 L20,18.2 C20,19.5 19,20.5 17.7,20.5 L6.3,20.5 C5,20.5 4,19.5 4,18.2 Z" />
+        android:pathData="M4.8,10.2 A7.2,7.4 0 0 1 19.2,10.2 L19.2,17.8 C19.2,19.3 18,20.5 16.5,20.5 L7.5,20.5 C6,20.5 4.8,19.3 4.8,17.8 Z" />
     <path
-        android:strokeColor="#FF000000" android:strokeWidth="2.3"
-        android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:strokeColor="#FF000000" android:strokeWidth="2.2"
+        android:strokeLineCap="round"
         android:fillColor="#00000000"
-        android:pathData="M9.5,20.5 L9.5,15.2 C9.5,14.4 10.2,13.7 11,13.7 L13,13.7 C13.8,13.7 14.5,14.4 14.5,15.2 L14.5,20.5" />
+        android:pathData="M12,13.5 A2.1,2.1 0 1 0 12,17.7 A2.1,2.1 0 1 0 12,13.5 Z" />
 </vector>
