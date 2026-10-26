@@ -346,18 +346,18 @@ private fun FreshTileGrid(tiles: List<SettingsTile>) {
     val custom = CustomizationStore.current
     val night = isNightScheme()
     val rainbow = custom.rainbowCards && !custom.cardGlass && !night
-    // 参考图配色：每格一个柔和马卡龙色；开七彩时走七彩表；壁纸/玻璃走磨砂
+    // 设计稿配色：磁贴循环 rose / mint / cream / lav / sky / gray；开七彩走七彩表；壁纸/玻璃走磨砂
     val tones = if (night) {
         listOf(
-            UiPalette.KpiMintDark, UiPalette.KpiCreamDark,
-            UiPalette.KpiLilacDark, UiPalette.KpiRoseDark,
-            UiPalette.PillLilacDark, UiPalette.PillSandDark,
+            UiPalette.KpiRoseDark, UiPalette.PillMintDark,
+            UiPalette.KpiCreamDark, UiPalette.KpiLilacDark,
+            UiPalette.PillSkyDark, UiPalette.PillGrayDark,
         )
     } else {
         listOf(
-            UiPalette.KpiMint, UiPalette.KpiCream,
-            UiPalette.KpiLilac, UiPalette.KpiRose,
-            UiPalette.PillLilac, UiPalette.PillSand,
+            UiPalette.KpiRose, UiPalette.PillMint,
+            UiPalette.KpiCream, UiPalette.KpiLilac,
+            UiPalette.PillSky, UiPalette.PillGray,
         )
     }
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {

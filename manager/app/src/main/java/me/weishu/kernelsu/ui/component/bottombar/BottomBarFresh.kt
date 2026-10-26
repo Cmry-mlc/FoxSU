@@ -70,6 +70,7 @@ import me.weishu.kernelsu.R
 import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.LocalMainPagerState
 import me.weishu.kernelsu.ui.theme.LaunchTint
+import me.weishu.kernelsu.ui.theme.UiPalette
 import me.weishu.kernelsu.ui.component.LocalAppBackdrop
 import me.weishu.kernelsu.ui.component.freshCardBorder
 import me.weishu.kernelsu.ui.component.freshCardColor
@@ -137,6 +138,9 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
             else -> navTint()
         }
     }
+
+    // 默认样式（未开七彩 / 莫奈 / 玻璃）走设计稿配色：未选中 #A5A2B5、选中 #6C5FC7、角标薄荷绿
+    val defaultNavStyle = !custom.navRainbow && monetAccents == null && !custom.cardGlass
 
     val navigationBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val drawerStyle = custom.bottomBarStyle == 1
@@ -350,6 +354,7 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
                                 selected = selected,
                                 badge = badgeFor(index, navigationBadge),
                                 accent = accents[index],
+                                defaultStyle = defaultNavStyle,
                                 onClick = {
                                     if (!selected) mainPagerState.animateToPage(index)
                                 },
@@ -487,6 +492,7 @@ private fun FreshNavItemView(
     selected: Boolean,
     badge: NavBadge?,
     accent: Color,
+    defaultStyle: Boolean = false,
     onClick: () -> Unit,
     onPressChange: (Boolean) -> Unit,
 ) {
@@ -494,16 +500,35 @@ private fun FreshNavItemView(
     val pressed by interactionSource.collectIsPressedAsState()
     LaunchedEffect(pressed) { onPressChange(pressed) }
 
+    // 设计稿配色：选中 #6C5FC7 + 淡紫底 #F3F0FB，未选中 #A5A2B5；夜间反白
+    val night = isNightScheme()
+    val activeColor = UiPalette.NavActive
+    val idleColor = UiPalette.NavIdle
     val contentColor by animateColorAsState(
-        targetValue = if (selected) accent else accent.copy(alpha = 0.58f),
+        targetValue = when {
+            defaultStyle && selected -> if (night) Color.White else activeColor
+            defaultStyle -> if (night) Color.White.copy(alpha = 0.55f) else idleColor
+            selected -> accent
+            else -> accent.copy(alpha = 0.58f)
+        },
         animationSpec = tween(durationMillis = 200),
         label = "navContent",
+    )
+    val pillBg by animateColorAsState(
+        targetValue = when {
+            !defaultStyle || !selected -> Color.Transparent
+            night -> Color.White.copy(alpha = 0.10f)
+            else -> UiPalette.NavActiveBg
+        },
+        animationSpec = tween(durationMillis = 200),
+        label = "navPill",
     )
 
     // 等分宽度：保证图标中心正好落在底栏 tab 中心（液态玻璃下的对齐就靠这个）
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(18.dp))
+            .background(pillBg)
             .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
             .padding(vertical = 3.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -512,9 +537,11 @@ private fun FreshNavItemView(
         if (badge != null) {
             BadgedBox(
                 badge = {
-                    // 角标颜色跟随图标本身的配色（七彩 / 莫奈 / 单色都一致）
+                    // 默认样式：薄荷绿角标（设计稿）；七彩 / 莫奈时仍跟随图标配色
                     Badge(
-                        containerColor = accent,
+                        containerColor = if (defaultStyle) {
+                            if (night) Color(0xFF4E8A5F) else UiPalette.NavBadge
+                        } else accent,
                         contentColor = Color.White,
                     ) {
                         Text(badge.count.toString())

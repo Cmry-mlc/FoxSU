@@ -1114,7 +1114,7 @@ private fun FreshStatusCard(
     val badgeTint = when {
         !ksuActive -> MaterialTheme.colorScheme.error
         hasHero || isNightScheme() -> Color.White
-        else -> UiPalette.HeroAccent
+        else -> UiPalette.StatusRose
     }
     // 呼吸光圈：复用项目现有的 Compose 动画体系，缓慢明暗缩放，不抢文字
     val badgeTransition = rememberInfiniteTransition(label = "statusBadge")
@@ -1147,6 +1147,16 @@ private fun FreshStatusCard(
         label = "ripple2",
     )
 
+    // 参考设计稿：主卡默认走粉桃渐变（135° #FDE4E0 → #FBD8E4）；
+    // 用户覆盖了卡面颜色、夜间、壁纸时退回纯色
+    val heroGradient = if (!hasHero && !isNightScheme() &&
+        containerColor.copy(alpha = 1f) == UiPalette.HeroSurface
+    ) {
+        Brush.linearGradient(listOf(UiPalette.HeroGradientStart, UiPalette.HeroGradientEnd))
+    } else {
+        null
+    }
+
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -1156,12 +1166,19 @@ private fun FreshStatusCard(
                 onLongClick = onLongPress,
             ),
         shape = RoundedCornerShape(26.dp),
-        color = containerColor,
+        color = if (heroGradient != null) Color.Transparent else containerColor,
         contentColor = contentColor,
         border = if (hasHero) null else cardBorder,
         shadowElevation = 0.dp,
     ) {
         Box {
+            if (heroGradient != null) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .background(heroGradient)
+                )
+            }
             GlassSheen(Modifier.matchParentSize())
             if (hero != null && heroBitmap != null) {
                 FreshHeroBackdrop(hero = hero, bitmap = heroBitmap)
@@ -1471,9 +1488,9 @@ private fun FreshKpiCard(
                 // 标题：小号、半透明
                 Text(
                     text = title,
-                    fontSize = 12.5.sp,
+                    fontSize = 12.sp,
                     lineHeight = 15.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontWeight = FontWeight.Bold,
                     color = textColor.copy(alpha = 0.72f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -1482,9 +1499,9 @@ private fun FreshKpiCard(
                 // 值：大号粗体、卡片主色（参考图里是紫色 / 墨绿那种有色彩的粗字）
                 Text(
                     text = value,
-                    fontSize = 20.sp,
-                    lineHeight = 24.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    lineHeight = 22.sp,
+                    fontWeight = FontWeight.ExtraBold,
                     letterSpacing = (-0.3).sp,
                     color = valueColor,
                     maxLines = 2,
@@ -1675,16 +1692,17 @@ private fun rainbowPair(index: Int): Pair<Color, Color> {
         val (bg, fg) = if (night) LaunchTint.rainbowPairDark(index) else LaunchTint.rainbowPair(index)
         return Color(bg) to Color(fg)
     }
-    // 默认：参考图的四色柔和卡（薄荷 / 奶油 / 淡紫 / 淡粉），循环取用
+    // 默认：设计稿的柔和色板。槽位固定分配：
+    // 0=指纹(淡紫) 1=SELinux(薄荷) 2=Seccomp(灰) 3=支持开发(蜜桃) 4=了解KSU(天蓝) 5=内核(玫瑰)
     val tones = if (night) {
         listOf(
-            UiPalette.KpiMintDark, UiPalette.KpiCreamDark,
-            UiPalette.KpiLilacDark, UiPalette.KpiRoseDark,
+            UiPalette.KpiLilacDark, UiPalette.PillMintDark, UiPalette.PillGrayDark,
+            UiPalette.PillPeachDark, UiPalette.PillSkyDark, UiPalette.KpiRoseDark,
         )
     } else {
         listOf(
-            UiPalette.KpiMint, UiPalette.KpiCream,
-            UiPalette.KpiLilac, UiPalette.KpiRose,
+            UiPalette.KpiLilac, UiPalette.PillMint, UiPalette.PillGray,
+            UiPalette.PillPeach, UiPalette.PillSky, UiPalette.KpiRose,
         )
     }
     val (bg, fg) = tones[index.mod(tones.size)]
