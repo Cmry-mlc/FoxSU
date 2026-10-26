@@ -353,7 +353,7 @@ fun HomePagerFresh(
                 ) {
                     FreshKpiCard(
                         modifier = Modifier.weight(1f),
-                        icon = Icons.Filled.Smartphone,
+                        iconRes = R.drawable.ic_d_phone,
                         title = stringResource(R.string.home_device_model),
                         value = state.systemInfo.deviceModel,
                         caption = stringResource(R.string.fresh_home_device_sub),
@@ -368,7 +368,7 @@ fun HomePagerFresh(
                     )
                     FreshKpiCard(
                         modifier = Modifier.weight(1f),
-                        icon = Icons.Filled.Palette,
+                        iconRes = R.drawable.ic_d_palette,
                         title = stringResource(R.string.settings_ui_mode),
                         value = stringResource(uiModeLabelRes(currentUiMode)),
                         caption = stringResource(R.string.fresh_home_style_switch),
@@ -391,7 +391,7 @@ fun HomePagerFresh(
                 ) {
                     FreshKpiCard(
                         modifier = Modifier.weight(1f),
-                        icon = Icons.Filled.Shield,
+                        iconRes = R.drawable.ic_d_shield,
                         title = stringResource(R.string.superuser),
                         value = navigationBadge.superuserCount.toString(),
                         caption = stringResource(R.string.fresh_home_superuser_sub),
@@ -406,7 +406,7 @@ fun HomePagerFresh(
                     )
                     FreshKpiCard(
                         modifier = Modifier.weight(1f),
-                        icon = Icons.Filled.Extension,
+                        iconRes = R.drawable.ic_d_grid,
                         title = stringResource(R.string.module),
                         value = navigationBadge.moduleEnabledCount.toString(),
                         caption = stringResource(R.string.fresh_home_module_sub),
@@ -441,7 +441,7 @@ fun HomePagerFresh(
 
                 val (kc1, kt1) = rainbowPair(5)
                 FreshKernelCard(
-                    icon = Icons.Filled.DeveloperBoard,
+                    iconRes = R.drawable.ic_d_chip,
                     title = stringResource(R.string.home_kernel),
                     value = state.systemInfo.kernelVersion,
                     containerColor = kc1,
@@ -452,7 +452,7 @@ fun HomePagerFresh(
 
                 val (kc2, kt2) = rainbowPair(0)
                 FreshKernelCard(
-                    icon = Icons.Filled.Fingerprint,
+                    iconRes = R.drawable.ic_d_chip,
                     title = stringResource(R.string.home_fingerprint),
                     value = state.systemInfo.fingerprint,
                     containerColor = kc2,
@@ -891,7 +891,7 @@ private fun RebootRow(
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
-                    imageVector = rebootIcon(option.reason),
+                    painter = painterResource(rebootIconRes(option.reason)),
                     contentDescription = null,
                     modifier = Modifier.size(16.dp),
                 )
@@ -1031,7 +1031,7 @@ private fun RebootGridCell(
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
-                    imageVector = rebootIcon(option.reason),
+                    painter = painterResource(rebootIconRes(option.reason)),
                     contentDescription = null,
                     modifier = Modifier.size(22.dp),
                 )
@@ -1049,14 +1049,14 @@ private fun RebootGridCell(
     }
 }
 
-private fun rebootIcon(reason: String): ImageVector = when (reason) {
-    "userspace" -> Icons.Filled.Autorenew
-    "soft_reboot" -> Icons.Filled.Cached
-    "recovery" -> Icons.Filled.SettingsBackupRestore
-    "bootloader" -> Icons.Filled.DeveloperMode
-    "download" -> Icons.Filled.Download
-    "edl" -> Icons.Filled.Usb
-    else -> Icons.Filled.RestartAlt
+private fun rebootIconRes(reason: String): Int = when (reason) {
+    "userspace" -> R.drawable.ic_d_refresh
+    "soft_reboot" -> R.drawable.ic_d_refresh
+    "recovery" -> R.drawable.ic_d_refresh
+    "bootloader" -> R.drawable.ic_d_boot
+    "download" -> R.drawable.ic_d_download
+    "edl" -> R.drawable.ic_d_tool
+    else -> R.drawable.ic_d_refresh
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -1400,7 +1400,7 @@ private fun FreshTag(text: String, container: Color, content: Color) {
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun FreshKpiCard(
-    icon: ImageVector,
+    iconRes: Int,
     title: String,
     value: String,
     caption: String,
@@ -1477,7 +1477,7 @@ private fun FreshKpiCard(
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            imageVector = icon,
+                            painter = painterResource(iconRes),
                             contentDescription = null,
                             tint = valueColor.copy(alpha = 0.85f),
                             modifier = Modifier.size(18.dp),
@@ -1548,7 +1548,7 @@ private fun FreshSecurityGroup(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         FreshPillTile(
-            icon = Icons.Filled.Security,
+            iconRes = R.drawable.ic_d_lock,
             title = stringResource(R.string.home_selinux_status),
             caption = selinuxDisplay,
             containerColor = c1,
@@ -1556,7 +1556,7 @@ private fun FreshSecurityGroup(
             modifier = Modifier.weight(1f),
         )
         FreshPillTile(
-            icon = Icons.Filled.FilterList,
+            iconRes = R.drawable.ic_d_tune,
             title = stringResource(R.string.home_seccomp_status),
             caption = seccompDisplay,
             containerColor = c2,
@@ -1580,7 +1580,7 @@ private fun FreshSupportGroup(
         val (c3, t3) = rainbowPair(3)
         val (c4, t4) = rainbowPair(4)
         FreshPillTile(
-            icon = Icons.Filled.VolunteerActivism,
+            iconRes = R.drawable.ic_d_heart,
             title = stringResource(R.string.home_support_title),
             caption = stringResource(R.string.home_support_content),
             accent = true,
@@ -1590,7 +1590,7 @@ private fun FreshSupportGroup(
             modifier = Modifier.weight(1f),
         )
         FreshPillTile(
-            icon = Icons.AutoMirrored.Filled.MenuBook,
+            iconRes = R.drawable.ic_d_book,
             title = stringResource(R.string.home_learn_kernelsu),
             caption = stringResource(R.string.home_click_to_learn_kernelsu),
             accent = true,
@@ -1605,7 +1605,7 @@ private fun FreshSupportGroup(
 /** 胶囊卡：左侧圆形图标 + 标题/说明，对应参考图里的「SELinux 状态 / 支持开发」样式。 */
 @Composable
 private fun FreshPillTile(
-    icon: ImageVector,
+    iconRes: Int,
     title: String,
     caption: String,
     containerColor: Color,
@@ -1646,7 +1646,7 @@ private fun FreshPillTile(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    imageVector = icon,
+                    painter = painterResource(iconRes),
                     contentDescription = null,
                     tint = tint,
                     modifier = Modifier.size(17.dp),
@@ -1712,7 +1712,7 @@ private fun rainbowPair(index: Int): Pair<Color, Color> {
 /** 内核信息卡：左侧圆角图标块 + 标题/详情，对应参考图里的单行工具卡。 */
 @Composable
 private fun FreshKernelCard(
-    icon: ImageVector,
+    iconRes: Int,
     title: String,
     value: String,
     containerColor: Color,
@@ -1740,7 +1740,7 @@ private fun FreshKernelCard(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    imageVector = icon,
+                    painter = painterResource(iconRes),
                     contentDescription = null,
                     tint = contentColor.copy(alpha = 0.68f),
                     modifier = Modifier.size(21.dp),

@@ -111,33 +111,9 @@ fun resolveCardSurface(slot: Int): CardSurface {
         )
     }
 
-    // 七彩卡片：所有槽位逐一上色，文字用配套的深色；
-    // 夜间走深底 + 亮字那一套，保证在纯黑画布上也看得出「这张卡是彩色的」
-    if (overrideColor == 0 && custom.rainbowCards && !custom.cardGlass) {
-        val pair = if (night) LaunchTint.rainbowPairDark(slot) else LaunchTint.rainbowPair(slot)
-        return CardSurface(
-            container = Color(pair.first).copy(alpha = alpha * 0.9f),
-            content = Color(pair.second),
-            accent = Color(pair.second),
-            border = null,
-        )
-    }
-
-    // Light mode: use the curated palette until the user overrides a card or turns it off.
-    if (!night && overrideColor == 0 && custom.homePalette) {
-        HomePalette[slot]?.let { style ->
-            return CardSurface(
-                container = Color(style.bg).copy(alpha = alpha * 0.84f),
-                content = Color(style.fg),
-                accent = Color(style.accent),
-                border = null,
-            )
-        }
-    }
-
-    // 参考图风格：主卡是淡薰衣草紫，四张 KPI 卡各一个柔和马卡龙色。
-    // 用户手动指定过颜色（overrideColor）时不参与，让位给用户选择。
-    if (overrideColor == 0 && !custom.rainbowCards && !custom.cardGlass) {
+    // 设计稿固定配色：主页所有卡片严格按 UiPalette 马卡龙色板来，
+    // 不再响应七彩/随机取色；用户手动覆盖（长按改色）仍然生效
+    if (overrideColor == 0 && !custom.cardGlass) {
         val ref = if (night) {
             when (slot) {
                 HERO_SLOT -> UiPalette.HeroSurfaceDark to UiPalette.HeroContentDark

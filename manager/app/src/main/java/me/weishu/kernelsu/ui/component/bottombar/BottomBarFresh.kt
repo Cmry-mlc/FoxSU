@@ -123,10 +123,11 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
     }
 
     val items = listOf(
-        FreshNavItem(R.string.home, R.drawable.ic_nav_home_fill, R.drawable.ic_nav_home),
-        FreshNavItem(R.string.superuser, R.drawable.ic_nav_shield_fill, R.drawable.ic_nav_shield),
-        FreshNavItem(R.string.module, R.drawable.ic_nav_module_fill, R.drawable.ic_nav_module),
-        FreshNavItem(R.string.settings, R.drawable.ic_nav_settings_fill, R.drawable.ic_nav_settings),
+        // 设计稿三页同款描边图标：选中/未选中同一枚，仅颜色与底色区分
+        FreshNavItem(R.string.home, R.drawable.ic_d_home, R.drawable.ic_d_home),
+        FreshNavItem(R.string.superuser, R.drawable.ic_d_shield, R.drawable.ic_d_shield),
+        FreshNavItem(R.string.module, R.drawable.ic_d_grid, R.drawable.ic_d_grid),
+        FreshNavItem(R.string.settings, R.drawable.ic_d_sliders, R.drawable.ic_d_sliders),
     )
 
     // 在 composable 作用域里先把 4 个 tab 的颜色都算好：
