@@ -167,21 +167,11 @@ fun wallpaperLuminance(path: String?): Float {
 fun glassNeedsLightText(): Boolean {
     val custom = CustomizationStore.current
     if (!custom.cardGlass) return false
-    // 用户自定义了卡片颜色：文字跟卡片走，别再按壁纸判断（否则白卡配白字）
+    // 自定义了不透明浅色卡片：文字按卡色走；其余情况玻璃统一是深色板 + 白字
     if (custom.cardColor != 0 && custom.cardAlpha >= 0.55f) {
         return Color(custom.cardColor).luminance() < 0.5f
     }
-    if (MaterialTheme.colorScheme.surface.luminance() < 0.5f) return true
-    // 以实际生效的那张背景判断：全局壁纸 > 玻璃专属壁纸 > 内置日落图
-    val effective = when {
-        custom.wallpaperUri != null && custom.wallpaperEnabled -> custom.wallpaperUri
-        custom.glassWallpaper != null -> custom.glassWallpaper
-        else -> null
-    }
-    if (effective != null) return wallpaperLuminance(effective) < 0.45f
-    // 没有自定义壁纸时，实际渲染的是内置日落图，就按它来判断，别再去看系统壁纸
-    val bundled = bundledGlassLuminance()
-    return if (bundled < 0f) true else bundled < 0.45f
+    return true
 }
 
 /** Loads the wallpaper with a sampled decode so a 4K photo does not blow up the heap. */

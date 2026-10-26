@@ -30,8 +30,13 @@ fun isNightScheme(): Boolean = MaterialTheme.colorScheme.surface.luminance() < 0
 fun rememberCardSurface(fallback: Color): Color {
     val custom = CustomizationStore.current
     val useCustom = custom.cardColor != 0 && !isNightScheme()
-    val base = if (useCustom) Color(custom.cardColor) else fallback
-    return base.copy(alpha = custom.cardAlpha)
+    if (useCustom) return Color(custom.cardColor).copy(alpha = custom.cardAlpha)
+    // 玻璃薄片自带透明度，只按用户滑杆等比缩放，不能直接被覆盖成不透明
+    return if (custom.cardGlass) {
+        fallback.copy(alpha = fallback.alpha * custom.cardAlpha)
+    } else {
+        fallback.copy(alpha = custom.cardAlpha)
+    }
 }
 
 /** Text color that stays readable on a custom card color. */
@@ -60,10 +65,11 @@ fun freshCardColor(): Color {
     val custom = CustomizationStore.current
     // 玻璃卡面：极淡的白色薄片，靠描边和高光撑出层次（参考图二的透明卡片）
     if (custom.cardGlass) {
-        // 深色壁纸上用极淡白片 + 白字；浅色壁纸上用更实的白片保证深色字可读
-        val light = glassNeedsLightText()
-        // 磨砂玻璃：只留一层很薄的白雾，靠背景的模糊和高光撑起质感
-        return Color.White.copy(alpha = if (light) 0.14f else 0.30f)
+        // 参考图风格：深色磨砂玻璃板 + 白字，任何壁纸上都稳定可读
+        if (custom.cardColor != 0) {
+            return Color(custom.cardColor).copy(alpha = custom.cardAlpha.coerceAtLeast(0.6f))
+        }
+        return Color(0xFF101014).copy(alpha = 0.46f)
     }
     val base = if (isSystemInDarkTheme()) {
         MaterialTheme.colorScheme.surfaceContainerHigh
@@ -81,7 +87,7 @@ fun freshCardBorder(): BorderStroke? {
     if (custom.cardGlass) {
         return BorderStroke(
             1.dp,
-            Color.White.copy(alpha = if (glassNeedsLightText()) 0.34f else 0.62f),
+            Color.White.copy(alpha = if (glassNeedsLightText()) 0.16f else 0.55f),
         )
     }
     return if (isSystemInDarkTheme()) {
