@@ -130,7 +130,7 @@ fun FreshKernelSUTheme(
         typography = rememberTypography(
             CustomizationStore.current.fontStyle,
             CustomizationStore.current.fontPath,
-        ),
+        ).let { if (glassLightText) it.withSoftShadow() else it },
         shapes = FreshShapes,
         content = {
             MonetColorsProvider.UpdateCss(animatedColorScheme)

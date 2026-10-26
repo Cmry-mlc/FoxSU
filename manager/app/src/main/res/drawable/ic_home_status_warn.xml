@@ -4,24 +4,24 @@
     android:height="80dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- 未安装：粗描边圆角三角 + 感叹号 -->
+    <!-- 未安装：细外框三角 + 粗感叹号 -->
     <path
         android:strokeColor="#FF000000"
-        android:strokeWidth="2"
+        android:strokeWidth="1.45"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
         android:fillColor="#00000000"
-        android:pathData="M10.5,4.05 C11.3,2.7 12.7,2.7 13.5,4.05 L21.5,18 C22.3,19.35 21.6,20.9 20,20.9 L4,20.9 C2.4,20.9 1.7,19.35 2.5,18 Z" />
-    <path
-        android:strokeColor="#FF000000"
-        android:strokeWidth="2.4"
-        android:strokeLineCap="round"
-        android:fillColor="#00000000"
-        android:pathData="M12,9 L12,14.1" />
+        android:pathData="M10.5,4.0 C11.3,2.65 12.7,2.65 13.5,4.0 L21.55,18.05 C22.35,19.4 21.65,20.95 20.05,20.95 L3.95,20.95 C2.35,20.95 1.65,19.4 2.45,18.05 Z" />
     <path
         android:strokeColor="#FF000000"
         android:strokeWidth="2.6"
         android:strokeLineCap="round"
         android:fillColor="#00000000"
-        android:pathData="M12,17.4 L12,17.5" />
+        android:pathData="M12,8.9 L12,14.2" />
+    <path
+        android:strokeColor="#FF000000"
+        android:strokeWidth="2.9"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M12,17.3 L12,17.4" />
 </vector>

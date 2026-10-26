@@ -63,7 +63,7 @@ fun freshCardColor(): Color {
         // 深色壁纸上用极淡白片 + 白字；浅色壁纸上用更实的白片保证深色字可读
         val light = glassNeedsLightText()
         // 磨砂玻璃：只留一层很薄的白雾，靠背景的模糊和高光撑起质感
-        return Color.White.copy(alpha = if (light) 0.10f else 0.24f)
+        return Color.White.copy(alpha = if (light) 0.14f else 0.30f)
     }
     val base = if (isSystemInDarkTheme()) {
         MaterialTheme.colorScheme.surfaceContainerHigh
@@ -110,7 +110,7 @@ fun GlassSheen(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier.background(
             Brush.verticalGradient(
-                0f to Color.White.copy(alpha = if (light) 0.22f else 0.62f),
+                0f to Color.White.copy(alpha = if (light) 0.16f else 0.62f),
                 0.45f to Color.White.copy(alpha = if (light) 0.04f else 0.18f),
                 1f to Color.White.copy(alpha = 0f),
             )

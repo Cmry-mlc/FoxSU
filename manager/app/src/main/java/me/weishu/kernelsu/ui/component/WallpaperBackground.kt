@@ -90,6 +90,42 @@ fun rememberDefaultGlassWallpaper(): ImageBitmap? = remember {
     }.getOrNull()
 }
 
+/** 内置兜底壁纸的平均亮度，用于决定文字黑白（缓存一次）。 */
+private var bundledLuminanceCache = -1f
+
+private fun bundledGlassLuminance(): Float {
+    if (bundledLuminanceCache >= 0f) return bundledLuminanceCache
+    bundledLuminanceCache = runCatching {
+        val opts = BitmapFactory.Options().apply { inSampleSize = 8 }
+        val bmp = BitmapFactory.decodeResource(
+            ksuApp.resources,
+            me.weishu.kernelsu.R.drawable.glass_default,
+            opts,
+        ) ?: return@runCatching -1f
+        var sum = 0.0
+        var count = 0
+        val stepX = (bmp.width / 20).coerceAtLeast(1)
+        val stepY = (bmp.height / 20).coerceAtLeast(1)
+        var y = 0
+        while (y < bmp.height) {
+            var x = 0
+            while (x < bmp.width) {
+                val c = bmp.getPixel(x, y)
+                val r = (c shr 16 and 0xFF) / 255f
+                val gg = (c shr 8 and 0xFF) / 255f
+                val bb = (c and 0xFF) / 255f
+                sum += (0.2126f * r + 0.7152f * gg + 0.0722f * bb)
+                count++
+                x += stepX
+            }
+            y += stepY
+        }
+        bmp.recycle()
+        if (count == 0) -1f else (sum / count).toFloat()
+    }.getOrDefault(-1f)
+    return bundledLuminanceCache
+}
+
 /** 玻璃模式下按优先级取背景：自定义玻璃壁纸 → 内置日落壁纸。 */
 @Composable
 fun rememberGlassBackdrop(): ImageBitmap? {
@@ -139,11 +175,9 @@ fun glassNeedsLightText(): Boolean {
         else -> null
     }
     if (effective != null) return wallpaperLuminance(effective) < 0.45f
-    if (systemWallpaperLuminanceCache < 0f) {
-        systemWallpaperBitmap()
-    }
-    // 读不到系统壁纸时用内置深色日落图，按深色底处理（白字才看得清）
-    return if (systemWallpaperLuminanceCache < 0f) true else systemWallpaperLuminanceCache < 0.45f
+    // 没有自定义壁纸时，实际渲染的是内置日落图，就按它来判断，别再去看系统壁纸
+    val bundled = bundledGlassLuminance()
+    return if (bundled < 0f) true else bundled < 0.45f
 }
 
 /** Loads the wallpaper with a sampled decode so a 4K photo does not blow up the heap. */
@@ -197,7 +231,7 @@ fun WallpaperBackground(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.16f)),
+                    .background(Color.Black.copy(alpha = 0.30f)),
             )
         }
         if (customization.wallpaperDim > 0f) {

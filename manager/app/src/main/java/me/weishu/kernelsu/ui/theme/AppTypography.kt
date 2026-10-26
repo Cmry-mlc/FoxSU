@@ -3,6 +3,10 @@ package me.weishu.kernelsu.ui.theme
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import java.io.File
@@ -47,3 +51,34 @@ fun typographyWithFont(style: Int, fontPath: String? = null): Typography {
 @Composable
 fun rememberTypography(style: Int, fontPath: String?): Typography =
     remember(style, fontPath) { typographyWithFont(style, fontPath) }
+
+
+/**
+ * 玻璃模式（白字）下给所有文字加一层极轻的投影，
+ * 避免壁纸亮部把白字吃掉——比继续加深蒙版更不牺牲通透感。
+ */
+fun Typography.withSoftShadow(): Typography {
+    val shadow = Shadow(
+        color = Color.Black.copy(alpha = 0.45f),
+        offset = Offset(0f, 1f),
+        blurRadius = 3f,
+    )
+    fun TextStyle.s(): TextStyle = copy(shadow = shadow)
+    return Typography(
+        displayLarge = displayLarge.s(),
+        displayMedium = displayMedium.s(),
+        displaySmall = displaySmall.s(),
+        headlineLarge = headlineLarge.s(),
+        headlineMedium = headlineMedium.s(),
+        headlineSmall = headlineSmall.s(),
+        titleLarge = titleLarge.s(),
+        titleMedium = titleMedium.s(),
+        titleSmall = titleSmall.s(),
+        bodyLarge = bodyLarge.s(),
+        bodyMedium = bodyMedium.s(),
+        bodySmall = bodySmall.s(),
+        labelLarge = labelLarge.s(),
+        labelMedium = labelMedium.s(),
+        labelSmall = labelSmall.s(),
+    )
+}
