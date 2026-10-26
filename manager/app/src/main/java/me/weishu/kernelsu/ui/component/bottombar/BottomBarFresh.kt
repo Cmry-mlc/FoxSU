@@ -33,7 +33,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.Surface
@@ -426,16 +425,13 @@ private fun DrawerNavItem(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val iconModifier = Modifier.size(22.dp)
+        val iconModifier = Modifier.size(24.dp)
         if (badge != null) {
             BadgedBox(
                 badge = {
+                    // 角标颜色跟随图标本身的配色（七彩 / 莫奈 / 单色都一致）
                     Badge(
-                        containerColor = if (badge.tone == BadgeTone.Alert) {
-                            MaterialTheme.colorScheme.error
-                        } else {
-                            MaterialTheme.colorScheme.primary
-                        },
+                        containerColor = accent,
                         contentColor = Color.White,
                     ) {
                         Text(badge.count.toString())
@@ -512,16 +508,13 @@ private fun FreshNavItemView(
             .padding(vertical = 3.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        val iconModifier = Modifier.size(23.dp)
+        val iconModifier = Modifier.size(24.dp)
         if (badge != null) {
             BadgedBox(
                 badge = {
+                    // 角标颜色跟随图标本身的配色（七彩 / 莫奈 / 单色都一致）
                     Badge(
-                        containerColor = if (badge.tone == BadgeTone.Alert) {
-                            MaterialTheme.colorScheme.error
-                        } else {
-                            MaterialTheme.colorScheme.primary
-                        },
+                        containerColor = accent,
                         contentColor = Color.White,
                     ) {
                         Text(badge.count.toString())
