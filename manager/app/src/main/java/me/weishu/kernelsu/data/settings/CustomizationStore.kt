@@ -34,9 +34,9 @@ data class Customization(
     val kpiImages: List<String?> = List(KPI_CARD_COUNT) { null },
     /** Opacity of each KPI card picture, 0.2f..1f. */
     val kpiAlphas: List<Float> = List(KPI_CARD_COUNT) { 0.7f },
-    /** Background picture of the module list cards (shared by every card). */
-    val moduleImage: String? = null,
-    /** Opacity of the module card picture. */
+    /** Per-module card background picture, keyed by module id. */
+    val moduleImages: Map<String, String> = emptyMap(),
+    /** Opacity of the module card pictures. */
     val moduleImageAlpha: Float = 0.7f,
     /**
      * Per-card surface override: slot 0 is the hero card, 1..4 are the KPI cards.
@@ -83,7 +83,7 @@ object CustomizationStore {
     private const val KEY_HERO_DIM = "hero_wallpaper_dim"
     private const val KEY_KPI_IMAGE = "kpi_image_"
     private const val KEY_KPI_ALPHA = "kpi_alpha_"
-    private const val KEY_MODULE_IMAGE = "module_image"
+    private const val KEY_MODULE_IMAGE_PREFIX = "module_image::"
     private const val KEY_MODULE_IMAGE_ALPHA = "module_image_alpha"
     private const val KEY_SURFACE_COLOR = "surface_color_"
     private const val KEY_SURFACE_ALPHA = "surface_alpha_"
@@ -129,7 +129,9 @@ object CustomizationStore {
             heroDim = getFloat(KEY_HERO_DIM, 0.35f),
             kpiImages = List(KPI_CARD_COUNT) { getString(KEY_KPI_IMAGE + it, null) },
             kpiAlphas = List(KPI_CARD_COUNT) { getFloat(KEY_KPI_ALPHA + it, 0.7f) },
-            moduleImage = getString(KEY_MODULE_IMAGE, null),
+            moduleImages = all.entries
+                .filter { it.key.startsWith(KEY_MODULE_IMAGE_PREFIX) && it.value is String }
+                .associate { it.key.removePrefix(KEY_MODULE_IMAGE_PREFIX) to it.value as String },
             moduleImageAlpha = getFloat(KEY_MODULE_IMAGE_ALPHA, 0.7f),
             surfaceColors = List(SURFACE_SLOT_COUNT) { getInt(KEY_SURFACE_COLOR + it, 0) },
             surfaceAlphas = List(SURFACE_SLOT_COUNT) { getFloat(KEY_SURFACE_ALPHA + it, -1f) },
@@ -178,7 +180,11 @@ object CustomizationStore {
     }
 
     fun setCardColor(color: Int) = update { it.copy(cardColor = color) }
-    fun setModuleImage(uri: String?) = update { it.copy(moduleImage = uri) }
+    fun setModuleImage(moduleId: String, uri: String?) = update {
+        val images = it.moduleImages.toMutableMap()
+        if (uri == null) images.remove(moduleId) else images[moduleId] = uri
+        it.copy(moduleImages = images)
+    }
     fun setModuleImageAlpha(alpha: Float) = update { it.copy(moduleImageAlpha = alpha) }
     fun setCardAlpha(alpha: Float) = update { it.copy(cardAlpha = alpha) }
     fun setHomeTitle(title: String) = update { it.copy(homeTitle = title) }
@@ -194,6 +200,8 @@ object CustomizationStore {
         val next = transform(current)
         // Dragging a colour slider fires many identical values; skip the disk write for them.
         if (next == current) return
+        // 逐模块图片：先清掉旧键再写，避免残留已删除模块的图片
+        val staleModuleKeys = prefs.all.keys.filter { it.startsWith(KEY_MODULE_IMAGE_PREFIX) }
         prefs.edit {
             putString(KEY_WALLPAPER, next.wallpaperUri)
             putFloat(KEY_SCALE, next.wallpaperScale)
@@ -215,7 +223,8 @@ object CustomizationStore {
             }
             putInt(KEY_CARD_COLOR, next.cardColor)
             putFloat(KEY_CARD_ALPHA, next.cardAlpha)
-            putString(KEY_MODULE_IMAGE, next.moduleImage)
+            staleModuleKeys.forEach { remove(it) }
+            next.moduleImages.forEach { (id, uri) -> putString(KEY_MODULE_IMAGE_PREFIX + id, uri) }
             putFloat(KEY_MODULE_IMAGE_ALPHA, next.moduleImageAlpha)
             putString(KEY_HOME_TITLE, next.homeTitle)
             putInt(KEY_BOTTOM_STYLE, next.bottomBarStyle)

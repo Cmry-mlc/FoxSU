@@ -42,3 +42,17 @@ fun savePickedImage(
     bitmap.recycle()
     file.absolutePath
 }.getOrNull()
+
+/** Writes an already decoded bitmap into the app's private storage as a JPEG. */
+fun saveCroppedBitmap(
+    context: Context,
+    bitmap: Bitmap,
+    fileName: String,
+    quality: Int = 92,
+): String? = runCatching {
+    val file = File(context.filesDir, fileName)
+    FileOutputStream(file).use { out ->
+        bitmap.compress(Bitmap.CompressFormat.JPEG, quality, out)
+    }
+    file.absolutePath
+}.getOrNull()

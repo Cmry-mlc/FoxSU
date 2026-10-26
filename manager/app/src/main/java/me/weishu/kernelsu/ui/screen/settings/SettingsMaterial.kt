@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.SystemUpdateAlt
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.SnackbarHostState
@@ -47,6 +48,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -442,6 +444,7 @@ fun SettingPagerMaterial(
 private fun TopBar(
     scrollBehavior: TopAppBarScrollBehavior? = null
 ) {
+    val navigator = LocalNavigator.current
     LargeFlexibleTopAppBar(
         title = {
             val titleText = stringResource(R.string.settings)
@@ -453,6 +456,17 @@ private fun TopBar(
                 )
             } else {
                 Text(text = titleText)
+            }
+        },
+        actions = {
+            if (isFreshStyle()) {
+                IconButton(onClick = { navigator.push(Route.Author) }) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_author),
+                        contentDescription = stringResource(R.string.author_title),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         },
         colors = expressiveTopAppBarColors(

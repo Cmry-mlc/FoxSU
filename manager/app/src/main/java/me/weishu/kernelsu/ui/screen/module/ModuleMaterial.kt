@@ -152,6 +152,7 @@ import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.component.rememberWallpaper
 import me.weishu.kernelsu.ui.util.savePickedImage
 import me.weishu.kernelsu.ui.component.CardAppearanceDialog
+import me.weishu.kernelsu.ui.component.ImageCropDialog
 import me.weishu.kernelsu.ui.component.resolveCardSurface
 import me.weishu.kernelsu.ui.component.supportingTextAlpha
 import androidx.compose.material3.LocalContentColor
@@ -764,18 +765,19 @@ private fun ModuleItem(
     val surface = resolveCardSurface(MODULE_SLOT)
     var showAppearance by remember { mutableStateOf(false) }
     val custom = CustomizationStore.current
-    val moduleBitmap = rememberWallpaper(custom.moduleImage)
+    val moduleBitmap = rememberWallpaper(custom.moduleImages[module.id])
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    var pendingCrop by remember { mutableStateOf<String?>(null) }
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
         scope.launch {
             val saved = withContext(Dispatchers.IO) {
-                savePickedImage(context, uri, "module_card.jpg", maxSide = 1200)
+                savePickedImage(context, uri, "module_raw_${module.id.hashCode()}.jpg", maxSide = 2000)
             }
-            if (saved != null) CustomizationStore.setModuleImage(saved)
+            if (saved != null) pendingCrop = saved
         }
     }
 
@@ -1063,12 +1065,25 @@ private fun ModuleItem(
         }
     }
 
+    pendingCrop?.let { raw ->
+        ImageCropDialog(
+            sourcePath = raw,
+            aspectRatio = 2.2f,
+            outputName = "module_card_${module.id.hashCode()}.jpg",
+            onConfirm = { cropped ->
+                CustomizationStore.setModuleImage(module.id, cropped)
+                pendingCrop = null
+            },
+            onDismiss = { pendingCrop = null },
+        )
+    }
+
     if (showAppearance) {
         CardAppearanceDialog(
             slot = MODULE_SLOT,
             title = stringResource(R.string.module_card_style_title),
             description = stringResource(R.string.module_card_style_desc),
-            hasImage = custom.moduleImage != null,
+            hasImage = custom.moduleImages[module.id] != null,
             imageAlpha = custom.moduleImageAlpha,
             imageAlphaRange = 0.2f..1f,
             imageAlphaLabel = stringResource(R.string.customization_dim),
@@ -1078,7 +1093,7 @@ private fun ModuleItem(
                     PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                 )
             },
-            onRemoveImage = { CustomizationStore.setModuleImage(null) },
+            onRemoveImage = { CustomizationStore.setModuleImage(module.id, null) },
             onDismiss = { showAppearance = false },
             showImage = true,
         )
