@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import me.weishu.kernelsu.data.settings.CustomizationStore
+import me.weishu.kernelsu.ui.component.glassNeedsLightText
 import me.weishu.kernelsu.ui.theme.isFreshStyle
 import top.yukonga.miuix.kmp.nav.gesture.WindowNavigationEventBridge
 
@@ -211,9 +212,11 @@ fun SearchAppBar(
             )
 
             val glass = CustomizationStore.current.cardGlass
+            // 深色壁纸 → 薄白片 + 白字；浅色壁纸 → 更实的白片保证深色输入文字可读
+            val glassAlpha = if (glassNeedsLightText()) 0.16f else 0.58f
             val searchBarColors = SearchBarDefaults.colors(
                 containerColor = when {
-                    glass -> Color.White.copy(alpha = 0.16f)
+                    glass -> Color.White.copy(alpha = glassAlpha)
                     fresh -> MaterialTheme.colorScheme.surface
                     else -> MaterialTheme.colorScheme.surfaceContainerHighest
                 }
@@ -229,8 +232,11 @@ fun SearchAppBar(
                     .border(
                         BorderStroke(
                             1.dp,
-                            if (glass) Color.White.copy(alpha = 0.22f)
-                            else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f),
+                            if (glass) {
+                                Color.White.copy(alpha = if (glassNeedsLightText()) 0.34f else 0.7f)
+                            } else {
+                                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)
+                            },
                         ),
                         CircleShape
                     )

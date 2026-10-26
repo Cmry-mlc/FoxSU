@@ -132,6 +132,7 @@ import me.weishu.kernelsu.ui.navigation3.Route
 import me.weishu.kernelsu.ui.component.CardSurface
 import me.weishu.kernelsu.ui.component.KsuIsValid
 import me.weishu.kernelsu.ui.component.freshCardBorder
+import me.weishu.kernelsu.ui.component.glassNeedsLightText
 import me.weishu.kernelsu.ui.component.freshCardColor
 import me.weishu.kernelsu.ui.component.isNightScheme
 import me.weishu.kernelsu.ui.theme.LaunchTint
@@ -719,7 +720,15 @@ private fun FreshRebootDialog(onDismiss: () -> Unit) {
     val allOptions = getRebootListOption()
     val onReboot = rememberRebootAction()
     val night = isNightScheme()
-    val sheetColor = if (night) freshCardColor().copy(alpha = 0.92f) else Color.White.copy(alpha = 0.86f)
+    val glass = CustomizationStore.current.cardGlass
+    val glassLightText = glassNeedsLightText()
+    val sheetColor = when {
+        // 玻璃 + 深色壁纸：用深色磨砂面板，白字才看得见
+        glass && glassLightText -> Color(0xFF1C1C1E).copy(alpha = 0.94f)
+        glass -> Color.White.copy(alpha = 0.90f)
+        night -> freshCardColor().copy(alpha = 0.92f)
+        else -> Color.White.copy(alpha = 0.86f)
+    }
 
     // 重启 / 软重启走滑动，其余做成等大的胶囊行
     val slideOptions = allOptions.filter { it.reason == "" || it.reason == "soft_reboot" }

@@ -101,12 +101,24 @@ fun FreshKernelSUTheme(
     // 玻璃卡面 + 深色壁纸：整体文字转白，避免深色字贴在照片上看不清
     val glassLightText = glassNeedsLightText()
     val textScheme = if (glassLightText) {
+        // 深色壁纸的玻璃模式：文字转白，同时把容器色压深，
+        // 否则对话框 / 开关 / 弹出菜单还是浅灰底，白字直接看不见。
         animatedColorScheme.copy(
             onSurface = Color.White,
-            onSurfaceVariant = Color.White.copy(alpha = 0.76f),
+            onSurfaceVariant = Color.White.copy(alpha = 0.78f),
             surfaceVariant = Color.White.copy(alpha = 0.12f),
-            outlineVariant = Color.White.copy(alpha = 0.26f),
+            outlineVariant = Color.White.copy(alpha = 0.24f),
             outline = Color.White.copy(alpha = 0.5f),
+            surfaceContainerLowest = Color(0xFF121212),
+            surfaceContainerLow = Color(0xFF161616),
+            surfaceContainer = Color(0xFF1A1A1A),
+            surfaceContainerHigh = Color(0xFF1F1F1F),
+            surfaceContainerHighest = Color(0xFF252525),
+            surfaceBright = Color(0xFF2A2A2A),
+            surfaceDim = Color(0xFF0E0E0E),
+            inverseSurface = Color.White,
+            inverseOnSurface = Color(0xFF1B1B1B),
+            surfaceTint = Color.Transparent,
         )
     } else {
         animatedColorScheme
@@ -115,7 +127,10 @@ fun FreshKernelSUTheme(
     MaterialExpressiveTheme(
         colorScheme = textScheme,
         motionScheme = MotionScheme.expressive(),
-        typography = typographyWithFont(CustomizationStore.current.fontStyle),
+        typography = rememberTypography(
+            CustomizationStore.current.fontStyle,
+            CustomizationStore.current.fontPath,
+        ),
         shapes = FreshShapes,
         content = {
             MonetColorsProvider.UpdateCss(animatedColorScheme)

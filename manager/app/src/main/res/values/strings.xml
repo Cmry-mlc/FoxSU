@@ -284,6 +284,11 @@
     <string name="customization_wallpaper_enable_sum">Turn off to hide the custom background everywhere</string>
     <string name="customization_font">Font</string>
     <string name="customization_font_sub">Global typeface for the ColorUI style</string>
+    <string name="customization_font_custom">Custom</string>
+    <string name="customization_font_import">Import font file</string>
+    <string name="customization_font_failed">Could not read that font file</string>
+    <string name="customization_font_applied">Font applied</string>
+    <string name="customization_font_idle_hint"> · not in use</string>
     <string name="customization_font_system">System</string>
     <string name="customization_font_serif">Serif</string>
     <string name="customization_font_mono">Mono</string>
@@ -291,8 +296,6 @@
     <string name="customization_wallpaper_sub">Applies to every page, behind the cards</string>
     <string name="customization_global_wallpaper">Global wallpaper</string>
     <string name="customization_global_wallpaper_sub">Shown on every screen; you can crop it after picking</string>
-    <string name="customization_hero_title">Home card pictures</string>
-    <string name="customization_hero_sub">Long-press any card on the home screen</string>
     <string name="fresh_home_hero_title">Top card style</string>
     <string name="fresh_home_hero_desc">Only this card. Long-press to change it again</string>
     <string name="fresh_home_kpi_bg_title">Card style</string>
@@ -306,11 +309,8 @@
     <string name="fresh_home_brightness">Brightness</string>
     <string name="fresh_home_hero_hint">Long-press to change colour, picture and opacity</string>
     <string name="customization_card_sub">Global default; long-press a home card to override it</string>
-    <string name="customization_offset_x">Horizontal position</string>
     <string name="customization_pick_image">Choose image</string>
     <string name="customization_clear">Remove</string>
-    <string name="customization_scale">Zoom</string>
-    <string name="customization_offset">Vertical position</string>
     <string name="customization_dim">Dim</string>
     <string name="customization_card">Card surface</string>
     <string name="customization_card_color">Card color</string>
@@ -328,6 +328,7 @@
     <string name="customization_bottom_bar_sub">Corner radius of the floating navigation bar</string>
     <string name="customization_bottom_immersive">Immersive sheen</string>
     <string name="customization_bottom_immersive_sum">HarmonyOS-style soft light: more transparent with a glassy highlight</string>
+    <string name="customization_bottom_alpha">Bar opacity</string>
     <string name="customization_radius">Radius</string>
     <string name="customization_icon">Launcher icon</string>
     <string name="customization_icon_fox2">Outline fox</string>

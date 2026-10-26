@@ -106,23 +106,17 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
         // 视频样式：半透明悬浮条（自定义卡片色也保持通透）；沉浸光感更透并叠柔光
         val immersive = custom.bottomBarImmersive
         val nightBar = isNightScheme()
-        val barColor = freshCardColor().let {
-            when {
-                // 玻璃模式：和卡片同一套通透度，深色壁纸下更透
-                custom.cardGlass -> if (glassNeedsLightText()) {
-                    Color.White.copy(alpha = 0.14f)
-                } else {
-                    Color.White.copy(alpha = 0.52f)
-                }
-                nightBar -> if (immersive) {
-                    Color(0xFF17181A).copy(alpha = 0.86f)
-                } else {
-                    Color(0xFF1B1C1E).copy(alpha = 0.94f)
-                }
-                immersive -> it.copy(alpha = 0.66f)
-                it.alpha > 0.9f -> it.copy(alpha = 0.84f)
-                else -> it
-            }
+        // 用户设置的底栏不透明度（默认 1f = 完全不透明）
+        val userAlpha = custom.bottomBarAlpha
+        val barColor = when {
+            // 玻璃模式：跟着卡片的通透度走
+            custom.cardGlass -> Color.White.copy(
+                alpha = (if (glassNeedsLightText()) 0.14f else 0.46f) * userAlpha
+            )
+            nightBar -> Color(if (immersive) 0xFF17181A else 0xFF1B1C1E)
+                .copy(alpha = (if (immersive) 0.86f else 1f) * userAlpha)
+            immersive -> freshCardColor().copy(alpha = 0.66f * userAlpha)
+            else -> freshCardColor().copy(alpha = userAlpha)
         }
         Surface(
             shape = barShape,

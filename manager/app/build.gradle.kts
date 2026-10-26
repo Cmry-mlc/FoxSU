@@ -65,6 +65,10 @@ android {
 
     buildTypes {
         debug {
+            // 调试包也开 R8 + 资源收缩：体积从 ~30MB 降到 ~10MB，功能与调试行为不变
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             externalNativeBuild {
                 cmake {
                     arguments += listOf("-DCMAKE_CXX_FLAGS_DEBUG=-Og", "-DCMAKE_C_FLAGS_DEBUG=-Og")

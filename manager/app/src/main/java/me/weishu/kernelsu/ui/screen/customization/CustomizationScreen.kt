@@ -77,13 +77,16 @@ import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.component.WallpaperBackground
 import me.weishu.kernelsu.ui.component.WallpaperBackdrop
 import me.weishu.kernelsu.ui.component.freshCardBorder
+import me.weishu.kernelsu.ui.component.GlassSheen
 import me.weishu.kernelsu.ui.component.freshCardColor
 import me.weishu.kernelsu.ui.component.rememberCardSurface
 import me.weishu.kernelsu.ui.component.ImageCropDialog
 import me.weishu.kernelsu.ui.component.scaffoldBackgroundColor
 import me.weishu.kernelsu.ui.navigation3.LocalNavigator
 import me.weishu.kernelsu.ui.util.LauncherIconManager
+import me.weishu.kernelsu.ui.util.importFontFile
 import me.weishu.kernelsu.ui.util.savePickedImage
+import java.io.File
 
 @Composable
 fun CustomizationScreen() {
@@ -126,18 +129,18 @@ fun CustomizationScreen() {
         }
     }
 
-    val heroPicker = rememberLauncherForActivityResult(
-        ActivityResultContracts.PickVisualMedia()
+    val fontPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
         if (uri == null) return@rememberLauncherForActivityResult
         scope.launch {
-            val saved = withContext(Dispatchers.IO) {
-                savePickedImage(context, uri, "hero_card.jpg", maxSide = 1400)
-            }
+            val saved = withContext(Dispatchers.IO) { importFontFile(context, uri) }
             if (saved == null) {
-                Toast.makeText(context, R.string.customization_wallpaper_failed, Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, R.string.customization_font_failed, Toast.LENGTH_SHORT).show()
             } else {
-                CustomizationStore.setHeroWallpaper(saved)
+                CustomizationStore.setFontPath(saved)
+                CustomizationStore.setFontStyle(4)
+                Toast.makeText(context, R.string.customization_font_applied, Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -215,65 +218,6 @@ fun CustomizationScreen() {
                                 )
                             }
                         }
-                    }
-                }
-
-                item {
-                    SectionCard(
-                        icon = Icons.Filled.Wallpaper,
-                        title = stringResource(R.string.customization_hero_title),
-                        subtitle = stringResource(R.string.customization_hero_sub),
-                    ) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            PillButton(
-                                text = stringResource(R.string.customization_pick_image),
-                                icon = Icons.Filled.Photo,
-                                filled = true,
-                                onClick = {
-                                    heroPicker.launch(
-                                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                                    )
-                                },
-                            )
-                            PillButton(
-                                text = stringResource(R.string.customization_clear),
-                                icon = Icons.Filled.DeleteOutline,
-                                filled = false,
-                                enabled = custom.heroWallpaperUri != null,
-                                onClick = { CustomizationStore.setHeroWallpaper(null) },
-                            )
-                        }
-
-                        if (custom.heroWallpaperUri != null) {
-                            SliderRow(
-                                label = stringResource(R.string.customization_scale),
-                                value = custom.heroScale,
-                                range = 1f..2.5f,
-                                display = "${(custom.heroScale * 100).toInt()}%",
-                                onChange = CustomizationStore::setHeroScale,
-                            )
-                            SliderRow(
-                                label = stringResource(R.string.customization_offset_x),
-                                value = custom.heroOffsetX,
-                                range = -0.4f..0.4f,
-                                display = "${(custom.heroOffsetX * 100).toInt()}%",
-                                onChange = CustomizationStore::setHeroOffsetX,
-                            )
-                            SliderRow(
-                                label = stringResource(R.string.customization_offset),
-                                value = custom.heroOffsetY,
-                                range = -0.4f..0.4f,
-                                display = "${(custom.heroOffsetY * 100).toInt()}%",
-                                onChange = CustomizationStore::setHeroOffsetY,
-                            )
-                        }
-                        SliderRow(
-                            label = stringResource(R.string.customization_dim),
-                            value = custom.heroDim,
-                            range = 0f..0.8f,
-                            display = "${(custom.heroDim * 100).toInt()}%",
-                            onChange = CustomizationStore::setHeroDim,
-                        )
                     }
                 }
 
@@ -371,6 +315,54 @@ fun CustomizationScreen() {
                                     onClick = { CustomizationStore.setFontStyle(index) },
                                 )
                             }
+                            if (custom.fontPath != null) {
+                                item {
+                                    StyleChip(
+                                        label = stringResource(R.string.customization_font_custom),
+                                        selected = custom.fontStyle == 4,
+                                        onClick = { CustomizationStore.setFontStyle(4) },
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(Modifier.height(10.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            PillButton(
+                                text = stringResource(R.string.customization_font_import),
+                                icon = Icons.Filled.TextFields,
+                                filled = custom.fontPath == null,
+                                onClick = {
+                                    fontPicker.launch(
+                                        arrayOf(
+                                            "font/ttf",
+                                            "font/otf",
+                                            "application/x-font-ttf",
+                                            "application/octet-stream",
+                                        )
+                                    )
+                                },
+                            )
+                            if (custom.fontPath != null) {
+                                PillButton(
+                                    text = stringResource(R.string.customization_clear),
+                                    icon = Icons.Filled.DeleteOutline,
+                                    filled = false,
+                                    onClick = {
+                                        CustomizationStore.setFontPath(null)
+                                        if (custom.fontStyle == 4) CustomizationStore.setFontStyle(0)
+                                    },
+                                )
+                            }
+                        }
+                        if (custom.fontPath != null) {
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                text = File(custom.fontPath).name +
+                                    if (custom.fontStyle == 4) "" else stringResource(R.string.customization_font_idle_hint),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
                         }
                     }
                 }
@@ -416,6 +408,14 @@ fun CustomizationScreen() {
                                 onCheckedChange = CustomizationStore::setBottomBarImmersive,
                             )
                         }
+
+                        SliderRow(
+                            label = stringResource(R.string.customization_bottom_alpha),
+                            value = custom.bottomBarAlpha,
+                            range = 0.2f..1f,
+                            display = "${(custom.bottomBarAlpha * 100).toInt()}%",
+                            onChange = CustomizationStore::setBottomBarAlpha,
+                        )
 
                         SliderRow(
                             label = stringResource(R.string.customization_radius),
@@ -611,8 +611,11 @@ private fun SectionCard(
     Surface(
         shape = RoundedCornerShape(22.dp),
         color = rememberCardSurface(freshCardColor()),
+        border = freshCardBorder(),
         modifier = Modifier.fillMaxWidth(),
     ) {
+        Box {
+            GlassSheen(Modifier.matchParentSize())
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Surface(
@@ -642,6 +645,7 @@ private fun SectionCard(
             }
             Spacer(Modifier.height(14.dp))
             content()
+        }
         }
     }
 }

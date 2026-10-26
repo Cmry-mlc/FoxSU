@@ -1,19 +1,28 @@
 package me.weishu.kernelsu.ui.theme
 
 import androidx.compose.material3.Typography
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import java.io.File
 
 /**
- * 全局字体：0 系统默认 / 1 衬线 / 2 等宽 / 3 手写体。
+ * 全局字体：
+ * 0 系统默认 / 1 衬线 / 2 等宽 / 3 手写体 / 4 用户导入的字体文件。
  * 除系统默认外，其余都基于同一套 Typography 只替换 fontFamily，字号行高不变。
  */
-fun typographyWithFont(style: Int): Typography {
-    val family = when (style) {
-        1 -> FontFamily.Serif
-        2 -> FontFamily.Monospace
-        3 -> FontFamily.Cursive
-        else -> return Typography
-    }
+fun typographyWithFont(style: Int, fontPath: String? = null): Typography {
+    val family = when {
+        style == 4 && fontPath != null -> runCatching {
+            FontFamily(Font(File(fontPath)))
+        }.getOrNull()
+        style == 1 -> FontFamily.Serif
+        style == 2 -> FontFamily.Monospace
+        style == 3 -> FontFamily.Cursive
+        else -> null
+    } ?: return Typography
+
     val base = Typography
     return Typography(
         displayLarge = base.displayLarge.copy(fontFamily = family),
@@ -33,3 +42,8 @@ fun typographyWithFont(style: Int): Typography {
         labelSmall = base.labelSmall.copy(fontFamily = family),
     )
 }
+
+/** 主题里调用：字体文件只在路径变化时重新加载。 */
+@Composable
+fun rememberTypography(style: Int, fontPath: String?): Typography =
+    remember(style, fontPath) { typographyWithFont(style, fontPath) }

@@ -260,6 +260,11 @@
     <string name="customization_wallpaper_enable_sum">关闭后全应用隐藏自定义背景</string>
     <string name="customization_font">字体</string>
     <string name="customization_font_sub">ColorUI 全局字体</string>
+    <string name="customization_font_custom">自定义</string>
+    <string name="customization_font_import">导入字体文件</string>
+    <string name="customization_font_failed">字体文件读取失败</string>
+    <string name="customization_font_applied">字体已应用</string>
+    <string name="customization_font_idle_hint"> · 未启用</string>
     <string name="customization_font_system">系统</string>
     <string name="customization_font_serif">衬线</string>
     <string name="customization_font_mono">等宽</string>
@@ -267,8 +272,6 @@
     <string name="customization_wallpaper_sub">作用于所有页面，位于卡片下层</string>
     <string name="customization_global_wallpaper">全局壁纸</string>
     <string name="customization_global_wallpaper_sub">所有界面共用一张背景图，选图后可直接裁剪</string>
-    <string name="customization_hero_title">首页卡片背景</string>
-    <string name="customization_hero_sub">长按首页任意卡片即可单独设置</string>
     <string name="fresh_home_hero_title">顶部卡片外观</string>
     <string name="fresh_home_hero_desc">只作用于这张卡片，长按可再次修改</string>
     <string name="fresh_home_kpi_bg_title">卡片外观</string>
@@ -282,11 +285,8 @@
     <string name="fresh_home_brightness">亮度</string>
     <string name="fresh_home_hero_hint">长按可改颜色、背景图和透明度</string>
     <string name="customization_card_sub">全局默认；长按首页卡片可单独覆盖</string>
-    <string name="customization_offset_x">左右位置</string>
     <string name="customization_pick_image">选择图片</string>
     <string name="customization_clear">移除</string>
-    <string name="customization_scale">缩放</string>
-    <string name="customization_offset">上下位置</string>
     <string name="customization_dim">暗化</string>
     <string name="customization_card">卡片背景</string>
     <string name="customization_card_color">卡片颜色</string>
@@ -304,6 +304,7 @@
     <string name="customization_bottom_bar_sub">调整悬浮底栏的圆角大小</string>
     <string name="customization_bottom_immersive">沉浸光感</string>
     <string name="customization_bottom_immersive_sum">鸿蒙风格柔光：更通透并带玻璃质感高光</string>
+    <string name="customization_bottom_alpha">底栏不透明度</string>
     <string name="customization_radius">圆角</string>
     <string name="customization_icon">启动器图标</string>
     <string name="customization_icon_fox2">黑团子</string>

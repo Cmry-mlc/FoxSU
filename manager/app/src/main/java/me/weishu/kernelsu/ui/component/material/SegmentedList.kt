@@ -71,6 +71,9 @@ import androidx.compose.ui.unit.round
 import androidx.compose.ui.zIndex
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import androidx.compose.ui.graphics.Color
+import me.weishu.kernelsu.data.settings.CustomizationStore
+import me.weishu.kernelsu.ui.component.glassNeedsLightText
 import me.weishu.kernelsu.ui.component.freshCardColor
 import me.weishu.kernelsu.ui.component.rememberCardSurface
 import me.weishu.kernelsu.ui.theme.isFreshStyle
@@ -85,13 +88,20 @@ private const val SegmentedSpringDamping = 0.9f
 annotation class SegmentedColumnDsl
 
 @Composable
-private fun defaultSegmentedColors(): ListItemColors = ListItemDefaults.segmentedColors(
-    containerColor = rememberCardSurface(
-        if (isFreshStyle()) freshCardColor() else colorScheme.surfaceBright
-    ),
-    disabledContainerColor = colorScheme.surfaceBright,
-    supportingContentColor = colorScheme.onSurfaceVariant
-)
+private fun defaultSegmentedColors(): ListItemColors {
+    val glass = CustomizationStore.current.cardGlass
+    // 玻璃模式下给列表行一片更明显的磨砂白，避免和壁纸糊在一起
+    val glassAlpha = if (glassNeedsLightText()) 0.18f else 0.40f
+    return ListItemDefaults.segmentedColors(
+        containerColor = if (glass) {
+            Color.White.copy(alpha = glassAlpha)
+        } else {
+            rememberCardSurface(if (isFreshStyle()) freshCardColor() else colorScheme.surfaceBright)
+        },
+        disabledContainerColor = colorScheme.surfaceBright,
+        supportingContentColor = colorScheme.onSurfaceVariant
+    )
+}
 
 @Composable
 private fun freshStandaloneShapes(): ListItemShapes =

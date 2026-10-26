@@ -56,3 +56,22 @@ fun saveCroppedBitmap(
     }
     file.absolutePath
 }.getOrNull()
+
+/**
+ * 把用户从系统文件选择器挑的字体（ttf/otf）复制到应用私有目录。
+ * 复制一份可以避免原文件被删除或权限失效导致下次启动字体丢失。
+ */
+fun importFontFile(context: Context, uri: Uri): String? = runCatching {
+    val dir = File(context.filesDir, "fonts").apply { mkdirs() }
+    // 清掉之前导入的字体，避免堆积
+    dir.listFiles()?.forEach { it.delete() }
+    val file = File(dir, "custom.ttf")
+    context.contentResolver.openInputStream(uri)?.use { input ->
+        file.outputStream().use { output -> input.copyTo(output) }
+    } ?: return null
+    if (file.length() < 1024L) {
+        file.delete()
+        return null
+    }
+    file.absolutePath
+}.getOrNull()
