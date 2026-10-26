@@ -15,6 +15,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.component.isNightScheme as isNightSchemeForTheme
 import me.weishu.kernelsu.ui.webui.MonetColorsProvider
+import me.weishu.kernelsu.ui.theme.UiPalette
 
 /**
  * "ColorUI" style.
@@ -57,22 +58,22 @@ fun FreshKernelSUTheme(
         colorSpec = appSettings.colorSpec,
     )
 
-    // 浅色：画布改成纯白，卡片用极浅的雾白 + 细描边来区分层次
+    // 浅色：画布统一成参考图的浅紫灰（#F6F4FB），卡片用近白/马卡龙浮在上面
     // 夜间：强调色保留，中性色切到安静的灰阶。
     val colorScheme = if (!darkTheme) {
         baseScheme.copy(
-            surface = Color.White,
-            background = Color.White,
-            surfaceBright = Color.White,
-            surfaceDim = Color(0xFFEDEFEC),
-            surfaceContainerLowest = Color(0xFFF7F9F7),
-            surfaceContainerLow = Color(0xFFF4F6F3),
-            surfaceContainer = Color(0xFFF0F3EF),
-            surfaceContainerHigh = Color(0xFFEBEFEA),
-            surfaceContainerHighest = Color(0xFFE6EAE4),
-            onSurface = Color(0xFF1A1D1A),
-            onSurfaceVariant = Color(0xFF606660),
-            outlineVariant = Color(0xFFE4E8E2),
+            surface = UiPalette.CanvasLight,
+            background = UiPalette.CanvasLight,
+            surfaceBright = UiPalette.CanvasLight,
+            surfaceDim = Color(0xFFE9E6F2),
+            surfaceContainerLowest = Color(0xFFFBFAFE),
+            surfaceContainerLow = Color(0xFFF6F4FB),
+            surfaceContainer = Color(0xFFF1EFF8),
+            surfaceContainerHigh = Color(0xFFECE9F4),
+            surfaceContainerHighest = Color(0xFFE5E2EE),
+            onSurface = Color(0xFF1B1B1F),
+            onSurfaceVariant = Color(0xFF5F5B6B),
+            outlineVariant = Color(0xFFE5E2EE),
         )
     } else {
         // Pitch-black canvas + #1E1E1E cards: the same look on every screen, with pure white

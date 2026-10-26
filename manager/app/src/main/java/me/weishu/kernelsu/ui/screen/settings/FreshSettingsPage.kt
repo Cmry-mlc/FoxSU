@@ -410,10 +410,10 @@ private fun SettingsTileView(
 
     Surface(
         modifier = modifier
-            .height(100.dp)
-            .clip(RoundedCornerShape(22.dp))
+            .height(102.dp)
+            .clip(RoundedCornerShape(24.dp))
             .clickable(enabled = tile.state != TileState.Disabled, onClick = tile.onClick),
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(24.dp),
         color = containerColor ?: freshCardColor(),
         contentColor = contentColor ?: cardContentColor(),
         border = if (onCard) null else freshCardBorder(),

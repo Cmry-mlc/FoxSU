@@ -752,7 +752,7 @@ private fun FreshRebootDialog(onDismiss: () -> Unit) {
         glass && glassLightText -> Color(0xFF1C1C1E).copy(alpha = 0.94f)
         glass -> Color.White.copy(alpha = 0.90f)
         night -> freshCardColor().copy(alpha = 0.92f)
-        else -> Color.White.copy(alpha = 0.86f)
+        else -> Color.White
     }
 
     // 重启 / 软重启走滑动，其余做成等大的胶囊行
@@ -1130,12 +1130,12 @@ private fun FreshStatusCard(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(22.dp))
+            .clip(RoundedCornerShape(26.dp))
             .combinedClickable(
                 onClick = { if (!state.isLateLoadMode) onInstall() },
                 onLongClick = onLongPress,
             ),
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(26.dp),
         color = containerColor,
         contentColor = contentColor,
         border = if (hasHero) null else cardBorder,
@@ -1376,13 +1376,13 @@ private fun FreshKpiCard(
 
     Surface(
         modifier = modifier
-            .height(148.dp)
-            .clip(RoundedCornerShape(22.dp))
+            .height(150.dp)
+            .clip(RoundedCornerShape(24.dp))
             .combinedClickable(
                 onClick = { onClick?.invoke() },
                 onLongClick = onLongPress,
             ),
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(24.dp),
         color = baseContainer,
         contentColor = textColor,
         border = baseBorder,

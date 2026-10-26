@@ -83,12 +83,12 @@ fun AuthorScreen() {
                     )
                 },
                 navigationIcon = { TopBarBackButton(onClick = dropUnlessResumed { navigator.pop() }) },
-                colors = expressiveTopAppBarColors(containerColor = MaterialTheme.colorScheme.surface),
+                colors = expressiveTopAppBarColors(containerColor = if (isNightScheme()) MaterialTheme.colorScheme.surface else Color.White),
                 windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
                 scrollBehavior = scrollBehavior,
             )
         },
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = if (isNightScheme()) MaterialTheme.colorScheme.surface else Color.White,
         contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
     ) { padding ->
         Column(
