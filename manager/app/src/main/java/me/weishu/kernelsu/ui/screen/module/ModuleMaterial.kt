@@ -147,6 +147,8 @@ import me.weishu.kernelsu.ui.component.CardAppearanceDialog
 import me.weishu.kernelsu.ui.component.resolveCardSurface
 import me.weishu.kernelsu.ui.component.supportingTextAlpha
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.FloatingActionButton
 import me.weishu.kernelsu.ui.theme.isFreshStyle
 import me.weishu.kernelsu.ui.util.reboot
 import top.yukonga.miuix.kmp.nav.gesture.WindowNavigationEventBridge
@@ -401,20 +403,40 @@ fun ModulePagerMaterial(
                     actions.onOpenFlash(uris)
                 }
 
-                SmallExtendedFloatingActionButton(
-                    modifier = Modifier.padding(bottom = bottomInnerPadding),
-                    expanded = fabExpanded,
-                    onClick = {
-                        // Select the zip files to install
-                        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-                            type = "application/zip"
-                            putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
-                        }
-                        selectZipLauncher.launch(intent)
-                    },
-                    icon = { Icon(Icons.Filled.Add, moduleInstall) },
-                    text = { Text(text = moduleInstall) },
-                )
+                if (isFreshStyle()) {
+                    // 图中样式：纯色大圆 FAB，白色加号，无文字
+                    FloatingActionButton(
+                        onClick = {
+                            // Select the zip files to install
+                            val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                                type = "application/zip"
+                                putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+                            }
+                            selectZipLauncher.launch(intent)
+                        },
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        shape = CircleShape,
+                        modifier = Modifier.padding(bottom = bottomInnerPadding),
+                    ) {
+                        Icon(Icons.Filled.Add, moduleInstall, modifier = Modifier.size(28.dp))
+                    }
+                } else {
+                    SmallExtendedFloatingActionButton(
+                        modifier = Modifier.padding(bottom = bottomInnerPadding),
+                        expanded = fabExpanded,
+                        onClick = {
+                            // Select the zip files to install
+                            val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                                type = "application/zip"
+                                putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+                            }
+                            selectZipLauncher.launch(intent)
+                        },
+                        icon = { Icon(Icons.Filled.Add, moduleInstall) },
+                        text = { Text(text = moduleInstall) },
+                    )
+                }
             }
         },
         contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
