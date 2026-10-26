@@ -1077,6 +1077,12 @@ private fun FreshStatusCard(
     val canJailbreak = notInstalled && state.isSELinuxPermissive
     val glassBackdrop = CustomizationStore.current.cardGlass
     val hasHero = !glassBackdrop && hero != null && heroBitmap != null
+    // 徽章着色：浅色卡片用品牌绿，深色/图片背景用更亮的绿
+    val statusTint = if (ksuActive) {
+        if (hasHero || isNightScheme()) Color(0xFF5BE08D) else Color(0xFF12B45C)
+    } else {
+        MaterialTheme.colorScheme.error
+    }
 
     Surface(
         modifier = Modifier
@@ -1098,7 +1104,7 @@ private fun FreshStatusCard(
                 FreshHeroBackdrop(hero = hero, bitmap = heroBitmap)
             }
             Row(
-                modifier = Modifier.padding(start = 18.dp, top = 18.dp, bottom = 18.dp, end = 86.dp),
+                modifier = Modifier.padding(start = 18.dp, top = 18.dp, bottom = 18.dp, end = 100.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
@@ -1197,15 +1203,15 @@ private fun FreshStatusCard(
                 }
             }
 
-            // 状态徽章：卡片右上角，留出安全边距，不溢出卡片
+            // 状态徽章：卡片右侧、垂直居中，整枚留在卡片内
             Icon(
                 painter = statusIcon,
                 contentDescription = null,
-                tint = Color.Unspecified,
+                tint = statusTint,
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = 12.dp, end = 12.dp)
-                    .size(64.dp),
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 12.dp)
+                    .size(76.dp),
             )
         }
     }
