@@ -1067,21 +1067,20 @@ private fun FreshStatusCard(
         }
     } else ""
 
+    // 运行模式 / 越狱模式标签配色：薄荷绿 + 琥珀，和卡片底色协调且不刺眼
+    val night = isNightScheme()
+    val lkmContainer = if (night) Color(0xFF1E3A2A) else Color(0xFFDCEFE0)
+    val lkmContent = if (night) Color(0xFFA6E8C2) else Color(0xFF1C5A36)
+    val jailContainer = if (night) Color(0xFF3E2E12) else Color(0xFFFFE7C2)
+    val jailContent = if (night) Color(0xFFFFD08A) else Color(0xFF8A5300)
+
     val canJailbreak = notInstalled && state.isSELinuxPermissive
     val glassBackdrop = CustomizationStore.current.cardGlass
     val hasHero = !glassBackdrop && hero != null && heroBitmap != null
 
-    val statusTint = if (ksuActive) {
-        if (hasHero || isNightScheme()) Color(0xFF5BE08D) else Color(0xFF10B45A)
-    } else {
-        MaterialTheme.colorScheme.error
-    }
-
-    Box(modifier = Modifier.fillMaxWidth()) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(end = 22.dp)
             .clip(RoundedCornerShape(22.dp))
             .combinedClickable(
                 onClick = { if (!state.isLateLoadMode) onInstall() },
@@ -1099,7 +1098,7 @@ private fun FreshStatusCard(
                 FreshHeroBackdrop(hero = hero, bitmap = heroBitmap)
             }
             Row(
-                modifier = Modifier.padding(start = 18.dp, top = 18.dp, bottom = 18.dp, end = 62.dp),
+                modifier = Modifier.padding(start = 18.dp, top = 18.dp, bottom = 18.dp, end = 86.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
@@ -1114,8 +1113,8 @@ private fun FreshStatusCard(
                             Spacer(Modifier.width(8.dp))
                             FreshTag(
                                 text = stringResource(R.string.jailbreak_mode),
-                                container = MaterialTheme.colorScheme.errorContainer,
-                                content = MaterialTheme.colorScheme.onErrorContainer,
+                                container = jailContainer,
+                                content = jailContent,
                             )
                         }
                         if (ksuActive && state.isSafeMode) {
@@ -1148,16 +1147,16 @@ private fun FreshStatusCard(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             FreshTag(
                                 text = workingMode,
-                                container = MaterialTheme.colorScheme.primary,
-                                content = MaterialTheme.colorScheme.onPrimary,
+                                container = lkmContainer,
+                                content = lkmContent,
                             )
                             // 越狱模式紧跟运行模式之后
                             if (ksuActive && state.isLateLoadMode) {
                                 Spacer(Modifier.width(8.dp))
                                 FreshTag(
                                     text = stringResource(R.string.jailbreak_mode),
-                                    container = MaterialTheme.colorScheme.errorContainer,
-                                    content = MaterialTheme.colorScheme.onErrorContainer,
+                                    container = jailContainer,
+                                    content = jailContent,
                                 )
                             }
                             if (!state.isLateLoadMode) {
@@ -1197,19 +1196,18 @@ private fun FreshStatusCard(
                     }
                 }
             }
-        }
-    }
 
-    // 大号状态徽章：压在卡片右缘并略微溢出，和参考图一致
-    Icon(
-        painter = statusIcon,
-        contentDescription = null,
-        tint = statusTint,
-        modifier = Modifier
-            .align(Alignment.CenterEnd)
-            .offset(x = 8.dp)
-            .size(96.dp),
-    )
+            // 状态徽章：卡片右上角，留出安全边距，不溢出卡片
+            Icon(
+                painter = statusIcon,
+                contentDescription = null,
+                tint = Color.Unspecified,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 12.dp, end = 12.dp)
+                    .size(64.dp),
+            )
+        }
     }
 }
 
