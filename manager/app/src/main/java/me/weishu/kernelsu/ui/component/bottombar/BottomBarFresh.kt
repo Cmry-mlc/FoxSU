@@ -34,6 +34,8 @@ import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -54,6 +56,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -67,6 +70,7 @@ import me.weishu.kernelsu.Natives
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.LocalMainPagerState
+import me.weishu.kernelsu.ui.theme.LaunchTint
 import me.weishu.kernelsu.ui.component.LocalAppBackdrop
 import me.weishu.kernelsu.ui.component.freshCardBorder
 import me.weishu.kernelsu.ui.component.freshCardColor
@@ -109,12 +113,31 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
     val mainPagerState = LocalMainPagerState.current
     val custom = CustomizationStore.current
 
+    // 图标配色：默认单色；开了七彩走随机彩色，开了莫奈走系统动态色（七彩优先）
+    val context = LocalContext.current
+    val monetAccents = if (custom.navMonet && !custom.navRainbow) {
+        val scheme = if (isNightScheme()) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+        listOf(scheme.primary, scheme.secondary, scheme.tertiary, scheme.error)
+    } else {
+        null
+    }
+
     val items = listOf(
         FreshNavItem(R.string.home, R.drawable.ic_nav_home_fill, R.drawable.ic_nav_home),
         FreshNavItem(R.string.superuser, R.drawable.ic_nav_shield_fill, R.drawable.ic_nav_shield),
         FreshNavItem(R.string.module, R.drawable.ic_nav_module_fill, R.drawable.ic_nav_module),
         FreshNavItem(R.string.settings, R.drawable.ic_nav_settings_fill, R.drawable.ic_nav_settings),
     )
+
+    // 在 composable 作用域里先把 4 个 tab 的颜色都算好：
+    // 默认单色；开七彩走随机彩色；开莫奈走系统动态色（七彩优先）
+    val accents = List(items.size) { index ->
+        when {
+            custom.navRainbow -> LaunchTint.navColor(index)
+            monetAccents != null -> monetAccents[index % monetAccents.size]
+            else -> navTint()
+        }
+    }
 
     val navigationBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val drawerStyle = custom.bottomBarStyle == 1
@@ -316,6 +339,7 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
                                 item = item,
                                 selected = selected,
                                 badge = badgeFor(index, navigationBadge),
+                                accent = accents[index],
                                 onClick = {
                                     if (!selected) mainPagerState.animateToPage(index)
                                 },
@@ -326,6 +350,7 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
                                 item = item,
                                 selected = selected,
                                 badge = badgeFor(index, navigationBadge),
+                                accent = accents[index],
                                 onClick = {
                                     if (!selected) mainPagerState.animateToPage(index)
                                 },
@@ -358,6 +383,7 @@ private fun DrawerNavItem(
     item: FreshNavItem,
     selected: Boolean,
     badge: NavBadge?,
+    accent: Color,
     onClick: () -> Unit,
 ) {
     // 与参考视频一致：选中纯黑，未选中半透明黑；夜间整体反白
@@ -464,16 +490,16 @@ private fun FreshNavItemView(
     item: FreshNavItem,
     selected: Boolean,
     badge: NavBadge?,
+    accent: Color,
     onClick: () -> Unit,
     onPressChange: (Boolean) -> Unit,
 ) {
-    val tint = navTint()
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     LaunchedEffect(pressed) { onPressChange(pressed) }
 
     val contentColor by animateColorAsState(
-        targetValue = if (selected) tint else tint.copy(alpha = 0.58f),
+        targetValue = if (selected) accent else accent.copy(alpha = 0.58f),
         animationSpec = tween(durationMillis = 200),
         label = "navContent",
     )
