@@ -70,6 +70,7 @@ import me.weishu.kernelsu.ui.component.material.SegmentedColumn
 import me.weishu.kernelsu.ui.component.material.SegmentedListItem
 import me.weishu.kernelsu.ui.component.material.TonalCard
 import me.weishu.kernelsu.ui.component.material.expressiveTopAppBarColors
+import me.weishu.kernelsu.ui.component.UiModeSwitchButton
 import me.weishu.kernelsu.ui.component.rebootlistpopup.RebootListPopup
 import me.weishu.kernelsu.ui.component.statustag.StatusTag
 
@@ -184,7 +185,10 @@ private fun TopBar(
 ) {
     LargeFlexibleTopAppBar(
         title = { Text(stringResource(R.string.app_name)) },
-        actions = { RebootListPopup() },
+        actions = {
+            UiModeSwitchButton()
+            RebootListPopup()
+        },
         colors = expressiveTopAppBarColors(),
         windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
         scrollBehavior = scrollBehavior

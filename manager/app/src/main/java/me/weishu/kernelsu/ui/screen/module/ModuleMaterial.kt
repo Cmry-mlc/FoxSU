@@ -143,6 +143,14 @@ import me.weishu.kernelsu.ui.component.statustag.StatusTag
 import me.weishu.kernelsu.ui.theme.LocalModuleDescriptionMaxLines
 import me.weishu.kernelsu.ui.component.scaffoldBackgroundColor
 import me.weishu.kernelsu.data.settings.MODULE_SLOT
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.graphicsLayer
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import me.weishu.kernelsu.data.settings.CustomizationStore
+import me.weishu.kernelsu.ui.component.rememberWallpaper
+import me.weishu.kernelsu.ui.util.savePickedImage
 import me.weishu.kernelsu.ui.component.CardAppearanceDialog
 import me.weishu.kernelsu.ui.component.resolveCardSurface
 import me.weishu.kernelsu.ui.component.supportingTextAlpha
@@ -755,6 +763,21 @@ private fun ModuleItem(
     val descriptionInteractionSource = remember { MutableInteractionSource() }
     val surface = resolveCardSurface(MODULE_SLOT)
     var showAppearance by remember { mutableStateOf(false) }
+    val custom = CustomizationStore.current
+    val moduleBitmap = rememberWallpaper(custom.moduleImage)
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val imagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            val saved = withContext(Dispatchers.IO) {
+                savePickedImage(context, uri, "module_card.jpg", maxSide = 1200)
+            }
+            if (saved != null) CustomizationStore.setModuleImage(saved)
+        }
+    }
 
     TonalCard(
         modifier = Modifier.fillMaxWidth(),
@@ -774,9 +797,21 @@ private fun ModuleItem(
         val haptic = LocalHapticFeedback.current
         val textDecoration = if (!module.remove) null else TextDecoration.LineThrough
 
-        Column(
-            modifier = Modifier.padding(16.dp, 14.dp, 16.dp, 10.dp)
-        ) {
+        Box {
+            if (moduleBitmap != null && custom.moduleImageAlpha > 0.02f) {
+                Image(
+                    bitmap = moduleBitmap,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .matchParentSize()
+                        .graphicsLayer { alpha = custom.moduleImageAlpha },
+                )
+            }
+
+            Column(
+                modifier = Modifier.padding(16.dp, 14.dp, 16.dp, 10.dp)
+            ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -1025,6 +1060,7 @@ private fun ModuleItem(
                 }
             }
         }
+        }
     }
 
     if (showAppearance) {
@@ -1032,15 +1068,19 @@ private fun ModuleItem(
             slot = MODULE_SLOT,
             title = stringResource(R.string.module_card_style_title),
             description = stringResource(R.string.module_card_style_desc),
-            hasImage = false,
-            imageAlpha = 0f,
-            imageAlphaRange = 0f..1f,
-            imageAlphaLabel = "",
-            onImageAlphaChange = {},
-            onPickImage = {},
-            onRemoveImage = {},
+            hasImage = custom.moduleImage != null,
+            imageAlpha = custom.moduleImageAlpha,
+            imageAlphaRange = 0.2f..1f,
+            imageAlphaLabel = stringResource(R.string.customization_dim),
+            onImageAlphaChange = CustomizationStore::setModuleImageAlpha,
+            onPickImage = {
+                imagePicker.launch(
+                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                )
+            },
+            onRemoveImage = { CustomizationStore.setModuleImage(null) },
             onDismiss = { showAppearance = false },
-            showImage = false,
+            showImage = true,
         )
     }
 }

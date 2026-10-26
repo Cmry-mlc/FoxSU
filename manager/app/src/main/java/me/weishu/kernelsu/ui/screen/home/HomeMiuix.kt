@@ -60,6 +60,7 @@ import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.component.WarningLevel
 import me.weishu.kernelsu.ui.component.dialog.rememberConfirmDialog
 import me.weishu.kernelsu.ui.component.miuix.WarningCard
+import me.weishu.kernelsu.ui.component.UiModeSwitchButton
 import me.weishu.kernelsu.ui.component.rebootlistpopup.RebootListPopupMiuix
 import me.weishu.kernelsu.ui.component.statustag.StatusTag
 import me.weishu.kernelsu.ui.theme.LocalEnableBlur
@@ -233,6 +234,7 @@ private fun TopBar(
             color = barColor,
             title = stringResource(R.string.app_name),
             actions = {
+                UiModeSwitchButton()
                 RebootListPopupMiuix()
             },
             scrollBehavior = scrollBehavior
