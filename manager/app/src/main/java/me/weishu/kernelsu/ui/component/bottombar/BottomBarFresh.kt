@@ -50,10 +50,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -77,6 +79,7 @@ import me.weishu.kernelsu.ui.component.isNightScheme
 import me.weishu.kernelsu.ui.component.liquid.lens
 import me.weishu.kernelsu.ui.component.liquid.vibrancy
 import me.weishu.kernelsu.ui.theme.LaunchTint
+import top.yukonga.miuix.kmp.blur.blur
 import top.yukonga.miuix.kmp.blur.drawBackdrop
 
 private data class FreshNavItem(
@@ -156,15 +159,15 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
             ((barWidthPx - horizontalPaddingPx * 2f) / items.size).coerceAtLeast(1f)
         }
 
-        // position：手柄当前落在第几个 tab 上（0..size-1，拖动时是小数）
-        val position = remember { Animatable(mainPagerState.selectedPage.toFloat()) }
+        // handlePos：手柄当前落在第几个 tab 上（0..size-1，拖动时是小数）
+        val handlePos = remember { Animatable(mainPagerState.selectedPage.toFloat()) }
         var dragging by remember { mutableFloatStateOf(0f) }
         // 点击切换 / 左右滑页切换：手柄弹到新 tab，并先“拉长”再回弹（点击反馈的液态感）
         val stretch = remember { Animatable(0f) }
         LaunchedEffect(mainPagerState.selectedPage) {
             launch {
                 if (dragging == 0f) {
-                    position.animateTo(
+                    handlePos.animateTo(
                         targetValue = mainPagerState.selectedPage.toFloat(),
                         animationSpec = spring(dampingRatio = 0.58f, stiffness = 300f),
                     )
@@ -217,14 +220,14 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
                                         .coerceIn(0f, (items.size - 1).toFloat())
 
                                 detectHorizontalDragGestures(
-                                    onDragStart = { down ->
+                                    onDragStart = { down: Offset ->
                                         dragging = 1f
-                                        scope.launch { position.snapTo(indexAt(down.position.x)) }
+                                        scope.launch { handlePos.snapTo(indexAt(down.x)) }
                                     },
                                     onDragCancel = {
                                         dragging = 0f
                                         scope.launch {
-                                            position.animateTo(
+                                            handlePos.animateTo(
                                                 mainPagerState.selectedPage.toFloat(),
                                                 spring(dampingRatio = 0.6f, stiffness = 320f),
                                             )
@@ -232,11 +235,11 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
                                     },
                                     onDragEnd = {
                                         dragging = 0f
-                                        val target = position.value
+                                        val target = handlePos.value
                                             .roundToInt()
                                             .coerceIn(0, items.size - 1)
                                         scope.launch {
-                                            position.animateTo(
+                                            handlePos.animateTo(
                                                 target.toFloat(),
                                                 spring(dampingRatio = 0.6f, stiffness = 320f),
                                             )
@@ -245,9 +248,9 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
                                             mainPagerState.animateToPage(target)
                                         }
                                     },
-                                    onHorizontalDrag = { change, _ ->
+                                    onHorizontalDrag = { change: PointerInputChange, _: Float ->
                                         val target = indexAt(change.position.x)
-                                        scope.launch { position.snapTo(target) }
+                                        scope.launch { handlePos.snapTo(target) }
                                     },
                                 )
                             }
@@ -308,7 +311,7 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
                         modifier = Modifier
                             .offset(
                                 x = ((horizontalPaddingPx +
-                                    tabWidthPx * (position.value + 0.5f) -
+                                    tabWidthPx * (handlePos.value + 0.5f) -
                                     handleWidthPx / 2f) / density.density).dp,
                                 y = 6.dp,
                             )
