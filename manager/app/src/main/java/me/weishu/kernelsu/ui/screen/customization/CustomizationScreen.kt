@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.Title
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
@@ -78,6 +79,7 @@ import me.weishu.kernelsu.ui.component.WallpaperBackground
 import me.weishu.kernelsu.ui.component.WallpaperBackdrop
 import me.weishu.kernelsu.ui.component.freshCardBorder
 import me.weishu.kernelsu.ui.component.GlassSheen
+import me.weishu.kernelsu.ui.component.cardContentColor
 import me.weishu.kernelsu.ui.component.freshCardColor
 import me.weishu.kernelsu.ui.component.rememberCardSurface
 import me.weishu.kernelsu.ui.component.ImageCropDialog
@@ -245,12 +247,12 @@ fun CustomizationScreen() {
                             Text(
                                 text = stringResource(R.string.customization_glass_wallpaper),
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurface,
+                                color = LocalContentColor.current,
                             )
                             Text(
                                 text = stringResource(R.string.customization_glass_wallpaper_sum),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = LocalContentColor.current.copy(alpha = 0.62f),
                             )
                             Spacer(Modifier.height(8.dp))
                             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -361,7 +363,7 @@ fun CustomizationScreen() {
                                 text = File(custom.fontPath).name +
                                     if (custom.fontStyle == 4) "" else stringResource(R.string.customization_font_idle_hint),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = LocalContentColor.current.copy(alpha = 0.62f),
                             )
                         }
                     }
@@ -395,12 +397,12 @@ fun CustomizationScreen() {
                                 Text(
                                     text = stringResource(R.string.customization_bottom_immersive),
                                     style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurface,
+                                    color = LocalContentColor.current,
                                 )
                                 Text(
                                     text = stringResource(R.string.customization_bottom_immersive_sum),
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    color = LocalContentColor.current.copy(alpha = 0.62f),
                                 )
                             }
                             Switch(
@@ -527,11 +529,7 @@ private fun PreviewCard(custom: Customization) {
         Color(custom.cardColor)
     }.copy(alpha = custom.cardAlpha)
 
-    val onCard = if (custom.cardColor != 0 && Color(custom.cardColor).luminance() < 0.55f) {
-        Color.White
-    } else {
-        MaterialTheme.colorScheme.onSurface
-    }
+    val onCard = cardContentColor()
 
     Surface(
         shape = RoundedCornerShape(28.dp),
@@ -608,9 +606,12 @@ private fun SectionCard(
     subtitle: String,
     content: @Composable () -> Unit,
 ) {
+    // 卡片自身决定文字明暗：白卡深字、深卡白字，避免白卡白字
+    val cardContent = cardContentColor()
     Surface(
         shape = RoundedCornerShape(22.dp),
         color = rememberCardSurface(freshCardColor()),
+        contentColor = cardContent,
         border = freshCardBorder(),
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -634,12 +635,12 @@ private fun SectionCard(
                         text = title,
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = LocalContentColor.current,
                     )
                     Text(
                         text = subtitle,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = LocalContentColor.current.copy(alpha = 0.62f),
                     )
                 }
             }
@@ -663,7 +664,7 @@ private fun SliderRow(
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = LocalContentColor.current.copy(alpha = 0.62f),
                 modifier = Modifier.weight(1f),
             )
             Text(
@@ -791,7 +792,7 @@ private fun IconOption(
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = LocalContentColor.current,
                 modifier = Modifier.weight(1f),
             )
             if (selected) {
@@ -823,12 +824,12 @@ private fun ToggleRow(
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = LocalContentColor.current,
             )
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = LocalContentColor.current.copy(alpha = 0.62f),
             )
         }
         Switch(checked = checked, onCheckedChange = onChange)
@@ -852,6 +853,7 @@ private fun IconChip(
         } else {
             freshCardColor()
         },
+        contentColor = cardContentColor(),
         border = if (selected) {
             BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary)
         } else {
@@ -887,7 +889,7 @@ private fun IconChip(
                 color = if (selected) {
                     MaterialTheme.colorScheme.primary
                 } else {
-                    MaterialTheme.colorScheme.onSurface
+                    LocalContentColor.current
                 },
             )
         }

@@ -103,8 +103,14 @@ fun cardNeedsLightText(): Boolean {
     if (custom.cardColor != 0 && custom.cardAlpha >= 0.55f) {
         return Color(custom.cardColor).luminance() < 0.5f
     }
-    return glassNeedsLightText()
+    if (custom.cardGlass) return glassNeedsLightText()
+    return isNightScheme()
 }
+
+/** 卡片内容的文字色：跟着卡片本身的明暗，白卡用墨色、深卡用白色。 */
+@Composable
+@ReadOnlyComposable
+fun cardContentColor(): Color = if (cardNeedsLightText()) Color.White else Color(0xFF1A1D1A)
 
 /** Supporting text on a card: a bit brighter in dark mode so it stays legible. */
 @Composable

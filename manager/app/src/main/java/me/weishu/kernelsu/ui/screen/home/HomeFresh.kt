@@ -136,6 +136,7 @@ import me.weishu.kernelsu.ui.navigation3.LocalNavigator
 import me.weishu.kernelsu.ui.navigation3.Route
 import me.weishu.kernelsu.ui.component.CardSurface
 import me.weishu.kernelsu.ui.component.KsuIsValid
+import me.weishu.kernelsu.ui.component.cardContentColor
 import me.weishu.kernelsu.ui.component.freshCardBorder
 import me.weishu.kernelsu.ui.component.glassNeedsLightText
 import me.weishu.kernelsu.ui.component.freshCardColor
@@ -1599,7 +1600,7 @@ private fun rainbowPair(index: Int): Pair<Color, Color> {
         val (bg, fg) = LaunchTint.rainbowPair(index)
         return Color(bg) to Color(fg)
     }
-    return freshCardColor() to MaterialTheme.colorScheme.onSurface
+    return freshCardColor() to cardContentColor()
 }
 
 /** 内核信息卡：左侧圆角图标块 + 标题/详情，对应参考图里的单行工具卡。 */

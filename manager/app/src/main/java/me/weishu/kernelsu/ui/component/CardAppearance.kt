@@ -94,7 +94,7 @@ fun resolveCardSurface(slot: Int): CardSurface {
         val lightText = glassNeedsLightText()
         return CardSurface(
             container = freshCardColor().copy(alpha = freshCardColor().alpha * alpha),
-            content = if (lightText) Color.White else MaterialTheme.colorScheme.onSurface,
+            content = cardContentColor(),
             accent = if (lightText) Color.White else MaterialTheme.colorScheme.primary,
             border = freshCardBorder(),
         )

@@ -59,6 +59,7 @@ import me.weishu.kernelsu.ui.UiMode
 import me.weishu.kernelsu.ui.component.freshCardBorder
 import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.component.GlassSheen
+import me.weishu.kernelsu.ui.component.cardContentColor
 import me.weishu.kernelsu.ui.component.freshCardColor
 import me.weishu.kernelsu.ui.theme.LaunchTint
 import me.weishu.kernelsu.ui.component.isNightScheme
@@ -390,7 +391,7 @@ private fun SettingsTileView(
             .clickable(enabled = tile.state != TileState.Disabled, onClick = tile.onClick),
         shape = RoundedCornerShape(20.dp),
         color = containerColor ?: freshCardColor(),
-        contentColor = contentColor ?: MaterialTheme.colorScheme.onSurface,
+        contentColor = contentColor ?: cardContentColor(),
         border = freshCardBorder(),
         shadowElevation = 0.dp,
     ) {
@@ -421,10 +422,8 @@ private fun SettingsTileView(
                 textAlign = TextAlign.Center,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                color = if (tile.state == TileState.Disabled) {
-                    (contentColor ?: MaterialTheme.colorScheme.onSurface).copy(alpha = 0.45f)
-                } else {
-                    contentColor ?: MaterialTheme.colorScheme.onSurface
+                color = (contentColor ?: cardContentColor()).let {
+                    if (tile.state == TileState.Disabled) it.copy(alpha = 0.45f) else it
                 },
             )
             if (tile.caption != null) {
