@@ -103,6 +103,22 @@ fun CustomizationScreen() {
         }
     }
 
+    val glassPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            val saved = withContext(Dispatchers.IO) {
+                savePickedImage(context, uri, "glass_wallpaper.jpg", maxSide = 2000)
+            }
+            if (saved == null) {
+                Toast.makeText(context, R.string.customization_wallpaper_failed, Toast.LENGTH_SHORT).show()
+            } else {
+                CustomizationStore.setGlassWallpaper(saved)
+            }
+        }
+    }
+
     val heroPicker = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
@@ -223,6 +239,41 @@ fun CustomizationScreen() {
                             onChange = CustomizationStore::setRainbowCards,
                         )
                         Spacer(Modifier.height(6.dp))
+                        if (custom.cardGlass) {
+                            Spacer(Modifier.height(10.dp))
+                            Text(
+                                text = stringResource(R.string.customization_glass_wallpaper),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Text(
+                                text = stringResource(R.string.customization_glass_wallpaper_sum),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                PillButton(
+                                    text = stringResource(R.string.customization_pick_image),
+                                    icon = Icons.Filled.Photo,
+                                    filled = true,
+                                    onClick = {
+                                        glassPicker.launch(
+                                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                        )
+                                    },
+                                )
+                                if (custom.glassWallpaper != null) {
+                                    PillButton(
+                                        text = stringResource(R.string.customization_clear),
+                                        icon = Icons.Filled.DeleteOutline,
+                                        filled = false,
+                                        onClick = { CustomizationStore.setGlassWallpaper(null) },
+                                    )
+                                }
+                            }
+                        }
+
                         SliderRow(
                             label = stringResource(R.string.customization_card_alpha),
                             value = custom.cardAlpha,

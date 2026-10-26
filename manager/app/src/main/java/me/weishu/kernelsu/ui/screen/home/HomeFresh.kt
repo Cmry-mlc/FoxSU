@@ -73,6 +73,10 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -606,8 +610,8 @@ private fun FreshHeader() {
 
     // 每次重新打开 App 随机一套柔色（深色模式沿用卡面，保证对比度）
     val chipPalette = listOf(
-        Color(0xFFFFFFFF), Color(0xFFF3F7EF), Color(0xFFF6F1FA),
-        Color(0xFFFFF6EC), Color(0xFFEFF6FB), Color(0xFFFDF1F3),
+        Color(0xFFE2F5E6), Color(0xFFEFE6FB), Color(0xFFFFF3D2),
+        Color(0xFFFFE4E0), Color(0xFFDDEBFA), Color(0xFFDFF3F3),
     )
     val randomChip = remember { chipPalette.random() }
     val chipColor = if (isNightScheme()) freshCardColor() else randomChip
@@ -716,96 +720,156 @@ private fun FreshHeader() {
 @Composable
 private fun FreshRebootDialog(onDismiss: () -> Unit) {
     val allOptions = getRebootListOption()
-    val softOption = allOptions.firstOrNull { it.reason == "soft_reboot" }
-    val options = allOptions.filter { it.reason != "soft_reboot" }
     val onReboot = rememberRebootAction()
     val night = isNightScheme()
     val sheetColor = if (night) freshCardColor().copy(alpha = 0.92f) else Color.White.copy(alpha = 0.86f)
 
+    // 重启 / 软重启走滑动，其余做成等大的胶囊行
+    val slideOptions = allOptions.filter { it.reason == "" || it.reason == "soft_reboot" }
+    val rowOptions = allOptions.filter { it.reason != "" && it.reason != "soft_reboot" }
+
     Dialog(onDismissRequest = onDismiss) {
         Surface(
-            shape = RoundedCornerShape(30.dp),
+            shape = RoundedCornerShape(32.dp),
             color = sheetColor,
-            border = BorderStroke(1.dp, Color.White.copy(alpha = if (night) 0.12f else 0.7f)),
+            border = BorderStroke(1.dp, Color.White.copy(alpha = if (night) 0.12f else 0.55f)),
             shadowElevation = 0.dp,
         ) {
-            Column(modifier = Modifier.padding(20.dp)) {
+            Column(
+                modifier = Modifier.padding(horizontal = 18.dp, vertical = 20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                    contentColor = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(40.dp),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Filled.RestartAlt,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
                 Text(
                     text = stringResource(R.string.reboot),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = stringResource(R.string.fresh_reboot_slide_hint),
+                    fontSize = 11.5.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                )
                 Spacer(Modifier.height(14.dp))
 
-                var tileIndex = 0
-                options.chunked(3).forEach { rowOptions ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        rowOptions.forEach { option ->
-                            val pair = RainbowCards[tileIndex % RainbowCards.size]
-                            tileIndex++
-                            RebootGridCell(
-                                option = option,
-                                containerColor = if (night) null else Color(pair.first),
-                                contentColor = if (night) null else Color(pair.second),
-                                modifier = Modifier.weight(1f),
-                                onClick = {
-                                    onDismiss()
-                                    onReboot(option.reason)
-                                },
-                            )
-                        }
-                        repeat(3 - rowOptions.size) {
-                            Spacer(Modifier.weight(1f))
-                        }
-                    }
-                    Spacer(Modifier.height(10.dp))
-                }
-
-                if (softOption != null) {
-                    SlideToConfirm(
-                        label = stringResource(softOption.labelRes),
+                rowOptions.forEachIndexed { index, option ->
+                    val pair = RainbowCards[index % RainbowCards.size]
+                    RebootRow(
+                        option = option,
                         containerColor = if (night) {
                             MaterialTheme.colorScheme.surfaceContainerHigh
                         } else {
-                            Color(0xFFE2F5E6)
+                            Color(pair.first)
+                        },
+                        contentColor = if (night) MaterialTheme.colorScheme.onSurface else Color(pair.second),
+                        onClick = {
+                            onDismiss()
+                            onReboot(option.reason)
+                        },
+                    )
+                    Spacer(Modifier.height(8.dp))
+                }
+
+                Spacer(Modifier.height(2.dp))
+                slideOptions.forEach { option ->
+                    SlideToConfirm(
+                        label = stringResource(option.labelRes),
+                        containerColor = if (night) {
+                            MaterialTheme.colorScheme.surfaceContainerHigh
+                        } else {
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
                         },
                         onConfirm = {
                             onDismiss()
-                            onReboot(softOption.reason)
+                            onReboot(option.reason)
                         },
                     )
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(8.dp))
                 }
 
-                Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.7f),
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = stringResource(R.string.fresh_home_cancel),
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
-                        .clickable(onClick = onDismiss),
-                ) {
-                    Box(
-                        modifier = Modifier.padding(vertical = 12.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = stringResource(R.string.fresh_home_cancel),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
+                        .clickable(onClick = onDismiss)
+                        .padding(vertical = 12.dp),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }
 }
 
-/** 图三那种滑动确认条：拖到右端松手执行，未到底自动回弹。 */
+/** 等高的胶囊行：圆形图标 + 文字（+ 箭头），用于其余重启方式。 */
+@Composable
+private fun RebootRow(
+    option: RebootListOption,
+    containerColor: Color,
+    contentColor: Color,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(54.dp)
+            .clip(RoundedCornerShape(27.dp))
+            .background(containerColor)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Surface(
+            shape = CircleShape,
+            color = contentColor.copy(alpha = 0.14f),
+            contentColor = contentColor,
+            modifier = Modifier.size(36.dp),
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = rebootIcon(option.reason),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+        }
+        Spacer(Modifier.width(12.dp))
+        Text(
+            text = stringResource(option.labelRes),
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
+            color = contentColor,
+            modifier = Modifier.weight(1f),
+        )
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = contentColor.copy(alpha = 0.55f),
+            modifier = Modifier.size(18.dp),
+        )
+    }
+}
+
+/** 滑动确认条：拖动时轨道逐渐染色，到底松手执行，未到底回弹。 */
 @Composable
 private fun SlideToConfirm(
     label: String,
@@ -821,6 +885,23 @@ private fun SlideToConfirm(
     val maxOffset = (trackWidth - thumbPx).coerceAtLeast(0f)
     val progress = if (maxOffset > 0f) (offsetPx / maxOffset).coerceIn(0f, 1f) else 0f
 
+    // 动画：轨道染色 + 文字淡出 + 滑块着色
+    val animatedProgress by animateFloatAsState(progress, spring(stiffness = 700f), label = "slideFill")
+    val accent by animateColorAsState(
+        targetValue = if (progress > 0.02f) {
+            Color(0xFF3E9E5A).copy(alpha = 0.25f + 0.55f * animatedProgress)
+        } else {
+            Color.Transparent
+        },
+        animationSpec = tween(180),
+        label = "slideAccent",
+    )
+    val thumbColor by animateColorAsState(
+        targetValue = if (progress > 0.8f) Color(0xFF2E8B4F) else Color(0xFF3E9E5A),
+        animationSpec = tween(200),
+        label = "thumbColor",
+    )
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -830,18 +911,27 @@ private fun SlideToConfirm(
             .onSizeChanged { trackWidth = it.width.toFloat() },
         contentAlignment = Alignment.CenterStart,
     ) {
+        // 进度填充层
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(animatedProgress.coerceIn(0f, 1f))
+                .height(56.dp)
+                .background(accent),
+        )
         Text(
             text = label,
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f * (1f - progress) + 0.2f),
+            color = MaterialTheme.colorScheme.onSurface.copy(
+                alpha = (0.5f * (1f - animatedProgress)).coerceAtLeast(0.12f)
+            ),
         )
         Surface(
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary,
+            color = thumbColor,
+            contentColor = Color.White,
             modifier = Modifier
                 .padding(5.dp)
                 .size(thumbSize)

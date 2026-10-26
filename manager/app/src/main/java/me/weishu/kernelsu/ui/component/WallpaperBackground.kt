@@ -111,10 +111,14 @@ fun glassNeedsLightText(): Boolean {
     val custom = CustomizationStore.current
     if (!custom.cardGlass) return false
     if (MaterialTheme.colorScheme.surface.luminance() < 0.5f) return true
-    if (systemWallpaperLuminanceCache < 0f) {
+    if (custom.glassWallpaper == null && systemWallpaperLuminanceCache < 0f) {
         systemWallpaperBitmap()
     }
-    val bgLuminance = if (systemWallpaperLuminanceCache < 0f) 1f else systemWallpaperLuminanceCache
+    val bgLuminance = if (custom.glassWallpaper != null) {
+        wallpaperLuminance(custom.glassWallpaper)
+    } else {
+        if (systemWallpaperLuminanceCache < 0f) 1f else systemWallpaperLuminanceCache
+    }
     return bgLuminance < 0.45f
 }
 
@@ -202,7 +206,8 @@ fun WallpaperBackdrop(
         return
     }
     Box(modifier = modifier.fillMaxSize()) {
-        WallpaperBackground(customization = custom.copy(wallpaperUri = null))
+        // 玻璃模式下优先用专属壁纸，其次系统壁纸
+        WallpaperBackground(customization = custom.copy(wallpaperUri = custom.glassWallpaper))
         content()
     }
 }

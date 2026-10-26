@@ -314,6 +314,8 @@
     <string name="customization_card_color">Card color</string>
     <string name="customization_home_palette">Colourful home cards</string>
     <string name="customization_home_palette_sum">Blue / lavender / mint / peach for the four KPI cards (light mode)</string>
+    <string name="customization_glass_wallpaper">Glass background</string>
+    <string name="customization_glass_wallpaper_sum">Only used while glass cards are on; empty = system wallpaper</string>
     <string name="customization_card_alpha">Card opacity</string>
     <string name="customization_title_bar">Title bar</string>
     <string name="customization_title_bar_sub">Customise the text at the top of the home screen</string>
@@ -360,6 +362,7 @@
     <string name="settings_ui_mode_material">Material</string>
     <string name="settings_ui_mode_fresh">ColorUI</string>
     <string name="fresh_home_flash_hint">Tap to flash or update the kernel</string>
+    <string name="fresh_reboot_slide_hint">Slide the bar to confirm; tap a card for other modes</string>
     <string name="fresh_home_cancel">Cancel</string>
     <string name="fresh_home_superuser_sub">apps granted</string>
     <string name="fresh_home_device_sub">Device</string>

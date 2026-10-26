@@ -290,6 +290,8 @@
     <string name="customization_card_color">卡片颜色</string>
     <string name="customization_home_palette">主页多彩卡片</string>
     <string name="customization_home_palette_sum">四张信息卡使用蓝 / 薰衣草 / 薄荷 / 蜜桃配色（浅色模式）</string>
+    <string name="customization_glass_wallpaper">玻璃背景壁纸</string>
+    <string name="customization_glass_wallpaper_sum">仅玻璃卡面开启时使用；不设置则用系统壁纸</string>
     <string name="customization_card_alpha">卡片透明度</string>
     <string name="customization_title_bar">标题栏</string>
     <string name="customization_title_bar_sub">自定义首页顶部的文字</string>
@@ -336,6 +338,7 @@
     <string name="settings_ui_mode_material">Material</string>
     <string name="settings_ui_mode_fresh">ColorUI</string>
     <string name="fresh_home_flash_hint">点按可刷入或更新内核</string>
+    <string name="fresh_reboot_slide_hint">滑动以确认重启，其他模式点选卡片</string>
     <string name="fresh_home_cancel">取消</string>
     <string name="fresh_home_superuser_sub">已授权应用</string>
     <string name="fresh_home_device_sub">当前设备</string>
