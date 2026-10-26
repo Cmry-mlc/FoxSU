@@ -78,6 +78,26 @@ fun systemWallpaperBitmap(): ImageBitmap? {
 @Composable
 fun rememberSystemWallpaper(): ImageBitmap? = remember { systemWallpaperBitmap() }
 
+/** 玻璃模式的兜底壁纸：内置的日落图，保证任何设备都有背景可用。 */
+@Composable
+fun rememberDefaultGlassWallpaper(): ImageBitmap? = remember {
+    runCatching {
+        val res = ksuApp.resources
+        val opts = android.graphics.BitmapFactory.Options().apply { inSampleSize = 2 }
+        android.graphics.BitmapFactory.decodeResource(res, me.weishu.kernelsu.R.drawable.glass_default, opts)
+            ?.asImageBitmap()
+    }.getOrNull()
+}
+
+/** 玻璃模式下按优先级取背景：自定义玻璃壁纸 → 内置日落壁纸。 */
+@Composable
+fun rememberGlassBackdrop(): ImageBitmap? {
+    val custom = CustomizationStore.current.glassWallpaper
+    val customBitmap = rememberWallpaper(custom)
+    val fallback = rememberDefaultGlassWallpaper()
+    return customBitmap ?: fallback
+}
+
 /** 0f（纯黑）..1f（纯白），读取失败按亮色处理。 */
 fun wallpaperLuminance(path: String?): Float {
     if (path == null) return 1f
@@ -149,7 +169,7 @@ fun WallpaperBackground(
 ) {
     val customWallpaper = rememberWallpaper(customization.wallpaperUri)
     val glass = customization.cardGlass
-    val bitmap = customWallpaper ?: if (glass) rememberSystemWallpaper() else null
+    val bitmap = customWallpaper ?: if (glass) rememberGlassBackdrop() else null
     if (bitmap == null) return
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -170,14 +190,11 @@ fun WallpaperBackground(
         )
         // 玻璃模式：壁纸雾化 + 一层薄雾，卡片上的文字更稳
         if (glass) {
-            val bright = wallpaperLuminance(customization.wallpaperUri) > 0.45f
+            // 统一的暗雾，保证白字在任何壁纸上都清晰
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(
-                        if (bright) Color.White.copy(alpha = 0.12f)
-                        else Color.Black.copy(alpha = 0.22f)
-                    ),
+                    .background(Color.Black.copy(alpha = 0.34f)),
             )
         }
         if (customization.wallpaperDim > 0f) {
@@ -206,7 +223,6 @@ fun WallpaperBackdrop(
         return
     }
     Box(modifier = modifier.fillMaxSize()) {
-        // 玻璃模式下优先用专属壁纸，其次系统壁纸
         WallpaperBackground(customization = custom.copy(wallpaperUri = custom.glassWallpaper))
         content()
     }

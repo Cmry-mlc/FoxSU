@@ -768,21 +768,27 @@ private fun FreshRebootDialog(onDismiss: () -> Unit) {
                 )
                 Spacer(Modifier.height(14.dp))
 
-                rowOptions.forEachIndexed { index, option ->
-                    val pair = RainbowCards[index % RainbowCards.size]
-                    RebootRow(
-                        option = option,
-                        containerColor = if (night) {
-                            MaterialTheme.colorScheme.surfaceContainerHigh
-                        } else {
-                            Color(pair.first)
-                        },
-                        contentColor = if (night) MaterialTheme.colorScheme.onSurface else Color(pair.second),
-                        onClick = {
-                            onDismiss()
-                            onReboot(option.reason)
-                        },
-                    )
+                rowOptions.chunked(2).forEachIndexed { rowIndex, rowChunk ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        rowChunk.forEachIndexed { colIndex, option ->
+                            val pair = RainbowCards[(rowIndex * 2 + colIndex) % RainbowCards.size]
+                            RebootRow(
+                                option = option,
+                                containerColor = if (night) {
+                                    MaterialTheme.colorScheme.surfaceContainerHigh
+                                } else {
+                                    Color(pair.first)
+                                },
+                                contentColor = if (night) MaterialTheme.colorScheme.onSurface else Color(pair.second),
+                                onClick = {
+                                    onDismiss()
+                                    onReboot(option.reason)
+                                },
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                        if (rowChunk.size == 1) Spacer(Modifier.weight(1f))
+                    }
                     Spacer(Modifier.height(8.dp))
                 }
 
@@ -827,10 +833,10 @@ private fun RebootRow(
     containerColor: Color,
     contentColor: Color,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
             .height(54.dp)
             .clip(RoundedCornerShape(27.dp))
             .background(containerColor)

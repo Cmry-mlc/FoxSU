@@ -86,6 +86,12 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
         FreshNavItem(R.string.settings, Icons.Filled.Settings, Icons.Outlined.Settings),
     )
 
+    // 每次启动随机一个强调色，图标/文字跟着变
+    val accentPalette = listOf(
+        Color(0xFF3E9E5A), Color(0xFF3B82F6), Color(0xFF8B5CF6),
+        Color(0xFFF08A24), Color(0xFFE0559B), Color(0xFF12A5A5),
+    )
+    val accentColor = remember { accentPalette.random() }
     val navigationBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
     Box(
@@ -162,6 +168,7 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
                             item = item,
                             selected = selected,
                             badge = badgeFor(index, navigationBadge),
+                            accent = accentColor,
                             onClick = onClick,
                         )
                     } else {
@@ -169,6 +176,7 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
                             item = item,
                             selected = selected,
                             badge = badgeFor(index, navigationBadge),
+                            accent = accentColor,
                             onClick = onClick,
                         )
                     }
@@ -189,6 +197,7 @@ private fun DrawerNavItem(
     item: FreshNavItem,
     selected: Boolean,
     badge: NavBadge?,
+    accent: Color,
     onClick: () -> Unit,
 ) {
     val width by animateDpAsState(
@@ -197,20 +206,12 @@ private fun DrawerNavItem(
         label = "drawerWidth",
     )
     val pillColor by animateColorAsState(
-        targetValue = if (selected) {
-            MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
-        } else {
-            Color.Transparent
-        },
+        targetValue = if (selected) accent.copy(alpha = 0.16f) else Color.Transparent,
         animationSpec = tween(durationMillis = 240),
         label = "drawerPill",
     )
     val contentColor by animateColorAsState(
-        targetValue = if (selected) {
-            MaterialTheme.colorScheme.primary
-        } else {
-            MaterialTheme.colorScheme.onSurfaceVariant
-        },
+        targetValue = if (selected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
         animationSpec = tween(durationMillis = 240),
         label = "drawerContent",
     )
@@ -284,17 +285,14 @@ private fun FreshNavItemView(
     item: FreshNavItem,
     selected: Boolean,
     badge: NavBadge?,
+    accent: Color,
     onClick: () -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
 
     val contentColor by animateColorAsState(
-        targetValue = if (selected) {
-            MaterialTheme.colorScheme.primary
-        } else {
-            MaterialTheme.colorScheme.onSurfaceVariant
-        },
+        targetValue = if (selected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
         animationSpec = tween(durationMillis = 220),
         label = "navContent",
     )

@@ -58,11 +58,7 @@ fun freshCardColor(): Color {
     if (custom.cardGlass) {
         // 深色壁纸上用极淡白片 + 白字；浅色壁纸上用更实的白片保证深色字可读
         val light = glassNeedsLightText()
-        return if (light) {
-            Color.White.copy(alpha = 0.10f)
-        } else {
-            Color.White.copy(alpha = 0.30f)
-        }
+        return Color.White.copy(alpha = if (light) 0.12f else 0.30f)
     }
     val base = if (isSystemInDarkTheme()) {
         MaterialTheme.colorScheme.surfaceContainerHigh
