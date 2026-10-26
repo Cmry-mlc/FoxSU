@@ -3,9 +3,6 @@ package me.weishu.kernelsu.ui.theme
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -54,31 +51,31 @@ fun rememberTypography(style: Int, fontPath: String?): Typography =
 
 
 /**
- * 玻璃模式（白字）下给所有文字加一层极轻的投影，
- * 避免壁纸亮部把白字吃掉——比继续加深蒙版更不牺牲通透感。
+ * 玻璃模式的文字：不带任何阴影，保持干净清晰。
+ * 可读性交给文字颜色本身（根据卡面明暗自动切换白字/墨字），
+ * 不再靠投影去救被壁纸亮部吃掉的白字——那会让字发灰、发脏。
  */
-fun Typography.withSoftShadow(): Typography {
-    val shadow = Shadow(
-        color = Color.Black.copy(alpha = 0.45f),
-        offset = Offset(0f, 1f),
-        blurRadius = 3f,
-    )
-    fun TextStyle.s(): TextStyle = copy(shadow = shadow)
+fun Typography.withoutShadow(): Typography {
+    fun TextStyle.c(): TextStyle = copy(shadow = null)
     return Typography(
-        displayLarge = displayLarge.s(),
-        displayMedium = displayMedium.s(),
-        displaySmall = displaySmall.s(),
-        headlineLarge = headlineLarge.s(),
-        headlineMedium = headlineMedium.s(),
-        headlineSmall = headlineSmall.s(),
-        titleLarge = titleLarge.s(),
-        titleMedium = titleMedium.s(),
-        titleSmall = titleSmall.s(),
-        bodyLarge = bodyLarge.s(),
-        bodyMedium = bodyMedium.s(),
-        bodySmall = bodySmall.s(),
-        labelLarge = labelLarge.s(),
-        labelMedium = labelMedium.s(),
-        labelSmall = labelSmall.s(),
+        displayLarge = displayLarge.c(),
+        displayMedium = displayMedium.c(),
+        displaySmall = displaySmall.c(),
+        headlineLarge = headlineLarge.c(),
+        headlineMedium = headlineMedium.c(),
+        headlineSmall = headlineSmall.c(),
+        titleLarge = titleLarge.c(),
+        titleMedium = titleMedium.c(),
+        titleSmall = titleSmall.c(),
+        bodyLarge = bodyLarge.c(),
+        bodyMedium = bodyMedium.c(),
+        bodySmall = bodySmall.c(),
+        labelLarge = labelLarge.c(),
+        labelMedium = labelMedium.c(),
+        labelSmall = labelSmall.c(),
     )
 }
+
+/** 旧的投影版本：保留接口但统一去掉阴影，避免别处仍在加影子。 */
+@Deprecated("Glass mode no longer uses text shadows", ReplaceWith("withoutShadow()"))
+fun Typography.withSoftShadow(): Typography = withoutShadow()
