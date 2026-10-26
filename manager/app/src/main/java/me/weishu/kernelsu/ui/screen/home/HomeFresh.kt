@@ -140,6 +140,7 @@ import me.weishu.kernelsu.ui.component.cardContentColor
 import me.weishu.kernelsu.ui.component.freshCardBorder
 import me.weishu.kernelsu.ui.component.glassNeedsLightText
 import me.weishu.kernelsu.ui.component.freshCardColor
+import me.weishu.kernelsu.ui.component.cardNeedsLightText
 import me.weishu.kernelsu.ui.component.frostedChromeColor
 import me.weishu.kernelsu.ui.component.hasWallpaperBackdrop
 import me.weishu.kernelsu.ui.component.isNightScheme
@@ -290,6 +291,9 @@ fun HomePagerFresh(
                     top = WindowInsets.systemBars.asPaddingValues().calculateTopPadding() + 8.dp,
                     bottom = 12.dp,
                 ),
+            // 玻璃/夜间模式下标题栏是深色雾面，强制使用浅色文字，
+            // 避免沿用浅色主题的深色 onSurface 造成“深底深字”
+            contentColor = if (cardNeedsLightText()) Color.White else MaterialTheme.colorScheme.onSurface,
         ) {
             FreshHeader()
         }
@@ -655,21 +659,25 @@ private fun FreshHeader() {
 
         Column(modifier = Modifier.weight(1f)) {
             val customTitle = CustomizationStore.current.homeTitle
+            val titleColor = LocalContentColor.current
             Text(
                 text = customTitle.ifBlank { stringResource(R.string.app_name) },
                 fontSize = 25.sp,
                 lineHeight = 30.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
+                // 字距收紧一点，标题更像品牌字而不像普通正文
+                letterSpacing = (-0.3).sp,
+                color = titleColor,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            // 标题下方自动轮换的一句话
+            // 标题下方自动轮换的一句话：不做投影，靠透明度区分层级
             androidx.compose.animation.Crossfade(targetState = phraseIndex, label = "witty") { index ->
                 Text(
                     text = phrases.getOrElse(index) { "" },
                     fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    letterSpacing = 0.1.sp,
+                    color = titleColor.copy(alpha = if (cardNeedsLightText()) 0.74f else 0.6f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
