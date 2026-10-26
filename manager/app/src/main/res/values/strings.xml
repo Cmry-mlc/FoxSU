@@ -328,6 +328,8 @@
     <string name="customization_bottom_bar_sub">Corner radius of the floating navigation bar</string>
     <string name="customization_bottom_immersive">Immersive sheen</string>
     <string name="customization_bottom_immersive_sum">HarmonyOS-style soft light: more transparent with a glassy highlight</string>
+    <string name="customization_bottom_liquid_glass">Liquid glass bar</string>
+    <string name="customization_bottom_liquid_glass_sum">Real-time blurred glass bar with a draggable highlight — drag left or right on the bar</string>
     <string name="customization_bottom_alpha">Bar opacity</string>
     <string name="customization_radius">Radius</string>
     <string name="customization_icon">Launcher icon</string>
