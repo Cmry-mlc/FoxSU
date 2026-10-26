@@ -3,10 +3,8 @@ package me.weishu.kernelsu.ui.component.bottombar
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
@@ -27,7 +25,6 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -50,12 +47,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
@@ -95,14 +90,18 @@ private val BarMaxWidth = 340.dp
 /** 胶囊外侧留白，决定底栏的「长度」。 */
 private val CapsuleSidePadding = 24.dp
 
-/** 选中滑块：横向占满一个 tab，纵向上下各留 3dp。 */
-private val PillInset = 3.dp
+/**
+ * 按下反馈：整条胶囊朝按下的那一侧收一收，纵向也跟着压扁一点点，松手弹回。
+ * 数值来自参考视频逐帧测量（宽度 ~249px → ~237px，约 5%）。
+ */
+private const val PressShrinkX = 0.95f
+private const val PressShrinkY = 0.985f
 
-/** miuix TabRow 用的是 200ms 线性 tween，滑块匀速平移，不做过冲。 */
-private const val PillSlideMillis = 200
-
-/** 按下时的下沉量，松手用弹簧推回。 */
-private const val PressDip = 0.94f
+/** 收缩约 230ms 到位；回弹用带一点过冲的减速曲线，约 620ms 收干净。 */
+private val PressInEasing = CubicBezierEasing(0.25f, 0.1f, 0.25f, 1f)
+private val PressOutEasing = CubicBezierEasing(0.16f, 1.1f, 0.3f, 1f)
+private const val PressInMillis = 230
+private const val PressOutMillis = 620
 
 @Composable
 fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
@@ -159,7 +158,7 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
             else -> freshCardColor().copy(alpha = userAlpha)
         }
 
-        // ---- 滑块坐标系统 ----
+        // ---- 手势坐标系统 ----
         val density = LocalDensity.current
         val horizontalPaddingDp = if (capsule) 10.dp else 8.dp
         val horizontalPaddingPx = with(density) { horizontalPaddingDp.toPx() }
@@ -169,63 +168,31 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
         } else {
             ((barWidthPx - horizontalPaddingPx * 2f) / items.size).coerceAtLeast(1f)
         }
-        val tabWidthDp = with(density) { tabWidthPx.toDp() }
 
-        // 滑块位置：跟手拖动时是小数，松手吸附到最近的 tab
-        val pillPos = remember { Animatable(mainPagerState.selectedPage.toFloat()) }
+        // 液态玻璃拖动时用的位置游标（已无滑块，只用于手势吸附）
+        val dragPos = remember { Animatable(mainPagerState.selectedPage.toFloat()) }
         var dragging by remember { mutableFloatStateOf(0f) }
         LaunchedEffect(mainPagerState.selectedPage) {
-            if (dragging == 0f) {
-                // 与 miuix TabRow 一致的匀速平移
-                pillPos.animateTo(
-                    targetValue = mainPagerState.selectedPage.toFloat(),
-                    animationSpec = tween(durationMillis = PillSlideMillis, easing = LinearEasing),
-                )
+            if (dragging == 0f) dragPos.snapTo(mainPagerState.selectedPage.toFloat())
+        }
+
+        // ---- 按下反馈：整条胶囊朝按下的那一侧收缩 ----
+        // pressBias: -1 = 按在左侧（重心左移），+1 = 按在右侧
+        var pressedIndex by remember { mutableIntStateOf(-1) }
+        var pressBias by remember { mutableFloatStateOf(0f) }
+        val press = remember { Animatable(0f) }
+        LaunchedEffect(pressedIndex) {
+            if (pressedIndex >= 0) {
+                press.animateTo(1f, tween(PressInMillis, easing = PressInEasing))
+            } else {
+                press.animateTo(0f, tween(PressOutMillis, easing = PressOutEasing))
             }
         }
 
-        // 按下反馈：滑块整条压扁一点，图标沉下去一点，松手弹簧推回
-        var pressedSlot by remember { mutableIntStateOf(-1) }
-        val pillDip by animateFloatAsState(
-            targetValue = if (pressedSlot >= 0) 1f else 0f,
-            animationSpec = if (pressedSlot >= 0) {
-                tween(durationMillis = 90, easing = FastOutLinearInEasing)
-            } else {
-                spring(dampingRatio = 0.34f, stiffness = 520f)
-            },
-            label = "pillDip",
-        )
-        val iconDip by animateFloatAsState(
-            targetValue = if (pressedSlot >= 0) 1f else 0f,
-            animationSpec = if (pressedSlot >= 0) {
-                tween(durationMillis = 90, easing = FastOutLinearInEasing)
-            } else {
-                spring(dampingRatio = 0.40f, stiffness = 480f)
-            },
-            label = "iconDip",
-        )
-
-        val accentFor: (Int) -> Color = { index -> LaunchTint.navColor(index) }
-        val pillColor = accentFor(mainPagerState.selectedPage).let {
-            if (nightBar || custom.cardGlass) it.copy(alpha = 0.20f) else it.copy(alpha = 0.13f)
-        }
-
         val scope = rememberCoroutineScope()
-        val barModifier = (if (capsule) Modifier.widthIn(max = BarMaxWidth) else Modifier.fillMaxWidth())
-            .then(
-                if (glass) {
-                    Modifier.dropShadow(
-                        shape = barShape,
-                        shadow = Shadow(
-                            radius = 14.dp,
-                            color = Color.Black,
-                            alpha = if (nightBar) 0.30f else 0.12f,
-                        ),
-                    )
-                } else {
-                    Modifier
-                }
-            )
+        // 液态玻璃不再额外补投影 / 白色蒙版：玻璃层本身就有折射和边缘高光，
+        // 再叠一层黑白会在深色壁纸上糊出一圈白雾或黑边。
+        val barModifier = if (capsule) Modifier.widthIn(max = BarMaxWidth) else Modifier.fillMaxWidth()
 
         Surface(
             shape = barShape,
@@ -242,8 +209,15 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
             Box(
                 modifier = Modifier
                     .onSizeChanged { barWidthPx = it.width }
+                    .graphicsLayer {
+                        // 横向收缩 + 轻微纵向压扁；按下时朝被按住的那一侧让一点
+                        val p = press.value
+                        scaleX = 1f - (1f - PressShrinkX) * p
+                        scaleY = 1f - (1f - PressShrinkY) * p
+                        translationX = pressBias * 3.dp.toPx() * p
+                    }
                     .then(
-                        // 液态玻璃专属手势：在底栏上左右拖，滑块跟手；松手吸附到最近的 tab
+                        // 液态玻璃专属手势：在底栏上左右拖，松手吸附到最近的 tab
                         if (glass && tabWidthPx > 0f) {
                             Modifier.pointerInput(tabWidthPx, items.size) {
                                 fun indexAt(x: Float): Float =
@@ -253,26 +227,26 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
                                 detectHorizontalDragGestures(
                                     onDragStart = { down: Offset ->
                                         dragging = 1f
-                                        scope.launch { pillPos.snapTo(indexAt(down.x)) }
+                                        scope.launch { dragPos.snapTo(indexAt(down.x)) }
                                     },
                                     onDragCancel = {
                                         dragging = 0f
                                         scope.launch {
-                                            pillPos.animateTo(
+                                            dragPos.animateTo(
                                                 mainPagerState.selectedPage.toFloat(),
-                                                tween(PillSlideMillis, easing = LinearEasing),
+                                                spring(dampingRatio = 0.6f, stiffness = 320f),
                                             )
                                         }
                                     },
                                     onDragEnd = {
                                         dragging = 0f
-                                        val target = pillPos.value
+                                        val target = dragPos.value
                                             .roundToInt()
                                             .coerceIn(0, items.size - 1)
                                         scope.launch {
-                                            pillPos.animateTo(
+                                            dragPos.animateTo(
                                                 target.toFloat(),
-                                                tween(PillSlideMillis, easing = LinearEasing),
+                                                spring(dampingRatio = 0.6f, stiffness = 320f),
                                             )
                                         }
                                         if (target != mainPagerState.selectedPage) {
@@ -281,7 +255,7 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
                                     },
                                     onHorizontalDrag = { change: PointerInputChange, _: Float ->
                                         val target = indexAt(change.position.x)
-                                        scope.launch { pillPos.snapTo(target) }
+                                        scope.launch { dragPos.snapTo(target) }
                                     },
                                 )
                             }
@@ -290,15 +264,9 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
                         }
                     )
             ) {
-                // 液态玻璃层：采样页面内容做模糊 + 色彩提亮 + 边缘折射，再压一层极薄色调
+                // 液态玻璃层：采样页面内容做模糊 + 色彩提亮 + 边缘折射；
+                // 不压任何白色/黑色蒙版，避免在深色壁纸上糊出一层白雾
                 if (glassBackdrop != null) {
-                    val glassTint = if (custom.cardGlass || nightBar) {
-                        Color.Black.copy(alpha = 0.06f)
-                    } else if (onBackdrop) {
-                        Color.Black.copy(alpha = 0.05f)
-                    } else {
-                        Color.White.copy(alpha = 0.04f)
-                    }
                     Box(
                         modifier = Modifier
                             .matchParentSize()
@@ -313,12 +281,11 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
                                         refractionAmount = 26.dp.toPx(),
                                     )
                                 },
-                                onDrawSurface = { drawRect(glassTint) },
                             )
                     )
                 }
 
-                // 磨砂高光：只有磨砂底栏才加，纯白胶囊保持干净（不再有那层白影子）
+                // 磨砂高光：只有磨砂底栏才加，纯白胶囊保持干净
                 if (!glass &&
                     (immersive || custom.cardGlass || (capsule && onBackdrop)) && !nightBar
                 ) {
@@ -335,26 +302,7 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
                     )
                 }
 
-                // 选中滑块：横向一个 tab 宽，纯色淡染，跟着选中项匀速平移
-                if (tabWidthPx > 0f) {
-                    Box(
-                        modifier = Modifier
-                            .offset(
-                                x = ((horizontalPaddingPx + tabWidthPx * pillPos.value) /
-                                    density.density).dp,
-                                y = PillInset,
-                            )
-                            .width(tabWidthDp.coerceAtLeast(1.dp))
-                            .height(56.dp)
-                            .graphicsLayer {
-                                // 按下时整条压下去，松手弹簧弹回（不做左右拉伸）
-                                scaleX = 1f - (1f - PressDip) * pillDip * 0.55f
-                                scaleY = 1f - (1f - PressDip) * pillDip
-                            }
-                            .background(pillColor, RoundedCornerShape(percent = 50)),
-                    )
-                }
-
+                // 图标严格等分：每个 tab 占同样宽度并居中，所以开关液态玻璃前后图标中心不变
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -369,23 +317,30 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
                                 item = item,
                                 selected = selected,
                                 badge = badgeFor(index, navigationBadge),
-                                accent = accentFor(index),
+                                accent = LaunchTint.navColor(index),
                                 onClick = {
                                     if (!selected) mainPagerState.animateToPage(index)
                                 },
                             )
                         } else {
                             FreshNavItemView(
+                                modifier = Modifier.weight(1f),
                                 item = item,
                                 selected = selected,
                                 badge = badgeFor(index, navigationBadge),
-                                accent = accentFor(index),
-                                iconDip = iconDip,
+                                accent = LaunchTint.navColor(index),
                                 onClick = {
                                     if (!selected) mainPagerState.animateToPage(index)
                                 },
                                 onPressChange = { down ->
-                                    pressedSlot = if (down) index else -1
+                                    if (down) {
+                                        pressedIndex = index
+                                        // 以底栏中点为轴：按左边重心左移，按右边右移
+                                        val center = items.size / 2f - 0.5f
+                                        pressBias = ((index - center) / center).coerceIn(-1f, 1f)
+                                    } else {
+                                        pressedIndex = -1
+                                    }
                                 },
                             )
                         }
@@ -502,16 +457,16 @@ private fun DrawerNavItem(
 }
 
 /**
- * 胶囊 tab：静息态只有图标 + 文字。按下时图标往下沉一点、略收，松手由外层弹簧推回；
- * 没有放大、没有光晕、没有任何白色影子。
+ * 胶囊 tab：只有一个图标 + 一行文字，没有滑块、没有按下色块、没有光晕。
+ * 按下反馈全部交给外层：整条胶囊朝按下的那一侧收缩，松手弹回。
  */
 @Composable
 private fun FreshNavItemView(
+    modifier: Modifier = Modifier,
     item: FreshNavItem,
     selected: Boolean,
     badge: NavBadge?,
     accent: Color,
-    iconDip: Float,
     onClick: () -> Unit,
     onPressChange: (Boolean) -> Unit,
 ) {
@@ -525,20 +480,12 @@ private fun FreshNavItemView(
         label = "navContent",
     )
 
+    // 等分宽度：保证图标中心正好落在底栏 tab 中心（液态玻璃下的对齐就靠这个）
     Column(
-        modifier = Modifier
-            .width(64.dp)
+        modifier = modifier
             .clip(RoundedCornerShape(18.dp))
             .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
-            .padding(vertical = 3.dp)
-            .graphicsLayer {
-                // 只有「当前按下的这一项」往下沉一点点（y 轴正方向 = 屏幕下方）
-                val dip = if (pressed) iconDip else 0f
-                translationY = 2.dp.toPx() * dip
-                val s = 1f - 0.07f * dip
-                scaleX = s
-                scaleY = s
-            },
+            .padding(vertical = 3.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         val iconModifier = Modifier.size(23.dp)
