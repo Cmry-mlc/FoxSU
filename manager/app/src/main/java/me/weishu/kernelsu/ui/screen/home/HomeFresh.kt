@@ -105,6 +105,7 @@ import me.weishu.kernelsu.BuildConfig
 import me.weishu.kernelsu.Natives
 import me.weishu.kernelsu.data.settings.Customization
 import me.weishu.kernelsu.data.settings.CustomizationStore
+import me.weishu.kernelsu.data.settings.RainbowCards
 import me.weishu.kernelsu.data.settings.HERO_SLOT
 import me.weishu.kernelsu.data.repository.SettingsRepositoryImpl
 import androidx.compose.ui.res.painterResource
@@ -399,20 +400,24 @@ fun HomePagerFresh(
 
                 Spacer(Modifier.height(14.dp))
 
+                val (kc1, kt1) = rainbowPair(5)
                 FreshKernelCard(
                     icon = Icons.Filled.DeveloperBoard,
                     title = stringResource(R.string.home_kernel),
                     value = state.systemInfo.kernelVersion,
-                    containerColor = cardColor,
+                    containerColor = kc1,
+                    contentColor = kt1,
                 )
 
                 Spacer(Modifier.height(10.dp))
 
+                val (kc2, kt2) = rainbowPair(0)
                 FreshKernelCard(
                     icon = Icons.Filled.Fingerprint,
                     title = stringResource(R.string.home_fingerprint),
                     value = state.systemInfo.fingerprint,
-                    containerColor = cardColor,
+                    containerColor = kc2,
+                    contentColor = kt2,
                 )
 
             }
@@ -1133,6 +1138,8 @@ private fun FreshSecurityGroup(
         else -> stringResource(R.string.seccomp_status_unknown)
     }
 
+    val (c1, t1) = rainbowPair(1)
+    val (c2, t2) = rainbowPair(2)
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -1141,14 +1148,16 @@ private fun FreshSecurityGroup(
             icon = Icons.Filled.Security,
             title = stringResource(R.string.home_selinux_status),
             caption = selinuxDisplay,
-            containerColor = containerColor,
+            containerColor = c1,
+            contentColor = t1,
             modifier = Modifier.weight(1f),
         )
         FreshPillTile(
             icon = Icons.Filled.FilterList,
             title = stringResource(R.string.home_seccomp_status),
             caption = seccompDisplay,
-            containerColor = containerColor,
+            containerColor = c2,
+            contentColor = t2,
             modifier = Modifier.weight(1f),
         )
     }
@@ -1165,12 +1174,15 @@ private fun FreshSupportGroup(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
+        val (c3, t3) = rainbowPair(3)
+        val (c4, t4) = rainbowPair(4)
         FreshPillTile(
             icon = Icons.Filled.VolunteerActivism,
             title = stringResource(R.string.home_support_title),
             caption = stringResource(R.string.home_support_content),
             accent = true,
-            containerColor = containerColor,
+            containerColor = c3,
+            contentColor = t3,
             onClick = { onOpenUrl("https://patreon.com/weishu") },
             modifier = Modifier.weight(1f),
         )
@@ -1179,7 +1191,8 @@ private fun FreshSupportGroup(
             title = stringResource(R.string.home_learn_kernelsu),
             caption = stringResource(R.string.home_click_to_learn_kernelsu),
             accent = true,
-            containerColor = containerColor,
+            containerColor = c4,
+            contentColor = t4,
             onClick = { onOpenUrl(learnMoreUrl) },
             modifier = Modifier.weight(1f),
         )
@@ -1193,12 +1206,13 @@ private fun FreshPillTile(
     title: String,
     caption: String,
     containerColor: Color,
+    contentColor: Color = MaterialTheme.colorScheme.onSurface,
     modifier: Modifier = Modifier,
     accent: Boolean = false,
     onClick: (() -> Unit)? = null,
 ) {
     val shape = RoundedCornerShape(26.dp)
-    val tint = if (accent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+    val tint = if (accent) MaterialTheme.colorScheme.primary else contentColor.copy(alpha = 0.7f)
     val base = modifier
         .height(78.dp)
         .clip(shape)
@@ -1206,7 +1220,7 @@ private fun FreshPillTile(
     Surface(
         shape = shape,
         color = containerColor,
-        contentColor = MaterialTheme.colorScheme.onSurface,
+        contentColor = contentColor,
         border = freshCardBorder(),
         shadowElevation = 0.dp,
         modifier = base,
@@ -1229,7 +1243,7 @@ private fun FreshPillTile(
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = contentColor,
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
@@ -1238,11 +1252,23 @@ private fun FreshPillTile(
                     lineHeight = 13.sp,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = supportingTextAlpha()),
+                    color = contentColor.copy(alpha = supportingTextAlpha()),
                 )
             }
         }
     }
+}
+
+
+/** 次级卡片的配色：七彩开启时取对应色，玻璃卡面优先。 */
+@Composable
+private fun rainbowPair(index: Int): Pair<Color, Color> {
+    val custom = CustomizationStore.current
+    if (!custom.cardGlass && !isNightScheme() && custom.rainbowCards) {
+        val (bg, fg) = RainbowCards[index % RainbowCards.size]
+        return Color(bg) to Color(fg)
+    }
+    return freshCardColor() to MaterialTheme.colorScheme.onSurface
 }
 
 /** 内核信息卡：左侧圆角图标块 + 标题/详情，对应参考图里的单行工具卡。 */
@@ -1252,11 +1278,12 @@ private fun FreshKernelCard(
     title: String,
     value: String,
     containerColor: Color,
+    contentColor: Color = MaterialTheme.colorScheme.onSurface,
 ) {
     Surface(
         shape = RoundedCornerShape(24.dp),
         color = containerColor,
-        contentColor = MaterialTheme.colorScheme.onSurface,
+        contentColor = contentColor,
         border = freshCardBorder(),
         shadowElevation = 0.dp,
         modifier = Modifier.fillMaxWidth(),
@@ -1275,7 +1302,7 @@ private fun FreshKernelCard(
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = contentColor.copy(alpha = 0.68f),
                     modifier = Modifier.size(21.dp),
                 )
             }
@@ -1285,7 +1312,7 @@ private fun FreshKernelCard(
                     text = title,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = contentColor,
                 )
                 Spacer(Modifier.height(3.dp))
                 Text(
@@ -1294,7 +1321,7 @@ private fun FreshKernelCard(
                     lineHeight = 16.sp,
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = supportingTextAlpha()),
+                    color = contentColor.copy(alpha = supportingTextAlpha()),
                 )
             }
         }

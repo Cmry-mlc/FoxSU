@@ -107,9 +107,9 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
             when {
                 // 玻璃模式：和卡片同一套通透度，深色壁纸下更透
                 custom.cardGlass -> if (glassNeedsLightText()) {
-                    Color.White.copy(alpha = 0.12f)
+                    Color.White.copy(alpha = 0.14f)
                 } else {
-                    Color.White.copy(alpha = 0.42f)
+                    Color.White.copy(alpha = 0.52f)
                 }
                 nightBar -> if (immersive) {
                     Color(0xFF17181A).copy(alpha = 0.86f)
@@ -125,11 +125,11 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
             shape = barShape,
             color = barColor,
             border = freshCardBorder(),
-            shadowElevation = 12.dp,
+            shadowElevation = if (custom.cardGlass) 0.dp else 12.dp,
             modifier = if (capsule) Modifier else Modifier.fillMaxWidth(),
         ) {
             Box {
-                if (immersive) {
+                if (immersive || custom.cardGlass) {
                     // 鸿蒙式柔光：上半部一层白高光，底部自然淡出
                     Box(
                         modifier = Modifier

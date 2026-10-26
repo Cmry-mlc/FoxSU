@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -13,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import me.weishu.kernelsu.data.settings.Customization
 import me.weishu.kernelsu.data.settings.CustomizationStore
@@ -47,11 +49,14 @@ fun wallpaperLuminance(path: String?): Float {
     return value
 }
 
-/** 玻璃卡面 + 深色壁纸时需要浅色文字。 */
+/** 玻璃卡面 + 深色壁纸（或夜间）时需要浅色文字。 */
+@Composable
+@ReadOnlyComposable
 fun glassNeedsLightText(): Boolean {
     val custom = CustomizationStore.current
     if (!custom.cardGlass) return false
-    if (custom.wallpaperUri == null || !custom.wallpaperEnabled) return false
+    if (MaterialTheme.colorScheme.surface.luminance() < 0.5f) return true
+    if (custom.wallpaperUri == null) return false
     return wallpaperLuminance(custom.wallpaperUri) < 0.45f
 }
 
@@ -117,7 +122,8 @@ fun WallpaperBackdrop(
     content: @Composable () -> Unit,
 ) {
     val custom = CustomizationStore.current
-    if (custom.wallpaperUri == null || !custom.wallpaperEnabled) {
+    // 玻璃卡面必须能看到背景，否则通透感无从谈起
+    if (custom.wallpaperUri == null || (!custom.wallpaperEnabled && !custom.cardGlass)) {
         content()
         return
     }
@@ -130,8 +136,10 @@ fun WallpaperBackdrop(
 /** True when the user picked a wallpaper, so scaffolds can go transparent. */
 @Composable
 @ReadOnlyComposable
-fun hasCustomWallpaper(): Boolean =
-    CustomizationStore.current.wallpaperUri != null && CustomizationStore.current.wallpaperEnabled
+fun hasCustomWallpaper(): Boolean {
+    val custom = CustomizationStore.current
+    return custom.wallpaperUri != null && (custom.wallpaperEnabled || custom.cardGlass)
+}
 
 /** Scaffold container that is transparent while a wallpaper is in use. */
 @Composable
