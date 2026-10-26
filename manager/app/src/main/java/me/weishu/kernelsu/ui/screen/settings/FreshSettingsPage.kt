@@ -321,8 +321,18 @@ private fun FreshSettingsSection(title: String, content: @Composable () -> Unit)
 
 @Composable
 private fun FreshTileGrid(tiles: List<SettingsTile>) {
+    // Rows of three, except a leftover pair fills the whole row (two wide cards per row).
+    val rows = buildList {
+        var i = 0
+        while (i < tiles.size) {
+            val remaining = tiles.size - i
+            val take = if (remaining == 2 || remaining == 1) remaining else 3
+            add(tiles.subList(i, i + take))
+            i += take
+        }
+    }
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        tiles.chunked(3).forEach { row ->
+        rows.forEach { row ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -330,7 +340,7 @@ private fun FreshTileGrid(tiles: List<SettingsTile>) {
                 row.forEach { tile ->
                     SettingsTileView(tile = tile, modifier = Modifier.weight(1f))
                 }
-                repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+                if (row.size == 1) { Spacer(Modifier.weight(1f)); Spacer(Modifier.weight(1f)) }
             }
         }
     }
