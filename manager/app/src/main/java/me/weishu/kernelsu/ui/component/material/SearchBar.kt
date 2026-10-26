@@ -197,7 +197,13 @@ fun SearchAppBar(
     }
 
     val fresh = isFreshStyle()
-    val topContainer = if (fresh) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
+    val glass = CustomizationStore.current.cardGlass
+    // 玻璃模式：顶栏透明，让壁纸透上来，和下面的深色磨砂列表连成一片
+    val topContainer = when {
+        glass -> Color.Transparent
+        fresh -> MaterialTheme.colorScheme.surface
+        else -> MaterialTheme.colorScheme.surfaceContainer
+    }
     Surface(color = topContainer) {
         Column(
             modifier = Modifier.fillMaxWidth()
@@ -211,9 +217,8 @@ fun SearchAppBar(
                 scrollBehavior = scrollBehavior
             )
 
-            val glass = CustomizationStore.current.cardGlass
-            // 深色壁纸 → 薄白片 + 白字；浅色壁纸 → 更实的白片保证深色输入文字可读
-            val glassAlpha = 0.55f
+            // 深色磨砂胶囊，和卡片同一套材质
+            val glassAlpha = 0.45f
             val searchBarColors = SearchBarDefaults.colors(
                 containerColor = when {
                     glass -> Color(0xFF101014).copy(alpha = glassAlpha)
