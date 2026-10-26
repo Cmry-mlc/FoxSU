@@ -93,6 +93,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
@@ -1102,10 +1103,10 @@ private fun FreshStatusCard(
 
     // 运行模式 / 越狱模式标签配色：薄荷绿 + 琥珀，和卡片底色协调且不刺眼
     val night = isNightScheme()
-    val lkmContainer = if (night) Color(0xFF1E3A2A) else Color(0xFFDCEFE0)
-    val lkmContent = if (night) Color(0xFFA6E8C2) else Color(0xFF1C5A36)
-    val jailContainer = if (night) Color(0xFF3E2E12) else Color(0xFFFFE7C2)
-    val jailContent = if (night) Color(0xFFFFD08A) else Color(0xFF8A5300)
+    val lkmContainer = if (night) Color.White.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.75f)
+    val lkmContent = if (night) Color(0xFFCDBDF5) else UiPalette.HeroAccent
+    val jailContainer = if (night) Color(0xFF2E2716) else UiPalette.KpiCream.first
+    val jailContent = if (night) Color(0xFFEFD79A) else UiPalette.KpiCream.second
 
     val canJailbreak = notInstalled && state.isSELinuxPermissive
     val glassBackdrop = CustomizationStore.current.cardGlass
@@ -1116,36 +1117,6 @@ private fun FreshStatusCard(
         hasHero || isNightScheme() -> Color.White
         else -> UiPalette.StatusRose
     }
-    // 呼吸光圈：复用项目现有的 Compose 动画体系，缓慢明暗缩放，不抢文字
-    val badgeTransition = rememberInfiniteTransition(label = "statusBadge")
-    val badgePulse by badgeTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2600, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "statusBadgePulse",
-    )
-    // 扩散涟漪圈：从白圈边缘向外扩散并淡出，错开半个周期形成连续波纹
-    val rippleTransition = rememberInfiniteTransition(label = "statusRipple")
-    val ripple1 by rippleTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 3000, easing = FastOutSlowInEasing),
-        ),
-        label = "ripple1",
-    )
-    val ripple2 by rippleTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 3000, easing = FastOutSlowInEasing),
-            initialStartOffset = androidx.compose.animation.core.StartOffset(1500),
-        ),
-        label = "ripple2",
-    )
 
     // 参考设计稿：主卡默认走粉桃渐变（135° #FDE4E0 → #FBD8E4）；
     // 用户覆盖了卡面颜色、夜间、壁纸时退回纯色
@@ -1285,38 +1256,20 @@ private fun FreshStatusCard(
                 }
             }
 
-            // 状态徽章：白底圆 + 细描边徽章，整圆带呼吸缩放（缓慢明暗，不抢文字）
+            // 设计稿 seal：右侧垂直居中的 66dp 白底圆 + 柔和投影，波浪章 32dp 玫红描边，静态无动画
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .padding(end = 16.dp)
-                    .size(64.dp),
+                    .padding(end = 20.dp)
+                    .size(66.dp)
+                    .shadow(elevation = 8.dp, shape = CircleShape, clip = false)
+                    .clip(CircleShape)
+                    .background(
+                        if (hasHero) Color.White.copy(alpha = 0.22f)
+                        else if (isNightScheme()) Color(0xFF2E2A38) else Color.White
+                    ),
                 contentAlignment = Alignment.Center,
             ) {
-                // 两道透明涟漪：从白圈边缘向外扩散、变透明，颜色跟徽章色
-                listOf(ripple1, ripple2).forEach { ripple ->
-                    Box(
-                        modifier = Modifier
-                            .size(64.dp)
-                            .graphicsLayer {
-                                scaleX = 1f + 0.45f * ripple
-                                scaleY = scaleX
-                                alpha = (1f - ripple) * 0.32f
-                            }
-                            .clip(CircleShape)
-                            .background(badgeTint.copy(alpha = 0.30f)),
-                    )
-                }
-                // 白底圆（深色壁纸下用半透明白）
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .clip(CircleShape)
-                        .background(
-                            if (hasHero) Color.White.copy(alpha = 0.22f)
-                            else Color.White.copy(alpha = if (isNightScheme()) 0.10f else 0.72f)
-                        ),
-                )
                 Icon(
                     painter = statusIcon,
                     contentDescription = null,
@@ -1384,15 +1337,16 @@ private fun FreshDialogRow(icon: ImageVector, text: String, onClick: () -> Unit)
 @Composable
 private fun FreshTag(text: String, container: Color, content: Color) {
     Surface(
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(9.dp),
         color = container,
         contentColor = content,
     ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+            fontSize = 10.5.sp,
+            lineHeight = 13.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 11.dp, vertical = 4.dp),
         )
     }
 }
@@ -1473,14 +1427,14 @@ private fun FreshKpiCard(
                         alpha = if (onPhoto) 0.24f else if (isNightScheme()) 0.10f else 0.66f
                     ),
                     contentColor = valueColor,
-                    modifier = Modifier.size(34.dp),
+                    modifier = Modifier.size(40.dp),
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             painter = painterResource(iconRes),
                             contentDescription = null,
-                            tint = valueColor.copy(alpha = 0.85f),
-                            modifier = Modifier.size(18.dp),
+                            tint = valueColor,
+                            modifier = Modifier.size(19.dp),
                         )
                     }
                 }
@@ -1491,7 +1445,7 @@ private fun FreshKpiCard(
                     fontSize = 12.sp,
                     lineHeight = 15.sp,
                     fontWeight = FontWeight.Bold,
-                    color = textColor.copy(alpha = 0.72f),
+                    color = valueColor.copy(alpha = 0.85f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -1512,7 +1466,7 @@ private fun FreshKpiCard(
                     text = caption,
                     fontSize = 10.5.sp,
                     lineHeight = 13.sp,
-                    color = textColor.copy(alpha = 0.55f),
+                    color = textColor.copy(alpha = 0.65f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -1638,18 +1592,16 @@ private fun FreshPillTile(
             // 参考图：左侧白底圆（半透明白），图标是卡片深色
             Box(
                 modifier = Modifier
-                    .size(34.dp)
-                    .clip(CircleShape)
-                    .background(
-                        Color.White.copy(alpha = if (isNightScheme()) 0.10f else 0.66f)
-                    ),
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(13.dp))
+                    .background(Color.White.copy(alpha = if (isNightScheme()) 0.10f else 1f)),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     painter = painterResource(iconRes),
                     contentDescription = null,
                     tint = tint,
-                    modifier = Modifier.size(17.dp),
+                    modifier = Modifier.size(19.dp),
                 )
             }
             Spacer(Modifier.width(10.dp))
@@ -1734,16 +1686,16 @@ private fun FreshKernelCard(
         ) {
             Box(
                 modifier = Modifier
-                    .size(42.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)),
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(13.dp))
+                    .background(Color.White.copy(alpha = if (isNightScheme()) 0.10f else 1f)),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     painter = painterResource(iconRes),
                     contentDescription = null,
-                    tint = contentColor.copy(alpha = 0.68f),
-                    modifier = Modifier.size(21.dp),
+                    tint = contentColor,
+                    modifier = Modifier.size(20.dp),
                 )
             }
             Spacer(Modifier.width(14.dp))
