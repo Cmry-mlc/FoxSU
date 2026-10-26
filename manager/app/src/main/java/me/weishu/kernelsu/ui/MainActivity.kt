@@ -65,6 +65,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import me.weishu.kernelsu.Natives
 import me.weishu.kernelsu.data.settings.CustomizationStore
+import me.weishu.kernelsu.ui.component.LocalAppBackdrop
 import me.weishu.kernelsu.ui.component.WallpaperBackground
 import me.weishu.kernelsu.ui.component.bottombar.BottomBar
 import me.weishu.kernelsu.ui.component.bottombar.MainPagerState
@@ -430,7 +431,12 @@ fun MainScreen(
     }
     val blurBackdrop = rememberBlurBackdrop(enableBlur)
 
+    // Fresh 风格的底栏液态玻璃也要采样页面内容，所以这里多算一个条件
+    val needsPageBackdrop = (enableFloatingBottomBar && enableFloatingBottomBarBlur) ||
+        CustomizationStore.current.bottomBarLiquidGlass
+
     val backdrop = rememberLayerBackdrop {
+        // ContentDrawScope 里的 drawRect 是成员函数，不需要 import
         drawRect(surfaceColor)
         drawContent()
     }
@@ -448,7 +454,10 @@ fun MainScreen(
     MainScreenBackHandler(mainPagerState, navController)
 
     CompositionLocalProvider(
-        LocalMainPagerState provides mainPagerState
+        LocalMainPagerState provides mainPagerState,
+        // 底栏的液态玻璃需要采样这个 backdrop（Fresh 模式默认不启用 Miuix 的浮动底栏模糊，
+        // 所以这里始终记录一份页面内容，开关打开就能立刻用）
+        LocalAppBackdrop provides backdrop,
     ) {
         val contentReady = rememberContentReady()
         val pagerContent = @Composable { bottomInnerPadding: Dp ->
@@ -460,7 +469,7 @@ fun MainScreen(
                             mode = pagerMode,
                             enabled = userScrollEnabled,
                         )
-                        .then(if (enableFloatingBottomBar && enableFloatingBottomBarBlur) Modifier.layerBackdrop(backdrop) else Modifier),
+                        .then(if (needsPageBackdrop) Modifier.layerBackdrop(backdrop) else Modifier),
                     state = mainPagerState.pagerState,
                     beyondViewportPageCount = if (contentReady) 3 else 0,
                     overscrollEffect = null,
