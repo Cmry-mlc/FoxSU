@@ -140,6 +140,7 @@ import me.weishu.kernelsu.ui.component.material.SearchAppBar
 import me.weishu.kernelsu.ui.component.material.SnackBarHost
 import me.weishu.kernelsu.ui.component.material.TonalCard
 import me.weishu.kernelsu.ui.component.statustag.StatusTag
+import me.weishu.kernelsu.ui.theme.LaunchTint
 import me.weishu.kernelsu.ui.theme.LocalModuleDescriptionMaxLines
 import me.weishu.kernelsu.ui.component.scaffoldBackgroundColor
 import me.weishu.kernelsu.data.settings.MODULE_SLOT
@@ -153,6 +154,9 @@ import me.weishu.kernelsu.ui.component.rememberWallpaper
 import me.weishu.kernelsu.ui.util.savePickedImage
 import me.weishu.kernelsu.ui.component.CardAppearanceDialog
 import me.weishu.kernelsu.ui.component.ImageCropDialog
+import me.weishu.kernelsu.ui.component.CardSurface
+import me.weishu.kernelsu.ui.component.rainbowTintFor
+import me.weishu.kernelsu.ui.component.rememberRainbowSlot
 import me.weishu.kernelsu.ui.component.resolveCardSurface
 import me.weishu.kernelsu.ui.component.supportingTextAlpha
 import androidx.compose.material3.LocalContentColor
@@ -390,6 +394,8 @@ fun ModulePagerMaterial(
         },
         floatingActionButton = {
             if (uiState.installButtonVisible) {
+                // 「安装模块」跟着七彩卡片一起上色：每次冷启动取同一套彩里的一个
+                val tint = LaunchTint.navColor(0)
                 val moduleInstall = stringResource(id = R.string.module_install)
                 val selectZipLauncher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.StartActivityForResult()
@@ -423,8 +429,8 @@ fun ModulePagerMaterial(
                             }
                             selectZipLauncher.launch(intent)
                         },
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        containerColor = tint ?: MaterialTheme.colorScheme.primary,
+                        contentColor = if (tint != null) Color.White else MaterialTheme.colorScheme.onPrimary,
                         shape = CircleShape,
                         modifier = Modifier.padding(bottom = bottomInnerPadding),
                     ) {
@@ -762,7 +768,10 @@ private fun ModuleItem(
     val canOpenWebUi = module.hasWebUi && !module.remove && module.enabled
     val cardInteractionSource = remember { MutableInteractionSource() }
     val descriptionInteractionSource = remember { MutableInteractionSource() }
-    val surface = resolveCardSurface(MODULE_SLOT)
+    // 每张卡片按自己的 id 取一套七彩，和 miuix 版一致
+    val rainbowTint = rainbowTintFor(rememberRainbowSlot(module.id))
+    val surface = rainbowTint?.let { CardSurface(it.first, it.second, it.second, null) }
+        ?: resolveCardSurface(MODULE_SLOT)
     var showAppearance by remember { mutableStateOf(false) }
     val custom = CustomizationStore.current
     val moduleBitmap = rememberWallpaper(custom.moduleImages[module.id])
