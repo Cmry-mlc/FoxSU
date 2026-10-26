@@ -212,7 +212,7 @@ fun WallpaperBackground(
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .fillMaxSize()
-                .then(if (glass) Modifier.blur(46.dp) else Modifier)
+                .then(if (glass) Modifier.blur(72.dp) else Modifier)
                 .graphicsLayer {
                     val scale = customization.wallpaperScale
                     scaleX = scale
@@ -226,15 +226,16 @@ fun WallpaperBackground(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.30f)),
+                    .background(Color.Black.copy(alpha = 0.22f)),
             )
+            // 顶部压暗：标题栏与背景同材质后，靠这层渐变保证头部白字依然清晰
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
-                            0f to Color.Black.copy(alpha = 0.55f),
-                            0.22f to Color.Black.copy(alpha = 0.22f),
+                            0f to Color.Black.copy(alpha = 0.52f),
+                            0.22f to Color.Black.copy(alpha = 0.20f),
                             0.40f to Color.Transparent,
                         )
                     ),

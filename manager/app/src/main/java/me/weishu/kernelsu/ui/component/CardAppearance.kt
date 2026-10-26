@@ -100,6 +100,16 @@ fun resolveCardSurface(slot: Int): CardSurface {
         )
     }
 
+    // 铺了壁纸：卡片统一走半透明磨砂材质，七彩/浅色板一律让位，避免白色块压在背景上
+    if (hasWallpaperBackdrop()) {
+        return CardSurface(
+            container = freshCardColor().copy(alpha = freshCardColor().alpha * alpha),
+            content = cardContentColor(),
+            accent = Color.White,
+            border = freshCardBorder(),
+        )
+    }
+
     // 七彩卡片：所有槽位逐一上色，文字用配套的深色
     if (!night && overrideColor == 0 && custom.rainbowCards && !custom.cardGlass) {
         val (bg, fg) = LaunchTint.rainbowPair(slot)

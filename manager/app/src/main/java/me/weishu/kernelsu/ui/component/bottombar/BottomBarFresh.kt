@@ -110,9 +110,11 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
         val userAlpha = custom.bottomBarAlpha
         val barColor = when {
             // 玻璃模式：统一深色玻璃条，和卡片同一套材质
-            custom.cardGlass -> Color(0xFF101014).copy(alpha = 0.72f * userAlpha)
+            custom.cardGlass -> Color(0xFF101014).copy(alpha = 0.46f * userAlpha)
             nightBar -> Color(if (immersive) 0xFF17181A else 0xFF1B1C1E)
                 .copy(alpha = (if (immersive) 0.86f else 1f) * userAlpha)
+            // 悬浮胶囊：跟随卡片的半透明磨砂材质，不再是一整块白胶囊
+            capsule -> Color(0xFF20242A).copy(alpha = (if (immersive) 0.34f else 0.46f) * userAlpha)
             immersive -> freshCardColor().copy(alpha = 0.66f * userAlpha)
             else -> freshCardColor().copy(alpha = userAlpha)
         }
@@ -120,19 +122,19 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
             shape = barShape,
             color = barColor,
             border = freshCardBorder(),
-            shadowElevation = if (custom.cardGlass) 0.dp else 12.dp,
+            shadowElevation = if (custom.cardGlass || capsule) 0.dp else 12.dp,
             modifier = if (capsule) Modifier else Modifier.fillMaxWidth(),
         ) {
             Box {
-                if ((immersive || custom.cardGlass) && !nightBar) {
-                    // 鸿蒙式柔光：上半部一层白高光，底部自然淡出
+                // 磨砂高光：玻璃条 / 悬浮胶囊都加一层自上而下淡出的薄白，去掉塑料感
+                if ((capsule || immersive || custom.cardGlass) && !nightBar) {
                     Box(
                         modifier = Modifier
                             .matchParentSize()
                             .background(
                                 Brush.verticalGradient(
-                                    0f to Color.White.copy(alpha = 0.34f),
-                                    0.55f to Color.White.copy(alpha = 0.08f),
+                                    0f to Color.White.copy(alpha = if (custom.cardGlass) 0.10f else 0.12f),
+                                    0.55f to Color.White.copy(alpha = 0.03f),
                                     1f to Color.Transparent,
                                 )
                             ),
@@ -200,7 +202,7 @@ private fun DrawerNavItem(
         label = "drawerPill",
     )
     val contentColor by animateColorAsState(
-        targetValue = if (selected) accent else accent.copy(alpha = 0.52f),
+        targetValue = if (selected) accent else accent.copy(alpha = 0.78f),
         animationSpec = tween(durationMillis = 240),
         label = "drawerContent",
     )
@@ -281,7 +283,7 @@ private fun FreshNavItemView(
     val pressed by interactionSource.collectIsPressedAsState()
 
     val contentColor by animateColorAsState(
-        targetValue = if (selected) accent else accent.copy(alpha = 0.52f),
+        targetValue = if (selected) accent else accent.copy(alpha = 0.78f),
         animationSpec = tween(durationMillis = 220),
         label = "navContent",
     )

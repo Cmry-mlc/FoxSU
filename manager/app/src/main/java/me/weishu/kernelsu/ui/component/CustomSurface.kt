@@ -20,6 +20,15 @@ import me.weishu.kernelsu.data.settings.CustomizationStore
 @ReadOnlyComposable
 fun isNightScheme(): Boolean = MaterialTheme.colorScheme.surface.luminance() < 0.5f
 
+/** True when a wallpaper is painted behind the UI (global wallpaper or glass mode). */
+@Composable
+@ReadOnlyComposable
+fun hasWallpaperBackdrop(): Boolean {
+    val custom = CustomizationStore.current
+    val global = custom.wallpaperUri != null && custom.wallpaperEnabled
+    return global || custom.cardGlass
+}
+
 /**
  * Card surface with the user card color (or the theme fallback) and opacity applied.
  * Custom colours are a light-mode option: at night the card always uses the dark surface so
@@ -71,6 +80,17 @@ fun freshCardColor(): Color {
         }
         return Color(0xFF101014).copy(alpha = 0.46f)
     }
+    // 有壁纸/玻璃背景时：卡片改成半透明磨砂板（不再是不透明白卡），
+    // 让背景透上来；浅色下用极淡的黑雾代替纯白，避免大片死白压住磨砂质感
+    if (hasWallpaperBackdrop()) {
+        val base = if (isSystemInDarkTheme()) {
+            MaterialTheme.colorScheme.surfaceContainerHigh
+        } else {
+            Color(0xFF20242A)
+        }
+        val baseAlpha = if (isSystemInDarkTheme()) 0.58f else 0.34f
+        return base.copy(alpha = baseAlpha)
+    }
     val base = if (isSystemInDarkTheme()) {
         MaterialTheme.colorScheme.surfaceContainerHigh
     } else {
@@ -85,10 +105,12 @@ fun freshCardColor(): Color {
 fun freshCardBorder(): BorderStroke? {
     val custom = CustomizationStore.current
     if (custom.cardGlass) {
-        return BorderStroke(
-            1.dp,
-            Color.White.copy(alpha = if (glassNeedsLightText()) 0.16f else 0.55f),
-        )
+        // 白卡才用浅描边；磨砂板统一用一层薄白高光勾边
+        return BorderStroke(1.dp, Color.White.copy(alpha = 0.18f))
+    }
+    // 半透明磨砂卡：白描边 + 顶部高光撑出玻璃层次
+    if (hasWallpaperBackdrop()) {
+        return BorderStroke(1.dp, Color.White.copy(alpha = 0.20f))
     }
     return if (isSystemInDarkTheme()) {
         BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
@@ -110,6 +132,8 @@ fun cardNeedsLightText(): Boolean {
         return Color(custom.cardColor).luminance() < 0.5f
     }
     if (custom.cardGlass) return glassNeedsLightText()
+    // 铺了壁纸时的半透明磨砂卡：底色是深雾，文字统一转白
+    if (hasWallpaperBackdrop()) return true
     return isNightScheme()
 }
 
@@ -124,6 +148,18 @@ fun freshTopBarColor(): Color =
 @ReadOnlyComposable
 fun cardContentColor(): Color = if (cardNeedsLightText()) Color.White else Color(0xFF1A1D1A)
 
+/**
+ * 页面画布（标题栏、底栏）的磨砂底色：
+ * 有壁纸时返回带透明度的雾面，透出背景又保证白字可读；没壁纸时交回主题色。
+ */
+@Composable
+@ReadOnlyComposable
+fun frostedChromeColor(fallback: Color): Color {
+    if (!hasWallpaperBackdrop()) return fallback
+    val dark = isNightScheme()
+    return if (dark) Color(0xFF101014).copy(alpha = 0.42f) else Color(0xFF20242A).copy(alpha = 0.40f)
+}
+
 /** Supporting text on a card: a bit brighter in dark mode so it stays legible. */
 @Composable
 @ReadOnlyComposable
@@ -137,13 +173,13 @@ fun supportingTextAlpha(): Float = if (isSystemInDarkTheme()) 0.82f else 0.65f
 @Composable
 fun GlassSheen(modifier: Modifier = Modifier) {
     val custom = CustomizationStore.current
-    if (!custom.cardGlass) return
-    val light = glassNeedsLightText()
+    // 磨砂卡面（玻璃模式 / 铺了壁纸时的半透明卡）：顶部一层薄白高光，向下淡出
+    if (!custom.cardGlass && !hasWallpaperBackdrop()) return
     Box(
         modifier = modifier.background(
             Brush.verticalGradient(
-                0f to Color.White.copy(alpha = if (light) 0.16f else 0.62f),
-                0.45f to Color.White.copy(alpha = if (light) 0.04f else 0.18f),
+                0f to Color.White.copy(alpha = 0.13f),
+                0.35f to Color.White.copy(alpha = 0.04f),
                 1f to Color.White.copy(alpha = 0f),
             )
         )

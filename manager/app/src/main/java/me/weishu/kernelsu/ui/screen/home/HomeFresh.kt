@@ -140,6 +140,8 @@ import me.weishu.kernelsu.ui.component.cardContentColor
 import me.weishu.kernelsu.ui.component.freshCardBorder
 import me.weishu.kernelsu.ui.component.glassNeedsLightText
 import me.weishu.kernelsu.ui.component.freshCardColor
+import me.weishu.kernelsu.ui.component.frostedChromeColor
+import me.weishu.kernelsu.ui.component.hasWallpaperBackdrop
 import me.weishu.kernelsu.ui.component.isNightScheme
 import me.weishu.kernelsu.ui.theme.LaunchTint
 import me.weishu.kernelsu.ui.component.resolveCardSurface
@@ -276,11 +278,12 @@ fun HomePagerFresh(
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // 标题栏保持不透明：全局壁纸只铺在它下方，避免图案压住 FoxSu 标题
+        // 标题栏与下方内容同一套磨砂材质：不再用不透明的 surface 白条，
+        // 有壁纸时铺同款雾面，让头部和内容连贯成一张玻璃画布
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface)
+                .background(frostedChromeColor(MaterialTheme.colorScheme.surface))
                 .padding(
                     start = 20.dp,
                     end = 20.dp,
@@ -617,9 +620,13 @@ private fun FreshHeader() {
         }
     }
 
-    // 与底栏共用同一套随机色（深色模式沿用卡面）
-    val chipColor = if (isNightScheme()) freshCardColor() else LaunchTint.chip
-    val glyphTint = if (isNightScheme()) MaterialTheme.colorScheme.onSurface else Color(0xFF1B1F1A)
+    // 与底栏共用同一套随机色（深色模式 / 壁纸模式沿用卡面）
+    val chipColor = if (isNightScheme() || hasWallpaperBackdrop()) freshCardColor() else LaunchTint.chip
+    val glyphTint = if (isNightScheme() || hasWallpaperBackdrop()) {
+        MaterialTheme.colorScheme.onSurface
+    } else {
+        Color(0xFF1B1F1A)
+    }
 
     Row(
         modifier = Modifier
@@ -1348,8 +1355,14 @@ private fun FreshKpiCard(
     val showImage = bitmap != null && imageAlpha > 0.02f
     // 图片足够不透明时文字转白，否则沿用卡面配色
     val onPhoto = showImage && imageAlpha > 0.45f
-    val textColor = if (onPhoto) Color.White else contentColor
-    val valueColor = if (onPhoto) Color.White else accentColor
+    // 未选图片时的配色：有壁纸则统一用磨砂卡面，避免彩虹浅色块变成一张白卡
+    val backdropMaterial = hasWallpaperBackdrop()
+    val baseContainer = if (backdropMaterial && !showImage) freshCardColor() else containerColor
+    val baseContent = if (backdropMaterial && !showImage) Color.White else contentColor
+    val baseAccent = if (backdropMaterial && !showImage) Color.White else accentColor
+    val baseBorder = if (backdropMaterial) freshCardBorder() else cardBorder
+    val textColor = if (onPhoto) Color.White else baseContent
+    val valueColor = if (onPhoto) Color.White else baseAccent
 
     Surface(
         modifier = modifier
@@ -1360,9 +1373,9 @@ private fun FreshKpiCard(
                 onLongClick = onLongPress,
             ),
         shape = RoundedCornerShape(22.dp),
-        color = containerColor,
+        color = baseContainer,
         contentColor = textColor,
-        border = cardBorder,
+        border = baseBorder,
         shadowElevation = 0.dp,
     ) {
         Box {
@@ -1592,13 +1605,16 @@ private fun FreshPillTile(
 }
 
 
-/** 次级卡片的配色：七彩开启时取对应色，玻璃卡面优先。 */
+/** 次级卡片的配色：七彩开启时取对应色；玻璃/壁纸模式一律走磨砂卡面。 */
 @Composable
 private fun rainbowPair(index: Int): Pair<Color, Color> {
     val custom = CustomizationStore.current
-    if (!custom.cardGlass && !isNightScheme() && custom.rainbowCards) {
+    if (!custom.cardGlass && !hasWallpaperBackdrop() && !isNightScheme() && custom.rainbowCards) {
         val (bg, fg) = LaunchTint.rainbowPair(index)
         return Color(bg) to Color(fg)
+    }
+    if (hasWallpaperBackdrop()) {
+        return freshCardColor() to Color.White
     }
     return freshCardColor() to cardContentColor()
 }
