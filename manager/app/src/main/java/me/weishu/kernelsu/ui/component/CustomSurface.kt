@@ -56,7 +56,13 @@ fun freshCardColor(): Color {
     val custom = CustomizationStore.current
     // 玻璃卡面：极淡的白色薄片，靠描边和高光撑出层次（参考图二的透明卡片）
     if (custom.cardGlass) {
-        return Color.White.copy(alpha = if (isNightScheme()) 0.07f else 0.16f)
+        // 深色壁纸上用极淡白片 + 白字；浅色壁纸上用更实的白片保证深色字可读
+        val light = glassNeedsLightText()
+        return if (light) {
+            Color.White.copy(alpha = 0.13f)
+        } else {
+            Color.White.copy(alpha = if (isNightScheme()) 0.16f else 0.46f)
+        }
     }
     val base = if (isSystemInDarkTheme()) {
         MaterialTheme.colorScheme.surfaceContainerHigh
@@ -74,7 +80,7 @@ fun freshCardBorder(): BorderStroke? {
     if (custom.cardGlass) {
         return BorderStroke(
             1.dp,
-            Color.White.copy(alpha = if (isNightScheme()) 0.14f else 0.55f),
+            Color.White.copy(alpha = if (glassNeedsLightText()) 0.22f else 0.7f),
         )
     }
     return if (isSystemInDarkTheme()) {

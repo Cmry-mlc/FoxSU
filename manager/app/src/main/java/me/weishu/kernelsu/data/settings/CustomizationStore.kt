@@ -65,6 +65,8 @@ data class Customization(
     val wallpaperEnabled: Boolean = true,
     /** 首页卡片取色跟随系统壁纸（动态取色）。 */
     val homeAdaptive: Boolean = false,
+    /** 七彩卡片：首页/模块卡全部换成柔和的七彩配色。 */
+    val rainbowCards: Boolean = true,
     /** 0 = 系统默认，1 = 衬线，2 = 等宽，3 = 手写圆体。 */
     val fontStyle: Int = 0,
     /** 0 = FoxSu icon, 1 = original KernelSU icon, 2..4 = alternative FoxSu icons. */
@@ -73,6 +75,16 @@ data class Customization(
 
 /** Number of equal-sized KPI cards on the ColorUI home screen. */
 const val KPI_CARD_COUNT = 4
+
+/** 七彩配色：依次覆盖大卡、四张 KPI 与模块卡。 */
+val RainbowCards = listOf(
+    0xFFDDEBFA.toInt() to 0xFF17324D.toInt(), // 雾蓝
+    0xFFE2F5E6.toInt() to 0xFF14401F.toInt(), // 薄荷
+    0xFFFFF3D2.toInt() to 0xFF4A3710.toInt(), // 奶油黄
+    0xFFFFE4E0.toInt() to 0xFF4A1F1A.toInt(), // 蜜桃
+    0xFFEFE6FB.toInt() to 0xFF2E2148.toInt(), // 薰衣草
+    0xFFDFF3F3.toInt() to 0xFF0F3A3A.toInt(), // 湖水
+)
 
 /** Hero card + four KPI cards + the module list cards. */
 const val SURFACE_SLOT_COUNT = KPI_CARD_COUNT + 2
@@ -107,6 +119,7 @@ object CustomizationStore {
     private const val KEY_CARD_GLASS = "card_glass"
     private const val KEY_WALLPAPER_ENABLED = "wallpaper_enabled"
     private const val KEY_HOME_ADAPTIVE = "home_adaptive"
+    private const val KEY_RAINBOW = "rainbow_cards"
     private const val KEY_FONT_STYLE = "font_style"
     private const val KEY_ICON_STYLE = "icon_style"
 
@@ -160,6 +173,7 @@ object CustomizationStore {
             cardGlass = getBoolean(KEY_CARD_GLASS, false),
             wallpaperEnabled = getBoolean(KEY_WALLPAPER_ENABLED, true),
             homeAdaptive = getBoolean(KEY_HOME_ADAPTIVE, false),
+            rainbowCards = getBoolean(KEY_RAINBOW, true),
             fontStyle = getInt(KEY_FONT_STYLE, 0),
             iconStyle = getInt(KEY_ICON_STYLE, 0),
         )
@@ -216,6 +230,7 @@ object CustomizationStore {
     fun setCardGlass(enabled: Boolean) = update { it.copy(cardGlass = enabled) }
     fun setWallpaperEnabled(enabled: Boolean) = update { it.copy(wallpaperEnabled = enabled) }
     fun setHomeAdaptive(enabled: Boolean) = update { it.copy(homeAdaptive = enabled) }
+    fun setRainbowCards(enabled: Boolean) = update { it.copy(rainbowCards = enabled) }
     fun setFontStyle(style: Int) = update { it.copy(fontStyle = style) }
     fun setIconStyle(style: Int) = update { it.copy(iconStyle = style) }
 
@@ -259,6 +274,7 @@ object CustomizationStore {
             putBoolean(KEY_CARD_GLASS, next.cardGlass)
             putBoolean(KEY_WALLPAPER_ENABLED, next.wallpaperEnabled)
             putBoolean(KEY_HOME_ADAPTIVE, next.homeAdaptive)
+            putBoolean(KEY_RAINBOW, next.rainbowCards)
             putInt(KEY_FONT_STYLE, next.fontStyle)
             putInt(KEY_ICON_STYLE, next.iconStyle)
         }

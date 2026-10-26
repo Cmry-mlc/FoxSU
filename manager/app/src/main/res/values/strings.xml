@@ -276,6 +276,8 @@
     <string name="customization_wallpaper">Wallpaper</string>
     <string name="customization_card_glass">Glass cards</string>
     <string name="customization_card_glass_sum">Very light translucent cards with a hairline white border</string>
+    <string name="customization_rainbow">Rainbow cards</string>
+    <string name="customization_rainbow_sum">Give every home and module card its own soft hue</string>
     <string name="customization_home_adaptive">Follow wallpaper colors</string>
     <string name="customization_home_adaptive_sum">Home cards take colors from the system dynamic palette</string>
     <string name="customization_wallpaper_enable">Enable background image</string>
@@ -325,8 +327,8 @@
     <string name="customization_radius">Radius</string>
     <string name="customization_icon">Launcher icon</string>
     <string name="customization_icon_fox2">Outline fox</string>
-    <string name="customization_icon_fox3">Cream fox</string>
-    <string name="customization_icon_fox4">Minimal fox</string>
+    <string name="customization_icon_fox3">Peach fox</string>
+    <string name="customization_icon_fox4">Mint fox</string>
     <string name="customization_icon_foxsu">FoxSu (default)</string>
     <string name="customization_icon_kernelsu">KernelSU (original)</string>
     <string name="customization_icon_hint">Launcher may take a few seconds to refresh</string>

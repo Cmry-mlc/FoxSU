@@ -18,6 +18,43 @@ import me.weishu.kernelsu.data.settings.Customization
 import me.weishu.kernelsu.data.settings.CustomizationStore
 import java.io.File
 
+/** 壁纸平均亮度缓存：玻璃卡面的文字颜色靠它决定黑白。 */
+private val luminanceCache = mutableMapOf<String, Float>()
+
+/** 0f（纯黑）..1f（纯白），读取失败按亮色处理。 */
+fun wallpaperLuminance(path: String?): Float {
+    if (path == null) return 1f
+    luminanceCache[path]?.let { return it }
+    val value = runCatching {
+        val opts = BitmapFactory.Options().apply { inSampleSize = 16 }
+        val bmp = BitmapFactory.decodeFile(path, opts) ?: return@runCatching 1f
+        var sum = 0.0
+        var count = 0
+        for (y in 0 until bmp.height step 2) {
+            for (x in 0 until bmp.width step 2) {
+                val c = bmp.getPixel(x, y)
+                val r = (c shr 16 and 0xFF) / 255f
+                val g = (c shr 8 and 0xFF) / 255f
+                val b = (c and 0xFF) / 255f
+                sum += (0.2126f * r + 0.7152f * g + 0.0722f * b)
+                count++
+            }
+        }
+        bmp.recycle()
+        if (count == 0) 1f else (sum / count).toFloat()
+    }.getOrDefault(1f)
+    luminanceCache[path] = value
+    return value
+}
+
+/** 玻璃卡面 + 深色壁纸时需要浅色文字。 */
+fun glassNeedsLightText(): Boolean {
+    val custom = CustomizationStore.current
+    if (!custom.cardGlass) return false
+    if (custom.wallpaperUri == null || !custom.wallpaperEnabled) return false
+    return wallpaperLuminance(custom.wallpaperUri) < 0.45f
+}
+
 /** Loads the wallpaper with a sampled decode so a 4K photo does not blow up the heap. */
 fun decodeWallpaper(path: String, maxSize: Int = 1600): ImageBitmap? = runCatching {
     val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }

@@ -51,6 +51,7 @@ import androidx.compose.ui.window.Dialog
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.data.settings.HERO_SLOT
+import me.weishu.kernelsu.data.settings.RainbowCards
 
 /** Resolved colours for one card: global settings with an optional per-card override. */
 data class CardSurface(
@@ -88,7 +89,18 @@ fun resolveCardSurface(slot: Int): CardSurface {
     val alphaOverride = custom.surfaceAlphas.getOrNull(slot) ?: -1f
     val alpha = if (alphaOverride >= 0f) alphaOverride else custom.cardAlpha
 
-    // 跟随系统壁纸：用动态取色得到的容器色，文字用对应的 on* 颜色
+    // 七彩卡片：所有槽位逐一上色，文字用配套的深色
+    if (!night && overrideColor == 0 && custom.rainbowCards && !custom.cardGlass) {
+        val (bg, fg) = RainbowCards[slot % RainbowCards.size]
+        return CardSurface(
+            container = Color(bg).copy(alpha = alpha * 0.9f),
+            content = Color(fg),
+            accent = Color(fg),
+            border = null,
+        )
+    }
+
+    // 跟随系统壁纸：用动态取色得到的容器颜色，文字用对应的 on* 颜色
     if (!night && overrideColor == 0 && custom.homePalette && custom.homeAdaptive) {
         val scheme = MaterialTheme.colorScheme
         val pair = when (slot) {

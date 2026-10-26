@@ -58,6 +58,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.component.freshCardBorder
+import me.weishu.kernelsu.ui.component.glassNeedsLightText
 import me.weishu.kernelsu.ui.component.isNightScheme
 import me.weishu.kernelsu.ui.component.freshCardColor
 import androidx.compose.ui.unit.sp
@@ -104,6 +105,12 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
         val nightBar = isNightScheme()
         val barColor = freshCardColor().let {
             when {
+                // 玻璃模式：和卡片同一套通透度，深色壁纸下更透
+                custom.cardGlass -> if (glassNeedsLightText()) {
+                    Color.White.copy(alpha = 0.12f)
+                } else {
+                    Color.White.copy(alpha = 0.42f)
+                }
                 nightBar -> if (immersive) {
                     Color(0xFF17181A).copy(alpha = 0.86f)
                 } else {

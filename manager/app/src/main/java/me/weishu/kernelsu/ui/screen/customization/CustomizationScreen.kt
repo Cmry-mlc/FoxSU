@@ -281,6 +281,12 @@ fun CustomizationScreen() {
                             onChange = CustomizationStore::setCardGlass,
                         )
                         ToggleRow(
+                            title = stringResource(R.string.customization_rainbow),
+                            subtitle = stringResource(R.string.customization_rainbow_sum),
+                            checked = custom.rainbowCards,
+                            onChange = CustomizationStore::setRainbowCards,
+                        )
+                        ToggleRow(
                             title = stringResource(R.string.customization_home_adaptive),
                             subtitle = stringResource(R.string.customization_home_adaptive_sum),
                             checked = custom.homeAdaptive,
@@ -467,7 +473,7 @@ fun CustomizationScreen() {
                                 labelRes = R.string.customization_icon_foxsu,
                                 iconRes = R.drawable.ic_launcher_foreground,
                                 background = Brush.linearGradient(
-                                    listOf(Color(0xFF4AE75A), Color(0xFF008F06))
+                                    listOf(Color(0xFFEFFBF3), Color(0xFFB7E3C6))
                                 ),
                             ),
                             IconChoice(
@@ -475,7 +481,7 @@ fun CustomizationScreen() {
                                 labelRes = R.string.customization_icon_fox2,
                                 iconRes = R.drawable.ic_launcher_fox2_foreground,
                                 background = Brush.linearGradient(
-                                    listOf(Color(0xFF3FA34D), Color(0xFF0A3D12))
+                                    listOf(Color(0xFFF6F8F7), Color(0xFFDBE6DF))
                                 ),
                             ),
                             IconChoice(
@@ -483,7 +489,7 @@ fun CustomizationScreen() {
                                 labelRes = R.string.customization_icon_fox3,
                                 iconRes = R.drawable.ic_launcher_fox3_foreground,
                                 background = Brush.linearGradient(
-                                    listOf(Color(0xFFF6EEE1), Color(0xFFF6EEE1))
+                                    listOf(Color(0xFFFFF3E7), Color(0xFFFFD3B4))
                                 ),
                             ),
                             IconChoice(
@@ -491,7 +497,7 @@ fun CustomizationScreen() {
                                 labelRes = R.string.customization_icon_fox4,
                                 iconRes = R.drawable.ic_launcher_fox4_foreground,
                                 background = Brush.linearGradient(
-                                    listOf(Color(0xFF111311), Color(0xFF111311))
+                                    listOf(Color(0xFFEDFAF3), Color(0xFFBFE8D5))
                                 ),
                             ),
                             IconChoice(

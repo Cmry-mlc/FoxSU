@@ -13,6 +13,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsControllerCompat
 import me.weishu.kernelsu.data.settings.CustomizationStore
+import me.weishu.kernelsu.ui.component.glassNeedsLightText
 import me.weishu.kernelsu.ui.webui.MonetColorsProvider
 
 /**
@@ -83,8 +84,22 @@ fun FreshKernelSUTheme(
 
     val animatedColorScheme = colorScheme.animateAsState()
 
+    // 玻璃卡面 + 深色壁纸：整体文字转白，避免深色字贴在照片上看不清
+    val glassLightText = glassNeedsLightText()
+    val textScheme = if (glassLightText) {
+        animatedColorScheme.copy(
+            onSurface = Color.White,
+            onSurfaceVariant = Color.White.copy(alpha = 0.76f),
+            surfaceVariant = Color.White.copy(alpha = 0.12f),
+            outlineVariant = Color.White.copy(alpha = 0.26f),
+            outline = Color.White.copy(alpha = 0.5f),
+        )
+    } else {
+        animatedColorScheme
+    }
+
     MaterialExpressiveTheme(
-        colorScheme = animatedColorScheme,
+        colorScheme = textScheme,
         motionScheme = MotionScheme.expressive(),
         typography = typographyWithFont(CustomizationStore.current.fontStyle),
         shapes = FreshShapes,

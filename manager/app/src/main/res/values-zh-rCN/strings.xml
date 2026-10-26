@@ -252,6 +252,8 @@
     <string name="customization_wallpaper">背景壁纸</string>
     <string name="customization_card_glass">玻璃卡面</string>
     <string name="customization_card_glass_sum">近全透明的浅色卡面 + 白色细描边，参考图二的通透质感</string>
+    <string name="customization_rainbow">七彩卡片</string>
+    <string name="customization_rainbow_sum">首页大卡、四张信息卡与模块卡各自一套柔和配色</string>
     <string name="customization_home_adaptive">跟随壁纸取色</string>
     <string name="customization_home_adaptive_sum">首页卡片从系统动态取色板取色，并自动匹配文字颜色</string>
     <string name="customization_wallpaper_enable">启用背景图</string>
@@ -300,9 +302,9 @@
     <string name="customization_bottom_immersive_sum">鸿蒙风格柔光：更通透并带玻璃质感高光</string>
     <string name="customization_radius">圆角</string>
     <string name="customization_icon">启动器图标</string>
-    <string name="customization_icon_fox2">线框狐</string>
-    <string name="customization_icon_fox3">奶油狐</string>
-    <string name="customization_icon_fox4">极简狐</string>
+    <string name="customization_icon_fox2">黑团子</string>
+    <string name="customization_icon_fox3">蜜桃狐</string>
+    <string name="customization_icon_fox4">薄荷狐</string>
     <string name="customization_icon_foxsu">FoxSu（默认）</string>
     <string name="customization_icon_kernelsu">KernelSU（原版）</string>
     <string name="customization_icon_hint">桌面图标可能需要几秒刷新</string>
