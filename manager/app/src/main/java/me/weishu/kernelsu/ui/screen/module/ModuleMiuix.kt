@@ -107,11 +107,14 @@ import me.weishu.kernelsu.ui.component.ListPopupDefaults
 import me.weishu.kernelsu.ui.component.ObserveAsEvents
 import me.weishu.kernelsu.ui.component.ScrollToTopOnChange
 import me.weishu.kernelsu.ui.component.SearchStatus
+import me.weishu.kernelsu.ui.component.rainbowTintFor
+import me.weishu.kernelsu.ui.component.rememberRainbowSlot
 import me.weishu.kernelsu.ui.component.dialog.rememberConfirmDialog
 import me.weishu.kernelsu.ui.component.dialog.rememberLoadingDialog
 import me.weishu.kernelsu.ui.component.miuix.SearchBarFake
 import me.weishu.kernelsu.ui.component.miuix.SearchBox
 import me.weishu.kernelsu.ui.component.miuix.SearchPager
+import me.weishu.kernelsu.ui.theme.LaunchTint
 import me.weishu.kernelsu.ui.theme.LocalEnableBlur
 import me.weishu.kernelsu.ui.theme.LocalModuleDescriptionMaxLines
 import me.weishu.kernelsu.ui.theme.isInDarkTheme
@@ -121,6 +124,7 @@ import me.weishu.kernelsu.ui.util.reboot
 import me.weishu.kernelsu.ui.util.rememberBlurBackdrop
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.DropdownImpl
 import top.yukonga.miuix.kmp.basic.FloatingActionButton
 import top.yukonga.miuix.kmp.basic.FloatingActionButtonDefaults
@@ -399,6 +403,7 @@ fun ModulePagerMiuix(
                     modifier = Modifier
                         .padding(bottom = bottomInnerPadding + 20.dp, end = 20.dp)
                         .border(0.05.dp, colorScheme.outline.copy(alpha = 0.5f), CircleShape),
+                    containerColor = LaunchTint.navColor(0),
                     shadowElevation = 0.dp,
                     onClick = {
                         // Select the zip files to install
@@ -413,7 +418,7 @@ fun ModulePagerMiuix(
                             Icons.Rounded.Add,
                             moduleInstall,
                             modifier = Modifier.size(40.dp),
-                            tint = colorScheme.onPrimary
+                            tint = Color.White
                         )
                     },
                 )
@@ -770,7 +775,6 @@ fun ModuleItem(
     onOpenWebUi: () -> Unit
 ) {
     val secondaryContainer = colorScheme.secondaryContainer.copy(alpha = 0.8f)
-    val actionIconTint = colorScheme.onSurface.copy(alpha = if (isInDarkTheme()) 0.7f else 0.9f)
     val updateBg = colorScheme.tertiaryContainer.copy(alpha = 0.6f)
     val updateTint = colorScheme.onTertiaryContainer.copy(alpha = 0.8f)
     val hasUpdate = updateUrl.isNotEmpty()
@@ -779,11 +783,23 @@ fun ModuleItem(
     val maxLinesLimit = LocalModuleDescriptionMaxLines.current
     var expanded by rememberSaveable(module.id) { mutableStateOf(false) }
 
+    // 每张卡片按自己的 id 取一套七彩：同一模块重启前后颜色稳定，不同模块之间错开
+    val rainbowSlot = rememberRainbowSlot(module.id)
+    val rainbowTint = rainbowTintFor(rainbowSlot)
+    val cardContainer = rainbowTint?.first ?: colorScheme.surfaceContainer
+    val cardContent = rainbowTint?.second ?: colorScheme.onSurface
+    // 动作图标跟着卡片文字色走，不再固定成灰白
+    val actionIconTint = cardContent.copy(alpha = 0.86f)
+
     Card(
         modifier = Modifier
             .padding(horizontal = 12.dp)
             .padding(bottom = 12.dp),
         insideMargin = PaddingValues(16.dp),
+        colors = CardDefaults.defaultColors(
+            color = cardContainer,
+            contentColor = cardContent,
+        ),
         onClick = if (hasDescription) {
             { expanded = !expanded }
         } else null
@@ -827,7 +843,7 @@ fun ModuleItem(
                             text = module.name,
                             fontSize = 17.sp,
                             fontWeight = FontWeight(550),
-                            color = colorScheme.onSurface,
+                            color = cardContent,
                             textDecoration = textDecoration,
                             onTextLayout = { nameTextLayout = it }
                         )
@@ -850,7 +866,7 @@ fun ModuleItem(
                     fontSize = 12.sp,
                     modifier = Modifier.padding(top = 2.dp),
                     fontWeight = FontWeight(550),
-                    color = colorScheme.onSurfaceVariantSummary,
+                    color = cardContent.copy(alpha = 0.66f),
                     textDecoration = textDecoration
                 )
                 Text(
@@ -858,7 +874,7 @@ fun ModuleItem(
                     fontSize = 12.sp,
                     modifier = Modifier.padding(bottom = 1.dp),
                     fontWeight = FontWeight(550),
-                    color = colorScheme.onSurfaceVariantSummary,
+                    color = cardContent.copy(alpha = 0.66f),
                     textDecoration = textDecoration
                 )
                 module.preinitWarning()?.let {
@@ -889,7 +905,7 @@ fun ModuleItem(
                     .fillMaxWidth()
                     .padding(top = 2.dp),
                 fontSize = 14.sp,
-                color = colorScheme.onSurfaceVariantSummary,
+                color = cardContent.copy(alpha = 0.72f),
                 textDecoration = textDecoration
             )
         }
@@ -897,7 +913,7 @@ fun ModuleItem(
         HorizontalDivider(
             modifier = Modifier.padding(vertical = 8.dp),
             thickness = 0.5.dp,
-            color = colorScheme.outline.copy(alpha = 0.5f)
+            color = cardContent.copy(alpha = 0.22f)
         )
 
         Row {
