@@ -443,13 +443,16 @@ fun CustomizationScreen() {
                             onChange = CustomizationStore::setBottomBarAlpha,
                         )
 
-                        SliderRow(
-                            label = stringResource(R.string.customization_radius),
-                            value = custom.bottomBarRadius,
-                            range = 0f..100f,
-                            display = "${custom.bottomBarRadius.toInt()}dp",
-                            onChange = CustomizationStore::setBottomBarRadius,
-                        )
+                        // 胶囊形态固定成药丸（全圆角），只有抽屉形态才开放圆角
+                        if (custom.bottomBarStyle == 1) {
+                            SliderRow(
+                                label = stringResource(R.string.customization_radius),
+                                value = custom.bottomBarRadius,
+                                range = 0f..100f,
+                                display = "${custom.bottomBarRadius.toInt()}dp",
+                                onChange = CustomizationStore::setBottomBarRadius,
+                            )
+                        }
                     }
                 }
 
