@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.component.freshCardBorder
 import me.weishu.kernelsu.ui.component.glassNeedsLightText
+import me.weishu.kernelsu.ui.component.hasWallpaperBackdrop
 import me.weishu.kernelsu.ui.component.isNightScheme
 import me.weishu.kernelsu.ui.theme.LaunchTint
 import me.weishu.kernelsu.ui.component.freshCardColor
@@ -108,13 +109,19 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
         val nightBar = isNightScheme()
         // 用户设置的底栏不透明度（默认 1f = 完全不透明）
         val userAlpha = custom.bottomBarAlpha
+        // 是否铺了壁纸/玻璃背景：决定底栏是白胶囊还是磨砂玻璃条
+        val onBackdrop = hasWallpaperBackdrop()
         val barColor = when {
             // 玻璃模式：统一深色玻璃条，和卡片同一套材质
             custom.cardGlass -> Color(0xFF101014).copy(alpha = 0.46f * userAlpha)
             nightBar -> Color(if (immersive) 0xFF17181A else 0xFF1B1C1E)
                 .copy(alpha = (if (immersive) 0.86f else 1f) * userAlpha)
-            // 悬浮胶囊：跟随卡片的半透明磨砂材质，不再是一整块白胶囊
-            capsule -> Color(0xFF20242A).copy(alpha = (if (immersive) 0.34f else 0.46f) * userAlpha)
+            // 悬浮胶囊：纯色画布上用白胶囊；铺了壁纸才转成半透明磨砂
+            capsule -> if (onBackdrop) {
+                Color(0xFF20242A).copy(alpha = (if (immersive) 0.34f else 0.46f) * userAlpha)
+            } else {
+                Color.White.copy(alpha = (if (immersive) 0.82f else 1f) * userAlpha)
+            }
             immersive -> freshCardColor().copy(alpha = 0.66f * userAlpha)
             else -> freshCardColor().copy(alpha = userAlpha)
         }
@@ -122,12 +129,12 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
             shape = barShape,
             color = barColor,
             border = freshCardBorder(),
-            shadowElevation = if (custom.cardGlass || capsule) 0.dp else 12.dp,
+            shadowElevation = if (custom.cardGlass) 0.dp else if (capsule) 10.dp else 12.dp,
             modifier = if (capsule) Modifier else Modifier.fillMaxWidth(),
         ) {
             Box {
-                // 磨砂高光：玻璃条 / 悬浮胶囊都加一层自上而下淡出的薄白，去掉塑料感
-                if ((capsule || immersive || custom.cardGlass) && !nightBar) {
+                // 磨砂高光：只有玻璃条 / 壁纸上的胶囊才加薄白反光，白胶囊保持干净
+                if ((immersive || custom.cardGlass || (capsule && onBackdrop)) && !nightBar) {
                     Box(
                         modifier = Modifier
                             .matchParentSize()
