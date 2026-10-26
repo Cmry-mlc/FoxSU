@@ -83,6 +83,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.LaunchedEffect
@@ -281,21 +282,28 @@ fun HomePagerFresh(
     Column(modifier = Modifier.fillMaxSize()) {
         // 标题栏与下方内容同一套磨砂材质：不再用不透明的 surface 白条，
         // 有壁纸时铺同款雾面，让头部和内容连贯成一张玻璃画布
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(frostedChromeColor(MaterialTheme.colorScheme.surface))
-                .padding(
-                    start = 20.dp,
-                    end = 20.dp,
-                    top = WindowInsets.systemBars.asPaddingValues().calculateTopPadding() + 8.dp,
-                    bottom = 12.dp,
-                ),
-            // 玻璃/夜间模式下标题栏是深色雾面，强制使用浅色文字，
-            // 避免沿用浅色主题的深色 onSurface 造成“深底深字”
-            contentColor = if (cardNeedsLightText()) Color.White else MaterialTheme.colorScheme.onSurface,
+        // 玻璃/夜间模式下标题栏是深色雾面，强制使用浅色文字，
+        // 避免沿用浅色主题的深色 onSurface 造成“深底深字”
+        CompositionLocalProvider(
+            LocalContentColor provides if (cardNeedsLightText()) {
+                Color.White
+            } else {
+                MaterialTheme.colorScheme.onSurface
+            }
         ) {
-            FreshHeader()
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(frostedChromeColor(MaterialTheme.colorScheme.surface))
+                    .padding(
+                        start = 20.dp,
+                        end = 20.dp,
+                        top = WindowInsets.systemBars.asPaddingValues().calculateTopPadding() + 8.dp,
+                        bottom = 12.dp,
+                    ),
+            ) {
+                FreshHeader()
+            }
         }
 
         LazyColumn(
