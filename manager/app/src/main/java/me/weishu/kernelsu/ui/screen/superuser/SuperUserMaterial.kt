@@ -64,6 +64,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.data.model.AppInfo
 import me.weishu.kernelsu.ui.component.AppIconImage
@@ -75,8 +76,10 @@ import me.weishu.kernelsu.ui.component.material.SegmentedItem
 import me.weishu.kernelsu.ui.component.material.SegmentedListItem
 import me.weishu.kernelsu.ui.component.statustag.StatusTag
 import me.weishu.kernelsu.ui.component.cardContentColor
+import me.weishu.kernelsu.ui.component.isNightScheme
 import me.weishu.kernelsu.ui.component.freshCardColor
 import me.weishu.kernelsu.ui.component.scaffoldBackgroundColor
+import me.weishu.kernelsu.ui.theme.UiPalette
 import me.weishu.kernelsu.ui.theme.isFreshStyle
 import me.weishu.kernelsu.ui.util.ownerNameForUid
 import me.weishu.kernelsu.ui.viewmodel.AppSortType
@@ -111,8 +114,9 @@ fun SuperUserPagerMaterial(
                     if (isFreshStyle()) {
                         Text(
                             text = titleText,
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 26.sp,
+                            lineHeight = 32.sp,
+                            fontWeight = FontWeight.ExtraBold,
                         )
                     } else {
                         Text(text = titleText)
@@ -497,8 +501,9 @@ private fun GroupItem(
     onToggleExpand: () -> Unit,
     onClickPrimary: () -> Unit,
 ) {
-    val bg = colorScheme.primary
-    val fg = colorScheme.onPrimary
+    // 设计稿 .root：薄荷绿底白字胶囊
+    val bg = if (isNightScheme()) androidx.compose.ui.graphics.Color(0xFF8FD6A4) else UiPalette.NavBadge
+    val fg = if (isNightScheme()) androidx.compose.ui.graphics.Color(0xFF1F2F26) else androidx.compose.ui.graphics.Color.White
     val umountBg = colorScheme.tertiaryContainer
     val umountFg = colorScheme.onTertiaryContainer
     val customBg = colorScheme.secondaryContainer
@@ -534,6 +539,8 @@ private fun GroupItem(
         supportingContent = {
             Text(
                 text = summaryText,
+                fontSize = 10.sp,
+                lineHeight = 13.sp,
                 color = colorScheme.onSurfaceVariant,
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 1

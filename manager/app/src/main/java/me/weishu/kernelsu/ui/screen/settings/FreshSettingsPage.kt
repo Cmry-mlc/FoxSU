@@ -406,17 +406,17 @@ private fun SettingsTileView(
         else -> MaterialTheme.colorScheme.outline
     }
     val titleColor = (contentColor ?: cardContentColor()).let {
-        if (tile.state == TileState.Disabled) it.copy(alpha = 0.45f) else it
+        if (tile.state == TileState.Disabled) it.copy(alpha = 0.6f) else it
     }
     val captionColor = when {
-        onCard -> contentColor!!.copy(alpha = if (tile.state == TileState.Disabled) 0.4f else 0.65f)
+        onCard -> contentColor!!.copy(alpha = if (tile.state == TileState.Disabled) 0.5f else 0.72f)
         tile.state == TileState.On -> MaterialTheme.colorScheme.primary
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
     Surface(
         modifier = modifier
-            .height(104.dp)
+            .height(118.dp)
             .clip(RoundedCornerShape(22.dp))
             .clickable(enabled = tile.state != TileState.Disabled, onClick = tile.onClick),
         shape = RoundedCornerShape(22.dp),
@@ -460,7 +460,7 @@ private fun SettingsTileView(
                 lineHeight = 16.sp,
                 fontWeight = FontWeight.ExtraBold,
                 textAlign = TextAlign.Center,
-                maxLines = 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 color = titleColor,
             )
@@ -471,7 +471,7 @@ private fun SettingsTileView(
                     fontSize = 10.sp,
                     lineHeight = 14.sp,
                     textAlign = TextAlign.Center,
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     color = captionColor,
                 )
@@ -526,7 +526,7 @@ private fun FreshOptionDialog(
                 Spacer(Modifier.height(8.dp))
                 Surface(
                     shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    color = if (isNightScheme()) Color(0xFF24242E) else Color(0xFFECECF2),
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))

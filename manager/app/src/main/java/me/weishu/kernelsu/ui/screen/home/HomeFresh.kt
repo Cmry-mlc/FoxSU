@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -775,23 +776,23 @@ private fun FreshRebootDialog(onDismiss: () -> Unit) {
                 // 参考图：浅紫圆底 + 薰衣草色图标
                 Surface(
                     shape = CircleShape,
-                    color = if (night) Color(0xFF3A2E5C) else UiPalette.HeroSurface,
-                    contentColor = if (night) Color(0xFFC4ACF5) else UiPalette.HeroAccent,
-                    modifier = Modifier.size(46.dp),
+                    color = if (night) Color(0xFF262437) else UiPalette.HeroSurface,
+                    contentColor = if (night) Color(0xFFA99DF0) else UiPalette.HeroAccent,
+                    modifier = Modifier.size(56.dp),
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             painter = painterResource(R.drawable.ic_power),
                             contentDescription = null,
-                            modifier = Modifier.size(22.dp),
+                            modifier = Modifier.size(24.dp),
                         )
                     }
                 }
                 Spacer(Modifier.height(10.dp))
                 Text(
                     text = stringResource(R.string.reboot),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Spacer(Modifier.height(4.dp))
@@ -805,20 +806,15 @@ private fun FreshRebootDialog(onDismiss: () -> Unit) {
                 rowOptions.chunked(2).forEachIndexed { rowIndex, rowChunk ->
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         rowChunk.forEachIndexed { colIndex, option ->
-                            val tone = UiPalette.RebootTones[(rowIndex * 2 + colIndex) % UiPalette.RebootTones.size]
                             val pair = if (night) {
-                                UiPalette.RebootTones[(rowIndex * 2 + colIndex) % UiPalette.RebootTones.size]
+                                UiPalette.RebootTonesDark[(rowIndex * 2 + colIndex) % UiPalette.RebootTonesDark.size]
                             } else {
-                                tone
+                                UiPalette.RebootTones[(rowIndex * 2 + colIndex) % UiPalette.RebootTones.size]
                             }
                             RebootRow(
                                 option = option,
-                                containerColor = if (night) {
-                                    MaterialTheme.colorScheme.surfaceContainerHigh
-                                } else {
-                                    pair.first
-                                },
-                                contentColor = if (night) MaterialTheme.colorScheme.onSurface else pair.second,
+                                containerColor = pair.first,
+                                contentColor = pair.second,
                                 onClick = {
                                     onDismiss()
                                     onReboot(option.reason)
@@ -836,7 +832,7 @@ private fun FreshRebootDialog(onDismiss: () -> Unit) {
                     SlideToConfirm(
                         label = stringResource(option.labelRes),
                         containerColor = if (night) {
-                            MaterialTheme.colorScheme.surfaceContainerHigh
+                            Color(0xFF24242E)
                         } else {
                             // 滑动确认条用主卡淡紫，和整体一套色
                             UiPalette.HeroSurface
@@ -877,33 +873,33 @@ private fun RebootRow(
 ) {
     Row(
         modifier = modifier
-            .height(54.dp)
-            .clip(RoundedCornerShape(27.dp))
+            .heightIn(min = 58.dp)
+            .clip(RoundedCornerShape(18.dp))
             .background(containerColor)
             .clickable(onClick = onClick)
-            .padding(start = 8.dp, end = 6.dp),
+            .padding(horizontal = 11.dp, vertical = 11.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Surface(
-            shape = CircleShape,
-            color = contentColor.copy(alpha = 0.14f),
+            shape = RoundedCornerShape(10.dp),
+            color = Color.White.copy(alpha = if (isNightScheme()) 0.10f else 1f),
             contentColor = contentColor,
-            modifier = Modifier.size(32.dp),
+            modifier = Modifier.size(30.dp),
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     painter = painterResource(rebootIconRes(option.reason)),
                     contentDescription = null,
-                    modifier = Modifier.size(16.dp),
+                    modifier = Modifier.size(15.dp),
                 )
             }
         }
-        Spacer(Modifier.width(10.dp))
+        Spacer(Modifier.width(8.dp))
         Text(
             text = stringResource(option.labelRes),
-            fontSize = 12.5.sp,
-            lineHeight = 15.sp,
-            fontWeight = FontWeight.Medium,
+            fontSize = 11.sp,
+            lineHeight = 14.sp,
+            fontWeight = FontWeight.Bold,
             color = contentColor,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,

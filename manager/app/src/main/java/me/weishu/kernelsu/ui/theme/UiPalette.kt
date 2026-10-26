@@ -87,6 +87,12 @@ object UiPalette {
         Color(0xFFDFF3F3) to Color(0xFF0F3A3A),
     )
 
+    // —— 重启弹层深色版（dark-mode 稿）——
+    val RebootTonesDark = listOf(
+        KpiLilacDark, KpiMintDark, KpiCreamDark,
+        KpiRoseDark, PillSkyDark, PillGrayDark,
+    )
+
     // —— 形状与尺寸 ——
     /** 大卡片圆角（主卡 / KPI 卡）。 */
     val CardShape = RoundedCornerShape(24.dp)

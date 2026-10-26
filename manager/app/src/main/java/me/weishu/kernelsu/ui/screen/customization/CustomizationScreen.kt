@@ -81,6 +81,7 @@ import me.weishu.kernelsu.ui.component.freshCardBorder
 import me.weishu.kernelsu.ui.component.GlassSheen
 import me.weishu.kernelsu.ui.component.cardContentColor
 import me.weishu.kernelsu.ui.component.freshCardColor
+import me.weishu.kernelsu.ui.component.isNightScheme
 import me.weishu.kernelsu.ui.component.rememberCardSurface
 import me.weishu.kernelsu.ui.component.ImageCropDialog
 import me.weishu.kernelsu.ui.component.scaffoldBackgroundColor
@@ -189,6 +190,7 @@ fun CustomizationScreen() {
 
                 item {
                     SectionCard(
+                        accent = Color(0xFF3E7A4C),
                         icon = Icons.Filled.Wallpaper,
                         title = stringResource(R.string.customization_global_wallpaper),
                         subtitle = stringResource(R.string.customization_global_wallpaper_sub),
@@ -225,6 +227,7 @@ fun CustomizationScreen() {
 
                 item {
                     SectionCard(
+                        accent = Color(0xFF9A7A1E),
                         icon = Icons.Filled.Palette,
                         title = stringResource(R.string.customization_card),
                         subtitle = stringResource(R.string.customization_card_sub),
@@ -289,6 +292,7 @@ fun CustomizationScreen() {
 
                 item {
                     SectionCard(
+                        accent = Color(0xFF6C5FC7),
                         icon = Icons.Filled.Title,
                         title = stringResource(R.string.customization_title_bar),
                         subtitle = stringResource(R.string.customization_title_bar_sub),
@@ -305,6 +309,7 @@ fun CustomizationScreen() {
 
                 item {
                     SectionCard(
+                        accent = Color(0xFF3E7A4C),
                         icon = Icons.Filled.TextFields,
                         title = stringResource(R.string.customization_font),
                         subtitle = stringResource(R.string.customization_font_sub),
@@ -371,6 +376,7 @@ fun CustomizationScreen() {
 
                 item {
                     SectionCard(
+                        accent = Color(0xFF3F6AA6),
                         icon = Icons.Filled.SmartButton,
                         title = stringResource(R.string.customization_bottom_bar),
                         subtitle = stringResource(R.string.customization_bottom_bar_sub),
@@ -506,6 +512,7 @@ fun CustomizationScreen() {
 
                 item {
                     SectionCard(
+                        accent = Color(0xFFB0508A),
                         icon = Icons.Filled.Photo,
                         title = stringResource(R.string.customization_icon),
                         subtitle = stringResource(R.string.customization_icon_hint),
@@ -679,6 +686,7 @@ private fun SectionCard(
     icon: ImageVector,
     title: String,
     subtitle: String,
+    accent: Color = Color(0xFF3E7A4C),
     content: @Composable () -> Unit,
 ) {
     // 卡片自身决定文字明暗：白卡深字、深卡白字，避免白卡白字
@@ -694,27 +702,29 @@ private fun SectionCard(
             GlassSheen(Modifier.matchParentSize())
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
+                // 设计稿 .whead：白底 40 圆角13 chip，图标用分组彩色
                 Surface(
-                    shape = RoundedCornerShape(10.dp),
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f),
-                    contentColor = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(28.dp),
+                    shape = RoundedCornerShape(13.dp),
+                    color = Color.White.copy(alpha = if (isNightScheme()) 0.10f else 1f),
+                    contentColor = accent,
+                    modifier = Modifier.size(40.dp),
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Icon(icon, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(icon, contentDescription = null, modifier = Modifier.size(19.dp))
                     }
                 }
-                Spacer(Modifier.width(10.dp))
+                Spacer(Modifier.width(12.dp))
                 Column {
                     Text(
                         text = title,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.ExtraBold,
                         color = LocalContentColor.current,
                     )
                     Text(
                         text = subtitle,
-                        style = MaterialTheme.typography.bodySmall,
+                        fontSize = 10.5.sp,
+                        lineHeight = 14.sp,
                         color = LocalContentColor.current.copy(alpha = 0.62f),
                     )
                 }
