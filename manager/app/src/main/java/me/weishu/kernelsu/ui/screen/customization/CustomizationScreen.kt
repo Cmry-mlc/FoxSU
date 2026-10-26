@@ -603,6 +603,16 @@ fun CustomizationScreen() {
     }
 }
 
+/** 设计稿薄荷主色（浅 #3E7A4C / 夜 #8FD6A4），替代主题绿 primary。 */
+@Composable
+private fun freshAccent(): Color = if (isNightScheme()) Color(0xFF8FD6A4) else Color(0xFF3E7A4C)
+
+@Composable
+private fun freshAccentContainer(): Color = if (isNightScheme()) Color(0xFF1F2F26) else Color(0xFFDDEEDC)
+
+@Composable
+private fun freshAccentContent(): Color = if (isNightScheme()) Color(0xFF1F2F26) else Color.White
+
 @Composable
 private fun PreviewCard(custom: Customization) {
     val cardColor = if (custom.cardColor == 0) {
@@ -628,7 +638,7 @@ private fun PreviewCard(custom: Customization) {
                         .background(
                             Brush.linearGradient(
                                 listOf(
-                                    MaterialTheme.colorScheme.primaryContainer,
+                                    freshAccentContainer(),
                                     MaterialTheme.colorScheme.surface,
                                 )
                             )
@@ -647,7 +657,7 @@ private fun PreviewCard(custom: Customization) {
                             text = stringResource(R.string.app_name),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary,
+                            color = freshAccent(),
                         )
                         Spacer(Modifier.height(4.dp))
                         Text(
@@ -666,7 +676,7 @@ private fun PreviewCard(custom: Customization) {
                             text = "LKM",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
+                            color = freshAccent(),
                         )
                         Spacer(Modifier.width(10.dp))
                         Text(
@@ -755,7 +765,7 @@ private fun SliderRow(
             Text(
                 text = display,
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
+                color = freshAccent(),
             )
         }
         Slider(
@@ -776,13 +786,13 @@ private fun PillButton(
 ) {
     val container = when {
         !enabled -> MaterialTheme.colorScheme.surfaceContainer
-        filled -> MaterialTheme.colorScheme.primary
-        else -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+        filled -> freshAccent()
+        else -> freshAccentContainer().copy(alpha = 0.6f)
     }
     val content = when {
         !enabled -> MaterialTheme.colorScheme.outline
-        filled -> MaterialTheme.colorScheme.onPrimary
-        else -> MaterialTheme.colorScheme.onPrimaryContainer
+        filled -> freshAccentContent()
+        else -> freshAccent()
     }
     Surface(
         shape = RoundedCornerShape(50),
@@ -808,12 +818,12 @@ private fun StyleChip(label: String, selected: Boolean, onClick: () -> Unit) {
     Surface(
         shape = RoundedCornerShape(50),
         color = if (selected) {
-            MaterialTheme.colorScheme.primary
+            freshAccent()
         } else {
             MaterialTheme.colorScheme.surfaceContainer
         },
         contentColor = if (selected) {
-            MaterialTheme.colorScheme.onPrimary
+            freshAccentContent()
         } else {
             MaterialTheme.colorScheme.onSurfaceVariant
         },
@@ -847,7 +857,7 @@ private fun IconOption(
     Surface(
         shape = RoundedCornerShape(18.dp),
         color = if (selected) {
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
+            freshAccentContainer().copy(alpha = 0.55f)
         } else {
             MaterialTheme.colorScheme.surfaceContainer
         },
@@ -884,7 +894,7 @@ private fun IconOption(
                 Icon(
                     imageVector = Icons.Filled.Check,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = freshAccent(),
                 )
             }
         }
@@ -934,13 +944,13 @@ private fun IconChip(
     Surface(
         shape = RoundedCornerShape(20.dp),
         color = if (selected) {
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
+            freshAccentContainer().copy(alpha = 0.55f)
         } else {
             freshCardColor()
         },
         contentColor = cardContentColor(),
         border = if (selected) {
-            BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary)
+            BorderStroke(1.5.dp, freshAccent())
         } else {
             freshCardBorder()
         },
@@ -972,7 +982,7 @@ private fun IconChip(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 color = if (selected) {
-                    MaterialTheme.colorScheme.primary
+                    freshAccent()
                 } else {
                     LocalContentColor.current
                 },

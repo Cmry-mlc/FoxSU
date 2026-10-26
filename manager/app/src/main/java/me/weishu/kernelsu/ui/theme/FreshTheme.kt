@@ -46,9 +46,8 @@ fun FreshKernelSUTheme(
     val context = LocalContext.current
     val systemDarkTheme = isSystemInDarkTheme()
     val darkTheme = appSettings.colorMode.isDark || (appSettings.colorMode.isSystem && systemDarkTheme)
-    // ColorUI keeps the original green as its identity, but still follows the key color
-    // picked in 设置 → 主题 (or the system color on ROMs without one).
-    val seedColor = if (appSettings.keyColor == 0) Color(0xFF00B00E) else Color(appSettings.keyColor)
+    // ColorUI follows the key color picked in 设置 → 主题; default seed is the design-spec mint.
+    val seedColor = if (appSettings.keyColor == 0) Color(0xFF3E7A4C) else Color(appSettings.keyColor)
 
     val baseScheme = rememberKernelSUColorScheme(
         seedColor = seedColor,

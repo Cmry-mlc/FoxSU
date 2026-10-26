@@ -349,18 +349,22 @@ private fun FreshTileGrid(tiles: List<SettingsTile>) {
     val custom = CustomizationStore.current
     val night = isNightScheme()
     val rainbow = custom.rainbowCards && !custom.cardGlass && !night
-    // 设计稿配色：磁贴循环 rose / mint / cream / lav / sky / gray；开七彩走七彩表；壁纸/玻璃走磨砂
+    // 设计稿磁贴逐个配色：rose mint rose mint cream / rose mint cream lav sky gray mint sky
     val tones = if (night) {
         listOf(
-            UiPalette.KpiRoseDark, UiPalette.PillMintDark,
-            UiPalette.KpiCreamDark, UiPalette.KpiLilacDark,
-            UiPalette.PillSkyDark, UiPalette.PillGrayDark,
+            UiPalette.KpiRoseDark, UiPalette.PillMintDark, UiPalette.KpiRoseDark,
+            UiPalette.PillMintDark, UiPalette.KpiCreamDark, UiPalette.KpiRoseDark,
+            UiPalette.PillMintDark, UiPalette.KpiCreamDark, UiPalette.KpiLilacDark,
+            UiPalette.PillSkyDark, UiPalette.PillGrayDark, UiPalette.PillMintDark,
+            UiPalette.PillSkyDark,
         )
     } else {
         listOf(
-            UiPalette.KpiRose, UiPalette.PillMint,
-            UiPalette.KpiCream, UiPalette.KpiLilac,
-            UiPalette.PillSky, UiPalette.PillGray,
+            UiPalette.KpiRose, UiPalette.PillMint, UiPalette.KpiRose,
+            UiPalette.PillMint, UiPalette.KpiCream, UiPalette.KpiRose,
+            UiPalette.PillMint, UiPalette.KpiCream, UiPalette.KpiLilac,
+            UiPalette.PillSky, UiPalette.PillGray, UiPalette.PillMint,
+            UiPalette.PillSky,
         )
     }
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -390,6 +394,10 @@ private fun FreshTileGrid(tiles: List<SettingsTile>) {
     }
 }
 
+/** 设计稿薄荷主色（浅 #3E7A4C / 夜 #8FD6A4）。 */
+@Composable
+private fun freshAccent(): Color = if (isNightScheme()) Color(0xFF8FD6A4) else Color(0xFF3E7A4C)
+
 @Composable
 private fun SettingsTileView(
     tile: SettingsTile,
@@ -401,7 +409,7 @@ private fun SettingsTileView(
     // 设计稿：磁贴标题/说明都用卡片自己的深彩色；未支持的状态降透明度
     val accent = when {
         onCard -> contentColor!!
-        tile.state == TileState.On || tile.state == TileState.Link -> MaterialTheme.colorScheme.primary
+        tile.state == TileState.On || tile.state == TileState.Link -> freshAccent()
         tile.state == TileState.Off -> MaterialTheme.colorScheme.onSurfaceVariant
         else -> MaterialTheme.colorScheme.outline
     }
@@ -410,7 +418,7 @@ private fun SettingsTileView(
     }
     val captionColor = when {
         onCard -> contentColor!!.copy(alpha = if (tile.state == TileState.Disabled) 0.5f else 0.72f)
-        tile.state == TileState.On -> MaterialTheme.colorScheme.primary
+        tile.state == TileState.On -> freshAccent()
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
@@ -518,7 +526,7 @@ private fun FreshOptionDialog(
                             Icon(
                                 imageVector = Icons.Filled.Check,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
+                                tint = freshAccent(),
                             )
                         }
                     }
