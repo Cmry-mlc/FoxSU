@@ -32,6 +32,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.data.settings.CustomizationStore
+import me.weishu.kernelsu.ui.util.appIconVisual
 import me.weishu.kernelsu.ui.component.material.ExpressiveScaffold
 import me.weishu.kernelsu.ui.component.material.SegmentedColumn
 import me.weishu.kernelsu.ui.component.material.SegmentedListItem
@@ -71,15 +73,16 @@ fun AboutScreenMaterial(
                         .padding(vertical = 48.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    val iconVisual = appIconVisual(CustomizationStore.current.iconStyle)
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
-                            .size(80.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(Color.White)
+                            .size(84.dp)
+                            .clip(RoundedCornerShape(24.dp))
+                            .background(iconVisual.background)
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                            painter = painterResource(id = iconVisual.foreground),
                             contentDescription = null,
                             contentScale = FixedScale(1f)
                         )

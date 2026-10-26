@@ -308,6 +308,8 @@
     <string name="customization_bottom_style_drawer">Drawer</string>
     <string name="customization_bottom_bar">Bottom bar</string>
     <string name="customization_bottom_bar_sub">Corner radius of the floating navigation bar</string>
+    <string name="customization_bottom_immersive">Immersive sheen</string>
+    <string name="customization_bottom_immersive_sum">HarmonyOS-style soft light: more transparent with a glassy highlight</string>
     <string name="customization_radius">Radius</string>
     <string name="customization_icon">Launcher icon</string>
     <string name="customization_icon_fox2">Outline fox</string>

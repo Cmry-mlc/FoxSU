@@ -378,6 +378,30 @@ fun CustomizationScreen() {
                                 onClick = { CustomizationStore.setBottomBarStyle(1) },
                             )
                         }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = stringResource(R.string.customization_bottom_immersive),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                )
+                                Text(
+                                    text = stringResource(R.string.customization_bottom_immersive_sum),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            Switch(
+                                checked = custom.bottomBarImmersive,
+                                onCheckedChange = CustomizationStore::setBottomBarImmersive,
+                            )
+                        }
+
                         SliderRow(
                             label = stringResource(R.string.customization_radius),
                             value = custom.bottomBarRadius,

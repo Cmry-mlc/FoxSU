@@ -604,10 +604,10 @@ private fun FreshHeader() {
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
-                        imageVector = Icons.Filled.PowerSettingsNew,
+                        painter = painterResource(R.drawable.ic_power),
                         contentDescription = stringResource(R.string.reboot),
                         tint = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.size(19.dp),
+                        modifier = Modifier.size(20.dp),
                     )
                 }
             }
@@ -886,16 +886,28 @@ private fun FreshStatusCard(
                         }
                     }
                 }
-                Icon(
-                    painter = statusIcon,
-                    contentDescription = null,
-                    tint = if (ksuActive) {
-                        contentColor.copy(alpha = if (hasHero) 0.85f else 0.30f)
-                    } else {
-                        MaterialTheme.colorScheme.error
-                    },
-                    modifier = Modifier.size(44.dp),
-                )
+                // 状态徽章：右端垂直居中的圆形柔光底，视觉重心更稳
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (ksuActive) contentColor.copy(alpha = if (hasHero) 0.14f else 0.06f)
+                            else MaterialTheme.colorScheme.error.copy(alpha = 0.10f)
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painter = statusIcon,
+                        contentDescription = null,
+                        tint = if (ksuActive) {
+                            contentColor.copy(alpha = if (hasHero) 0.9f else 0.5f)
+                        } else {
+                            MaterialTheme.colorScheme.error
+                        },
+                        modifier = Modifier.size(30.dp),
+                    )
+                }
             }
         }
     }

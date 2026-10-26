@@ -11,48 +11,48 @@
         android:scaleY="0.9">
         <!-- 蜜桃小狐：奶油白圆脸 + 蜜桃耳 + 眨眼 -->
         <path
-            android:fillColor="#FFFFF7EF"
+            android:fillColor="#FFFFFBF4"
             android:pathData="M34,44 C27,30 33,20 42,27 L49,34 Z" />
         <path
-            android:fillColor="#FFFFF7EF"
+            android:fillColor="#FFFFFBF4"
             android:pathData="M74,44 C81,30 75,20 66,27 L59,34 Z" />
         <path
-            android:fillColor="#FFFFC9A8"
+            android:fillColor="#FFFFBE99"
             android:pathData="M37,40 C33,31 36,25 41,29 L46,34 Z" />
         <path
-            android:fillColor="#FFFFC9A8"
+            android:fillColor="#FFFFBE99"
             android:pathData="M71,40 C75,31 72,25 67,29 L62,34 Z" />
         <path
-            android:fillColor="#FFFFF7EF"
+            android:fillColor="#FFFFFBF4"
             android:pathData="M54,33 C39,33 26,44 26,59 C26,74 39,85 54,85 C69,85 82,74 82,59 C82,44 69,33 54,33 Z" />
         <path
-            android:fillColor="#FFFFF7EF"
+            android:fillColor="#FFFFFBF4"
             android:pathData="M29,71 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0" />
         <path
-            android:fillColor="#FFFFF7EF"
+            android:fillColor="#FFFFFBF4"
             android:pathData="M79,71 m-3.4,0 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0" />
         <path
-            android:fillColor="#FFFFF7EF"
+            android:fillColor="#FFFFFBF4"
             android:pathData="M38,83 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
         <path
-            android:fillColor="#FFFFF7EF"
+            android:fillColor="#FFFFFBF4"
             android:pathData="M54,86 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
         <path
-            android:fillColor="#FFFFF7EF"
+            android:fillColor="#FFFFFBF4"
             android:pathData="M70,83 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
         <!-- 腮红 -->
         <path
-            android:fillColor="#FFFFB9A6"
+            android:fillColor="#FFFFA794"
             android:pathData="M32,70 m-4.8,0 a4.8,3.6 0 1,0 9.6,0 a4.8,3.6 0 1,0 -9.6,0" />
         <path
-            android:fillColor="#FFFFB9A6"
+            android:fillColor="#FFFFA794"
             android:pathData="M76,70 m-4.8,0 a4.8,3.6 0 1,0 9.6,0 a4.8,3.6 0 1,0 -9.6,0" />
         <!-- 左眼：亮晶晶 -->
         <path
             android:fillColor="#FFFFFFFF"
             android:pathData="M43,62 m-6.8,0 a6.8,7.8 0 1,0 13.6,0 a6.8,7.8 0 1,0 -13.6,0" />
         <path
-            android:fillColor="#FF3A2E29"
+            android:fillColor="#FF33231F"
             android:pathData="M43,63 m-4.2,0 a4.2,4.5 0 1,0 8.4,0 a4.2,4.5 0 1,0 -8.4,0" />
         <path
             android:fillColor="#FFFFFFFF"
@@ -62,24 +62,24 @@
             android:pathData="M45,65.2 m-1,0 a1,1 0 1,0 2,0 a1,1 0 1,0 -2,0" />
         <!-- 右眼：眨眼弧线 -->
         <path
-            android:strokeColor="#FF3A2E29"
+            android:strokeColor="#FF33231F"
             android:strokeWidth="2.6"
             android:strokeLineCap="round"
             android:fillColor="#00000000"
             android:pathData="M60,63.5 C63,58.5 67,58.5 70,63.5" />
         <!-- 鼻子和嘴 -->
         <path
-            android:fillColor="#FFE8907E"
+            android:fillColor="#FFE27A62"
             android:pathData="M50.8,73 C50.8,71.4 57.2,71.4 57.2,73 C57.2,75.4 55.3,77.8 54,77.8 C52.7,77.8 50.8,75.4 50.8,73 Z" />
         <path
-            android:strokeColor="#FF3A2E29"
+            android:strokeColor="#FF33231F"
             android:strokeWidth="1.5"
             android:strokeLineCap="round"
             android:fillColor="#00000000"
             android:pathData="M54,77.8 L54,80 M54,80 C52.2,82.2 49.9,81.4 49,80.1 M54,80 C55.8,82.2 58.1,81.4 59,80.1" />
         <!-- 小爱心 -->
         <path
-            android:fillColor="#FFFF8FA3"
+            android:fillColor="#FFFF7E95"
             android:pathData="M73,44 C74.6,41.6 78,42 78,44.6 C78,47.4 74.4,49.6 73,50.6 C71.6,49.6 68,47.4 68,44.6 C68,42 71.4,41.6 73,44 Z" />
     </group>
 </vector>

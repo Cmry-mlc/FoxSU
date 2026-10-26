@@ -17,10 +17,10 @@
             android:fillColor="#FFFFFFFF"
             android:pathData="M74,44 C81,30 75,20 66,27 L59,34 Z" />
         <path
-            android:fillColor="#FFA9E8C2"
+            android:fillColor="#FF92E0B2"
             android:pathData="M37,40 C33,31 36,25 41,29 L46,34 Z" />
         <path
-            android:fillColor="#FFA9E8C2"
+            android:fillColor="#FF92E0B2"
             android:pathData="M71,40 C75,31 72,25 67,29 L62,34 Z" />
         <path
             android:fillColor="#FFFFFFFF"
@@ -42,10 +42,10 @@
             android:pathData="M70,83 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
         <!-- 腮红 -->
         <path
-            android:fillColor="#FFB7E9C9"
+            android:fillColor="#FFA4E4BD"
             android:pathData="M33,70 m-4.8,0 a4.8,3.4 0 1,0 9.6,0 a4.8,3.4 0 1,0 -9.6,0" />
         <path
-            android:fillColor="#FFB7E9C9"
+            android:fillColor="#FFA4E4BD"
             android:pathData="M75,70 m-4.8,0 a4.8,3.4 0 1,0 9.6,0 a4.8,3.4 0 1,0 -9.6,0" />
         <!-- 眼睛 -->
         <path
@@ -78,7 +78,7 @@
             android:fillColor="#00000000"
             android:pathData="M54,76.6 L54,78.4 M54,78.4 C51.8,80.4 49.6,79.6 48.8,78.4 M54,78.4 C56.2,80.4 58.4,79.6 59.2,78.4" />
         <path
-            android:fillColor="#FFFF9FB0"
+            android:fillColor="#FFFF8EA3"
             android:pathData="M54,80.2 C55.8,80.2 56.6,81.6 56.2,83 C55.9,84.2 54.9,85.2 54,85.2 C53.1,85.2 52.1,84.2 51.8,83 C51.4,81.6 52.2,80.2 54,80.2 Z" />
     </group>
 </vector>

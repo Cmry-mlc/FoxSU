@@ -11,6 +11,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -97,8 +98,15 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
     ) {
         val barShape = RoundedCornerShape(custom.bottomBarRadius.dp)
         val capsule = custom.bottomBarStyle != 1
-        // 视频样式：半透明悬浮条（自定义卡片色也保持通透）
-        val barColor = freshCardColor().let { if (it.alpha > 0.9f) it.copy(alpha = 0.84f) else it }
+        // 视频样式：半透明悬浮条（自定义卡片色也保持通透）；沉浸光感更透并叠柔光
+        val immersive = custom.bottomBarImmersive
+        val barColor = freshCardColor().let {
+            when {
+                immersive -> it.copy(alpha = 0.66f)
+                it.alpha > 0.9f -> it.copy(alpha = 0.84f)
+                else -> it
+            }
+        }
         Surface(
             shape = barShape,
             color = barColor,
@@ -106,6 +114,21 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
             shadowElevation = 12.dp,
             modifier = if (capsule) Modifier else Modifier.fillMaxWidth(),
         ) {
+            Box {
+                if (immersive) {
+                    // 鸿蒙式柔光：上半部一层白高光，底部自然淡出
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    0f to Color.White.copy(alpha = 0.34f),
+                                    0.55f to Color.White.copy(alpha = 0.08f),
+                                    1f to Color.Transparent,
+                                )
+                            ),
+                    )
+                }
             Row(
                 modifier = Modifier
                     .then(if (capsule) Modifier else Modifier.fillMaxWidth())
@@ -136,6 +159,7 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
                         )
                     }
                 }
+            }
             }
         }
     }

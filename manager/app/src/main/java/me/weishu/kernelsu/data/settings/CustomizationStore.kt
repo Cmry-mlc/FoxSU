@@ -57,6 +57,8 @@ data class Customization(
     val homePalette: Boolean = true,
     /** Corner radius of the floating bottom bar, in dp. */
     val bottomBarRadius: Float = 30f,
+    /** 鸿蒙式沉浸光感：底栏加一层柔光渐变，更通透。 */
+    val bottomBarImmersive: Boolean = false,
     /** 0 = FoxSu icon, 1 = original KernelSU icon, 2..4 = alternative FoxSu icons. */
     val iconStyle: Int = 0,
 )
@@ -93,6 +95,7 @@ object CustomizationStore {
     private const val KEY_BOTTOM_STYLE = "bottom_bar_style"
     private const val KEY_HOME_PALETTE = "home_palette"
     private const val KEY_BOTTOM_RADIUS = "bottom_bar_radius"
+    private const val KEY_BOTTOM_IMMERSIVE = "bottom_bar_immersive"
     private const val KEY_ICON_STYLE = "icon_style"
 
     val cardColorOptions = listOf(
@@ -141,6 +144,7 @@ object CustomizationStore {
             bottomBarStyle = getInt(KEY_BOTTOM_STYLE, 0),
             homePalette = getBoolean(KEY_HOME_PALETTE, true),
             bottomBarRadius = getFloat(KEY_BOTTOM_RADIUS, 30f),
+            bottomBarImmersive = getBoolean(KEY_BOTTOM_IMMERSIVE, false),
             iconStyle = getInt(KEY_ICON_STYLE, 0),
         )
     }
@@ -192,6 +196,7 @@ object CustomizationStore {
 
     fun setHomePalette(enabled: Boolean) = update { it.copy(homePalette = enabled) }
     fun setBottomBarRadius(radius: Float) = update { it.copy(bottomBarRadius = radius) }
+    fun setBottomBarImmersive(enabled: Boolean) = update { it.copy(bottomBarImmersive = enabled) }
     fun setIconStyle(style: Int) = update { it.copy(iconStyle = style) }
 
     fun reset() = update { Customization() }
@@ -230,6 +235,7 @@ object CustomizationStore {
             putInt(KEY_BOTTOM_STYLE, next.bottomBarStyle)
             putBoolean(KEY_HOME_PALETTE, next.homePalette)
             putFloat(KEY_BOTTOM_RADIUS, next.bottomBarRadius)
+            putBoolean(KEY_BOTTOM_IMMERSIVE, next.bottomBarImmersive)
             putInt(KEY_ICON_STYLE, next.iconStyle)
         }
         current = next
