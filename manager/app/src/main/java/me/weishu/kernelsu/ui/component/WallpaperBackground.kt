@@ -155,7 +155,7 @@ fun WallpaperBackground(
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .fillMaxSize()
-                .then(if (glass) Modifier.blur(24.dp) else Modifier)
+                .then(if (glass) Modifier.blur(30.dp) else Modifier)
                 .graphicsLayer {
                     val scale = customization.wallpaperScale
                     scaleX = scale
@@ -164,6 +164,18 @@ fun WallpaperBackground(
                     translationY = customization.wallpaperOffsetY * size.height
                 },
         )
+        // 玻璃模式：壁纸雾化 + 一层薄雾，卡片上的文字更稳
+        if (glass) {
+            val bright = wallpaperLuminance(customization.wallpaperUri) > 0.45f
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        if (bright) Color.White.copy(alpha = 0.12f)
+                        else Color.Black.copy(alpha = 0.22f)
+                    ),
+            )
+        }
         if (customization.wallpaperDim > 0f) {
             Box(
                 modifier = Modifier

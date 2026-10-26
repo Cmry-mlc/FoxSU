@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
@@ -97,6 +98,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import kotlin.math.roundToInt
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.Dispatchers
@@ -596,8 +604,14 @@ private fun FreshHeader() {
         }
     }
 
-    val chipColor = if (isNightScheme()) freshCardColor() else Color.White
-    val glyphTint = MaterialTheme.colorScheme.onSurface
+    // 每次重新打开 App 随机一套柔色（深色模式沿用卡面，保证对比度）
+    val chipPalette = listOf(
+        Color(0xFFFFFFFF), Color(0xFFF3F7EF), Color(0xFFF6F1FA),
+        Color(0xFFFFF6EC), Color(0xFFEFF6FB), Color(0xFFFDF1F3),
+    )
+    val randomChip = remember { chipPalette.random() }
+    val chipColor = if (isNightScheme()) freshCardColor() else randomChip
+    val glyphTint = if (isNightScheme()) MaterialTheme.colorScheme.onSurface else Color(0xFF1B1F1A)
 
     Row(
         modifier = Modifier
@@ -701,13 +715,19 @@ private fun FreshHeader() {
 /** 3 x 3 grid of power options, replacing the old dropdown list. */
 @Composable
 private fun FreshRebootDialog(onDismiss: () -> Unit) {
-    val options = getRebootListOption()
+    val allOptions = getRebootListOption()
+    val softOption = allOptions.firstOrNull { it.reason == "soft_reboot" }
+    val options = allOptions.filter { it.reason != "soft_reboot" }
     val onReboot = rememberRebootAction()
+    val night = isNightScheme()
+    val sheetColor = if (night) freshCardColor().copy(alpha = 0.92f) else Color.White.copy(alpha = 0.86f)
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
-            shape = RoundedCornerShape(28.dp),
-            color = freshCardColor(),
+            shape = RoundedCornerShape(30.dp),
+            color = sheetColor,
+            border = BorderStroke(1.dp, Color.White.copy(alpha = if (night) 0.12f else 0.7f)),
+            shadowElevation = 0.dp,
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 Text(
@@ -716,16 +736,21 @@ private fun FreshRebootDialog(onDismiss: () -> Unit) {
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(14.dp))
 
+                var tileIndex = 0
                 options.chunked(3).forEach { rowOptions ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         rowOptions.forEach { option ->
+                            val pair = RainbowCards[tileIndex % RainbowCards.size]
+                            tileIndex++
                             RebootGridCell(
                                 option = option,
+                                containerColor = if (night) null else Color(pair.first),
+                                contentColor = if (night) null else Color(pair.second),
                                 modifier = Modifier.weight(1f),
                                 onClick = {
                                     onDismiss()
@@ -740,10 +765,25 @@ private fun FreshRebootDialog(onDismiss: () -> Unit) {
                     Spacer(Modifier.height(10.dp))
                 }
 
-                Spacer(Modifier.height(2.dp))
+                if (softOption != null) {
+                    SlideToConfirm(
+                        label = stringResource(softOption.labelRes),
+                        containerColor = if (night) {
+                            MaterialTheme.colorScheme.surfaceContainerHigh
+                        } else {
+                            Color(0xFFE2F5E6)
+                        },
+                        onConfirm = {
+                            onDismiss()
+                            onReboot(softOption.reason)
+                        },
+                    )
+                    Spacer(Modifier.height(12.dp))
+                }
+
                 Surface(
                     shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.7f),
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
@@ -765,12 +805,83 @@ private fun FreshRebootDialog(onDismiss: () -> Unit) {
     }
 }
 
+/** 图三那种滑动确认条：拖到右端松手执行，未到底自动回弹。 */
+@Composable
+private fun SlideToConfirm(
+    label: String,
+    containerColor: Color,
+    onConfirm: () -> Unit,
+) {
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    var offsetPx by remember { mutableStateOf(0f) }
+    var trackWidth by remember { mutableStateOf(0f) }
+    val thumbSize = 46.dp
+    val thumbPx = with(density) { thumbSize.toPx() }
+    val maxOffset = (trackWidth - thumbPx).coerceAtLeast(0f)
+    val progress = if (maxOffset > 0f) (offsetPx / maxOffset).coerceIn(0f, 1f) else 0f
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .clip(RoundedCornerShape(28.dp))
+            .background(containerColor)
+            .onSizeChanged { trackWidth = it.width.toFloat() },
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f * (1f - progress) + 0.2f),
+        )
+        Surface(
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            modifier = Modifier
+                .padding(5.dp)
+                .size(thumbSize)
+                .offset { IntOffset(offsetPx.roundToInt(), 0) }
+                .draggable(
+                    orientation = Orientation.Horizontal,
+                    state = rememberDraggableState { delta ->
+                        offsetPx = (offsetPx + delta).coerceIn(0f, maxOffset)
+                    },
+                    onDragStopped = {
+                        if (offsetPx >= maxOffset * 0.82f) {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onConfirm()
+                        } else {
+                            offsetPx = 0f
+                        }
+                    },
+                ),
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    modifier = Modifier.size(22.dp),
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun RebootGridCell(
     option: RebootListOption,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    containerColor: Color? = null,
+    contentColor: Color? = null,
 ) {
+    val tileBg = containerColor ?: MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+    val tileFg = contentColor ?: MaterialTheme.colorScheme.primary
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(18.dp))
@@ -780,8 +891,8 @@ private fun RebootGridCell(
     ) {
         Surface(
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.primary,
+            color = tileBg,
+            contentColor = tileFg,
             modifier = Modifier.size(48.dp),
         ) {
             Box(contentAlignment = Alignment.Center) {
@@ -796,7 +907,7 @@ private fun RebootGridCell(
         Text(
             text = stringResource(option.labelRes),
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = tileFg,
             textAlign = TextAlign.Center,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
