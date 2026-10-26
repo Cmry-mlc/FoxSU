@@ -606,13 +606,18 @@ private fun FreshHeader() {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // 白圆底 + 黑色小狐
-        Surface(shape = CircleShape, color = chipColor, modifier = Modifier.size(46.dp)) {
+        Surface(
+            shape = CircleShape,
+            color = chipColor,
+            shadowElevation = 0.dp,
+            modifier = Modifier.size(44.dp),
+        ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     painter = painterResource(R.drawable.ic_launcher_monochrome),
                     contentDescription = null,
                     tint = glyphTint,
-                    modifier = Modifier.size(28.dp),
+                    modifier = Modifier.size(22.dp),
                 )
             }
         }
@@ -623,7 +628,8 @@ private fun FreshHeader() {
             val customTitle = CustomizationStore.current.homeTitle
             Text(
                 text = customTitle.ifBlank { stringResource(R.string.app_name) },
-                style = MaterialTheme.typography.headlineMedium,
+                fontSize = 25.sp,
+                lineHeight = 30.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
@@ -644,26 +650,42 @@ private fun FreshHeader() {
         Spacer(Modifier.width(10.dp))
 
         // 白色胶囊：作者 + 电源
-        Surface(shape = RoundedCornerShape(50), color = chipColor) {
+        Surface(
+            shape = RoundedCornerShape(50),
+            color = chipColor,
+            shadowElevation = 0.dp,
+            modifier = Modifier.height(44.dp),
+        ) {
             Row(
-                modifier = Modifier.padding(horizontal = 4.dp),
+                modifier = Modifier.padding(horizontal = 2.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                IconButton(onClick = { navigator.push(Route.Author) }, modifier = Modifier.size(40.dp)) {
+                // 圆形波纹裁切，按压阴影/水波都跟着圆角走
+                IconButton(
+                    onClick = { navigator.push(Route.Author) },
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape),
+                ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_author),
                         contentDescription = stringResource(R.string.author_title),
                         tint = glyphTint,
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(21.dp),
                     )
                 }
                 KsuIsValid {
-                    IconButton(onClick = { showRebootDialog = true }, modifier = Modifier.size(40.dp)) {
+                    IconButton(
+                        onClick = { showRebootDialog = true },
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape),
+                    ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_power),
                             contentDescription = stringResource(R.string.reboot),
                             tint = glyphTint,
-                            modifier = Modifier.size(20.dp),
+                            modifier = Modifier.size(21.dp),
                         )
                     }
                 }
