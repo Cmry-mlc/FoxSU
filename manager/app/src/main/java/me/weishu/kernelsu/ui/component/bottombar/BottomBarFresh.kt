@@ -90,23 +90,25 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
                 end = 16.dp,
                 bottom = navigationBarPadding + 12.dp,
             ),
+        contentAlignment = Alignment.Center,
     ) {
         val barShape = RoundedCornerShape(custom.bottomBarRadius.dp)
+        val capsule = custom.bottomBarStyle != 1
         Surface(
             shape = barShape,
             color = freshCardColor(),
             border = freshCardBorder(),
             shadowElevation = 12.dp,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = if (capsule) Modifier else Modifier.fillMaxWidth(),
         ) {
             Row(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                    .then(if (capsule) Modifier else Modifier.fillMaxWidth())
+                    .padding(horizontal = if (capsule) 10.dp else 8.dp, vertical = 8.dp),
                 horizontalArrangement = if (custom.bottomBarStyle == 1) {
                     Arrangement.Center
                 } else {
-                    Arrangement.SpaceEvenly
+                    Arrangement.Center
                 },
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -126,7 +128,6 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
                             selected = selected,
                             badge = badgeFor(index, navigationBadge),
                             onClick = onClick,
-                            modifier = Modifier.weight(1f),
                         )
                     }
                 }
@@ -241,7 +242,6 @@ private fun FreshNavItemView(
     selected: Boolean,
     badge: NavBadge?,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
 ) {
     val contentColor by animateColorAsState(
         targetValue = if (selected) {
@@ -268,10 +268,10 @@ private fun FreshNavItemView(
     )
 
     Column(
-        modifier = modifier
+        modifier = Modifier
             .clip(RoundedCornerShape(20.dp))
             .clickable(onClick = onClick)
-            .padding(vertical = 4.dp),
+            .padding(horizontal = 10.dp, vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(

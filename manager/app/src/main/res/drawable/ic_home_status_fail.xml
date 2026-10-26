@@ -4,16 +4,9 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- 不支持：细描边圆 + 斜杠 -->
+    <!-- 不支持：实心圆 + 挖空斜杠 -->
     <path
-        android:strokeColor="#FF000000"
-        android:strokeWidth="1.6"
-        android:fillColor="#00000000"
-        android:pathData="M12,3.4 m-8.6,0 a8.6,8.6 0 1,0 17.2,0 a8.6,8.6 0 1,0 -17.2,0" />
-    <path
-        android:strokeColor="#FF000000"
-        android:strokeWidth="1.9"
-        android:strokeLineCap="round"
-        android:fillColor="#00000000"
-        android:pathData="M7.2,7.2 L16.8,16.8" />
+        android:fillColor="#FF000000"
+        android:fillType="evenOdd"
+        android:pathData="M12,2.9 A9.1,9.1 0 1,0 12.002,21.1 A9.1,9.1 0 1,0 12,2.9 Z M7.05,8.46 L8.46,7.05 L16.95,15.54 L15.54,16.95 Z" />
 </vector>
