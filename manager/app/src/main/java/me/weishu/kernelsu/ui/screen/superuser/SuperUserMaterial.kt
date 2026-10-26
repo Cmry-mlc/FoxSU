@@ -22,9 +22,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
-import androidx.compose.material.icons.automirrored.outlined.Article
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.CheckableDropdownMenuItem
 import androidx.compose.material3.DropdownMenuGroup
@@ -58,6 +56,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -128,7 +127,7 @@ fun SuperUserPagerMaterial(
                 navigationIcon = {
                     IconButton(onClick = actions.onOpenSulog) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.Article,
+                            painter = painterResource(R.drawable.ic_su_log),
                             contentDescription = stringResource(R.string.settings_sulog)
                         )
                     }
@@ -138,7 +137,7 @@ fun SuperUserPagerMaterial(
 
                     IconButton(onClick = { showSortMenu = true }) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Sort,
+                            painter = painterResource(R.drawable.ic_su_sort),
                             contentDescription = stringResource(R.string.menu_sort)
                         )
 
@@ -210,7 +209,7 @@ fun SuperUserPagerMaterial(
 
                     IconButton(onClick = { showDropdown = true }) {
                         Icon(
-                            imageVector = Icons.Filled.MoreVert,
+                            painter = painterResource(R.drawable.ic_su_filter),
                             contentDescription = stringResource(id = R.string.settings)
                         )
 

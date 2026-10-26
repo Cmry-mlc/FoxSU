@@ -1,6 +1,8 @@
 package me.weishu.kernelsu.ui.component.material
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -16,6 +18,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material.icons.Icons
@@ -48,6 +51,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -55,6 +60,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import me.weishu.kernelsu.ui.theme.isFreshStyle
 import top.yukonga.miuix.kmp.nav.gesture.WindowNavigationEventBridge
 
 @Composable
@@ -164,7 +170,14 @@ fun SearchAppBar(
                             Icon(Icons.AutoMirrored.Rounded.ArrowBack, null)
                         }
                     } else {
-                        Icon(Icons.Filled.Search, null)
+                        Icon(
+                            Icons.Filled.Search, null,
+                            tint = if (isFreshStyle()) {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            } else {
+                                Color.Unspecified
+                            }
+                        )
                     }
                 },
                 trailingIcon = {
@@ -180,29 +193,47 @@ fun SearchAppBar(
         }
     }
 
-    Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
+    val fresh = isFreshStyle()
+    val topContainer = if (fresh) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
+    Surface(color = topContainer) {
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
             LargeFlexibleTopAppBar(
                 title = title,
-                colors = expressiveTopAppBarColors(),
+                colors = expressiveTopAppBarColors(containerColor = topContainer),
                 navigationIcon = { if (navigationIcon != null) navigationIcon() },
                 actions = { if (actions != null) actions() },
                 windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
                 scrollBehavior = scrollBehavior
             )
 
-            SearchBar(
-                modifier = Modifier
+            val searchBarColors = SearchBarDefaults.colors(
+                containerColor = if (fresh) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainerHighest
+            )
+            val barModifier = if (fresh) {
+                Modifier
                     .fillMaxWidth()
                     .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
                     .padding(horizontal = 16.dp)
-                    .padding(bottom = 13.dp),
-
+                    .padding(bottom = 13.dp)
+                    .shadow(3.dp, CircleShape, clip = false, ambientColor = Color.Black.copy(alpha = 0.10f), spotColor = Color.Black.copy(alpha = 0.08f))
+                    .border(
+                        BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)),
+                        CircleShape
+                    )
+            } else {
+                Modifier
+                    .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 13.dp)
+            }
+            SearchBar(
+                modifier = barModifier,
                 state = searchBarState,
                 inputField = inputField,
-                colors = SearchBarDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
+                colors = searchBarColors,
             )
         }
     }
