@@ -104,7 +104,7 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
             Row(
                 modifier = Modifier
                     .then(if (capsule) Modifier else Modifier.fillMaxWidth())
-                    .padding(horizontal = if (capsule) 10.dp else 8.dp, vertical = 8.dp),
+                    .padding(horizontal = if (capsule) 10.dp else 8.dp, vertical = 6.dp),
                 horizontalArrangement = if (custom.bottomBarStyle == 1) {
                     Arrangement.Center
                 } else {
@@ -271,7 +271,7 @@ private fun FreshNavItemView(
         modifier = Modifier
             .clip(RoundedCornerShape(20.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 4.dp),
+            .padding(horizontal = 10.dp, vertical = 2.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(

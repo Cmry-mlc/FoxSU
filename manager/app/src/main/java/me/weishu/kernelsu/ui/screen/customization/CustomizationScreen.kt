@@ -381,7 +381,7 @@ fun CustomizationScreen() {
                         SliderRow(
                             label = stringResource(R.string.customization_radius),
                             value = custom.bottomBarRadius,
-                            range = 0f..30f,
+                            range = 0f..100f,
                             display = "${custom.bottomBarRadius.toInt()}dp",
                             onChange = CustomizationStore::setBottomBarRadius,
                         )
