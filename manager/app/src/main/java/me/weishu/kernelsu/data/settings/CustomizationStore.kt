@@ -61,6 +61,10 @@ data class Customization(
     val bottomBarImmersive: Boolean = false,
     /** 底栏液态玻璃：玻璃条 + 可拖动高光，完全覆盖沉浸光感。 */
     val bottomBarLiquidGlass: Boolean = false,
+    // 底栏图标七彩：每个 tab 用一套随机彩色（默认关）
+    val navRainbow: Boolean = false,
+    // 底栏图标莫奈取色：跟随系统动态色（默认关）
+    val navMonet: Boolean = false,
     /** 底栏不透明度，1f = 完全不透明（默认）。 */
     val bottomBarAlpha: Float = 1f,
     /** 玻璃质感卡面：接近全透明的白色薄片 + 白色描边。 */
@@ -145,6 +149,8 @@ object CustomizationStore {
     private const val KEY_BOTTOM_RADIUS = "bottom_bar_radius"
     private const val KEY_BOTTOM_IMMERSIVE = "bottom_bar_immersive"
     private const val KEY_BOTTOM_LIQUID_GLASS = "bottom_bar_liquid_glass"
+    private const val KEY_NAV_RAINBOW = "nav_rainbow"
+    private const val KEY_NAV_MONET = "nav_monet"
     private const val KEY_BOTTOM_ALPHA = "bottom_bar_alpha"
     private const val KEY_FONT_PATH = "font_path"
     private const val KEY_CARD_GLASS = "card_glass"
@@ -202,6 +208,8 @@ object CustomizationStore {
             bottomBarRadius = getFloat(KEY_BOTTOM_RADIUS, 30f),
             bottomBarImmersive = getBoolean(KEY_BOTTOM_IMMERSIVE, false),
             bottomBarLiquidGlass = getBoolean(KEY_BOTTOM_LIQUID_GLASS, false),
+            navRainbow = getBoolean(KEY_NAV_RAINBOW, false),
+            navMonet = getBoolean(KEY_NAV_MONET, false),
             bottomBarAlpha = getFloat(KEY_BOTTOM_ALPHA, 1f),
             cardGlass = getBoolean(KEY_CARD_GLASS, false),
             wallpaperEnabled = getBoolean(KEY_WALLPAPER_ENABLED, true),
@@ -262,6 +270,8 @@ object CustomizationStore {
     fun setBottomBarRadius(radius: Float) = update { it.copy(bottomBarRadius = radius) }
     fun setBottomBarImmersive(enabled: Boolean) = update { it.copy(bottomBarImmersive = enabled) }
     fun setBottomBarLiquidGlass(enabled: Boolean) = update { it.copy(bottomBarLiquidGlass = enabled) }
+    fun setNavRainbow(enabled: Boolean) = update { it.copy(navRainbow = enabled) }
+    fun setNavMonet(enabled: Boolean) = update { it.copy(navMonet = enabled) }
     fun setBottomBarAlpha(alpha: Float) = update { it.copy(bottomBarAlpha = alpha.coerceIn(0.2f, 1f)) }
     fun setCardGlass(enabled: Boolean) = update { it.copy(cardGlass = enabled) }
     fun setWallpaperEnabled(enabled: Boolean) = update { it.copy(wallpaperEnabled = enabled) }
@@ -309,6 +319,8 @@ object CustomizationStore {
             putFloat(KEY_BOTTOM_RADIUS, next.bottomBarRadius)
             putBoolean(KEY_BOTTOM_IMMERSIVE, next.bottomBarImmersive)
             putBoolean(KEY_BOTTOM_LIQUID_GLASS, next.bottomBarLiquidGlass)
+            putBoolean(KEY_NAV_RAINBOW, next.navRainbow)
+            putBoolean(KEY_NAV_MONET, next.navMonet)
             putFloat(KEY_BOTTOM_ALPHA, next.bottomBarAlpha)
             putBoolean(KEY_CARD_GLASS, next.cardGlass)
             putBoolean(KEY_WALLPAPER_ENABLED, next.wallpaperEnabled)
