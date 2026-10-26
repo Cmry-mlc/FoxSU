@@ -1071,9 +1071,17 @@ private fun FreshStatusCard(
     val glassBackdrop = CustomizationStore.current.cardGlass
     val hasHero = !glassBackdrop && hero != null && heroBitmap != null
 
+    val statusTint = if (ksuActive) {
+        if (hasHero || isNightScheme()) Color(0xFF5BE08D) else Color(0xFF10B45A)
+    } else {
+        MaterialTheme.colorScheme.error
+    }
+
+    Box(modifier = Modifier.fillMaxWidth()) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(end = 22.dp)
             .clip(RoundedCornerShape(22.dp))
             .combinedClickable(
                 onClick = { if (!state.isLateLoadMode) onInstall() },
@@ -1091,7 +1099,7 @@ private fun FreshStatusCard(
                 FreshHeroBackdrop(hero = hero, bitmap = heroBitmap)
             }
             Row(
-                modifier = Modifier.padding(horizontal = 18.dp, vertical = 18.dp),
+                modifier = Modifier.padding(start = 18.dp, top = 18.dp, bottom = 18.dp, end = 62.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
@@ -1102,7 +1110,7 @@ private fun FreshStatusCard(
                             fontWeight = FontWeight.SemiBold,
                             color = contentColor,
                         )
-                        if (ksuActive && state.isLateLoadMode) {
+                        if (ksuActive && state.isLateLoadMode && workingMode.isEmpty()) {
                             Spacer(Modifier.width(8.dp))
                             FreshTag(
                                 text = stringResource(R.string.jailbreak_mode),
@@ -1143,6 +1151,15 @@ private fun FreshStatusCard(
                                 container = MaterialTheme.colorScheme.primary,
                                 content = MaterialTheme.colorScheme.onPrimary,
                             )
+                            // 越狱模式紧跟运行模式之后
+                            if (ksuActive && state.isLateLoadMode) {
+                                Spacer(Modifier.width(8.dp))
+                                FreshTag(
+                                    text = stringResource(R.string.jailbreak_mode),
+                                    container = MaterialTheme.colorScheme.errorContainer,
+                                    content = MaterialTheme.colorScheme.onErrorContainer,
+                                )
+                            }
                             if (!state.isLateLoadMode) {
                                 Spacer(Modifier.width(8.dp))
                                 Text(
@@ -1179,30 +1196,20 @@ private fun FreshStatusCard(
                         }
                     }
                 }
-                // 状态徽章：右端垂直居中的圆形柔光底，视觉重心更稳
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (ksuActive) contentColor.copy(alpha = if (hasHero) 0.14f else 0.06f)
-                            else MaterialTheme.colorScheme.error.copy(alpha = 0.10f)
-                        ),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        painter = statusIcon,
-                        contentDescription = null,
-                        tint = if (ksuActive) {
-                            contentColor.copy(alpha = if (hasHero) 0.9f else 0.5f)
-                        } else {
-                            MaterialTheme.colorScheme.error
-                        },
-                        modifier = Modifier.size(30.dp),
-                    )
-                }
             }
         }
+    }
+
+    // 大号状态徽章：压在卡片右缘并略微溢出，和参考图一致
+    Icon(
+        painter = statusIcon,
+        contentDescription = null,
+        tint = statusTint,
+        modifier = Modifier
+            .align(Alignment.CenterEnd)
+            .offset(x = 8.dp)
+            .size(96.dp),
+    )
     }
 }
 
