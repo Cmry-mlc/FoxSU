@@ -219,7 +219,7 @@ fun SearchAppBar(
                     .padding(horizontal = 16.dp)
                     .padding(bottom = 13.dp)
                     .height(48.dp)
-                    .shadow(3.dp, CircleShape, clip = false, ambientColor = Color.Black.copy(alpha = 0.10f), spotColor = Color.Black.copy(alpha = 0.08f))
+                    .shadow(0.dp, CircleShape, clip = false)
                     .border(
                         BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)),
                         CircleShape

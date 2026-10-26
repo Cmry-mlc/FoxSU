@@ -578,7 +578,7 @@ private fun FreshHeader() {
                 shape = CircleShape,
                 color = freshCardColor(),
                 border = freshCardBorder(),
-                shadowElevation = 2.dp,
+                shadowElevation = 0.dp,
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
@@ -773,7 +773,7 @@ private fun FreshStatusCard(
         color = containerColor,
         contentColor = contentColor,
         border = if (hasHero) null else cardBorder,
-        shadowElevation = if (hasHero || cardBorder != null) 0.dp else 1.dp,
+        shadowElevation = 0.dp,
     ) {
         Box {
             if (hero != null && heroBitmap != null) {
@@ -988,7 +988,7 @@ private fun FreshKpiCard(
         color = containerColor,
         contentColor = textColor,
         border = cardBorder,
-        shadowElevation = if (cardBorder != null) 0.dp else 1.dp,
+        shadowElevation = 0.dp,
     ) {
         Box {
             if (bitmap != null && imageAlpha > 0.02f) {
@@ -1157,7 +1157,7 @@ private fun FreshPillTile(
         color = containerColor,
         contentColor = MaterialTheme.colorScheme.onSurface,
         border = freshCardBorder(),
-        shadowElevation = if (freshCardBorder() != null) 0.dp else 1.dp,
+        shadowElevation = 0.dp,
         modifier = base,
     ) {
         Row(
@@ -1205,7 +1205,7 @@ private fun FreshCardGroup(
         color = containerColor,
         contentColor = contentColor,
         border = freshCardBorder(),
-        shadowElevation = if (freshCardBorder() != null) 0.dp else 1.dp,
+        shadowElevation = 0.dp,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column { content() }
@@ -1340,7 +1340,7 @@ private fun FreshIssueList(
                 color = containerColor,
                 contentColor = contentColor,
                 border = freshCardBorder(),
-                shadowElevation = if (freshCardBorder() != null) 0.dp else 1.dp,
+                shadowElevation = 0.dp,
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))

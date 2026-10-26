@@ -211,7 +211,7 @@ private fun GridCell(
         color = freshCardColor(),
         contentColor = MaterialTheme.colorScheme.onSurface,
         border = freshCardBorder(),
-        shadowElevation = if (freshCardBorder() != null) 0.dp else 1.dp,
+        shadowElevation = 0.dp,
     ) {
         Column(
             modifier = Modifier
