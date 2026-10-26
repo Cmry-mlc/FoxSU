@@ -47,14 +47,18 @@ fun rememberCardSupportingColor(): Color = LocalContentColor.current.copy(alpha 
 /**
  * Card colour for the ColorUI style. In dark mode the card has to sit *above* the canvas, so we
  * use a higher container tone instead of the lowest one (which is darker than the background and
- * made text look muddy).
+ * made text look muddy). The surface is translucent so the wallpaper shows through, matching
+ * the floating bottom bar.
  */
 @Composable
 @ReadOnlyComposable
-fun freshCardColor(): Color = if (isSystemInDarkTheme()) {
-    MaterialTheme.colorScheme.surfaceContainerHigh
-} else {
-    MaterialTheme.colorScheme.surfaceContainerLowest
+fun freshCardColor(): Color {
+    val base = if (isSystemInDarkTheme()) {
+        MaterialTheme.colorScheme.surfaceContainerHigh
+    } else {
+        MaterialTheme.colorScheme.surfaceContainerLowest
+    }
+    return base.copy(alpha = 0.84f)
 }
 
 /** Hairline that lifts a card off the canvas; only dark mode needs it (shadows read as noise). */

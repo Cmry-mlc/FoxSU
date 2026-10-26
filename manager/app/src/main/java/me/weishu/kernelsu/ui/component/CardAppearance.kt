@@ -91,7 +91,7 @@ fun resolveCardSurface(slot: Int): CardSurface {
     if (!night && overrideColor == 0 && custom.homePalette) {
         HomePalette[slot]?.let { style ->
             return CardSurface(
-                container = Color(style.bg).copy(alpha = alpha),
+                container = Color(style.bg).copy(alpha = alpha * 0.84f),
                 content = Color(style.fg),
                 accent = Color(style.accent),
                 border = null,
@@ -107,7 +107,7 @@ fun resolveCardSurface(slot: Int): CardSurface {
     }
     val accent = if (effectiveColor == 0) MaterialTheme.colorScheme.primary else content
     val border = if (effectiveColor == 0) freshCardBorder() else null
-    return CardSurface(base.copy(alpha = alpha), content, accent, border)
+    return CardSurface(base.copy(alpha = base.alpha * alpha), content, accent, border)
 }
 
 /**

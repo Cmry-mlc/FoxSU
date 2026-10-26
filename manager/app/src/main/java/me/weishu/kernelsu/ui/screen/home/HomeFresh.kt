@@ -211,7 +211,7 @@ fun HomePagerFresh(
     val custom = CustomizationStore.current
     val night = isNightScheme()
     val cardColor = if (custom.cardColor == 0 || night) {
-        freshCardColor().copy(alpha = custom.cardAlpha)
+        freshCardColor().let { it.copy(alpha = it.alpha * custom.cardAlpha) }
     } else {
         Color(custom.cardColor).copy(alpha = custom.cardAlpha)
     }
@@ -378,6 +378,22 @@ fun HomePagerFresh(
 
                 Spacer(Modifier.height(14.dp))
 
+                FreshSecurityGroup(
+                    systemInfo = state.systemInfo,
+                    containerColor = cardColor,
+                    contentColor = cardContent,
+                )
+
+                Spacer(Modifier.height(14.dp))
+
+                FreshSupportGroup(
+                    onOpenUrl = actions.onOpenUrl,
+                    containerColor = cardColor,
+                    contentColor = cardContent,
+                )
+
+                Spacer(Modifier.height(14.dp))
+
                 FreshCardGroup(
                     containerColor = cardColor,
                     contentColor = cardContent,
@@ -394,22 +410,6 @@ fun HomePagerFresh(
                         value = state.systemInfo.fingerprint,
                     )
                 }
-
-                Spacer(Modifier.height(14.dp))
-
-                FreshSecurityGroup(
-                    systemInfo = state.systemInfo,
-                    containerColor = cardColor,
-                    contentColor = cardContent,
-                )
-
-                Spacer(Modifier.height(14.dp))
-
-                FreshSupportGroup(
-                    onOpenUrl = actions.onOpenUrl,
-                    containerColor = cardColor,
-                    contentColor = cardContent,
-                )
 
             }
         }
@@ -1149,6 +1149,7 @@ private fun FreshPillTile(
     val shape = RoundedCornerShape(26.dp)
     val tint = if (accent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
     val base = modifier
+        .height(78.dp)
         .clip(shape)
         .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
     Surface(
