@@ -692,43 +692,44 @@ private fun FreshHeader() {
 
         Spacer(Modifier.width(10.dp))
 
-        // 两个白色圆按钮（参考图是分离的独立圆，而不是一条胶囊）
+        // 白色胶囊：作者 + 电源两个圆图标并排（与之前一致的胶囊形态）
         Surface(
-            shape = CircleShape,
+            shape = RoundedCornerShape(50),
             color = buttonBg,
             shadowElevation = 0.dp,
-            modifier = Modifier.size(40.dp),
+            modifier = Modifier.height(44.dp),
         ) {
-            IconButton(
-                onClick = { navigator.push(Route.Author) },
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_author),
-                    contentDescription = stringResource(R.string.author_title),
-                    tint = buttonTint,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
-        }
-        KsuIsValid {
-            Spacer(Modifier.width(8.dp))
-            Surface(
-                shape = CircleShape,
-                color = buttonBg,
-                shadowElevation = 0.dp,
-                modifier = Modifier.size(40.dp),
+            Row(
+                modifier = Modifier.padding(horizontal = 2.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 IconButton(
-                    onClick = { showRebootDialog = true },
-                    modifier = Modifier.fillMaxSize(),
+                    onClick = { navigator.push(Route.Author) },
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape),
                 ) {
                     Icon(
-                        painter = painterResource(R.drawable.ic_power),
-                        contentDescription = stringResource(R.string.reboot),
+                        painter = painterResource(R.drawable.ic_author),
+                        contentDescription = stringResource(R.string.author_title),
                         tint = buttonTint,
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(21.dp),
                     )
+                }
+                KsuIsValid {
+                    IconButton(
+                        onClick = { showRebootDialog = true },
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape),
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_power),
+                            contentDescription = stringResource(R.string.reboot),
+                            tint = buttonTint,
+                            modifier = Modifier.size(21.dp),
+                        )
+                    }
                 }
             }
         }
@@ -1109,11 +1110,11 @@ private fun FreshStatusCard(
     val canJailbreak = notInstalled && state.isSELinuxPermissive
     val glassBackdrop = CustomizationStore.current.cardGlass
     val hasHero = !glassBackdrop && hero != null && heroBitmap != null
-    // 状态徽章：参考图是「圆形浅底 + 细描边徽章图标」，不用实心锯齿
+    // 状态徽章：参考图是薰衣草紫的细描边徽章，工作态用主卡强调紫
     val badgeTint = when {
         !ksuActive -> MaterialTheme.colorScheme.error
         hasHero || isNightScheme() -> Color.White
-        else -> contentColor.copy(alpha = 0.9f)
+        else -> UiPalette.HeroAccent
     }
     // 呼吸光圈：复用项目现有的 Compose 动画体系，缓慢明暗缩放，不抢文字
     val badgeTransition = rememberInfiniteTransition(label = "statusBadge")
@@ -1155,7 +1156,8 @@ private fun FreshStatusCard(
                         Text(
                             text = statusTitle,
                             style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = (-0.2).sp,
                             color = contentColor,
                         )
                         if (ksuActive && state.isLateLoadMode && workingMode.isEmpty()) {
@@ -1180,7 +1182,8 @@ private fun FreshStatusCard(
                         Text(
                             text = statusSummary,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = contentColor.copy(alpha = if (supportingTextAlpha() > 0.7f) 0.88f else 0.78f),
+                            fontWeight = FontWeight.Medium,
+                            color = contentColor.copy(alpha = if (supportingTextAlpha() > 0.7f) 0.82f else 0.72f),
                         )
                         if (state.showCustomLkmBadge) {
                             Spacer(Modifier.width(8.dp))
@@ -1246,12 +1249,17 @@ private fun FreshStatusCard(
                 }
             }
 
-            // 状态徽章：参考图是右侧一枚白底圆 + 细描边徽章，干净不抢眼
+            // 状态徽章：白底圆 + 细描边徽章，整圆带呼吸缩放（缓慢明暗，不抢文字）
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
                     .padding(end = 16.dp)
-                    .size(64.dp),
+                    .size(64.dp)
+                    .graphicsLayer {
+                        scaleX = 0.96f + 0.06f * badgePulse
+                        scaleY = scaleX
+                        alpha = 0.82f + 0.18f * badgePulse
+                    },
                 contentAlignment = Alignment.Center,
             ) {
                 // 白底圆（深色壁纸下用半透明白）
@@ -1449,6 +1457,7 @@ private fun FreshKpiCard(
                     fontSize = 20.sp,
                     lineHeight = 24.sp,
                     fontWeight = FontWeight.Bold,
+                    letterSpacing = (-0.3).sp,
                     color = valueColor,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
