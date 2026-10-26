@@ -1082,17 +1082,23 @@ private fun FreshSecurityGroup(
         else -> stringResource(R.string.seccomp_status_unknown)
     }
 
-    FreshCardGroup(containerColor = containerColor, contentColor = contentColor) {
-        FreshInfoRow(
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        FreshPillTile(
             icon = Icons.Filled.Security,
-            label = stringResource(R.string.home_selinux_status),
-            value = selinuxDisplay,
+            title = stringResource(R.string.home_selinux_status),
+            caption = selinuxDisplay,
+            containerColor = containerColor,
+            modifier = Modifier.weight(1f),
         )
-        FreshDivider()
-        FreshInfoRow(
+        FreshPillTile(
             icon = Icons.Filled.FilterList,
-            label = stringResource(R.string.home_seccomp_status),
-            value = seccompDisplay,
+            title = stringResource(R.string.home_seccomp_status),
+            caption = seccompDisplay,
+            containerColor = containerColor,
+            modifier = Modifier.weight(1f),
         )
     }
 }
@@ -1104,20 +1110,86 @@ private fun FreshSupportGroup(
     contentColor: Color,
 ) {
     val learnMoreUrl = stringResource(R.string.home_learn_kernelsu_url)
-    FreshCardGroup(containerColor = containerColor, contentColor = contentColor) {
-        FreshNavRow(
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        FreshPillTile(
             icon = Icons.Filled.VolunteerActivism,
             title = stringResource(R.string.home_support_title),
-            description = stringResource(R.string.home_support_content),
+            caption = stringResource(R.string.home_support_content),
+            accent = true,
+            containerColor = containerColor,
             onClick = { onOpenUrl("https://patreon.com/weishu") },
+            modifier = Modifier.weight(1f),
         )
-        FreshDivider()
-        FreshNavRow(
+        FreshPillTile(
             icon = Icons.AutoMirrored.Filled.MenuBook,
             title = stringResource(R.string.home_learn_kernelsu),
-            description = stringResource(R.string.home_click_to_learn_kernelsu),
+            caption = stringResource(R.string.home_click_to_learn_kernelsu),
+            accent = true,
+            containerColor = containerColor,
             onClick = { onOpenUrl(learnMoreUrl) },
+            modifier = Modifier.weight(1f),
         )
+    }
+}
+
+/** 胶囊卡：左侧图标 + 标题/说明，对应参考图里的“常用工具”样式。 */
+@Composable
+private fun FreshPillTile(
+    icon: ImageVector,
+    title: String,
+    caption: String,
+    containerColor: Color,
+    modifier: Modifier = Modifier,
+    accent: Boolean = false,
+    onClick: (() -> Unit)? = null,
+) {
+    val shape = RoundedCornerShape(26.dp)
+    val tint = if (accent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+    val base = modifier
+        .clip(shape)
+        .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+    Surface(
+        shape = shape,
+        color = containerColor,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        border = freshCardBorder(),
+        shadowElevation = if (freshCardBorder() != null) 0.dp else 1.dp,
+        modifier = base,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = tint,
+                modifier = Modifier.size(20.dp),
+            )
+            Spacer(Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = caption,
+                    fontSize = 11.sp,
+                    lineHeight = 13.sp,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = supportingTextAlpha()),
+                )
+            }
+        }
     }
 }
 
