@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -33,6 +34,7 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SmartButton
+import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.material.icons.filled.Title
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material3.Icon
@@ -43,6 +45,8 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -68,6 +72,7 @@ import me.weishu.kernelsu.data.settings.Customization
 import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.component.WallpaperBackground
 import me.weishu.kernelsu.ui.component.WallpaperBackdrop
+import me.weishu.kernelsu.ui.component.freshCardBorder
 import me.weishu.kernelsu.ui.component.freshCardColor
 import me.weishu.kernelsu.ui.component.rememberCardSurface
 import me.weishu.kernelsu.ui.component.scaffoldBackgroundColor
@@ -144,6 +149,13 @@ fun CustomizationScreen() {
                         title = stringResource(R.string.customization_wallpaper),
                         subtitle = stringResource(R.string.customization_wallpaper_sub),
                     ) {
+                        ToggleRow(
+                            title = stringResource(R.string.customization_wallpaper_enable),
+                            subtitle = stringResource(R.string.customization_wallpaper_enable_sum),
+                            checked = custom.wallpaperEnabled,
+                            onChange = CustomizationStore::setWallpaperEnabled,
+                        )
+                        Spacer(Modifier.height(6.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             PillButton(
                                 text = stringResource(R.string.customization_pick_image),
@@ -262,6 +274,19 @@ fun CustomizationScreen() {
                         title = stringResource(R.string.customization_card),
                         subtitle = stringResource(R.string.customization_card_sub),
                     ) {
+                        ToggleRow(
+                            title = stringResource(R.string.customization_card_glass),
+                            subtitle = stringResource(R.string.customization_card_glass_sum),
+                            checked = custom.cardGlass,
+                            onChange = CustomizationStore::setCardGlass,
+                        )
+                        ToggleRow(
+                            title = stringResource(R.string.customization_home_adaptive),
+                            subtitle = stringResource(R.string.customization_home_adaptive_sum),
+                            checked = custom.homeAdaptive,
+                            onChange = CustomizationStore::setHomeAdaptive,
+                        )
+                        Spacer(Modifier.height(6.dp))
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             items(CustomizationStore.cardColorOptions.size) { index ->
                                 val value = CustomizationStore.cardColorOptions[index]
@@ -357,6 +382,24 @@ fun CustomizationScreen() {
                             placeholder = { Text(stringResource(R.string.customization_title_placeholder)) },
                             modifier = Modifier.fillMaxWidth(),
                         )
+                    }
+                }
+
+                item {
+                    SectionCard(
+                        icon = Icons.Filled.TextFields,
+                        title = stringResource(R.string.customization_font),
+                        subtitle = stringResource(R.string.customization_font_sub),
+                    ) {
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(4) { index ->
+                                StyleChip(
+                                    label = stringResource(fontLabelRes(index)),
+                                    selected = custom.fontStyle == index,
+                                    onClick = { CustomizationStore.setFontStyle(index) },
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -458,23 +501,32 @@ fun CustomizationScreen() {
                                 background = Brush.linearGradient(listOf(Color.White, Color.White)),
                             ),
                         )
-                        iconChoices.forEachIndexed { index, choice ->
-                            if (index > 0) Spacer(Modifier.height(10.dp))
-                            IconOption(
-                                label = stringResource(choice.labelRes),
-                                selected = custom.iconStyle == choice.style,
-                                background = choice.background,
-                                iconRes = choice.iconRes,
-                                onSelect = {
-                                    CustomizationStore.setIconStyle(choice.style)
-                                    LauncherIconManager.apply(choice.style)
-                                    Toast.makeText(
-                                        context,
-                                        R.string.customization_icon_hint,
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
-                                },
-                            )
+                        iconChoices.chunked(3).forEach { row ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            ) {
+                                row.forEach { choice ->
+                                    IconChip(
+                                        modifier = Modifier.weight(1f),
+                                        label = stringResource(choice.labelRes),
+                                        selected = custom.iconStyle == choice.style,
+                                        background = choice.background,
+                                        iconRes = choice.iconRes,
+                                        onSelect = {
+                                            CustomizationStore.setIconStyle(choice.style)
+                                            LauncherIconManager.apply(choice.style)
+                                            Toast.makeText(
+                                                context,
+                                                R.string.customization_icon_hint,
+                                                Toast.LENGTH_SHORT,
+                                            ).show()
+                                        },
+                                    )
+                                }
+                                repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+                            }
+                            Spacer(Modifier.height(10.dp))
                         }
                     }
                 }
@@ -775,4 +827,101 @@ private fun IconOption(
             }
         }
     }
+}
+
+/** 通用开关行：标题 + 说明 + 右侧开关。 */
+@Composable
+private fun ToggleRow(
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Switch(checked = checked, onCheckedChange = onChange)
+    }
+}
+
+/** 九宫格胶囊：小图标 + 名称，选中时描边 + 主题色底。 */
+@Composable
+private fun IconChip(
+    label: String,
+    selected: Boolean,
+    background: Brush,
+    iconRes: Int,
+    onSelect: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        color = if (selected) {
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
+        } else {
+            freshCardColor()
+        },
+        border = if (selected) {
+            BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary)
+        } else {
+            freshCardBorder()
+        },
+        modifier = modifier
+            .clip(RoundedCornerShape(20.dp))
+            .clickable(onClick = onSelect),
+    ) {
+        Column(
+            modifier = Modifier.padding(vertical = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(38.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(background),
+                contentAlignment = Alignment.Center,
+            ) {
+                Image(
+                    painter = painterResource(iconRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(30.dp),
+                )
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = label,
+                fontSize = 11.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                color = if (selected) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                },
+            )
+        }
+    }
+}
+
+/** 字体选项文案。 */
+private fun fontLabelRes(index: Int): Int = when (index) {
+    1 -> R.string.customization_font_serif
+    2 -> R.string.customization_font_mono
+    3 -> R.string.customization_font_round
+    else -> R.string.customization_font_system
 }

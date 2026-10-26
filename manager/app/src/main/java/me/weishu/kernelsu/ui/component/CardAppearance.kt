@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.data.settings.CustomizationStore
+import me.weishu.kernelsu.data.settings.HERO_SLOT
 
 /** Resolved colours for one card: global settings with an optional per-card override. */
 data class CardSurface(
@@ -86,6 +87,24 @@ fun resolveCardSurface(slot: Int): CardSurface {
     val effectiveColor = if (overrideColor != 0) overrideColor else if (night) 0 else custom.cardColor
     val alphaOverride = custom.surfaceAlphas.getOrNull(slot) ?: -1f
     val alpha = if (alphaOverride >= 0f) alphaOverride else custom.cardAlpha
+
+    // 跟随系统壁纸：用动态取色得到的容器色，文字用对应的 on* 颜色
+    if (!night && overrideColor == 0 && custom.homePalette && custom.homeAdaptive) {
+        val scheme = MaterialTheme.colorScheme
+        val pair = when (slot) {
+            HERO_SLOT -> scheme.primaryContainer to scheme.onPrimaryContainer
+            1 -> scheme.secondaryContainer to scheme.onSecondaryContainer
+            2 -> scheme.tertiaryContainer to scheme.onTertiaryContainer
+            3 -> scheme.surfaceContainerHigh to scheme.onSurface
+            else -> scheme.primaryContainer to scheme.onPrimaryContainer
+        }
+        return CardSurface(
+            container = pair.first.copy(alpha = alpha * 0.92f),
+            content = pair.second,
+            accent = pair.second,
+            border = null,
+        )
+    }
 
     // Light mode: use the curated palette until the user overrides a card or turns it off.
     if (!night && overrideColor == 0 && custom.homePalette) {

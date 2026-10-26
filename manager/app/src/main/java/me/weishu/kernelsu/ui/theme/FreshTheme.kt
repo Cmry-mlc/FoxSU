@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsControllerCompat
+import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.webui.MonetColorsProvider
 
 /**
@@ -85,7 +86,7 @@ fun FreshKernelSUTheme(
     MaterialExpressiveTheme(
         colorScheme = animatedColorScheme,
         motionScheme = MotionScheme.expressive(),
-        typography = Typography,
+        typography = typographyWithFont(CustomizationStore.current.fontStyle),
         shapes = FreshShapes,
         content = {
             MonetColorsProvider.UpdateCss(animatedColorScheme)

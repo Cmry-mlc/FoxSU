@@ -80,7 +80,7 @@ fun WallpaperBackdrop(
     content: @Composable () -> Unit,
 ) {
     val custom = CustomizationStore.current
-    if (custom.wallpaperUri == null) {
+    if (custom.wallpaperUri == null || !custom.wallpaperEnabled) {
         content()
         return
     }
@@ -93,7 +93,8 @@ fun WallpaperBackdrop(
 /** True when the user picked a wallpaper, so scaffolds can go transparent. */
 @Composable
 @ReadOnlyComposable
-fun hasCustomWallpaper(): Boolean = CustomizationStore.current.wallpaperUri != null
+fun hasCustomWallpaper(): Boolean =
+    CustomizationStore.current.wallpaperUri != null && CustomizationStore.current.wallpaperEnabled
 
 /** Scaffold container that is transparent while a wallpaper is in use. */
 @Composable

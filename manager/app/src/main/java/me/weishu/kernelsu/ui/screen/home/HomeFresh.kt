@@ -66,6 +66,7 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -111,6 +112,8 @@ import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.UiMode
 import me.weishu.kernelsu.ui.component.CardAppearanceDialog
+import me.weishu.kernelsu.ui.navigation3.LocalNavigator
+import me.weishu.kernelsu.ui.navigation3.Route
 import me.weishu.kernelsu.ui.component.CardSurface
 import me.weishu.kernelsu.ui.component.KsuIsValid
 import me.weishu.kernelsu.ui.component.freshCardBorder
@@ -574,6 +577,7 @@ private fun FreshStylePickerDialog(
 
 @Composable
 private fun FreshHeader() {
+    val navigator = LocalNavigator.current
     var showRebootDialog by remember { mutableStateOf(false) }
 
     Row(
@@ -590,6 +594,23 @@ private fun FreshHeader() {
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
         )
+
+        // 关于作者：和电源键同款的圆形描边按钮
+        IconButton(
+            onClick = { navigator.push(Route.Author) },
+            modifier = Modifier
+                .padding(end = 8.dp)
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(freshCardColor()),
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_author),
+                contentDescription = stringResource(R.string.author_title),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(21.dp),
+            )
+        }
 
         KsuIsValid {
             Surface(

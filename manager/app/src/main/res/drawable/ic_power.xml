@@ -4,17 +4,17 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- 圆润电源键：竖档 + 开口圆环 -->
+    <!-- 新版电源键：粗圆环 + 加长竖档，开口更窄 -->
     <path
         android:strokeColor="#FF000000"
-        android:strokeWidth="2"
+        android:strokeWidth="2.4"
         android:strokeLineCap="round"
         android:fillColor="#00000000"
-        android:pathData="M12,3.6 L12,11.2" />
+        android:pathData="M12,3.2 L12,11.4" />
     <path
         android:strokeColor="#FF000000"
-        android:strokeWidth="2"
+        android:strokeWidth="2.4"
         android:strokeLineCap="round"
         android:fillColor="#00000000"
-        android:pathData="M6.9,6.7 A7.1,7.1 0 1,0 17.1,6.7" />
+        android:pathData="M7.6,6.2 A6.9,6.9 0 1,0 16.4,6.2" />
 </vector>

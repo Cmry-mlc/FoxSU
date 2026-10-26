@@ -26,6 +26,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeFlexibleTopAppBar
@@ -48,6 +49,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.dropUnlessResumed
+import me.weishu.kernelsu.BuildConfig
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.component.freshCardBorder
 import me.weishu.kernelsu.ui.component.freshCardColor
@@ -149,6 +151,12 @@ fun AuthorScreen() {
 
             Spacer(Modifier.height(12.dp))
 
+            InfoRow(
+                icon = Icons.Filled.Info,
+                label = stringResource(R.string.author_version),
+                value = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+            )
+            Spacer(Modifier.height(10.dp))
             InfoRow(
                 icon = Icons.Filled.Code,
                 label = stringResource(R.string.author_project),

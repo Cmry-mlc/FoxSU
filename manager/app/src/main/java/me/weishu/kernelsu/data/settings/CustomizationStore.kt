@@ -59,6 +59,14 @@ data class Customization(
     val bottomBarRadius: Float = 30f,
     /** 鸿蒙式沉浸光感：底栏加一层柔光渐变，更通透。 */
     val bottomBarImmersive: Boolean = false,
+    /** 玻璃质感卡面：接近全透明的白色薄片 + 白色描边。 */
+    val cardGlass: Boolean = false,
+    /** 是否启用全局背景图。 */
+    val wallpaperEnabled: Boolean = true,
+    /** 首页卡片取色跟随系统壁纸（动态取色）。 */
+    val homeAdaptive: Boolean = false,
+    /** 0 = 系统默认，1 = 衬线，2 = 等宽，3 = 手写圆体。 */
+    val fontStyle: Int = 0,
     /** 0 = FoxSu icon, 1 = original KernelSU icon, 2..4 = alternative FoxSu icons. */
     val iconStyle: Int = 0,
 )
@@ -96,6 +104,10 @@ object CustomizationStore {
     private const val KEY_HOME_PALETTE = "home_palette"
     private const val KEY_BOTTOM_RADIUS = "bottom_bar_radius"
     private const val KEY_BOTTOM_IMMERSIVE = "bottom_bar_immersive"
+    private const val KEY_CARD_GLASS = "card_glass"
+    private const val KEY_WALLPAPER_ENABLED = "wallpaper_enabled"
+    private const val KEY_HOME_ADAPTIVE = "home_adaptive"
+    private const val KEY_FONT_STYLE = "font_style"
     private const val KEY_ICON_STYLE = "icon_style"
 
     val cardColorOptions = listOf(
@@ -145,6 +157,10 @@ object CustomizationStore {
             homePalette = getBoolean(KEY_HOME_PALETTE, true),
             bottomBarRadius = getFloat(KEY_BOTTOM_RADIUS, 30f),
             bottomBarImmersive = getBoolean(KEY_BOTTOM_IMMERSIVE, false),
+            cardGlass = getBoolean(KEY_CARD_GLASS, false),
+            wallpaperEnabled = getBoolean(KEY_WALLPAPER_ENABLED, true),
+            homeAdaptive = getBoolean(KEY_HOME_ADAPTIVE, false),
+            fontStyle = getInt(KEY_FONT_STYLE, 0),
             iconStyle = getInt(KEY_ICON_STYLE, 0),
         )
     }
@@ -197,6 +213,10 @@ object CustomizationStore {
     fun setHomePalette(enabled: Boolean) = update { it.copy(homePalette = enabled) }
     fun setBottomBarRadius(radius: Float) = update { it.copy(bottomBarRadius = radius) }
     fun setBottomBarImmersive(enabled: Boolean) = update { it.copy(bottomBarImmersive = enabled) }
+    fun setCardGlass(enabled: Boolean) = update { it.copy(cardGlass = enabled) }
+    fun setWallpaperEnabled(enabled: Boolean) = update { it.copy(wallpaperEnabled = enabled) }
+    fun setHomeAdaptive(enabled: Boolean) = update { it.copy(homeAdaptive = enabled) }
+    fun setFontStyle(style: Int) = update { it.copy(fontStyle = style) }
     fun setIconStyle(style: Int) = update { it.copy(iconStyle = style) }
 
     fun reset() = update { Customization() }
@@ -236,6 +256,10 @@ object CustomizationStore {
             putBoolean(KEY_HOME_PALETTE, next.homePalette)
             putFloat(KEY_BOTTOM_RADIUS, next.bottomBarRadius)
             putBoolean(KEY_BOTTOM_IMMERSIVE, next.bottomBarImmersive)
+            putBoolean(KEY_CARD_GLASS, next.cardGlass)
+            putBoolean(KEY_WALLPAPER_ENABLED, next.wallpaperEnabled)
+            putBoolean(KEY_HOME_ADAPTIVE, next.homeAdaptive)
+            putInt(KEY_FONT_STYLE, next.fontStyle)
             putInt(KEY_ICON_STYLE, next.iconStyle)
         }
         current = next

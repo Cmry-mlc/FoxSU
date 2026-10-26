@@ -53,6 +53,11 @@ fun rememberCardSupportingColor(): Color = LocalContentColor.current.copy(alpha 
 @Composable
 @ReadOnlyComposable
 fun freshCardColor(): Color {
+    val custom = CustomizationStore.current
+    // 玻璃卡面：极淡的白色薄片，靠描边和高光撑出层次（参考图二的透明卡片）
+    if (custom.cardGlass) {
+        return Color.White.copy(alpha = if (isNightScheme()) 0.07f else 0.16f)
+    }
     val base = if (isSystemInDarkTheme()) {
         MaterialTheme.colorScheme.surfaceContainerHigh
     } else {
@@ -64,10 +69,19 @@ fun freshCardColor(): Color {
 /** Hairline that lifts a card off the canvas; only dark mode needs it (shadows read as noise). */
 @Composable
 @ReadOnlyComposable
-fun freshCardBorder(): BorderStroke? = if (isSystemInDarkTheme()) {
-    BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-} else {
-    null
+fun freshCardBorder(): BorderStroke? {
+    val custom = CustomizationStore.current
+    if (custom.cardGlass) {
+        return BorderStroke(
+            1.dp,
+            Color.White.copy(alpha = if (isNightScheme()) 0.14f else 0.55f),
+        )
+    }
+    return if (isSystemInDarkTheme()) {
+        BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+    } else {
+        null
+    }
 }
 
 /** Supporting text on a card: a bit brighter in dark mode so it stays legible. */
