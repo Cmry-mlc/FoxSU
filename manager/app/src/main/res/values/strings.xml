@@ -111,7 +111,7 @@
     <string name="home_support_title">Support Us</string>
     <string name="home_support_content">KernelSU is, and always will be, free, and open source. However, you can show us that you care by making a donation.</string>
     <string name="home_gki_warning">Starting from v3.0.0, the GKI work mode will be used only in testing environments. We do not recommend it for daily use, and image files will no longer be provided.</string>
-    <string name="about_source_code"><![CDATA[View source code at %1$s<br/>Join our %2$s channel]]></string>
+    <string name="about_source_code"><![CDATA[View source code at %1$s<br/>Join our %2$s channel<br/>Join our <b><a href="https://pd.qq.com/s/8glxclfk6?b=9">QQ</a></b> channel]]></string>
     <string name="profile" translatable="false">App Profile</string>
     <string name="profile_default">Default</string>
     <string name="profile_template">Template</string>
@@ -334,6 +334,8 @@
     <string name="author_upstream">Upstream</string>
     <string name="author_upstream_value">KernelSU by tiann</string>
     <string name="author_tap_hint">Tap to open</string>
+    <string name="author_qq">QQ channel</string>
+    <string name="author_qq_value">Tap to join the FoxSu channel</string>
     <string name="customization_preview_hint">Cards use this surface</string>
     <string name="customization_preview_card">Working mode</string>
     <string name="settings_ui_mode_summary">Choose the interface style.</string>

@@ -25,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeFlexibleTopAppBar
@@ -160,6 +161,13 @@ fun AuthorScreen() {
                 label = stringResource(R.string.author_contact),
                 value = stringResource(R.string.author_contact_value),
                 onClick = { uriHandler.openUri("https://github.com/Cmry-mlc/FoxSu/issues") },
+            )
+            Spacer(Modifier.height(10.dp))
+            InfoRow(
+                icon = Icons.Filled.Groups,
+                label = stringResource(R.string.author_qq),
+                value = stringResource(R.string.author_qq_value),
+                onClick = { uriHandler.openUri("https://pd.qq.com/s/8glxclfk6?b=9") },
             )
             Spacer(Modifier.height(10.dp))
             InfoRow(

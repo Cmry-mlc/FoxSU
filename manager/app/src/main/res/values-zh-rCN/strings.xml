@@ -98,7 +98,7 @@
     <string name="home_support_title">支持开发</string>
     <string name="home_support_content">KernelSU 将保持免费开源，向开发者捐赠以表示支持</string>
     <string name="home_gki_warning">自 v3.0.0 起 GKI 工作模式将仅用于测试环境，我们不建议用于日常使用，也不再提供镜像文件</string>
-    <string name="about_source_code"><![CDATA[在 %1$s 查看源码<br/>加入我们的 %2$s 频道<br/>加入我们的 <b><a href="https://pd.qq.com/s/8lipl1brp">QQ</a></b> 频道]]></string>
+    <string name="about_source_code"><![CDATA[在 %1$s 查看源码<br/>加入我们的 %2$s 频道<br/>加入我们的 <b><a href="https://pd.qq.com/s/8glxclfk6?b=9">QQ</a></b> 频道]]></string>
     <string name="profile_default">默认</string>
     <string name="profile_template">模板</string>
     <string name="profile_custom">自定义</string>
@@ -310,6 +310,8 @@
     <string name="author_upstream">上游项目</string>
     <string name="author_upstream_value">KernelSU 原项目</string>
     <string name="author_tap_hint">点击跳转</string>
+    <string name="author_qq">QQ 频道</string>
+    <string name="author_qq_value">点击链接加入腾讯频道【FoxSu】</string>
     <string name="customization_preview_hint">卡片使用这个背景</string>
     <string name="customization_preview_card">工作模式</string>
     <string name="settings_ui_mode_summary">选择应用的界面风格</string>
