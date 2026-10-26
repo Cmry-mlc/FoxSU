@@ -307,6 +307,9 @@
     <string name="author_project_value">FoxSu · KernelSU 分支</string>
     <string name="author_contact">反馈</string>
     <string name="author_contact_value">在 GitHub 提交 Issue</string>
+    <string name="author_upstream">上游项目</string>
+    <string name="author_upstream_value">KernelSU 原项目</string>
+    <string name="author_tap_hint">点击跳转</string>
     <string name="customization_preview_hint">卡片使用这个背景</string>
     <string name="customization_preview_card">工作模式</string>
     <string name="settings_ui_mode_summary">选择应用的界面风格</string>

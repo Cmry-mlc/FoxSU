@@ -331,6 +331,9 @@
     <string name="author_project_value">FoxSu · KernelSU fork</string>
     <string name="author_contact">Feedback</string>
     <string name="author_contact_value">Open an issue on GitHub</string>
+    <string name="author_upstream">Upstream</string>
+    <string name="author_upstream_value">KernelSU by tiann</string>
+    <string name="author_tap_hint">Tap to open</string>
     <string name="customization_preview_hint">Cards use this surface</string>
     <string name="customization_preview_card">Working mode</string>
     <string name="settings_ui_mode_summary">Choose the interface style.</string>

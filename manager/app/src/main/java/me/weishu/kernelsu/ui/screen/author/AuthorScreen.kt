@@ -2,6 +2,7 @@ package me.weishu.kernelsu.ui.screen.author
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,8 +22,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -57,6 +61,7 @@ import me.weishu.kernelsu.ui.navigation3.LocalNavigator
 @Composable
 fun AuthorScreen() {
     val navigator = LocalNavigator.current
+    val uriHandler = LocalUriHandler.current
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
 
     ExpressiveScaffold(
@@ -147,12 +152,21 @@ fun AuthorScreen() {
                 icon = Icons.Filled.Code,
                 label = stringResource(R.string.author_project),
                 value = stringResource(R.string.author_project_value),
+                onClick = { uriHandler.openUri("https://github.com/Cmry-mlc/FoxSu") },
             )
             Spacer(Modifier.height(10.dp))
             InfoRow(
                 icon = Icons.Filled.Favorite,
                 label = stringResource(R.string.author_contact),
                 value = stringResource(R.string.author_contact_value),
+                onClick = { uriHandler.openUri("https://github.com/Cmry-mlc/FoxSu/issues") },
+            )
+            Spacer(Modifier.height(10.dp))
+            InfoRow(
+                icon = Icons.Filled.Public,
+                label = stringResource(R.string.author_upstream),
+                value = stringResource(R.string.author_upstream_value),
+                onClick = { uriHandler.openUri("https://github.com/tiann/KernelSU") },
             )
 
             Spacer(Modifier.height(28.dp))
@@ -165,12 +179,15 @@ private fun InfoRow(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
     value: String,
+    onClick: (() -> Unit)? = null,
 ) {
     Surface(
         shape = RoundedCornerShape(24.dp),
         color = freshCardColor(),
         border = freshCardBorder(),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
@@ -191,7 +208,7 @@ private fun InfoRow(
                     modifier = Modifier.size(18.dp),
                 )
             }
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = label,
                     fontSize = 12.sp,
@@ -202,6 +219,14 @@ private fun InfoRow(
                     fontSize = 13.5.sp,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+            if (onClick != null) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = stringResource(R.string.author_tap_hint),
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f),
+                    modifier = Modifier.size(20.dp),
                 )
             }
         }

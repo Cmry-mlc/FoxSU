@@ -124,6 +124,7 @@ import me.weishu.kernelsu.ui.component.rebootlistpopup.RebootListOption
 import me.weishu.kernelsu.ui.component.rebootlistpopup.getRebootListOption
 import me.weishu.kernelsu.ui.component.rebootlistpopup.rememberRebootAction
 import me.weishu.kernelsu.ui.uiModeLabelRes
+import me.weishu.kernelsu.ui.component.ImageCropDialog
 import me.weishu.kernelsu.ui.util.savePickedImage
 
 /** Resolved colours for one card: global settings with optional per-card override. */
@@ -163,6 +164,7 @@ fun HomePagerFresh(
     var showHeroMenu by remember { mutableStateOf(false) }
     var kpiMenuIndex by remember { mutableStateOf(-1) }
     var kpiPickIndex by remember { mutableStateOf(0) }
+    var pendingCrop by remember { mutableStateOf<PendingCrop?>(null) }
     val currentUiMode = LocalUiMode.current
 
     val context = LocalContext.current
@@ -173,7 +175,7 @@ fun HomePagerFresh(
         if (uri == null) return@rememberLauncherForActivityResult
         scope.launch {
             val saved = withContext(Dispatchers.IO) {
-                savePickedImage(context, uri, "hero_card.jpg", maxSide = 1400)
+                savePickedImage(context, uri, "hero_raw.jpg", maxSide = 2000)
             }
             if (saved == null) {
                 Toast.makeText(
@@ -182,7 +184,7 @@ fun HomePagerFresh(
                     Toast.LENGTH_SHORT,
                 ).show()
             } else {
-                CustomizationStore.setHeroWallpaper(saved)
+                pendingCrop = PendingCrop(saved, 2.6f, 0, 0)
             }
         }
     }
@@ -194,7 +196,7 @@ fun HomePagerFresh(
         val index = kpiPickIndex
         scope.launch {
             val saved = withContext(Dispatchers.IO) {
-                savePickedImage(context, uri, "kpi_card_$index.jpg", maxSide = 1200)
+                savePickedImage(context, uri, "kpi_raw_$index.jpg", maxSide = 2000)
             }
             if (saved == null) {
                 Toast.makeText(
@@ -203,7 +205,7 @@ fun HomePagerFresh(
                     Toast.LENGTH_SHORT,
                 ).show()
             } else {
-                CustomizationStore.setKpiImage(index, saved)
+                pendingCrop = PendingCrop(saved, 1.08f, 1, index)
             }
         }
     }
@@ -394,26 +396,42 @@ fun HomePagerFresh(
 
                 Spacer(Modifier.height(14.dp))
 
-                FreshCardGroup(
+                FreshKernelCard(
+                    icon = Icons.Filled.DeveloperBoard,
+                    title = stringResource(R.string.home_kernel),
+                    value = state.systemInfo.kernelVersion,
                     containerColor = cardColor,
-                    contentColor = cardContent,
-                ) {
-                    FreshInfoRow(
-                        icon = Icons.Filled.DeveloperBoard,
-                        label = stringResource(R.string.home_kernel),
-                        value = state.systemInfo.kernelVersion,
-                    )
-                    FreshDivider()
-                    FreshInfoRow(
-                        icon = Icons.Filled.Fingerprint,
-                        label = stringResource(R.string.home_fingerprint),
-                        value = state.systemInfo.fingerprint,
-                    )
-                }
+                )
+
+                Spacer(Modifier.height(10.dp))
+
+                FreshKernelCard(
+                    icon = Icons.Filled.Fingerprint,
+                    title = stringResource(R.string.home_fingerprint),
+                    value = state.systemInfo.fingerprint,
+                    containerColor = cardColor,
+                )
 
             }
         }
         }
+    }
+
+    pendingCrop?.let { crop ->
+        ImageCropDialog(
+            sourcePath = crop.path,
+            aspectRatio = crop.aspect,
+            outputName = if (crop.kind == 0) "hero_card.jpg" else "kpi_card_${crop.index}.jpg",
+            onConfirm = { cropped ->
+                if (crop.kind == 0) {
+                    CustomizationStore.setHeroWallpaper(cropped)
+                } else {
+                    CustomizationStore.setKpiImage(crop.index, cropped)
+                }
+                pendingCrop = null
+            },
+            onDismiss = { pendingCrop = null },
+        )
     }
 
     if (showHeroMenu) {
@@ -1194,6 +1212,62 @@ private fun FreshPillTile(
     }
 }
 
+/** 内核信息卡：左侧圆角图标块 + 标题/详情，对应参考图里的单行工具卡。 */
+@Composable
+private fun FreshKernelCard(
+    icon: ImageVector,
+    title: String,
+    value: String,
+    containerColor: Color,
+) {
+    Surface(
+        shape = RoundedCornerShape(24.dp),
+        color = containerColor,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        border = freshCardBorder(),
+        shadowElevation = 0.dp,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(42.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(21.dp),
+                )
+            }
+            Spacer(Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(Modifier.height(3.dp))
+                Text(
+                    text = value,
+                    fontSize = 12.sp,
+                    lineHeight = 16.sp,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = supportingTextAlpha()),
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun FreshCardGroup(
     containerColor: Color,
@@ -1378,3 +1452,11 @@ private fun FreshIssueList(
         }
     }
 }
+
+/** 待裁剪的卡面图片：kind 0 = 顶部大卡，1 = KPI 卡（带索引）。 */
+private data class PendingCrop(
+    val path: String,
+    val aspect: Float,
+    val kind: Int,
+    val index: Int,
+)
