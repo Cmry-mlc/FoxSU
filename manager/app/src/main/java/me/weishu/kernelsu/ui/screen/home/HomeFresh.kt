@@ -1077,11 +1077,16 @@ private fun FreshStatusCard(
     val canJailbreak = notInstalled && state.isSELinuxPermissive
     val glassBackdrop = CustomizationStore.current.cardGlass
     val hasHero = !glassBackdrop && hero != null && heroBitmap != null
-    // 徽章着色：浅色卡片用品牌绿，深色/图片背景用更亮的绿
-    val statusTint = if (ksuActive) {
-        if (hasHero || isNightScheme()) Color(0xFF5BE08D) else Color(0xFF12B45C)
+    // 徽章：深墨绿（与 LKM 标签同色系）而非高饱和绿，融入卡片又不失成功语义
+    val badgeTint = when {
+        !ksuActive -> MaterialTheme.colorScheme.error
+        hasHero || isNightScheme() -> Color.White
+        else -> Color(0xFF1C5A36)
+    }
+    val badgeBackdrop = if (ksuActive) {
+        badgeTint.copy(alpha = if (hasHero) 0.16f else 0.07f)
     } else {
-        MaterialTheme.colorScheme.error
+        MaterialTheme.colorScheme.error.copy(alpha = 0.10f)
     }
 
     Surface(
@@ -1203,16 +1208,23 @@ private fun FreshStatusCard(
                 }
             }
 
-            // 状态徽章：卡片右侧、垂直居中，整枚留在卡片内
-            Icon(
-                painter = statusIcon,
-                contentDescription = null,
-                tint = statusTint,
+            // 状态徽章：柔光圆底 + 同色系线性环勾，和卡片里的其他图标同一套语言
+            Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .padding(end = 12.dp)
-                    .size(76.dp),
-            )
+                    .padding(end = 14.dp)
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .background(badgeBackdrop),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painter = statusIcon,
+                    contentDescription = null,
+                    tint = badgeTint.copy(alpha = if (ksuActive) 0.88f else 0.9f),
+                    modifier = Modifier.size(56.dp),
+                )
+            }
         }
     }
 }
