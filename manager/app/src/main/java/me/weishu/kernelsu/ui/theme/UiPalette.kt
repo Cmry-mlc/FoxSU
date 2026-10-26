@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 object UiPalette {
     /** 画布底色：设计稿那种带一点紫灰的浅色。 */
     val CanvasLight = Color(0xFFF5F4F9)
-    val CanvasDark = Color(0xFF101014)
+    val CanvasDark = Color(0xFF16161D)
 
     // —— 主页各卡片的底色 / 内容色（浅色模式，与设计稿逐色对照）——
     /** 主状态卡：粉桃渐变（135deg #FDE4E0 → #FBD8E4）。 */
@@ -46,22 +46,27 @@ object UiPalette {
     val PillLilac = Color(0xFFE4DEF8) to Color(0xFF6C5FC7)
     val PillSand = Color(0xFFFAEDCF) to Color(0xFF9A7A1E)
 
-    // —— 深色模式：同样的色相压暗，配亮字 ——
-    val HeroSurfaceDark = Color(0xFF2A2140)
-    val HeroContentDark = Color(0xFFE8DFFF)
-    val HeroAccentDark = Color(0xFFC4ACF5)
+    // —— 深色模式：与设计稿 dark-mode 稿逐色对齐 ——
+    // bg #16161D / ink #ECEAF2 / sub #9A97AB / faint #5A5768
+    val InkDark = Color(0xFFECEAF2)
+    val SubDark = Color(0xFF9A97AB)
+    val FaintDark = Color(0xFF5A5768)
 
-    val KpiMintDark = Color(0xFF172A1B) to Color(0xFFBFE8C6)
-    val KpiCreamDark = Color(0xFF2E2716) to Color(0xFFEFD79A)
-    val KpiLilacDark = Color(0xFF221C3A) to Color(0xFFCDBDF5)
-    val KpiRoseDark = Color(0xFF2E1A22) to Color(0xFFF2BCCD)
+    val HeroSurfaceDark = Color(0xFF2A2124)
+    val HeroContentDark = InkDark
+    val HeroAccentDark = Color(0xFFA99DF0)
 
-    val PillMintDark = Color(0xFF172A1B) to Color(0xFFBFE8C6)
-    val PillGrayDark = Color(0xFF23222B) to Color(0xFFC6C3D2)
-    val PillPeachDark = Color(0xFF33241A) to Color(0xFFF0C4A0)
-    val PillSkyDark = Color(0xFF1A2436) to Color(0xFFB9CDEF)
-    val PillLilacDark = Color(0xFF241E3D) to Color(0xFFC9BAEF)
-    val PillSandDark = Color(0xFF2C2616) to Color(0xFFE8D296)
+    val KpiMintDark = Color(0xFF1F2F26) to Color(0xFF8FD6A4)
+    val KpiCreamDark = Color(0xFF332C1C) to Color(0xFFE3C26E)
+    val KpiLilacDark = Color(0xFF262437) to Color(0xFFA99DF0)
+    val KpiRoseDark = Color(0xFF33222B) to Color(0xFFF08AB4)
+
+    val PillMintDark = Color(0xFF1F2F26) to Color(0xFF8FD6A4)
+    val PillGrayDark = Color(0xFF24242E) to Color(0xFFB5B2C2)
+    val PillPeachDark = Color(0xFF332620) to Color(0xFFF0A874)
+    val PillSkyDark = Color(0xFF1F2836) to Color(0xFF82ABDF)
+    val PillLilacDark = Color(0xFF262437) to Color(0xFFA99DF0)
+    val PillSandDark = Color(0xFF332C1C) to Color(0xFFE3C26E)
 
     // —— 底栏（设计稿三页同款）——
     /** 未选中图标 / 文字。 */

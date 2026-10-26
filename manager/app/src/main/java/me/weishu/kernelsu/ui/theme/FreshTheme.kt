@@ -78,22 +78,24 @@ fun FreshKernelSUTheme(
     } else {
         // Pitch-black canvas + #1E1E1E cards: the same look on every screen, with pure white
         // titles and a mid-grey secondary so nothing blends into the background.
+        // 设计稿 dark-mode：画布 #16161D，卡片 #1E1E28 一档档浮起，字 #ECEAF2 / #9A97AB
         baseScheme.copy(
-            surface = Color.Black,
-            surfaceDim = Color.Black,
-            background = Color.Black,
-            surfaceContainerLowest = Color(0xFF0A0A0A),
-            surfaceContainerLow = Color(0xFF141414),
-            surfaceContainer = Color(0xFF181818),
-            surfaceContainerHigh = Color(0xFF1E1E1E),
-            surfaceContainerHighest = Color(0xFF262626),
-            onSurface = Color(0xFFF5F5F5),
-            onSurfaceVariant = Color(0xFFA6A6A6),
-            onBackground = Color(0xFFF5F5F5),
-            outline = Color(0xFF8A8A8A),
-            outlineVariant = Color(0xFF333333),
-            inverseSurface = Color(0xFFEDEDED),
-            inverseOnSurface = Color(0xFF1B1B1B),
+            surface = UiPalette.CanvasDark,
+            surfaceDim = Color(0xFF121218),
+            background = UiPalette.CanvasDark,
+            surfaceBright = Color(0xFF2A2A36),
+            surfaceContainerLowest = Color(0xFF121218),
+            surfaceContainerLow = Color(0xFF1A1A22),
+            surfaceContainer = Color(0xFF1E1E28),
+            surfaceContainerHigh = Color(0xFF24242E),
+            surfaceContainerHighest = Color(0xFF2C2C38),
+            onSurface = UiPalette.InkDark,
+            onSurfaceVariant = UiPalette.SubDark,
+            onBackground = UiPalette.InkDark,
+            outline = UiPalette.SubDark,
+            outlineVariant = UiPalette.FaintDark,
+            inverseSurface = UiPalette.InkDark,
+            inverseOnSurface = UiPalette.CanvasDark,
         )
     }
 

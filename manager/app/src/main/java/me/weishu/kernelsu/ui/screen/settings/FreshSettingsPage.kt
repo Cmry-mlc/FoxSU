@@ -47,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -70,7 +71,7 @@ import me.weishu.kernelsu.ui.uiModeLabelRes
 private enum class TileState { On, Off, Link, Disabled }
 
 private class SettingsTile(
-    val icon: ImageVector,
+    val iconRes: Int,
     val title: String,
     val caption: String?,
     val state: TileState,
@@ -95,13 +96,13 @@ fun FreshSettingsPage(
     val unsupported = stringResource(R.string.feature_status_unsupported_summary)
 
     fun switchTile(
-        icon: ImageVector,
+        icon: Int,
         title: String,
         checked: Boolean,
         enabled: Boolean = true,
         onChange: (Boolean) -> Unit,
     ) = SettingsTile(
-        icon = icon,
+        iconRes = icon,
         title = title,
         caption = when {
             !enabled -> unsupported
@@ -116,7 +117,7 @@ fun FreshSettingsPage(
         onClick = { if (enabled) onChange(!checked) },
     )
 
-    fun linkTile(icon: ImageVector, title: String, caption: String?, onClick: () -> Unit) =
+    fun linkTile(icon: Int, title: String, caption: String?, onClick: () -> Unit) =
         SettingsTile(icon, title, caption, TileState.Link, onClick)
 
     var sucompatDialog by remember { mutableStateOf(false) }
@@ -126,13 +127,13 @@ fun FreshSettingsPage(
             FreshTileGrid(
                 listOf(
                     switchTile(
-                        icon = Icons.Filled.SystemUpdate,
+                        icon = R.drawable.ic_d_download,
                         title = stringResource(R.string.settings_check_update),
                         checked = uiState.checkUpdate,
                         onChange = actions.onSetCheckUpdate,
                     ),
                     switchTile(
-                        icon = Icons.Filled.SystemUpdateAlt,
+                        icon = R.drawable.ic_d_refresh,
                         title = stringResource(R.string.settings_module_check_update),
                         checked = uiState.checkModuleUpdate,
                         onChange = actions.onSetCheckModuleUpdate,
@@ -145,19 +146,19 @@ fun FreshSettingsPage(
             FreshTileGrid(
                 listOf(
                     linkTile(
-                        icon = Icons.Filled.DisplaySettings,
+                        icon = R.drawable.ic_d_palette,
                         title = stringResource(R.string.settings_ui_mode),
                         caption = stringResource(uiModeLabelRes(UiMode.fromValue(uiState.uiMode))),
                         onClick = onOpenUiModePicker,
                     ),
                     linkTile(
-                        icon = Icons.Filled.Wallpaper,
+                        icon = R.drawable.ic_d_image,
                         title = stringResource(R.string.customization_title),
                         caption = stringResource(R.string.customization_entry_summary),
                         onClick = onOpenCustomization,
                     ),
                     linkTile(
-                        icon = Icons.Filled.Palette,
+                        icon = R.drawable.ic_d_palette,
                         title = stringResource(R.string.settings_theme),
                         caption = stringResource(R.string.settings_theme_summary),
                         onClick = actions.onOpenTheme,
@@ -170,7 +171,7 @@ fun FreshSettingsPage(
             FreshTileGrid(
                 listOf(
                     linkTile(
-                        icon = Icons.Filled.AdminPanelSettings,
+                        icon = R.drawable.ic_d_terminal,
                         title = stringResource(R.string.settings_sucompat),
                         caption = when (uiState.suCompatStatus) {
                             "unsupported" -> unsupported
@@ -181,49 +182,49 @@ fun FreshSettingsPage(
                         onClick = { if (uiState.suCompatStatus == "supported") sucompatDialog = true },
                     ),
                     switchTile(
-                        icon = Icons.Filled.LayersClear,
+                        icon = R.drawable.ic_d_hammer,
                         title = stringResource(R.string.settings_kernel_umount),
                         checked = uiState.isKernelUmountEnabled,
                         enabled = uiState.kernelUmountStatus == "supported",
                         onChange = actions.onSetKernelUmountEnabled,
                     ),
                     switchTile(
-                        icon = Icons.Filled.Security,
+                        icon = R.drawable.ic_d_lock,
                         title = stringResource(R.string.settings_selinux_hide),
                         checked = uiState.isSelinuxHideEnabled,
                         enabled = uiState.selinuxHideStatus == "supported",
                         onChange = actions.onSetSelinuxHideEnabled,
                     ),
                     switchTile(
-                        icon = Icons.AutoMirrored.Filled.Article,
+                        icon = R.drawable.ic_d_book,
                         title = stringResource(R.string.settings_sulog),
                         checked = uiState.isSulogEnabled,
                         enabled = uiState.sulogStatus == "supported",
                         onChange = actions.onSetSulogEnabled,
                     ),
                     switchTile(
-                        icon = Icons.Filled.Adb,
+                        icon = R.drawable.ic_d_android,
                         title = stringResource(R.string.settings_adb_root),
                         checked = uiState.isAdbRootEnabled,
                         enabled = uiState.adbRootStatus == "supported",
                         onChange = actions.onSetAdbRootEnabled,
                     ),
                     switchTile(
-                        icon = Icons.Filled.VerifiedUser,
+                        icon = R.drawable.ic_d_shield2,
                         title = stringResource(R.string.settings_shell_su_adb_only),
                         checked = uiState.isShellSuAdbOnlyEnabled,
                         enabled = uiState.shellSuAdbOnlyStatus == "supported",
                         onChange = actions.onSetShellSuAdbOnlyEnabled,
                     ),
                     switchTile(
-                        icon = Icons.Filled.RestartAlt,
+                        icon = R.drawable.ic_d_refresh,
                         title = stringResource(R.string.settings_soft_reboot),
                         checked = uiState.isLateLoadMode || uiState.useSoftReboot,
                         enabled = !uiState.isLateLoadMode,
                         onChange = actions.onSetUseSoftReboot,
                     ),
                     switchTile(
-                        icon = Icons.Filled.FlashOn,
+                        icon = R.drawable.ic_d_power2,
                         title = stringResource(R.string.settings_auto_jailbreak),
                         checked = uiState.autoJailbreak,
                         enabled = uiState.isLateLoadMode,
@@ -238,7 +239,7 @@ fun FreshSettingsPage(
                 buildList {
                     add(
                         linkTile(
-                            icon = Icons.Filled.Description,
+                            icon = R.drawable.ic_d_log,
                             title = stringResource(R.string.settings_profile_template),
                             caption = stringResource(R.string.settings_profile_template_summary),
                             onClick = actions.onOpenProfileTemplate,
@@ -246,7 +247,7 @@ fun FreshSettingsPage(
                     )
                     add(
                         switchTile(
-                            icon = Icons.AutoMirrored.Filled.Rule,
+                            icon = R.drawable.ic_d_tune,
                             title = stringResource(R.string.settings_umount_modules_default),
                             checked = uiState.isDefaultUmountModules,
                             onChange = actions.onSetDefaultUmountModules,
@@ -254,7 +255,7 @@ fun FreshSettingsPage(
                     )
                     add(
                         switchTile(
-                            icon = Icons.Filled.DeveloperMode,
+                            icon = R.drawable.ic_d_terminal,
                             title = stringResource(R.string.enable_web_debugging),
                             checked = uiState.enableWebDebugging,
                             onChange = actions.onSetEnableWebDebugging,
@@ -263,7 +264,7 @@ fun FreshSettingsPage(
                     if (uiState.isLkmMode) {
                         add(
                             linkTile(
-                                icon = Icons.Filled.Delete,
+                                icon = R.drawable.ic_d_hammer,
                                 title = stringResource(R.string.settings_uninstall),
                                 caption = null,
                                 onClick = { if (!uiState.isLateLoadMode) onShowUninstall() },
@@ -278,13 +279,13 @@ fun FreshSettingsPage(
             FreshTileGrid(
                 listOf(
                     linkTile(
-                        icon = Icons.Filled.BugReport,
+                        icon = R.drawable.ic_d_log,
                         title = stringResource(R.string.send_log),
                         caption = null,
                         onClick = onShowLog,
                     ),
                     linkTile(
-                        icon = Icons.Filled.Info,
+                        icon = R.drawable.ic_d_book,
                         title = stringResource(R.string.about),
                         caption = null,
                         onClick = actions.onOpenAbout,
@@ -316,12 +317,14 @@ fun FreshSettingsPage(
 
 @Composable
 private fun FreshSettingsSection(title: String, content: @Composable () -> Unit) {
-    Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 14.dp)) {
+    Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 4.dp)) {
         Text(
             text = title,
-            style = MaterialTheme.typography.labelMedium,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.ExtraBold,
+            letterSpacing = 1.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = 4.dp, bottom = 10.dp),
+            modifier = Modifier.padding(start = 6.dp, top = 16.dp, bottom = 9.dp),
         )
         content()
     }
@@ -395,25 +398,28 @@ private fun SettingsTileView(
     contentColor: Color? = null,
 ) {
     val onCard = containerColor != null && contentColor != null
-    // 参考图：图标在卡片自身文字色的白底圆里，状态用透明度区分，不再用主题蓝红
+    // 设计稿：磁贴标题/说明都用卡片自己的深彩色；未支持的状态降透明度
     val accent = when {
         onCard -> contentColor!!
         tile.state == TileState.On || tile.state == TileState.Link -> MaterialTheme.colorScheme.primary
         tile.state == TileState.Off -> MaterialTheme.colorScheme.onSurfaceVariant
         else -> MaterialTheme.colorScheme.outline
     }
+    val titleColor = (contentColor ?: cardContentColor()).let {
+        if (tile.state == TileState.Disabled) it.copy(alpha = 0.45f) else it
+    }
     val captionColor = when {
-        onCard -> contentColor!!.copy(alpha = 0.6f)
+        onCard -> contentColor!!.copy(alpha = if (tile.state == TileState.Disabled) 0.4f else 0.65f)
         tile.state == TileState.On -> MaterialTheme.colorScheme.primary
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
     Surface(
         modifier = modifier
-            .height(102.dp)
-            .clip(RoundedCornerShape(24.dp))
+            .height(104.dp)
+            .clip(RoundedCornerShape(22.dp))
             .clickable(enabled = tile.state != TileState.Disabled, onClick = tile.onClick),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(22.dp),
         color = containerColor ?: freshCardColor(),
         contentColor = contentColor ?: cardContentColor(),
         border = if (onCard) null else freshCardBorder(),
@@ -424,42 +430,46 @@ private fun SettingsTileView(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 6.dp, vertical = 12.dp),
+                .padding(horizontal = 6.dp, vertical = 15.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            // 设计稿 chip：40dp 白底、13dp 圆角、彩色描边图标
             Surface(
-                shape = CircleShape,
+                shape = RoundedCornerShape(13.dp),
                 color = if (onCard) {
-                    Color.White.copy(alpha = if (isNightScheme()) 0.10f else 0.66f)
+                    Color.White.copy(alpha = if (isNightScheme()) 0.10f else 1f)
                 } else {
                     accent.copy(alpha = if (tile.state == TileState.On) 0.18f else 0.10f)
                 },
                 contentColor = accent,
-                modifier = Modifier.size(36.dp),
+                modifier = Modifier.size(40.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(tile.icon, contentDescription = null, modifier = Modifier.size(19.dp))
+                    Icon(
+                        painter = painterResource(tile.iconRes),
+                        contentDescription = null,
+                        tint = accent,
+                        modifier = Modifier.size(19.dp),
+                    )
                 }
             }
             Spacer(Modifier.height(8.dp))
             Text(
                 text = tile.title,
-                fontSize = 11.5.sp,
-                lineHeight = 14.sp,
-                fontWeight = FontWeight.SemiBold,
+                fontSize = 12.5.sp,
+                lineHeight = 16.sp,
+                fontWeight = FontWeight.ExtraBold,
                 textAlign = TextAlign.Center,
-                maxLines = 2,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                color = (contentColor ?: cardContentColor()).let {
-                    if (tile.state == TileState.Disabled) it.copy(alpha = 0.45f) else it
-                },
+                color = titleColor,
             )
             if (tile.caption != null) {
                 Spacer(Modifier.height(3.dp))
                 Text(
                     text = tile.caption,
-                    fontSize = 9.5.sp,
-                    lineHeight = 12.sp,
+                    fontSize = 10.sp,
+                    lineHeight = 14.sp,
                     textAlign = TextAlign.Center,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
