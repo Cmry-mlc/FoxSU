@@ -289,6 +289,8 @@
     <string name="customization_font_mono">Mono</string>
     <string name="customization_font_round">Cursive</string>
     <string name="customization_wallpaper_sub">Applies to every page, behind the cards</string>
+    <string name="customization_global_wallpaper">Global wallpaper</string>
+    <string name="customization_global_wallpaper_sub">Shown on every screen; you can crop it after picking</string>
     <string name="customization_hero_title">Home card pictures</string>
     <string name="customization_hero_sub">Long-press any card on the home screen</string>
     <string name="fresh_home_hero_title">Top card style</string>

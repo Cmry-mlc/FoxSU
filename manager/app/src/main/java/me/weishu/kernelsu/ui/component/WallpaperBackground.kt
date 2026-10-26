@@ -3,6 +3,7 @@ package me.weishu.kernelsu.ui.component
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.draw.blur
@@ -131,15 +132,18 @@ fun glassNeedsLightText(): Boolean {
     val custom = CustomizationStore.current
     if (!custom.cardGlass) return false
     if (MaterialTheme.colorScheme.surface.luminance() < 0.5f) return true
-    if (custom.glassWallpaper == null && systemWallpaperLuminanceCache < 0f) {
+    // 以实际生效的那张背景判断：全局壁纸 > 玻璃专属壁纸 > 内置日落图
+    val effective = when {
+        custom.wallpaperUri != null && custom.wallpaperEnabled -> custom.wallpaperUri
+        custom.glassWallpaper != null -> custom.glassWallpaper
+        else -> null
+    }
+    if (effective != null) return wallpaperLuminance(effective) < 0.45f
+    if (systemWallpaperLuminanceCache < 0f) {
         systemWallpaperBitmap()
     }
-    val bgLuminance = if (custom.glassWallpaper != null) {
-        wallpaperLuminance(custom.glassWallpaper)
-    } else {
-        if (systemWallpaperLuminanceCache < 0f) 1f else systemWallpaperLuminanceCache
-    }
-    return bgLuminance < 0.45f
+    // 读不到系统壁纸时用内置深色日落图，按深色底处理（白字才看得清）
+    return if (systemWallpaperLuminanceCache < 0f) true else systemWallpaperLuminanceCache < 0.45f
 }
 
 /** Loads the wallpaper with a sampled decode so a 4K photo does not blow up the heap. */
@@ -179,7 +183,7 @@ fun WallpaperBackground(
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .fillMaxSize()
-                .then(if (glass) Modifier.blur(30.dp) else Modifier)
+                .then(if (glass) Modifier.blur(46.dp) else Modifier)
                 .graphicsLayer {
                     val scale = customization.wallpaperScale
                     scaleX = scale
@@ -188,13 +192,12 @@ fun WallpaperBackground(
                     translationY = customization.wallpaperOffsetY * size.height
                 },
         )
-        // 玻璃模式：壁纸雾化 + 一层薄雾，卡片上的文字更稳
+        // 玻璃模式：只留一层很淡的雾，保留照片的通透感（文字由卡片本身的白描边撑住）
         if (glass) {
-            // 统一的暗雾，保证白字在任何壁纸上都清晰
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.34f)),
+                    .background(Color.Black.copy(alpha = 0.16f)),
             )
         }
         if (customization.wallpaperDim > 0f) {
@@ -217,13 +220,30 @@ fun WallpaperBackdrop(
     content: @Composable () -> Unit,
 ) {
     val custom = CustomizationStore.current
-    // 壁纸只服务玻璃卡面：未开启玻璃时主页用默认背景，且背景取自系统壁纸
-    if (!custom.cardGlass) {
+    val globalWallpaper = custom.wallpaperUri != null && custom.wallpaperEnabled
+    if (!globalWallpaper && !custom.cardGlass) {
         content()
         return
     }
     Box(modifier = modifier.fillMaxSize()) {
-        WallpaperBackground(customization = custom.copy(wallpaperUri = custom.glassWallpaper))
+        if (globalWallpaper) {
+            // 全局壁纸：全应用显示，保持清晰（不做模糊），叠一层薄雾让深色文字可读
+            WallpaperBackground(customization = custom.copy(cardGlass = false))
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        if (isSystemInDarkTheme()) {
+                            Color.Black.copy(alpha = 0.30f)
+                        } else {
+                            Color.White.copy(alpha = 0.20f)
+                        }
+                    ),
+            )
+        } else {
+            // 玻璃模式的磨砂壁纸：自定义玻璃图优先，否则内置日落图
+            WallpaperBackground(customization = custom.copy(wallpaperUri = custom.glassWallpaper))
+        }
         content()
     }
 }
@@ -231,7 +251,11 @@ fun WallpaperBackdrop(
 /** True when the user picked a wallpaper, so scaffolds can go transparent. */
 @Composable
 @ReadOnlyComposable
-fun hasCustomWallpaper(): Boolean = CustomizationStore.current.cardGlass
+fun hasCustomWallpaper(): Boolean {
+    val custom = CustomizationStore.current
+    val global = custom.wallpaperUri != null && custom.wallpaperEnabled
+    return global || custom.cardGlass
+}
 
 /** Scaffold container that is transparent while a wallpaper is in use. */
 @Composable

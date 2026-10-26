@@ -51,7 +51,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -75,6 +79,7 @@ import me.weishu.kernelsu.ui.component.WallpaperBackdrop
 import me.weishu.kernelsu.ui.component.freshCardBorder
 import me.weishu.kernelsu.ui.component.freshCardColor
 import me.weishu.kernelsu.ui.component.rememberCardSurface
+import me.weishu.kernelsu.ui.component.ImageCropDialog
 import me.weishu.kernelsu.ui.component.scaffoldBackgroundColor
 import me.weishu.kernelsu.ui.navigation3.LocalNavigator
 import me.weishu.kernelsu.ui.util.LauncherIconManager
@@ -87,18 +92,20 @@ fun CustomizationScreen() {
     val context = androidx.compose.ui.platform.LocalContext.current
     val scope = rememberCoroutineScope()
 
+    var pendingWallpaperCrop by remember { mutableStateOf<String?>(null) }
+
     val picker = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
         if (uri == null) return@rememberLauncherForActivityResult
         scope.launch {
             val saved = withContext(Dispatchers.IO) {
-                savePickedImage(context, uri, "wallpaper.jpg")
+                savePickedImage(context, uri, "wallpaper_raw.jpg", maxSide = 2400)
             }
             if (saved == null) {
                 Toast.makeText(context, R.string.customization_wallpaper_failed, Toast.LENGTH_SHORT).show()
             } else {
-                CustomizationStore.setWallpaper(saved)
+                pendingWallpaperCrop = saved
             }
         }
     }
@@ -135,6 +142,20 @@ fun CustomizationScreen() {
         }
     }
 
+    pendingWallpaperCrop?.let { raw ->
+        ImageCropDialog(
+            sourcePath = raw,
+            aspectRatio = 0.5625f,
+            outputName = "wallpaper.jpg",
+            onConfirm = { cropped ->
+                CustomizationStore.setWallpaper(cropped)
+                CustomizationStore.setWallpaperEnabled(true)
+                pendingWallpaperCrop = null
+            },
+            onDismiss = { pendingWallpaperCrop = null },
+        )
+    }
+
     Scaffold(
         containerColor = scaffoldBackgroundColor(MaterialTheme.colorScheme.surface),
         topBar = {
@@ -160,6 +181,42 @@ fun CustomizationScreen() {
                 item { PreviewCard(custom) }
 
 
+
+                item {
+                    SectionCard(
+                        icon = Icons.Filled.Wallpaper,
+                        title = stringResource(R.string.customization_global_wallpaper),
+                        subtitle = stringResource(R.string.customization_global_wallpaper_sub),
+                    ) {
+                        ToggleRow(
+                            title = stringResource(R.string.customization_wallpaper_enable),
+                            subtitle = stringResource(R.string.customization_wallpaper_enable_sum),
+                            checked = custom.wallpaperEnabled,
+                            onChange = CustomizationStore::setWallpaperEnabled,
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            PillButton(
+                                text = stringResource(R.string.customization_pick_image),
+                                icon = Icons.Filled.Photo,
+                                filled = true,
+                                onClick = {
+                                    picker.launch(
+                                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                    )
+                                },
+                            )
+                            if (custom.wallpaperUri != null) {
+                                PillButton(
+                                    text = stringResource(R.string.customization_clear),
+                                    icon = Icons.Filled.DeleteOutline,
+                                    filled = false,
+                                    onClick = { CustomizationStore.setWallpaper(null) },
+                                )
+                            }
+                        }
+                    }
+                }
 
                 item {
                     SectionCard(

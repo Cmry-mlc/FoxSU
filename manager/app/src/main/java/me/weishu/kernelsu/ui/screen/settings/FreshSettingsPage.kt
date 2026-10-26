@@ -58,8 +58,9 @@ import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.UiMode
 import me.weishu.kernelsu.ui.component.freshCardBorder
 import me.weishu.kernelsu.data.settings.CustomizationStore
-import me.weishu.kernelsu.data.settings.RainbowCards
+import me.weishu.kernelsu.ui.component.GlassSheen
 import me.weishu.kernelsu.ui.component.freshCardColor
+import me.weishu.kernelsu.ui.theme.LaunchTint
 import me.weishu.kernelsu.ui.component.isNightScheme
 import me.weishu.kernelsu.ui.uiModeLabelRes
 
@@ -349,7 +350,7 @@ private fun FreshTileGrid(tiles: List<SettingsTile>) {
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 row.forEach { tile ->
-                    val pair = if (rainbow) RainbowCards[index % RainbowCards.size] else null
+                    val pair = if (rainbow) LaunchTint.rainbowPair(index) else null
                     index++
                     SettingsTileView(
                         tile = tile,
@@ -393,6 +394,8 @@ private fun SettingsTileView(
         border = freshCardBorder(),
         shadowElevation = 0.dp,
     ) {
+        Box {
+            GlassSheen(Modifier.matchParentSize())
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -436,6 +439,7 @@ private fun SettingsTileView(
                     color = captionColor,
                 )
             }
+        }
         }
     }
 }

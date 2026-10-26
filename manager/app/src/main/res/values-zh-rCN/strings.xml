@@ -265,6 +265,8 @@
     <string name="customization_font_mono">等宽</string>
     <string name="customization_font_round">手写</string>
     <string name="customization_wallpaper_sub">作用于所有页面，位于卡片下层</string>
+    <string name="customization_global_wallpaper">全局壁纸</string>
+    <string name="customization_global_wallpaper_sub">所有界面共用一张背景图，选图后可直接裁剪</string>
     <string name="customization_hero_title">首页卡片背景</string>
     <string name="customization_hero_sub">长按首页任意卡片即可单独设置</string>
     <string name="fresh_home_hero_title">顶部卡片外观</string>

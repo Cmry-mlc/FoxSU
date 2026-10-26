@@ -88,8 +88,7 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
         FreshNavItem(R.string.settings, R.drawable.ic_nav_settings_fill, R.drawable.ic_nav_settings),
     )
 
-    // 与标题栏同一套随机色，保证上下呼应
-    val accentColor = LaunchTint.accent
+    // 底栏每个图标各自取一套七彩颜色（每次启动顺序随机），选中实色、未选中淡化
     val navigationBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
     Box(
@@ -166,7 +165,7 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
                             item = item,
                             selected = selected,
                             badge = badgeFor(index, navigationBadge),
-                            accent = accentColor,
+                            accent = LaunchTint.navColor(index),
                             onClick = onClick,
                         )
                     } else {
@@ -174,7 +173,7 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
                             item = item,
                             selected = selected,
                             badge = badgeFor(index, navigationBadge),
-                            accent = accentColor,
+                            accent = LaunchTint.navColor(index),
                             onClick = onClick,
                         )
                     }
@@ -209,7 +208,7 @@ private fun DrawerNavItem(
         label = "drawerPill",
     )
     val contentColor by animateColorAsState(
-        targetValue = if (selected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
+        targetValue = if (selected) accent else accent.copy(alpha = 0.52f),
         animationSpec = tween(durationMillis = 240),
         label = "drawerContent",
     )
@@ -290,7 +289,7 @@ private fun FreshNavItemView(
     val pressed by interactionSource.collectIsPressedAsState()
 
     val contentColor by animateColorAsState(
-        targetValue = if (selected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
+        targetValue = if (selected) accent else accent.copy(alpha = 0.52f),
         animationSpec = tween(durationMillis = 220),
         label = "navContent",
     )

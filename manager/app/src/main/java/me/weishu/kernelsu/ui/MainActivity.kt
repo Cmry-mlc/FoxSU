@@ -271,9 +271,11 @@ class MainActivity : ComponentActivity() {
                     }
 
                     Box(modifier = Modifier.fillMaxSize()) {
-                        // 玻璃卡面：全应用共用一张玻璃壁纸（自定义优先，其次内置日落图）
+                        // 背景：全局壁纸优先（所有界面生效），否则玻璃模式的磨砂壁纸
                         val customNow = CustomizationStore.current
-                        if (customNow.cardGlass) {
+                        if (customNow.wallpaperUri != null && customNow.wallpaperEnabled) {
+                            WallpaperBackground(customization = customNow.copy(cardGlass = false))
+                        } else if (customNow.cardGlass) {
                             WallpaperBackground(
                                 customization = customNow.copy(wallpaperUri = customNow.glassWallpaper)
                             )

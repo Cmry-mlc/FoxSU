@@ -118,7 +118,6 @@ import me.weishu.kernelsu.BuildConfig
 import me.weishu.kernelsu.Natives
 import me.weishu.kernelsu.data.settings.Customization
 import me.weishu.kernelsu.data.settings.CustomizationStore
-import me.weishu.kernelsu.data.settings.RainbowCards
 import me.weishu.kernelsu.data.settings.HERO_SLOT
 import me.weishu.kernelsu.data.repository.SettingsRepositoryImpl
 import androidx.compose.ui.res.painterResource
@@ -127,6 +126,7 @@ import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.UiMode
 import me.weishu.kernelsu.ui.component.CardAppearanceDialog
+import me.weishu.kernelsu.ui.component.GlassSheen
 import me.weishu.kernelsu.ui.navigation3.LocalNavigator
 import me.weishu.kernelsu.ui.navigation3.Route
 import me.weishu.kernelsu.ui.component.CardSurface
@@ -768,7 +768,7 @@ private fun FreshRebootDialog(onDismiss: () -> Unit) {
                 rowOptions.chunked(2).forEachIndexed { rowIndex, rowChunk ->
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         rowChunk.forEachIndexed { colIndex, option ->
-                            val pair = RainbowCards[(rowIndex * 2 + colIndex) % RainbowCards.size]
+                            val pair = LaunchTint.rainbowPair(rowIndex * 2 + colIndex)
                             RebootRow(
                                 option = option,
                                 containerColor = if (night) {
@@ -796,7 +796,7 @@ private fun FreshRebootDialog(onDismiss: () -> Unit) {
                         containerColor = if (night) {
                             MaterialTheme.colorScheme.surfaceContainerHigh
                         } else {
-                            Color(RainbowCards[index % RainbowCards.size].first)
+                            LaunchTint.rainbowSurface(index)
                         },
                         onConfirm = {
                             onDismiss()
@@ -1077,6 +1077,7 @@ private fun FreshStatusCard(
         shadowElevation = 0.dp,
     ) {
         Box {
+            GlassSheen(Modifier.matchParentSize())
             if (hero != null && heroBitmap != null) {
                 FreshHeroBackdrop(hero = hero, bitmap = heroBitmap)
             }
@@ -1304,6 +1305,7 @@ private fun FreshKpiCard(
         shadowElevation = 0.dp,
     ) {
         Box {
+            GlassSheen(Modifier.matchParentSize())
             if (bitmap != null && imageAlpha > 0.02f) {
                 Image(
                     bitmap = bitmap,
@@ -1469,7 +1471,8 @@ private fun FreshPillTile(
     onClick: (() -> Unit)? = null,
 ) {
     val shape = RoundedCornerShape(26.dp)
-    val tint = if (accent) MaterialTheme.colorScheme.primary else contentColor.copy(alpha = 0.7f)
+    // 图标跟着卡片自己的文字色走（不再固定主题绿），并加一层同色淡底，和七彩卡面更搭
+    val tint = if (accent) contentColor else contentColor.copy(alpha = 0.72f)
     val base = modifier
         .height(78.dp)
         .clip(shape)
@@ -1482,16 +1485,26 @@ private fun FreshPillTile(
         shadowElevation = 0.dp,
         modifier = base,
     ) {
+        Box {
+            GlassSheen(Modifier.matchParentSize())
         Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = tint,
-                modifier = Modifier.size(20.dp),
-            )
+            Box(
+                modifier = Modifier
+                    .size(30.dp)
+                    .clip(CircleShape)
+                    .background(tint.copy(alpha = if (accent) 0.16f else 0.08f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = tint,
+                    modifier = Modifier.size(17.dp),
+                )
+            }
             Spacer(Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -1513,6 +1526,7 @@ private fun FreshPillTile(
                 )
             }
         }
+        }
     }
 }
 
@@ -1522,7 +1536,7 @@ private fun FreshPillTile(
 private fun rainbowPair(index: Int): Pair<Color, Color> {
     val custom = CustomizationStore.current
     if (!custom.cardGlass && !isNightScheme() && custom.rainbowCards) {
-        val (bg, fg) = RainbowCards[index % RainbowCards.size]
+        val (bg, fg) = LaunchTint.rainbowPair(index)
         return Color(bg) to Color(fg)
     }
     return freshCardColor() to MaterialTheme.colorScheme.onSurface
@@ -1545,6 +1559,8 @@ private fun FreshKernelCard(
         shadowElevation = 0.dp,
         modifier = Modifier.fillMaxWidth(),
     ) {
+        Box {
+            GlassSheen(Modifier.matchParentSize())
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -1581,6 +1597,7 @@ private fun FreshKernelCard(
                     color = contentColor.copy(alpha = supportingTextAlpha()),
                 )
             }
+        }
         }
     }
 }

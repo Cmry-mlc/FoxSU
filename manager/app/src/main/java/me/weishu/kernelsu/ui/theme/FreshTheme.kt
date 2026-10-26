@@ -57,9 +57,23 @@ fun FreshKernelSUTheme(
         colorSpec = appSettings.colorSpec,
     )
 
-    // Night mode keeps the accent colour but moves the neutrals to a calm grey scale.
+    // 浅色：画布改成纯白，卡片用极浅的雾白 + 细描边来区分层次
+    // 夜间：强调色保留，中性色切到安静的灰阶。
     val colorScheme = if (!darkTheme) {
-        baseScheme
+        baseScheme.copy(
+            surface = Color.White,
+            background = Color.White,
+            surfaceBright = Color.White,
+            surfaceDim = Color(0xFFEDEFEC),
+            surfaceContainerLowest = Color(0xFFF7F9F7),
+            surfaceContainerLow = Color(0xFFF4F6F3),
+            surfaceContainer = Color(0xFFF0F3EF),
+            surfaceContainerHigh = Color(0xFFEBEFEA),
+            surfaceContainerHighest = Color(0xFFE6EAE4),
+            onSurface = Color(0xFF1A1D1A),
+            onSurfaceVariant = Color(0xFF606660),
+            outlineVariant = Color(0xFFE4E8E2),
+        )
     } else {
         // Pitch-black canvas + #1E1E1E cards: the same look on every screen, with pure white
         // titles and a mid-grey secondary so nothing blends into the background.

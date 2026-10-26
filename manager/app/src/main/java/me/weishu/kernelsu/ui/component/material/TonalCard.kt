@@ -16,6 +16,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.Box
+import me.weishu.kernelsu.ui.component.GlassSheen
 import me.weishu.kernelsu.ui.component.freshCardColor
 import me.weishu.kernelsu.ui.component.rememberCardContentColor
 import me.weishu.kernelsu.ui.component.rememberCardSurface
@@ -53,7 +55,7 @@ fun TonalCard(
                 ),
             colors = colors,
             shape = shape,
-        ) { content() }
+        ) { GlassBox { content() } }
 
         onClick != null -> Card(
             onClick = onClick,
@@ -62,12 +64,22 @@ fun TonalCard(
             colors = colors,
             shape = shape,
             interactionSource = interactionSource,
-        ) { content() }
+        ) { GlassBox { content() } }
 
         else -> Card(
             modifier = modifier,
             colors = colors,
             shape = shape,
-        ) { content() }
+        ) { GlassBox { content() } }
+    }
+}
+
+
+/** 磨砂玻璃时在卡片内容下垫一层高光，其他风格保持原样。 */
+@Composable
+private fun GlassBox(content: @Composable () -> Unit) {
+    Box {
+        GlassSheen(Modifier.matchParentSize())
+        content()
     }
 }
