@@ -90,6 +90,28 @@ val RainbowCards = listOf(
     0xFFFFE4E0.toInt() to 0xFF4A1F1A.toInt(), // 蜜桃
     0xFFEFE6FB.toInt() to 0xFF2E2148.toInt(), // 薰衣草
     0xFFDFF3F3.toInt() to 0xFF0F3A3A.toInt(), // 湖水
+    0xFFFCE8F3.toInt() to 0xFF4A1733.toInt(), // 樱粉
+    0xFFE8F1D8.toInt() to 0xFF2F3A12.toInt(), // 青柠
+    0xFFEDE9DC.toInt() to 0xFF3A3418.toInt(), // 沙金
+    0xFFF6E3D2.toInt() to 0xFF431F0C.toInt(), // 焦糖
+    0xFFE0E7F7.toInt() to 0xFF1C2550.toInt(), // 靛蓝
+    0xFFF2E2F7.toInt() to 0xFF3C1440.toInt(), // 紫罗兰
+)
+
+/** 夜间七彩：深色卡片底 + 亮色图标，保证在黑底上也是一眼能认出的彩色卡片。 */
+val RainbowCardsDark = listOf(
+    0xFF172A3D.toInt() to 0xFF9EC9F0.toInt(), // 雾蓝
+    0xFF14301F.toInt() to 0xFF9BE0B4.toInt(), // 薄荷
+    0xFF34290F.toInt() to 0xFFF0CE83.toInt(), // 奶油黄
+    0xFF381A16.toInt() to 0xFFF2A99C.toInt(), // 蜜桃
+    0xFF251A3D.toInt() to 0xFFC4A9F5.toInt(), // 薰衣草
+    0xFF10302F.toInt() to 0xFF8ADCD8.toInt(), // 湖水
+    0xFF36142A.toInt() to 0xFFF1A6CD.toInt(), // 樱粉
+    0xFF232B12.toInt() to 0xFFCBDD97.toInt(), // 青柠
+    0xFF2C2814.toInt() to 0xFFE4D69B.toInt(), // 沙金
+    0xFF32190E.toInt() to 0xFFEDB489.toInt(), // 焦糖
+    0xFF161E42.toInt() to 0xFFA3B4F0.toInt(), // 靛蓝
+    0xFF2E1235.toInt() to 0xFFDDA6E8.toInt(), // 紫罗兰
 )
 
 /** Hero card + four KPI cards + the module list cards. */
