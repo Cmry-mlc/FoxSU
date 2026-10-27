@@ -64,7 +64,7 @@ fun GlassBottomBar(
                 .clip(RoundedCornerShape(99.dp))
                 .background(t.dockBg)
                 .border(1.dp, t.dockBorder, RoundedCornerShape(99.dp))
-                .padding(5.dp),
+                .padding(4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             items.forEach { item ->
@@ -87,19 +87,19 @@ fun GlassBottomBar(
                             .clip(RoundedCornerShape(16.dp))
                             .background(bg)
                             .clickable { onOpenTab(item.tab) }
-                            .padding(horizontal = 17.dp, vertical = 6.dp),
+                            .padding(horizontal = 15.dp, vertical = 5.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Icon(
                             painter = painterResource(item.iconRes),
                             contentDescription = null,
-                            modifier = Modifier.size(15.dp),
+                            modifier = Modifier.size(14.dp),
                             tint = iconTint,
                         )
                         Text(
                             text = stringResource(item.labelRes),
-                            fontSize = 8.sp,
-                            letterSpacing = 0.5.sp,
+                            fontSize = 7.5.sp,
+                            letterSpacing = 0.3.sp,
                             color = fg,
                             maxLines = 1,
                             modifier = Modifier.padding(top = 2.dp),
@@ -110,7 +110,7 @@ fun GlassBottomBar(
                         Box(
                             modifier = Modifier
                                 .align(Alignment.TopCenter)
-                                .offset(y = (-7).dp)
+                                .offset(y = (-4).dp)
                                 .size(width = 22.dp, height = 3.dp)
                                 .clip(RoundedCornerShape(3.dp))
                                 .background(t.dockGrad),
@@ -121,16 +121,16 @@ fun GlassBottomBar(
                         Box(
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
-                                .padding(top = 1.dp, end = 8.dp)
-                                .heightIn(min = 13.dp)
+                                .offset(x = 2.dp, y = (-1).dp)
+                                .heightIn(min = 11.dp)
                                 .clip(CircleShape)
                                 .background(item.accent)
-                                .padding(horizontal = 6.dp, vertical = 1.dp),
+                                .padding(horizontal = 4.dp, vertical = 0.dp),
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(
                                 text = item.count.toString(),
-                                fontSize = 8.sp,
+                                fontSize = 7.sp,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = Color.White,
                                 maxLines = 1,
