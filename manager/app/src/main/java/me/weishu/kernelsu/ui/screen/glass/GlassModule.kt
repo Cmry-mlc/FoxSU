@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -168,9 +169,10 @@ fun GlassModuleList(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    // 随机七彩外圈：每次进入页面随机取一套霓虹色做 sweep 渐变描边
+                    .rainbowOutline(RoundedCornerShape(22.dp), 1.5.dp)
                     .clip(RoundedCornerShape(22.dp))
                     .background(if (t.isDark) Color.Transparent else Color(0x66FFFFFF))
-                    .border(1.5.dp, if (t.isDark) Color(0xFF2E2E3C) else Color(0xFFC9C6DA), RoundedCornerShape(22.dp))
                     .clickable(onClick = onAddModule)
                     .padding(vertical = 16.dp),
                 horizontalArrangement = Arrangement.Center,
@@ -203,4 +205,18 @@ fun GlassModuleList(
             }
         }
     }
+}
+
+/** 设计稿 addmod 的七彩描边：随机取 5 色做 sweep 渐变，底部带同色柔光 */
+@Composable
+private fun Modifier.rainbowOutline(shape: RoundedCornerShape, width: androidx.compose.ui.unit.Dp): Modifier {
+    val neon = listOf(
+        Color(0xFFFF7A59), Color(0xFFFFB35C), Color(0xFFFFE45C), Color(0xFF6EF08A),
+        Color(0xFF6EF0C0), Color(0xFF5CE1E6), Color(0xFF7AA2FF), Color(0xFFC77DFF), Color(0xFFFF7AC8),
+    )
+    val picked: List<Color> = remember { neon.shuffled().take(5) }
+    val colors = picked + picked.first()
+    return this
+        .shadow(10.dp, shape, spotColor = picked.first().copy(alpha = 0.22f), ambientColor = picked[2].copy(alpha = 0.18f))
+        .border(width, Brush.sweepGradient(colors), shape)
 }

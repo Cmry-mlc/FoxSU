@@ -545,6 +545,7 @@
     <string name="glass_refresh_modules_sub">Rescan module directory</string>
     <string name="glass_clean_modules">Clean unused modules</string>
     <string name="glass_clean_modules_sub">Remove leftover modules safely</string>
+    <string name="glass_profile_default_hint">Using the default profile, no extra rules</string>
     <string name="glass_home_fingerprint">System fingerprint</string>
     <string name="glass_reboot_hint">Choose a reboot target</string>
     <string name="glass_flash_sub">FoxSu Glass · Flashing console</string>
