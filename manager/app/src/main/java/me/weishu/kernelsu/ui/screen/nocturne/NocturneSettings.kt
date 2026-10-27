@@ -41,16 +41,19 @@ fun NocturneSettingsScreen(
 
     Box(Modifier.fillMaxSize()) {
         NcGlowBackground(t)
+        Column(Modifier.fillMaxSize().padding(top = ncStatusTop() + 2.dp, bottom = bottomInnerPadding)) {
+            Box(Modifier.padding(horizontal = 18.dp)) {
+                NcHeader(kicker = "PREFERENCES", title = "设置") {
+                    NcIconButton(iconRes = R.drawable.nc_user, onClick = actions.onOpenAbout)
+                    NcIconButton(iconRes = R.drawable.nc_palette, onClick = { showStylePicker = true })
+                }
+            }
         Column(
             Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(start = 18.dp, end = 18.dp, top = ncStatusTop() + 2.dp, bottom = bottomInnerPadding + 86.dp),
+                .padding(start = 18.dp, end = 18.dp, bottom = 86.dp),
         ) {
-            NcHeader(kicker = "PREFERENCES", title = "设置") {
-                NcIconButton(iconRes = R.drawable.nc_user, onClick = actions.onOpenAbout)
-                NcIconButton(iconRes = R.drawable.nc_palette, onClick = { showStylePicker = true })
-            }
 
             NcSectionLabel("UPDATES")
             NcGroupCard {
@@ -196,6 +199,7 @@ fun NocturneSettingsScreen(
                 modifier = Modifier.padding(start = 2.dp),
             )
             Spacer(Modifier.height(16.dp))
+        }
         }
     }
 

@@ -41,16 +41,19 @@ fun NocturneAuthorScreen(
 
     Box(Modifier.fillMaxSize()) {
         NcGlowBackground(t)
+        Column(Modifier.fillMaxSize().padding(top = ncStatusTop() + 2.dp)) {
+            Box(Modifier.padding(horizontal = 18.dp)) {
+                NcHeader(kicker = "AUTHOR · 造物者", title = "关于") {
+                    NcIconButton(iconRes = R.drawable.nc_back, onClick = onBack)
+                    NcIconButton(iconRes = R.drawable.nc_user, onClick = {}, primary = true)
+                }
+            }
         Column(
             Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(start = 18.dp, end = 18.dp, top = ncStatusTop() + 2.dp, bottom = 40.dp),
+                .padding(start = 18.dp, end = 18.dp, bottom = 40.dp),
         ) {
-            NcHeader(kicker = "AUTHOR · 造物者", title = "关于") {
-                NcIconButton(iconRes = R.drawable.nc_back, onClick = onBack)
-                NcIconButton(iconRes = R.drawable.nc_user, onClick = {}, primary = true)
-            }
 
             // acard
             NcGradientBorder(radius = 24.dp) {
@@ -182,6 +185,7 @@ fun NocturneAuthorScreen(
                 )
             }
             Spacer(Modifier.height(24.dp))
+        }
         }
     }
 }

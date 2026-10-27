@@ -59,22 +59,31 @@ fun NocturneHomeScreen(
     val t = ncTokens()
     val ok = state.ksuVersion != null
     var showReboot by remember { mutableStateOf(false) }
+    var showTheme by remember { mutableStateOf(false) }
 
     Box(Modifier.fillMaxSize()) {
         NcGlowBackground(t)
         Column(
             Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(start = 18.dp, end = 18.dp, top = ncStatusTop() + 2.dp, bottom = bottomInnerPadding + 86.dp),
+                .padding(top = ncStatusTop() + 2.dp, bottom = bottomInnerPadding),
         ) {
-            NcHeader(kicker = "KERNEL MANAGER", title = "FoxSu") {
-                NcIconButton(iconRes = R.drawable.nc_user, onClick = onOpenAuthor)
-                NcIconButton(iconRes = R.drawable.nc_palette, onClick = { onOpenTab(3) })
-                NcIconButton(iconRes = R.drawable.nc_power, onClick = { showReboot = true })
+            // 页头固定在顶部（不随内容滚动）
+            Box(Modifier.padding(horizontal = 18.dp)) {
+                NcHeader(kicker = "KERNEL MANAGER", title = "FoxSu") {
+                    NcIconButton(iconRes = R.drawable.nc_user, onClick = onOpenAuthor)
+                    NcIconButton(iconRes = R.drawable.nc_palette, onClick = { showTheme = true })
+                    NcIconButton(iconRes = R.drawable.nc_power, onClick = { showReboot = true })
+                }
             }
-
-            NcHero(state = state, ok = ok)
+            // 仅内容滚动
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(start = 18.dp, end = 18.dp, bottom = 86.dp),
+            ) {
+                NcHero(state = state, ok = ok)
             Spacer(Modifier.height(10.dp))
 
             NcSectionLabel("DEVICE · 设备")
@@ -139,10 +148,12 @@ fun NocturneHomeScreen(
                 iconRes = R.drawable.nc_lock,
             )
             Spacer(Modifier.height(10.dp))
+            }
         }
     }
 
     if (showReboot) NcRebootSheet(onDismiss = { showReboot = false })
+    if (showTheme) NcThemeSheet(onDismiss = { showTheme = false })
 }
 
 /**

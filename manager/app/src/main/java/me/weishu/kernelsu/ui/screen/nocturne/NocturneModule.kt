@@ -55,20 +55,17 @@ fun NocturneModuleScreen(
 
     Box(Modifier.fillMaxSize()) {
         NcGlowBackground(t)
-        LazyColumn(
-            Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = 18.dp, end = 18.dp,
-                top = ncStatusTop() + 2.dp,
-                bottom = bottomInnerPadding + 100.dp,
-            ),
-        ) {
-            item {
+        Column(Modifier.fillMaxSize().padding(top = ncStatusTop() + 2.dp)) {
+            Box(Modifier.padding(horizontal = 18.dp)) {
                 NcHeader(kicker = "MODULES", title = "模块") {
                     NcIconButton(iconRes = R.drawable.nc_user, onClick = {})
                     NcIconButton(iconRes = R.drawable.nc_download, onClick = onOpenRepo)
                 }
             }
+        LazyColumn(
+            Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(start = 18.dp, end = 18.dp, bottom = bottomInnerPadding + 100.dp),
+        ) {
             item {
                 NcSearchField(query, { query = it }, "搜索模块", R.drawable.nc_search_glyph)
                 Spacer(Modifier.height(12.dp))
@@ -92,6 +89,7 @@ fun NocturneModuleScreen(
                     Spacer(Modifier.height(7.dp))
                 }
             }
+        }
         }
 
         // FAB 56 violet 渐变
