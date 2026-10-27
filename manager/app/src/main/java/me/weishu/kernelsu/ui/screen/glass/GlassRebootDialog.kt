@@ -105,6 +105,7 @@ fun GlassRebootDialog(onDismiss: () -> Unit) {
                     animationSpec = infiniteRepeatable(tween(2200, easing = LinearEasing), RepeatMode.Restart),
                     label = "breath",
                 )
+                // 呼吸扩散环：与下方胶囊同一组七彩
                 Box(
                     modifier = Modifier
                         .size(56.dp)
@@ -116,28 +117,32 @@ fun GlassRebootDialog(onDismiss: () -> Unit) {
                         }
                         .border(
                             1.5.dp,
-                            Brush.sweepGradient(listOf(t.flame, t.violet, t.cyan, t.flame)),
+                            Brush.sweepGradient(rainbow + rainbow.first()),
                             CircleShape,
                         ),
                 )
+                // 内核圆：白玻璃 + 七彩圈，与胶囊统一
                 Box(
                     modifier = Modifier
                         .size(56.dp)
                         .shadow(
                             14.dp,
                             CircleShape,
-                            ambientColor = t.flame.copy(alpha = 0.32f),
-                            spotColor = t.violet.copy(alpha = 0.32f),
+                            ambientColor = rainbow.first().copy(alpha = 0.30f),
+                            spotColor = rainbow.last().copy(alpha = 0.30f),
                         )
                         .clip(CircleShape)
-                        .background(Brush.linearGradient(listOf(t.flame, t.violet))),
+                        .background(
+                            if (t.isDark) Color(0xF71A1A24) else Color(0xFFFFFAF8)
+                        )
+                        .rainbowRing(CircleShape, 1.7.dp, rainbow),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_d_power2),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp),
-                        tint = Color.White,
+                        tint = t.flame,
                     )
                 }
             }
@@ -209,26 +214,38 @@ fun GlassRebootDialog(onDismiss: () -> Unit) {
                 Spacer(Modifier.height(12.dp))
             }
 
-            // 其余选项：两列玻璃胶囊
+            // 其余选项：两列玻璃胶囊；落单的最后一项（EDL）占整行，与「重启」同款胶囊
             others.chunked(2).forEachIndexed { chunkIndex, chunk ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    chunk.forEachIndexed { i, option ->
-                        val accent = rainbow[(chunkIndex * 2 + i) % rainbow.size]
-                        GlassOptionChip(
-                            modifier = Modifier.weight(1f),
-                            label = stringResource(option.labelRes),
-                            accent = accent,
-                            ring = rainbow,
-                            onClick = {
-                                onDismiss()
-                                doReboot(option.reason)
-                            },
-                        )
+                if (chunk.size == 1) {
+                    val option = chunk.first()
+                    GlassWidePill(
+                        label = stringResource(option.labelRes),
+                        iconRes = R.drawable.ic_d_power2,
+                        ring = rainbow,
+                        onClick = {
+                            onDismiss()
+                            doReboot(option.reason)
+                        },
+                    )
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        chunk.forEachIndexed { i, option ->
+                            val accent = rainbow[(chunkIndex * 2 + i) % rainbow.size]
+                            GlassOptionChip(
+                                modifier = Modifier.weight(1f),
+                                label = stringResource(option.labelRes),
+                                accent = accent,
+                                ring = rainbow,
+                                onClick = {
+                                    onDismiss()
+                                    doReboot(option.reason)
+                                },
+                            )
+                        }
                     }
-                    if (chunk.size == 1) Spacer(Modifier.weight(1f))
                 }
                 Spacer(Modifier.height(10.dp))
             }
@@ -301,7 +318,7 @@ private fun GlassOptionChip(
  */
 @Composable
 private fun Modifier.rainbowRing(
-    shape: RoundedCornerShape,
+    shape: androidx.compose.ui.graphics.Shape,
     width: androidx.compose.ui.unit.Dp,
     colors: List<Color>,
 ): Modifier = this.border(
@@ -309,3 +326,61 @@ private fun Modifier.rainbowRing(
     brush = Brush.sweepGradient(colors + colors.first()),
     shape = shape,
 )
+
+/** 整行七彩胶囊：与主操作「重启」同款（白玻璃 + 1.7dp 七彩圈 + 渐变文字） */
+@Composable
+private fun GlassWidePill(
+    label: String,
+    iconRes: Int,
+    ring: List<Color>,
+    onClick: () -> Unit,
+) {
+    val t = glassTokens()
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val scale by animateFloatAsState(if (pressed) 0.97f else 1f, tween(120), label = "wide")
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .shadow(
+                14.dp,
+                RoundedCornerShape(99.dp),
+                ambientColor = ring.first().copy(alpha = 0.30f),
+                spotColor = ring.last().copy(alpha = 0.30f),
+            )
+            .clip(RoundedCornerShape(99.dp))
+            .background(
+                if (t.isDark) {
+                    Brush.linearGradient(listOf(Color(0xF71A1A24), Color(0xF71A1A24)))
+                } else {
+                    Brush.linearGradient(listOf(Color(0xFFFFFAF8), Color(0xFFFCF8FF)))
+                }
+            )
+            .rainbowRing(RoundedCornerShape(99.dp), 1.7.dp, ring)
+            .clickable(interactionSource = interaction, indication = null, onClick = onClick)
+            .padding(vertical = 14.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                painter = painterResource(iconRes),
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
+                tint = t.flame,
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = label,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.ExtraBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = androidx.compose.ui.text.TextStyle(brush = t.glineGrad),
+            )
+        }
+    }
+}
