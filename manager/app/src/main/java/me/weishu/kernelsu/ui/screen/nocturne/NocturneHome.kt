@@ -1,19 +1,11 @@
 package me.weishu.kernelsu.ui.screen.nocturne
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
+import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -22,32 +14,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
-import me.weishu.kernelsu.ui.LocalUiMode
-import me.weishu.kernelsu.ui.screen.glass.GlassStylePickerDialog
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
 import me.weishu.kernelsu.ui.screen.home.HomeActions
 import me.weishu.kernelsu.ui.screen.home.HomeUiState
 
 /**
- * 主页 —— 严格对照视觉稿 s1：
- * KERNEL MANAGER 眉题 + FoxSu 大标题 → Hero 卡（● RUNNING · 越狱模式 / 大字「工作中」+ LKM /
- * 右上 56 环形+对勾 / VERSION·MODE·TEMP 三列）→ DEVICE · 设备 → SECURITY · 安全 → BUILD · 内核与指纹。
+ * 主页 —— 严格对照视觉稿 ① 主页：
+ * KERNEL MANAGER 眉题 + FoxSu 大标题 → Hero 卡（● RUNNING · 越狱模式 / 大字「工作中」+ LKM 徽章 /
+ * 右上 56 环形+对勾 / VERSION·MODE·UAPI 三列）→ DEVICE · 设备 → SECURITY · 安全 → BUILD · 内核与指纹。
+ *
+ * 所有数值均取自真实运行状态，无任何设计稿假数据。
  */
 @Composable
 fun NocturneHomeScreen(
@@ -86,114 +68,147 @@ fun NocturneHomeScreen(
                     .padding(start = 18.dp, end = 18.dp, bottom = 86.dp),
             ) {
                 NcHero(state = state, ok = ok)
-            Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(10.dp))
 
-            NcSectionLabel("DEVICE · 设备")
-            NcGroupCard {
-                NcRow(
-                    iconRes = R.drawable.nc_phone,
-                    title = stringResource(R.string.home_device_model),
-                    subtitle = state.systemInfo.deviceModel.ifBlank { "—" },
-                    accent = NcAccent.Violet,
-                )
-            }
+                NcSectionLabel("DEVICE · 设备")
+                NcGroupCard {
+                    NcRow(
+                        iconRes = R.drawable.nc_phone,
+                        title = "设备型号",
+                        subtitle = state.systemInfo.deviceModel.ifBlank { Build.MODEL },
+                        accent = NcAccentTone.Violet,
+                        trailing = {
+                            Text(
+                                text = Build.MODEL,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = t.tx2,
+                            )
+                        },
+                    )
+                    NcRow(
+                        iconRes = R.drawable.nc_chip,
+                        title = "处理器内核",
+                        subtitle = state.systemInfo.kernelVersion.ifBlank { "—" },
+                        accent = NcAccentTone.Default,
+                        showDivider = true,
+                    )
+                }
 
-            NcSectionLabel("SECURITY · 安全")
-            NcGroupCard {
-                NcRow(
-                    iconRes = R.drawable.nc_shield,
-                    title = "SELinux",
-                    subtitle = "安全增强策略已启用",
-                    accent = NcAccent.Mint,
-                    trailing = {
-                        Text(
-                            text = if (state.isSELinuxPermissive) "宽容" else "强制",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (state.isSELinuxPermissive) t.amber else t.mint,
-                        )
-                    },
-                )
-                NcRow(
-                    iconRes = R.drawable.nc_filter,
-                    title = "Seccomp",
-                    subtitle = "系统调用过滤已启用",
-                    accent = NcAccent.Default,
-                    showDivider = true,
-                    trailing = {
-                        Text("Filter", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = t.text2)
-                    },
-                )
-                NcRow(
-                    iconRes = R.drawable.nc_heart,
-                    title = "支持开发",
-                    subtitle = "KernelSU 保持免费开源，欢迎捐赠",
-                    accent = NcAccent.Red,
-                    showDivider = true,
-                    onClick = onOpenAuthor,
-                    trailing = { NcChevron() },
-                )
-            }
+                NcSectionLabel("SECURITY · 安全")
+                NcGroupCard {
+                    NcRow(
+                        iconRes = R.drawable.nc_lock,
+                        title = "SELinux",
+                        subtitle = if (state.isSELinuxPermissive) "安全策略处于宽容模式" else "安全增强策略已启用",
+                        accent = NcAccentTone.Mint,
+                        trailing = {
+                            Text(
+                                text = if (state.isSELinuxPermissive) "宽容" else "强制",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (state.isSELinuxPermissive) t.amber else t.mint,
+                            )
+                        },
+                    )
+                    NcRow(
+                        iconRes = R.drawable.nc_filter,
+                        title = "Seccomp",
+                        subtitle = if (state.systemInfo.seccompStatus >= 0) "系统调用过滤已开启" else "系统调用过滤状态未知",
+                        accent = NcAccentTone.Default,
+                        showDivider = true,
+                        trailing = {
+                            Text(
+                                text = if (state.systemInfo.seccompStatus >= 0) "Filter" else "未知",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = t.tx2,
+                            )
+                        },
+                    )
+                    NcRow(
+                        iconRes = R.drawable.nc_heart,
+                        title = "支持开发",
+                        subtitle = "KernelSU 保持免费开源，欢迎捐赠",
+                        accent = NcAccentTone.Red,
+                        showDivider = true,
+                        onClick = onOpenAuthor,
+                        trailing = { NcChevron() },
+                    )
+                }
 
-            NcSectionLabel("BUILD · 内核与指纹")
-            NcCodeCard(
-                kicker = "KERNEL · 内核版本",
-                value = state.systemInfo.kernelVersion.ifBlank { "—" },
-                tag = "6.6 KMI",
-                iconRes = R.drawable.nc_terminal,
-            )
-            Spacer(Modifier.height(7.dp))
-            NcCodeCard(
-                kicker = "FINGERPRINT · 指纹信息",
-                value = state.systemInfo.fingerprint.ifBlank { "—" },
-                tag = "RO",
-                iconRes = R.drawable.nc_lock,
-            )
-            Spacer(Modifier.height(10.dp))
+                NcSectionLabel("BUILD · 内核与指纹")
+                NcCodeCard(
+                    kicker = "KERNEL · 内核版本",
+                    value = state.systemInfo.kernelVersion.ifBlank { "—" },
+                    tag = kernelTag(state.systemInfo.kernelVersion),
+                    iconRes = R.drawable.nc_terminal,
+                )
+                Spacer(Modifier.height(7.dp))
+                NcCodeCard(
+                    kicker = "FINGERPRINT · 指纹信息",
+                    value = state.systemInfo.fingerprint.ifBlank { "—" },
+                    tag = fingerprintTag(state.systemInfo.fingerprint),
+                    iconRes = R.drawable.nc_lock,
+                )
+                Spacer(Modifier.height(10.dp))
             }
         }
         // 重启弹层：覆盖整屏（含底栏），放在最外层 Box 最后绘制
         if (showReboot) NcRebootSheet(onDismiss = { showReboot = false })
     }
 
-    if (showStylePicker) GlassStylePickerDialog(current = LocalUiMode.current, onDismiss = { showStylePicker = false })
+    if (showStylePicker) {
+        me.weishu.kernelsu.ui.screen.glass.GlassStylePickerDialog(
+            current = me.weishu.kernelsu.ui.LocalUiMode.current,
+            onDismiss = { showStylePicker = false },
+        )
+    }
+}
+
+/** 从真实内核版本推导 KMI 标签，例如 "6.6.118-android15-…" → "6.6 KMI"。 */
+private fun kernelTag(kernelVersion: String): String {
+    val seg = kernelVersion.substringBefore('-').split('.').filter { it.isNotEmpty() }
+    if (seg.size < 2) return "KMI"
+    return "${seg[0]}.${seg[1]} KMI"
+}
+
+/** 从真实指纹推导签名类型标签。 */
+private fun fingerprintTag(fingerprint: String): String = when {
+    fingerprint.contains("release-keys") -> "RO"
+    fingerprint.contains("test-keys") -> "TEST"
+    fingerprint.isBlank() -> "—"
+    else -> "USER"
 }
 
 /**
- * Hero 状态卡：r24 渐变描边 + r23 内层 + 右上 180 光晕。
+ * Hero 状态卡：r24 渐变描边（150deg）+ r23 内层（165deg）+ 右上 180px 紫色透明扩散光晕。
  */
 @Composable
 private fun NcHero(state: HomeUiState, ok: Boolean) {
     val t = ncTokens()
-    val breath = rememberInfiniteTransition(label = "hero")
-    val dot by breath.animateFloat(
-        initialValue = 1f,
-        targetValue = 0.45f,
-        animationSpec = infiniteRepeatable(tween(1200, easing = LinearEasing), RepeatMode.Reverse),
-        label = "dot",
-    )
-    NcGradientBorder(radius = 24.dp) {
+    NcGradientBorder(
+        radius = 24.dp,
+        borderColors = t.heroBorder,
+        borderStops = t.heroBorderStops,
+        borderAngle = 150f,
+        cardColors = t.heroCard,
+        cardStops = t.heroCardStops,
+        cardAngle = 165f,
+    ) {
         Box(Modifier.fillMaxWidth()) {
-            Canvas(Modifier.size(180.dp).align(Alignment.TopEnd)) {
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(t.heroGlow, Color.Transparent),
-                        center = Offset(size.width * 0.6f, size.height * 0.2f),
-                        radius = size.width * 0.55f,
-                    ),
-                    radius = size.width / 2,
-                    center = center,
-                )
+            // 右上角 180px 紫色光晕（向外透明扩散）
+            Box(
+                Modifier
+                    .size(180.dp)
+                    .align(Alignment.TopEnd)
+                    .offset(x = 50.dp, y = (-70).dp)
+            ) {
+                NcHeroGlow(t, Modifier.fillMaxSize())
             }
             Column(Modifier.padding(start = 17.dp, end = 17.dp, top = 15.dp, bottom = 14.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        Modifier
-                            .size(8.dp)
-                            .alpha(dot)
-                            .clip(CircleShape)
-                            .background(if (ok) t.mint else t.red)
-                    )
+                    NcPulseDot(color = if (ok) t.mint else t.red)
                     Spacer(Modifier.width(8.dp))
                     Text(
                         text = if (ok) "RUNNING · 越狱模式" else "STOPPED · 未安装",
@@ -203,13 +218,14 @@ private fun NcHero(state: HomeUiState, ok: Boolean) {
                         fontWeight = FontWeight.Bold,
                     )
                 }
+                Spacer(Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(
                         text = if (ok) "工作中" else "未安装",
                         fontSize = 29.sp,
                         fontWeight = FontWeight.ExtraBold,
                         letterSpacing = (-1.2).sp,
-                        color = t.text1,
+                        color = t.heroBig,
                     )
                     if (ok) {
                         Spacer(Modifier.width(9.dp))
@@ -231,12 +247,27 @@ private fun NcHero(state: HomeUiState, ok: Boolean) {
                     }
                 }
                 Spacer(Modifier.height(11.dp))
-                Canvas(Modifier.fillMaxWidth().height(1.dp)) { drawRect(t.line) }
+                androidx.compose.foundation.Canvas(Modifier.fillMaxWidth().height(1.dp)) { drawRect(t.line) }
                 Spacer(Modifier.height(9.dp))
                 Row {
-                    HeroMeta("VERSION", state.ksuVersion?.let { "v$it" } ?: "—", t.text1, Modifier.weight(1f))
-                    HeroMeta("MODE", if (state.lkmMode == true) "LKM" else "GKI", t.mint, Modifier.weight(1f))
-                    HeroMeta("TEMP", "38°C", t.text1, Modifier.weight(1f))
+                    HeroMeta(
+                        "VERSION",
+                        state.systemInfo.managerVersion.ifBlank { "—" },
+                        t.heroBig,
+                        Modifier.weight(1f),
+                    )
+                    HeroMeta(
+                        "MODE",
+                        if (state.lkmMode == true) "LKM" else "GKI",
+                        t.mint,
+                        Modifier.weight(1f),
+                    )
+                    HeroMeta(
+                        "UAPI",
+                        state.kernelUAPIVersion?.toString() ?: "—",
+                        t.heroBig,
+                        Modifier.weight(1f),
+                    )
                 }
             }
             NcHeroRing(
@@ -248,45 +279,18 @@ private fun NcHero(state: HomeUiState, ok: Boolean) {
 }
 
 @Composable
-private fun HeroMeta(k: String, v: String, valueColor: Color, modifier: Modifier = Modifier) {
+private fun HeroMeta(k: String, v: String, valueColor: androidx.compose.ui.graphics.Color, modifier: Modifier = Modifier) {
     val t = ncTokens()
     Column(modifier) {
         Text(k, fontSize = 9.sp, letterSpacing = 1.6.sp, color = t.heroMetaKey, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(5.dp))
-        Text(v, fontSize = 12.5.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.2.sp, color = valueColor)
-    }
-}
-
-/** 56dp 环 + 中心对勾。 */
-@Composable
-private fun NcHeroRing(modifier: Modifier = Modifier, ok: Boolean) {
-    val t = ncTokens()
-    Box(modifier.size(56.dp), contentAlignment = Alignment.Center) {
-        Canvas(Modifier.fillMaxSize()) {
-            val stroke = 3.dp.toPx()
-            val inset = stroke / 2
-            drawArc(
-                color = if (ok) t.mint.copy(alpha = 0.16f) else t.red.copy(alpha = 0.14f),
-                startAngle = 0f, sweepAngle = 360f, useCenter = false,
-                topLeft = Offset(inset, inset),
-                size = Size(size.width - stroke, size.height - stroke),
-                style = Stroke(stroke),
-            )
-            drawArc(
-                brush = Brush.sweepGradient(
-                    listOf(if (ok) t.mint else t.red, t.violet, if (ok) t.mint else t.red)
-                ),
-                startAngle = -90f, sweepAngle = if (ok) 360f else 120f, useCenter = false,
-                topLeft = Offset(inset, inset),
-                size = Size(size.width - stroke, size.height - stroke),
-                style = Stroke(stroke, cap = StrokeCap.Round),
-            )
-        }
-        Icon(
-            painter = painterResource(R.drawable.nc_check),
-            contentDescription = null,
-            tint = if (ok) t.mint else t.red,
-            modifier = Modifier.size(20.dp),
+        Text(
+            v,
+            fontSize = 12.5.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 0.2.sp,
+            color = valueColor,
+            maxLines = 1,
         )
     }
 }

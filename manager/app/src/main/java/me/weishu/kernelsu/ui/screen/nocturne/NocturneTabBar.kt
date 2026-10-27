@@ -3,7 +3,6 @@ package me.weishu.kernelsu.ui.screen.nocturne
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -21,19 +20,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
 
 /**
- * 底栏 —— 严格对照视觉稿：
+ * 底栏 —— 严格对照设计稿：
  * 左右 18 / 底 16 / 高 64 / r22 玻璃 rgba(20,22,30,.72)，
  * 4 tab 平分，选中 violet + 顶部 24×2.5 violet→mint 指示条 + 发光，右上 violetDeep 数字徽标。
  */
@@ -58,8 +55,8 @@ fun NocturneTabBarScreen(
             .fillMaxWidth()
             .height(64.dp)
             .clip(RoundedCornerShape(22.dp))
-            .background(t.navBgSolid)
-            .border(1.dp, t.navLine, RoundedCornerShape(22.dp)),
+            .background(t.navBg)
+            .border(1.dp, t.navBorder, RoundedCornerShape(22.dp)),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         tabs.forEach { (label, icon, index) ->
@@ -111,24 +108,12 @@ fun NocturneTabBarScreen(
                             modifier = Modifier.size(21.dp),
                         )
                         if (count > 0) {
-                            Box(
-                                Modifier
+                            NcBadgeDot(
+                                count = count,
+                                modifier = Modifier
                                     .align(Alignment.TopEnd)
-                                    .offset(x = 8.dp, y = (-2).dp)
-                                    .size(14.dp)
-                                    .clip(CircleShape)
-                                    .background(t.badgeBg),
-                            ) {
-                                Text(
-                                    text = if (count > 9) "9+" else "$count",
-                                    fontSize = 8.sp,
-                                    lineHeight = 14.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = Color.White,
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier.fillMaxWidth(),
-                                )
-                            }
+                                    .offset(x = 8.dp, y = (-2).dp),
+                            )
                         }
                     }
                     Spacer(Modifier.height(3.dp))
