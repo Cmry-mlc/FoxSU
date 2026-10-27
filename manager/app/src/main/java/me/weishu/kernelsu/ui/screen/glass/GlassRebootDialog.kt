@@ -66,6 +66,20 @@ fun GlassRebootDialog(onDismiss: () -> Unit) {
             t.cyan, t.blue, t.violet, t.pink,
         ).shuffled()
     }
+    // 七彩呼吸相位：hue 让色环缓慢流转，breath 让圈与填充同步呼吸
+    val aura = rememberInfiniteTransition(label = "aura")
+    val hue by aura.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(7000, easing = LinearEasing), RepeatMode.Restart),
+        label = "hue",
+    )
+    val auraPulse by aura.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(2400, easing = LinearEasing), RepeatMode.Reverse),
+        label = "auraPulse",
+    )
 
     val enter = remember { androidx.compose.animation.core.Animatable(0f) }
     LaunchedEffect(Unit) { enter.animateTo(1f, tween(260)) }
@@ -121,7 +135,22 @@ fun GlassRebootDialog(onDismiss: () -> Unit) {
                             CircleShape,
                         ),
                 )
-                // 内核圆：白玻璃 + 七彩圈，与胶囊统一
+                // 内核圆：半透明玻璃 + 动态七彩圈 + 呼吸光晕，与下方胶囊统一
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .graphicsLayer {
+                            scaleX = 1f + breath * 0.05f
+                            scaleY = 1f + breath * 0.05f
+                        }
+                        .blur(8.dp)
+                        .border(
+                            5.dp,
+                            Brush.sweepGradient(hueShift(rainbow, hue) + hueShift(rainbow, hue).first()),
+                            CircleShape,
+                        )
+                        .graphicsLayer { alpha = (0.30f + 0.45f * (1f - breath)) },
+                )
                 Box(
                     modifier = Modifier
                         .size(56.dp)
@@ -133,9 +162,9 @@ fun GlassRebootDialog(onDismiss: () -> Unit) {
                         )
                         .clip(CircleShape)
                         .background(
-                            if (t.isDark) Color(0xF71A1A24) else Color(0xFFFFFAF8)
+                            if (t.isDark) Color(0xCC1A1A24) else Color(0xCCFFFAF8)
                         )
-                        .rainbowRing(CircleShape, 1.7.dp, rainbow),
+                        .animatedRainbowRing(CircleShape, 1.7.dp, rainbow, hue, breath),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
@@ -172,7 +201,21 @@ fun GlassRebootDialog(onDismiss: () -> Unit) {
                         .graphicsLayer {
                             scaleX = scale
                             scaleY = scale
-                        }
+                        },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    // 呼吸光晕：向外扩散的七彩柔光（半透明，不遮挡内容）
+                    BreathAura(
+                        shape = RoundedCornerShape(99.dp),
+                        colors = rainbow,
+                        hue = hue,
+                        pulse = auraPulse,
+                        spread = 1.10f,
+                        strength = 0.30f,
+                    )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
                         .shadow(
                             14.dp,
                             RoundedCornerShape(99.dp),
@@ -182,12 +225,12 @@ fun GlassRebootDialog(onDismiss: () -> Unit) {
                         .clip(RoundedCornerShape(99.dp))
                         .background(
                             if (t.isDark) {
-                                Brush.linearGradient(listOf(Color(0xF71A1A24), Color(0xF71A1A24)))
+                                Brush.linearGradient(listOf(Color(0xCC1A1A24), Color(0xCC1A1A24)))
                             } else {
-                                Brush.linearGradient(listOf(Color(0xFFFFFAF8), Color(0xFFFCF8FF)))
+                                Brush.linearGradient(listOf(Color(0xCCFFFAF8), Color(0xCCFCF8FF)))
                             }
                         )
-                        .rainbowRing(RoundedCornerShape(99.dp), 1.7.dp, rainbow)
+                        .animatedRainbowRing(RoundedCornerShape(99.dp), 1.7.dp, rainbow, hue, auraPulse)
                         .clickable(interactionSource = interaction, indication = null) {
                             onDismiss()
                             doReboot(primary.reason)
@@ -211,6 +254,7 @@ fun GlassRebootDialog(onDismiss: () -> Unit) {
                         )
                     }
                 }
+                }
                 Spacer(Modifier.height(12.dp))
             }
 
@@ -222,6 +266,8 @@ fun GlassRebootDialog(onDismiss: () -> Unit) {
                         label = stringResource(option.labelRes),
                         iconRes = R.drawable.ic_d_power2,
                         ring = rainbow,
+                        hue = hue,
+                        pulse = auraPulse,
                         onClick = {
                             onDismiss()
                             doReboot(option.reason)
@@ -327,12 +373,14 @@ private fun Modifier.rainbowRing(
     shape = shape,
 )
 
-/** 整行七彩胶囊：与主操作「重启」同款（白玻璃 + 1.7dp 七彩圈 + 渐变文字） */
+/** 整行七彩胶囊：与主操作「重启」同款（半透明玻璃 + 动态七彩圈 + 呼吸光晕 + 渐变文字） */
 @Composable
 private fun GlassWidePill(
     label: String,
     iconRes: Int,
     ring: List<Color>,
+    hue: Float,
+    pulse: Float,
     onClick: () -> Unit,
 ) {
     val t = glassTokens()
@@ -345,42 +393,124 @@ private fun GlassWidePill(
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
-            }
-            .shadow(
-                14.dp,
-                RoundedCornerShape(99.dp),
-                ambientColor = ring.first().copy(alpha = 0.30f),
-                spotColor = ring.last().copy(alpha = 0.30f),
-            )
-            .clip(RoundedCornerShape(99.dp))
-            .background(
-                if (t.isDark) {
-                    Brush.linearGradient(listOf(Color(0xF71A1A24), Color(0xF71A1A24)))
-                } else {
-                    Brush.linearGradient(listOf(Color(0xFFFFFAF8), Color(0xFFFCF8FF)))
-                }
-            )
-            .rainbowRing(RoundedCornerShape(99.dp), 1.7.dp, ring)
-            .clickable(interactionSource = interaction, indication = null, onClick = onClick)
-            .padding(vertical = 14.dp),
+            },
         contentAlignment = Alignment.Center,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                painter = painterResource(iconRes),
-                contentDescription = null,
-                modifier = Modifier.size(16.dp),
-                tint = t.flame,
-            )
-            Spacer(Modifier.width(8.dp))
-            Text(
-                text = label,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.ExtraBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                style = androidx.compose.ui.text.TextStyle(brush = t.glineGrad),
-            )
+        BreathAura(
+            shape = RoundedCornerShape(99.dp),
+            colors = ring,
+            hue = hue,
+            pulse = pulse,
+            spread = 1.10f,
+            strength = 0.30f,
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .shadow(
+                    14.dp,
+                    RoundedCornerShape(99.dp),
+                    ambientColor = ring.first().copy(alpha = 0.30f),
+                    spotColor = ring.last().copy(alpha = 0.30f),
+                )
+                .clip(RoundedCornerShape(99.dp))
+                .background(
+                    if (t.isDark) {
+                        Brush.linearGradient(listOf(Color(0xCC1A1A24), Color(0xCC1A1A24)))
+                    } else {
+                        Brush.linearGradient(listOf(Color(0xCCFFFAF8), Color(0xCCFCF8FF)))
+                    }
+                )
+                .animatedRainbowRing(RoundedCornerShape(99.dp), 1.7.dp, ring, hue, pulse)
+                .clickable(interactionSource = interaction, indication = null, onClick = onClick)
+                .padding(vertical = 14.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    painter = painterResource(iconRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = t.flame,
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = label,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = androidx.compose.ui.text.TextStyle(brush = t.glineGrad),
+                )
+            }
         }
     }
+}
+
+/**
+ * 呼吸七彩光晕：形状外扩一圈的 sweep 渐变描边，
+ * 透明度随 pulse 呼吸、色相随 hue 缓慢旋转，形成"外圈在缓缓发光"的效果。
+ */
+@Composable
+private fun BreathAura(
+    shape: androidx.compose.ui.graphics.Shape,
+    colors: List<Color>,
+    hue: Float,
+    pulse: Float,
+    spread: Float,
+    strength: Float,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(50.dp)
+            .graphicsLayer {
+                scaleX = spread + pulse * 0.03f
+                scaleY = 1f + pulse * 0.12f
+                alpha = (0.35f + 0.65f * pulse) * strength
+            }
+            .blur(9.dp)
+            .border(
+                width = 5.dp,
+                brush = Brush.sweepGradient(hueShift(colors, hue) + hueShift(colors, hue).first()),
+                shape = shape,
+            ),
+    )
+}
+
+/**
+ * 动态七彩描边：在静态七彩圈外再叠一层高速旋转的高光段，
+ * 让"呼吸"不仅体现在透明度上，也能看到光在圈上跑动。
+ */
+@Composable
+private fun Modifier.animatedRainbowRing(
+    shape: androidx.compose.ui.graphics.Shape,
+    width: androidx.compose.ui.unit.Dp,
+    colors: List<Color>,
+    hue: Float,
+    pulse: Float,
+): Modifier = this
+    .border(
+        width = width,
+        brush = Brush.sweepGradient(colors + colors.first()),
+        shape = shape,
+    )
+    .border(
+        width = width,
+        brush = Brush.sweepGradient(
+            hueShift(colors, hue).mapIndexed { i, c ->
+                // 前 1/4 段提亮，其余压低 → 一道高光沿圈流动
+                if (i < colors.size / 4 + 1) c.copy(alpha = 0.30f + 0.45f * pulse)
+                else c.copy(alpha = 0f)
+            }
+        ),
+        shape = shape,
+    )
+
+/** 按 hue∈[0,1) 循环右移调色板（色相流转） */
+private fun hueShift(colors: List<Color>, hue: Float): List<Color> {
+    if (colors.isEmpty()) return colors
+    val n = colors.size
+    val shift = ((hue % 1f + 1f) % 1f * n).toInt()
+    return List(n) { i -> colors[(i + shift) % n] }
 }
