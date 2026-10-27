@@ -65,7 +65,7 @@ fun NocturneAuthorScreen(
                     Box(Modifier.size(78.dp), contentAlignment = Alignment.Center) {
                         Canvas(Modifier.fillMaxSize()) {
                             drawCircle(
-                                color = Color(0x38FFFFFF),
+                                color = Color(0x38FFFFFF).let { if (t.dark) it else Color(0x66A9AFC0) },
                                 radius = size.width / 2 - 3.dp.toPx(),
                                 style = Stroke(
                                     width = 1.dp.toPx(),
@@ -77,7 +77,7 @@ fun NocturneAuthorScreen(
                             Modifier
                                 .size(66.dp)
                                 .clip(CircleShape)
-                                .background(Brush.linearGradient(listOf(Color(0xFF8B7BFF), Color(0xFF6A57F5)))),
+                                .background(Brush.linearGradient(listOf(t.violet, t.violetDeep))),
                             contentAlignment = Alignment.Center,
                         ) {
                             Text("FOX", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp, color = Color.White)

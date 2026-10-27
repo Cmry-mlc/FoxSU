@@ -88,8 +88,8 @@ object NcDimens {
 /** 亮暗感知 token 入口：Nocturne 屏幕统一从这里取色。 */
 @Composable
 fun ncTokens(): NcTokens {
-    // Nocturne 是 OLED 暗夜主题：固定使用设计稿暗夜 token，不随系统/应用亮色设置切换
-    return NcTokens.dark
+    // 明暗跟随应用设置（深色 / 浅色 / 跟随系统），默认跟随系统
+    return if (me.weishu.kernelsu.ui.theme.isInDarkTheme()) NcTokens.dark else NcTokens.light
 }
 
 data class NcTokens(
@@ -113,6 +113,30 @@ data class NcTokens(
     val text3: Color,
     val textMono: Color,
     val iconTint: Color,
+    // 亮暗配套（替代原先散落的硬编码值）
+    val cardTop: Color,        // Hero/acard 内层渐变顶端
+    val cardBottom: Color,     // Hero/acard 内层渐变底端
+    val codeTop: Color,        // CodeCard 渐变顶端
+    val codeBottom: Color,     // CodeCard 渐变底端
+    val codeKicker: Color,     // CodeCard 眉题紫字
+    val codeTag: Color,        // CodeCard 右侧灰字
+    val codeValue: Color,      // CodeCard mono 值
+    val sheetTop: Color,       // 弹层渐变顶端
+    val sheetBottom: Color,    // 弹层渐变底端
+    val scrim: Color,          // 遮罩
+    val grab: Color,           // 弹层 grab 条
+    val ghostLine: Color,      // ghost 按钮描边
+    val softFill: Color,       // 白 4% 底（暗）/ 浅灰（亮）
+    val softFill2: Color,      // 白 5% 底（暗）/ 浅灰（亮）
+    val thumbOff: Color,       // 开关关闭态圆球
+    val navBgSolid: Color,     // 底栏玻璃实色兜底
+    val navLine: Color,        // 底栏描边
+    val onViolet: Color,       // 紫底上的文字
+    val violetSoft: Color,     // 紫底浅紫副文字
+    val dangerText: Color,     // EDL 标题
+    val dangerSub: Color,      // EDL 副标题
+    val dangerIcon: Color,     // EDL 图标
+    val dangerChev: Color,     // EDL 箭头
 ) {
     companion object {
         val dark = NcTokens(
@@ -124,6 +148,16 @@ data class NcTokens(
             red = NcColors.red, redSoft = NcColors.redSoft, amber = NcColors.amber,
             text1 = NcColors.text1, text2 = NcColors.text2, text3 = NcColors.text3,
             textMono = NcColors.textMono, iconTint = NcColors.iconTint,
+            cardTop = Color(0xFF141724), cardBottom = Color(0xFF0E1018),
+            codeTop = Color(0xFF0F1219), codeBottom = Color(0xFF0B0D13),
+            codeKicker = Color(0xFF9E93FF), codeTag = Color(0xFF4E5466), codeValue = Color(0xFFB9BFCB),
+            sheetTop = Color(0xFF171A25), sheetBottom = Color(0xFF0E1016),
+            scrim = Color(0x9E040508), grab = Color(0x29FFFFFF), ghostLine = Color(0x1AFFFFFF),
+            softFill = Color(0x0AFFFFFF), softFill2 = Color(0x0DFFFFFF),
+            thumbOff = Color(0xFF8C93A5), navBgSolid = Color(0xB814161E), navLine = Color(0x0DFFFFFF),
+            onViolet = Color.White, violetSoft = Color(0xFFA9A3D8),
+            dangerText = Color(0xFFFFB3A9), dangerSub = Color(0xFF8A6A66),
+            dangerIcon = Color(0xFFFF8A7D), dangerChev = Color(0xFF7A5751),
         )
         val light = NcTokens(
             dark = false,
@@ -134,6 +168,16 @@ data class NcTokens(
             red = NcColors.lRed, redSoft = Color(0xFF8A2318), amber = NcColors.lAmber,
             text1 = NcColors.lText1, text2 = NcColors.lText2, text3 = NcColors.lText3,
             textMono = Color(0xFF4E5464), iconTint = Color(0xFF6F7686),
+            cardTop = Color(0xFFFFFFFF), cardBottom = Color(0xFFF7F8FD),
+            codeTop = Color(0xFFFBFBFD), codeBottom = Color(0xFFF6F7FB),
+            codeKicker = Color(0xFF6A57F5), codeTag = Color(0xFFA9AEBB), codeValue = Color(0xFF4E5464),
+            sheetTop = Color(0xFFFFFFFF), sheetBottom = Color(0xFFF4F5FA),
+            scrim = Color(0x660A0C16), grab = Color(0x1F0F142D), ghostLine = Color(0x1F0F142D),
+            softFill = Color(0x0A0F142D), softFill2 = Color(0x0D0F142D),
+            thumbOff = Color(0xFFB9BECB), navBgSolid = Color(0xD9FFFFFF), navLine = Color(0x140F142D),
+            onViolet = Color.White, violetSoft = Color(0xFFE4E0FF),
+            dangerText = Color(0xFFC0392B), dangerSub = Color(0xFFB08A86),
+            dangerIcon = Color(0xFFE8503F), dangerChev = Color(0xFFC9A9A5),
         )
     }
 }

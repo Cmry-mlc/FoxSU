@@ -54,7 +54,7 @@ fun NcThemeSheet(onDismiss: () -> Unit) {
         Box(
             Modifier
                 .fillMaxSize()
-                .background(Color(0x9E040508))
+                .background(t.scrim)
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onDismiss() }
         )
         Column(
@@ -63,13 +63,13 @@ fun NcThemeSheet(onDismiss: () -> Unit) {
                 .fillMaxWidth()
                 .offset(y = (30 * (1f - show.value)).dp)
                 .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
-                .background(Brush.verticalGradient(listOf(Color(0xFF171A25), Color(0xFF0E1016))))
+                .background(Brush.verticalGradient(listOf(t.sheetTop, t.sheetBottom)))
                 .border(1.dp, t.violet.copy(alpha = 0.30f), RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
                 .padding(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 26.dp)
         ) {
             Box(
                 Modifier.align(Alignment.CenterHorizontally).size(36.dp, 4.dp)
-                    .clip(CircleShape).background(Color(0x29FFFFFF))
+                    .clip(CircleShape).background(t.grab)
             )
             Spacer(Modifier.height(16.dp))
             Row(verticalAlignment = Alignment.Bottom) {
@@ -98,7 +98,7 @@ fun NcThemeSheet(onDismiss: () -> Unit) {
                         if (accent == i) {
                             Box(
                                 Modifier.size(34.dp).clip(CircleShape)
-                                    .border(1.6.dp, Color(0x8CFFFFFF), CircleShape)
+                                    .border(1.6.dp, if (t.dark) Color(0x8CFFFFFF) else Color(0x995D6376), CircleShape)
                             )
                         }
                         Box(
@@ -165,7 +165,7 @@ private fun ModeCard(
     Column(
         modifier
             .clip(RoundedCornerShape(16.dp))
-            .background(if (on) t.violet.copy(alpha = 0.10f) else Color(0x0AFFFFFF))
+            .background(if (on) t.violet.copy(alpha = 0.10f) else t.softFill)
             .border(
                 width = 1.dp,
                 color = if (on) t.violet.copy(alpha = 0.75f) else t.line,
@@ -192,8 +192,8 @@ private fun ModeCard(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxSize()) {
                 MiniBar(width = 0.7f, color = t.violet.copy(alpha = 0.75f))
-                MiniBar(width = 0.9f, color = if (index == 1) Color(0x1F000000) else Color(0x29FFFFFF))
-                MiniBar(width = 0.55f, color = if (index == 1) Color(0x12000000) else Color(0x1AFFFFFF))
+                MiniBar(width = 0.9f, color = if (index == 1) Color(0x1F0F142D) else t.grab)
+                MiniBar(width = 0.55f, color = if (index == 1) Color(0x120F142D) else Color(0x1AFFFFFF))
                 if (index != 2) MiniBar(width = 0.4f, color = t.mint.copy(alpha = 0.55f))
             }
         }
@@ -226,7 +226,7 @@ private fun OptionRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            Modifier.size(36.dp).clip(RoundedCornerShape(12.dp)).background(Color(0x0DFFFFFF)),
+            Modifier.size(36.dp).clip(RoundedCornerShape(12.dp)).background(t.softFill2),
             contentAlignment = Alignment.Center,
         ) {
             Icon(painterResource(iconRes), null, tint = t.iconTint, modifier = Modifier.size(17.dp))

@@ -286,7 +286,7 @@ fun NcCodeCard(kicker: String, value: String, tag: String? = null, iconRes: Int?
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(
-                Brush.linearGradient(listOf(Color(0xFF0F1219), Color(0xFF0B0D13)))
+                Brush.linearGradient(listOf(t.codeTop, t.codeBottom))
             )
             .border(1.dp, t.violet.copy(alpha = 0.16f), RoundedCornerShape(16.dp))
     ) {
@@ -301,7 +301,7 @@ fun NcCodeCard(kicker: String, value: String, tag: String? = null, iconRes: Int?
         Column(Modifier.padding(start = 13.dp, end = 13.dp, top = 10.dp, bottom = 11.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (iconRes != null) {
-                    Icon(painterResource(iconRes), null, tint = Color(0xFF9E93FF), modifier = Modifier.size(12.dp))
+                    Icon(painterResource(iconRes), null, tint = t.codeKicker, modifier = Modifier.size(12.dp))
                     Spacer(Modifier.width(7.dp))
                 }
                 Text(
@@ -309,11 +309,11 @@ fun NcCodeCard(kicker: String, value: String, tag: String? = null, iconRes: Int?
                     fontSize = 8.5.sp,
                     letterSpacing = 2.2.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = Color(0xFF9E93FF),
+                    color = t.codeKicker,
                 )
                 if (tag != null) {
                     Spacer(Modifier.weight(1f))
-                    Text(tag, fontSize = 8.sp, letterSpacing = 1.2.sp, color = Color(0xFF4E5466))
+                    Text(tag, fontSize = 8.sp, letterSpacing = 1.2.sp, color = t.codeTag)
                 }
             }
             Spacer(Modifier.height(7.dp))
@@ -323,7 +323,7 @@ fun NcCodeCard(kicker: String, value: String, tag: String? = null, iconRes: Int?
                 fontSize = 9.3.sp,
                 lineHeight = 15.sp,
                 letterSpacing = (-0.15).sp,
-                color = Color(0xFFB9BFCB),
+                color = t.codeValue,
             )
         }
     }
@@ -346,7 +346,7 @@ fun NcSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
                 .offset(x = offset.dp, y = 3.dp)
                 .size(19.dp)
                 .clip(CircleShape)
-                .background(if (checked) Color.White else Color(0xFF8C93A5))
+                .background(if (checked) Color.White else t.thumbOff)
         )
     }
 }
@@ -440,7 +440,7 @@ fun NcGradientBorder(
             Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(radius - 1.dp))
-                .background(Brush.linearGradient(listOf(Color(0xFF141724), Color(0xFF0E1018)), start = Offset.Zero, end = Offset(0f, 600f))),
+                .background(Brush.linearGradient(listOf(t.cardTop, t.cardBottom), start = Offset.Zero, end = Offset(0f, 600f))),
             content = content,
         )
     }

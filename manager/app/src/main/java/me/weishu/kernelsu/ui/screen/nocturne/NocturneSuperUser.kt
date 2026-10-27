@@ -130,7 +130,7 @@ private fun NcAppRow(
                 Modifier
                     .size(36.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .border(1.dp, Color(0x0FFFFFFF), RoundedCornerShape(12.dp)),
+                    .border(1.dp, t.navLine, RoundedCornerShape(12.dp)),
                 contentAlignment = Alignment.Center,
             ) {
                 AppIconImage(

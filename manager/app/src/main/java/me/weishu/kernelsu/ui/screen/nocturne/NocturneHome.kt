@@ -38,6 +38,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.ui.LocalUiMode
+import me.weishu.kernelsu.ui.screen.glass.GlassStylePickerDialog
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
 import me.weishu.kernelsu.ui.screen.home.HomeActions
 import me.weishu.kernelsu.ui.screen.home.HomeUiState
@@ -59,7 +61,7 @@ fun NocturneHomeScreen(
     val t = ncTokens()
     val ok = state.ksuVersion != null
     var showReboot by remember { mutableStateOf(false) }
-    var showTheme by remember { mutableStateOf(false) }
+    var showStylePicker by remember { mutableStateOf(false) }
 
     Box(Modifier.fillMaxSize()) {
         NcGlowBackground(t)
@@ -72,7 +74,7 @@ fun NocturneHomeScreen(
             Box(Modifier.padding(horizontal = 18.dp)) {
                 NcHeader(kicker = "KERNEL MANAGER", title = "FoxSu") {
                     NcIconButton(iconRes = R.drawable.nc_user, onClick = onOpenAuthor)
-                    NcIconButton(iconRes = R.drawable.nc_palette, onClick = { showTheme = true })
+                    NcIconButton(iconRes = R.drawable.nc_palette, onClick = { showStylePicker = true })
                     NcIconButton(iconRes = R.drawable.nc_power, onClick = { showReboot = true })
                 }
             }
@@ -153,7 +155,7 @@ fun NocturneHomeScreen(
     }
 
     if (showReboot) NcRebootSheet(onDismiss = { showReboot = false })
-    if (showTheme) NcThemeSheet(onDismiss = { showTheme = false })
+    if (showStylePicker) GlassStylePickerDialog(current = LocalUiMode.current, onDismiss = { showStylePicker = false })
 }
 
 /**

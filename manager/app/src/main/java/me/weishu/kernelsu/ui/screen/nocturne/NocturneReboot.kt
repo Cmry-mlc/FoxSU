@@ -59,7 +59,7 @@ fun NcRebootSheet(onDismiss: () -> Unit) {
         Box(
             Modifier
                 .fillMaxSize()
-                .background(Color(0x9E040508))
+                .background(t.scrim)
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onDismiss() }
         )
         Column(
@@ -68,7 +68,7 @@ fun NcRebootSheet(onDismiss: () -> Unit) {
                 .fillMaxWidth()
                 .offset(y = (30 * (1f - show.value)).dp)
                 .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
-                .background(Brush.verticalGradient(listOf(Color(0xFF171A25), Color(0xFF0E1016))))
+                .background(Brush.verticalGradient(listOf(t.sheetTop, t.sheetBottom)))
                 .border(1.dp, t.violet.copy(alpha = 0.30f), RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
                 .padding(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 26.dp)
         ) {
@@ -78,7 +78,7 @@ fun NcRebootSheet(onDismiss: () -> Unit) {
                     .align(Alignment.CenterHorizontally)
                     .size(36.dp, 4.dp)
                     .clip(CircleShape)
-                    .background(Color(0x29FFFFFF))
+                    .background(t.grab)
             )
             Spacer(Modifier.height(16.dp))
             // 眉题
@@ -114,7 +114,7 @@ fun NcRebootSheet(onDismiss: () -> Unit) {
                         .clip(RoundedCornerShape(20.dp))
                         .background(
                             Brush.linearGradient(
-                                listOf(t.violet.copy(alpha = 0.18f), t.violet.copy(alpha = 0.04f), Color(0xFF0F2A26))
+                                listOf(t.violet.copy(alpha = 0.18f), t.violet.copy(alpha = 0.04f), t.mint.copy(alpha = 0.05f))
                             )
                         )
                         .border(1.dp, t.violet.copy(alpha = 0.45f), RoundedCornerShape(20.dp))
@@ -128,7 +128,7 @@ fun NcRebootSheet(onDismiss: () -> Unit) {
                         Modifier
                             .size(44.dp)
                             .clip(RoundedCornerShape(15.dp))
-                            .background(Brush.linearGradient(listOf(Color(0xFF8B7BFF), Color(0xFF6A57F5)))),
+                            .background(Brush.linearGradient(listOf(t.violet, t.violetDeep))),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(painterResource(R.drawable.nc_power), null, tint = Color.White, modifier = Modifier.size(20.dp))
@@ -137,12 +137,12 @@ fun NcRebootSheet(onDismiss: () -> Unit) {
                     Column(Modifier.weight(1f)) {
                         Text("重启设备", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White)
                         Spacer(Modifier.height(3.dp))
-                        Text("reboot · 立即执行", fontSize = 9.sp, fontFamily = ncMono, color = Color(0xFFA9A3D8))
+                        Text("reboot · 立即执行", fontSize = 9.sp, fontFamily = ncMono, color = t.violetSoft)
                     }
                     Icon(
                         painterResource(R.drawable.nc_chev),
                         null,
-                        tint = Color(0xFFB0A4FF),
+                        tint = t.violetText,
                         modifier = Modifier.size(18.dp),
                     )
                 }
@@ -185,15 +185,15 @@ fun NcRebootSheet(onDismiss: () -> Unit) {
                             .background(t.red.copy(alpha = 0.14f)),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Icon(painterResource(R.drawable.nc_bolt), null, tint = Color(0xFFFF8A7D), modifier = Modifier.size(15.dp))
+                        Icon(painterResource(R.drawable.nc_bolt), null, tint = t.dangerIcon, modifier = Modifier.size(15.dp))
                     }
                     Spacer(Modifier.width(11.dp))
                     Column(Modifier.weight(1f)) {
-                        Text("EDL 深度刷机模式", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFFFFB3A9))
+                        Text("EDL 深度刷机模式", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = t.dangerText)
                         Spacer(Modifier.height(2.dp))
-                        Text("qualcomm 9008 · 仅救砖时使用", fontSize = 8.5.sp, color = Color(0xFF8A6A66))
+                        Text("qualcomm 9008 · 仅救砖时使用", fontSize = 8.5.sp, color = t.dangerSub)
                     }
-                    Icon(painterResource(R.drawable.nc_chev), null, tint = Color(0xFF7A5751), modifier = Modifier.size(15.dp))
+                    Icon(painterResource(R.drawable.nc_chev), null, tint = t.dangerChev, modifier = Modifier.size(15.dp))
                 }
                 Spacer(Modifier.height(10.dp))
             }
@@ -203,7 +203,7 @@ fun NcRebootSheet(onDismiss: () -> Unit) {
                 Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(14.dp))
-                    .border(1.dp, Color(0x1AFFFFFF), RoundedCornerShape(14.dp))
+                    .border(1.dp, t.ghostLine, RoundedCornerShape(14.dp))
                     .clickable { onDismiss() }
                     .padding(vertical = 11.dp),
                 contentAlignment = Alignment.Center,
@@ -229,16 +229,16 @@ private fun RbCell(title: String, sub: String, modifier: Modifier = Modifier, on
         modifier
             .scale(sc)
             .clip(RoundedCornerShape(16.dp))
-            .background(Color(0x0AFFFFFF))
+            .background(t.softFill)
             .border(1.dp, t.line, RoundedCornerShape(16.dp))
             .clickable(interactionSource = src, indication = null, onClick = onClick)
             .padding(12.dp)
     ) {
         Box(
-            Modifier.size(30.dp).clip(RoundedCornerShape(10.dp)).background(Color(0x0DFFFFFF)),
+            Modifier.size(30.dp).clip(RoundedCornerShape(10.dp)).background(t.softFill2),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(painterResource(rebootIcon(sub)), null, tint = Color(0xFFA9AFC0), modifier = Modifier.size(15.dp))
+            Icon(painterResource(rebootIcon(sub)), null, tint = t.iconTint, modifier = Modifier.size(15.dp))
         }
         Spacer(Modifier.height(10.dp))
         Text(title, fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = t.text1)

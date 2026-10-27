@@ -100,7 +100,7 @@ fun NocturneModuleScreen(
                 .size(56.dp)
                 .shadow(16.dp, CircleShape, ambientColor = t.violet.copy(alpha = 0.55f), spotColor = t.violet.copy(alpha = 0.55f))
                 .clip(CircleShape)
-                .background(Brush.linearGradient(listOf(Color(0xFF8B7BFF), Color(0xFF6A57F5))))
+                .background(Brush.linearGradient(listOf(t.violet, t.violetDeep)))
                 .clickable(onClick = onAddModule),
             contentAlignment = Alignment.Center,
         ) {

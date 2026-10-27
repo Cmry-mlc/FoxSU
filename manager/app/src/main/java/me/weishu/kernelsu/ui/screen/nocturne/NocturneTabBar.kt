@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
@@ -57,8 +58,8 @@ fun NocturneTabBarScreen(
             .fillMaxWidth()
             .height(64.dp)
             .clip(RoundedCornerShape(22.dp))
-            .background(Color(0xB814161E))
-            .border(1.dp, Color(0x0DFFFFFF), RoundedCornerShape(22.dp)),
+            .background(t.navBgSolid)
+            .border(1.dp, t.navLine, RoundedCornerShape(22.dp)),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         tabs.forEach { (label, icon, index) ->
@@ -113,7 +114,7 @@ fun NocturneTabBarScreen(
                             Box(
                                 Modifier
                                     .align(Alignment.TopEnd)
-                                    .offset(x = 9.dp, y = (-6).dp)
+                                    .offset(x = 9.dp, y = (-1).dp)
                                     .size(14.dp)
                                     .clip(CircleShape)
                                     .background(t.violetDeep),
@@ -124,6 +125,8 @@ fun NocturneTabBarScreen(
                                     fontSize = 8.sp,
                                     fontWeight = FontWeight.ExtraBold,
                                     color = Color.White,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.offset(y = (0.5).dp),
                                 )
                             }
                         }
