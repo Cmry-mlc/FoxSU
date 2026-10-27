@@ -212,7 +212,6 @@ fun GlassRebootDialog(onDismiss: () -> Unit) {
                         colors = rainbow,
                         hue = hue,
                         pulse = auraPulse,
-                        spread = 1.10f,
                         strength = 0.30f,
                     )
                 Box(
@@ -403,7 +402,6 @@ private fun GlassWidePill(
             colors = ring,
             hue = hue,
             pulse = pulse,
-            spread = 1.10f,
             strength = 0.30f,
         )
         Box(
@@ -450,49 +448,39 @@ private fun GlassWidePill(
 }
 
 /**
- * 呼吸七彩光晕：不用 blur（Compose 的 blur 会把结果裁在组件矩形内，出现方框），
- * 改为 3 层逐渐外扩、逐渐变淡的圆角描边环，贴着卡边向外呼吸。
+ * 呼吸七彩外圈：与胶囊/圆形完全同尺寸同形状（matchParentSize），
+ * 从边缘(1.0)向外扩散，贴边最亮、扩散渐隐——光始终「贴在边上」呼吸。
  */
 @Composable
-private fun BreathAura(
+private fun androidx.compose.foundation.layout.BoxScope.BreathAura(
     shape: androidx.compose.ui.graphics.Shape,
     colors: List<Color>,
     hue: Float,
     pulse: Float,
-    spread: Float,
     strength: Float,
 ) {
-    // ring: scale 倍数 / 描边宽度 / 透明度权重
+    // grow: 外扩倍率权重；width: 描边宽度；weight: 透明度权重
     val layers = listOf(
-        Triple(1.035f, 3.5.dp, 0.55f),
-        Triple(1.075f, 2.5.dp, 0.32f),
-        Triple(1.115f, 1.5.dp, 0.16f),
+        Triple(1f, 3.dp, 1f),
+        Triple(2f, 2.dp, 0.5f),
     )
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(46.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        layers.forEachIndexed { index, (scale, width, weight) ->
-            val shifted = hueShift(colors, hue + index * 0.12f)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(46.dp)
-                    .graphicsLayer {
-                        scaleX = spread + (scale - 1f) + pulse * 0.012f
-                        scaleY = scale + pulse * 0.06f
-                        // 呼吸：pulse 越大越亮，但外圈始终比内圈淡
-                        alpha = (0.30f + 0.70f * pulse) * weight * strength * 2.2f
-                    }
-                    .border(
-                        width = width,
-                        brush = Brush.sweepGradient(shifted + shifted.first()),
-                        shape = shape,
-                    ),
-            )
-        }
+    layers.forEachIndexed { index, (grow, width, weight) ->
+        val shifted = hueShift(colors, hue + index * 0.1f)
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .graphicsLayer {
+                    scaleX = 1f + pulse * 0.045f * grow
+                    scaleY = 1f + pulse * 0.09f * grow
+                    // 贴边(pulse=0)最亮，向外扩散渐隐
+                    alpha = (1f - pulse) * 0.6f * weight * (strength / 0.30f)
+                }
+                .border(
+                    width = width,
+                    brush = Brush.sweepGradient(shifted + shifted.first()),
+                    shape = shape,
+                ),
+        )
     }
 }
 
