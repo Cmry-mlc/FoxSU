@@ -21,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -109,7 +110,7 @@ fun EdMasthead(
             .hairBottom(t.ink)
             .padding(start = 22.dp, end = 22.dp, top = 16.dp, bottom = 14.dp),
     ) {
-        Column {
+        Column(modifier = Modifier.padding(end = 108.dp)) {
             Row(verticalAlignment = Alignment.Bottom) {
                 if (showBack && onBack != null) {
                     EdCircleButton(iconRes = R.drawable.ic_d_back, onClick = onBack, size = 30)
@@ -138,7 +139,7 @@ fun EdMasthead(
                         .padding(horizontal = 7.dp, vertical = 2.dp),
                 )
             }
-            Spacer(Modifier.height(5.dp))
+            Spacer(Modifier.height(6.dp))
             Row(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = left,
@@ -248,8 +249,8 @@ fun EdCircleButton(iconRes: Int, onClick: () -> Unit, size: Int = 32) {
 }
 
 /**
- * 状态通栏：墨色底 + 大字号状态 + em 强调点 + 三列 KV。
- * sb-big 进入时做一次轻微上浮淡入（对应设计稿的首屏动效）。
+ * 状态通栏：墨色底 + 大字号状态 + 红点 + 三列 KV。
+ * 注意：水印必须夹在通栏内且不参与布局测量，避免压住 KV 文字。
  */
 @Composable
 fun EdStatusBand(
@@ -258,38 +259,34 @@ fun EdStatusBand(
     kvs: List<Triple<String, String, Boolean>>,
 ) {
     val t = edTokens()
-    val appear = remember { Animatable(0f) }
-    LaunchedEffect(Unit) { appear.animateTo(1f, tween(520, easing = FastOutSlowInEasing)) }
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .clipToBounds()
             .background(t.ink),
     ) {
-        // 右上角狐尾水印（对应设计稿 .tail，opacity .14）
+        // 右上角狐尾水印（设计稿 .tail）：放在顶部角落，尺寸收小，不侵入 KV 区
         Icon(
             painter = painterResource(R.drawable.ic_launcher_monochrome),
             contentDescription = null,
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .offset(x = 42.dp, y = (-30).dp)
-                .size(150.dp),
-            tint = t.paper.copy(alpha = 0.10f),
+                .offset(x = 30.dp, y = (-46).dp)
+                .size(128.dp),
+            tint = t.paper.copy(alpha = 0.09f),
         )
         Column(
-            modifier = Modifier
-                .padding(start = 22.dp, end = 22.dp, top = 18.dp, bottom = 18.dp)
-                .graphicsLayer {
-                    alpha = appear.value
-                    translationY = (1f - appear.value) * 14f
-                },
+            modifier = Modifier.padding(start = 22.dp, end = 22.dp, top = 18.dp, bottom = 20.dp),
         ) {
             Text(
                 text = kicker,
                 fontSize = 9.5.sp,
                 fontWeight = FontWeight.ExtraBold,
                 letterSpacing = 3.sp,
+                lineHeight = 13.sp,
                 color = t.paper.copy(alpha = 0.55f),
             )
+            Spacer(Modifier.height(4.dp))
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
                     text = big,
@@ -297,12 +294,11 @@ fun EdStatusBand(
                     fontWeight = FontWeight.Black,
                     letterSpacing = (-1).sp,
                     color = t.paper,
-                    lineHeight = 40.sp,
-                    modifier = Modifier.padding(top = 6.dp),
+                    lineHeight = 44.sp,
                 )
                 Box(
                     modifier = Modifier
-                        .padding(start = 4.dp, bottom = 7.dp)
+                        .padding(start = 5.dp, bottom = 9.dp)
                         .size(9.dp)
                         .clip(CircleShape)
                         .background(t.acc),
@@ -311,20 +307,19 @@ fun EdStatusBand(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 16.dp),
+                    .padding(top = 18.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 kvs.forEach { (k, v, hot) ->
                     Column(
                         modifier = Modifier
                             .weight(1f)
-                            // 竖线与文字之间留 12dp，避免「版本｜」贴边
                             .padding(start = 12.dp)
                             .drawBehind {
                                 drawLine(
                                     color = t.paper.copy(alpha = 0.22f),
-                                    start = Offset(0f, 1.dp.toPx()),
-                                    end = Offset(0f, size.height - 1.dp.toPx()),
+                                    start = Offset(0f, 0f),
+                                    end = Offset(0f, size.height),
                                     strokeWidth = 1.5.dp.toPx(),
                                 )
                             },
@@ -333,6 +328,7 @@ fun EdStatusBand(
                             text = k,
                             fontSize = 8.5.sp,
                             letterSpacing = 1.4.sp,
+                            lineHeight = 12.sp,
                             color = t.paper.copy(alpha = 0.5f),
                             maxLines = 1,
                         )
@@ -340,8 +336,9 @@ fun EdStatusBand(
                             text = v,
                             fontSize = 12.5.sp,
                             fontWeight = FontWeight.ExtraBold,
+                            lineHeight = 17.sp,
                             color = if (hot) t.acc else t.paper,
-                            modifier = Modifier.padding(top = 4.dp),
+                            modifier = Modifier.padding(top = 5.dp),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -354,14 +351,14 @@ fun EdStatusBand(
 
 /** 编号区块标题：01 ── 设备概况 ────────（线在首次出现时展开） */
 @Composable
-fun EdSection(number: String, title: String, topPadding: Dp = 20.dp) {
+fun EdSection(number: String, title: String, topPadding: Dp = 22.dp) {
     val t = edTokens()
     val grow = remember { Animatable(0f) }
     LaunchedEffect(Unit) { grow.animateTo(1f, tween(420, easing = FastOutSlowInEasing)) }
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 22.dp, end = 22.dp, top = topPadding, bottom = 4.dp),
+            .padding(start = 22.dp, end = 22.dp, top = topPadding, bottom = 6.dp),
         verticalAlignment = Alignment.Bottom,
     ) {
         Text(
@@ -412,7 +409,7 @@ fun EdRow(
             .fillMaxWidth()
             .hairBottom(t.hair)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(horizontal = 22.dp, vertical = 13.dp),
+            .padding(horizontal = 22.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
