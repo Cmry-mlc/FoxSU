@@ -48,6 +48,26 @@ import me.weishu.kernelsu.ui.theme.glassTokens
 fun GlassAuthor(onBack: () -> Unit, onOpenUrl: (String) -> Unit) {
     val t = glassTokens()
 
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            // 详情页必须有实底：否则会透出导航栈上一页（玻璃卡会变成"半透明弹窗"）
+            .background(t.bg),
+    ) {
+        // 顶部柔光只在页面内部，不干扰可读性
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(300.dp)
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            t.flame.copy(alpha = if (t.isDark) 0.10f else 0.07f),
+                            Color.Transparent,
+                        )
+                    )
+                ),
+        )
     LazyColumn(
         modifier = Modifier
             .fillMaxSize(),
@@ -68,7 +88,7 @@ fun GlassAuthor(onBack: () -> Unit, onOpenUrl: (String) -> Unit) {
                 Box(
                     modifier = Modifier
                         .size(38.dp)
-                        .glassCard(99.dp)
+                        .glassCardSolid(99.dp)
                         .clickable(onClick = onBack),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -103,7 +123,7 @@ fun GlassAuthor(onBack: () -> Unit, onOpenUrl: (String) -> Unit) {
                         spotColor = t.glassShadow,
                     )
                     .clip(RoundedCornerShape(26.dp))
-                    .background(if (t.isDark) Color(0x08FFFFFF) else Color(0x9EFFFFFF))
+                    .background(if (t.isDark) Color(0xFF16161F) else Color(0xF7FFFFFF))
                     .border(1.dp, t.heroGrad, RoundedCornerShape(26.dp)),
             ) {
                 Column(modifier = Modifier.padding(18.dp)) {
@@ -205,6 +225,7 @@ fun GlassAuthor(onBack: () -> Unit, onOpenUrl: (String) -> Unit) {
                 title = stringResource(R.string.author_project),
                 subtitle = stringResource(R.string.author_project_value),
                 accent = t.violet,
+                solid = true,
                 showChevron = true,
                 onClick = { onOpenUrl("https://github.com/Cmry-mlc/FoxSu") },
             )
@@ -216,6 +237,7 @@ fun GlassAuthor(onBack: () -> Unit, onOpenUrl: (String) -> Unit) {
                 title = stringResource(R.string.author_upstream),
                 subtitle = stringResource(R.string.author_upstream_value),
                 accent = t.lemon,
+                solid = true,
                 showChevron = true,
                 onClick = { onOpenUrl("https://github.com/tiann/KernelSU") },
             )
@@ -228,6 +250,7 @@ fun GlassAuthor(onBack: () -> Unit, onOpenUrl: (String) -> Unit) {
                 title = stringResource(R.string.author_contact),
                 subtitle = stringResource(R.string.author_contact_value),
                 accent = t.flame,
+                solid = true,
                 showChevron = true,
                 onClick = { onOpenUrl("https://github.com/Cmry-mlc/FoxSu/issues") },
             )
@@ -239,6 +262,7 @@ fun GlassAuthor(onBack: () -> Unit, onOpenUrl: (String) -> Unit) {
                 title = stringResource(R.string.author_qq),
                 subtitle = stringResource(R.string.author_qq_value),
                 accent = t.cyan,
+                solid = true,
                 showChevron = true,
                 onClick = { onOpenUrl("https://pd.qq.com/s/8glxclfk6?b=9") },
             )
@@ -251,7 +275,9 @@ fun GlassAuthor(onBack: () -> Unit, onOpenUrl: (String) -> Unit) {
                 title = stringResource(R.string.author_version),
                 subtitle = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
                 accent = t.mint,
+                solid = true,
             )
         }
+    }
     }
 }

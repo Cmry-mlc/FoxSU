@@ -581,15 +581,41 @@ fun glassStatusBarTop(): Dp =
 
 /** .chip：38 圆角12 玻璃 chip（亮色 rgba(255,255,255,.6) + 白描边 + 0 2 8 投影；暗色 rgba(255,255,255,.05)） */
 @Composable
-fun GlassChip(iconRes: Int, accent: Color, shadowed: Boolean = false) {
+fun GlassChip(
+    iconRes: Int,
+    accent: Color,
+    shadowed: Boolean = false,
+    /** 实玻璃卡上使用：底色改为同色系淡色，避免白色 chip 淹没在白色卡面上 */
+    tinted: Boolean = false,
+) {
     val t = glassTokens()
     Box(
         modifier = Modifier
             .size(38.dp)
-            .then(if (shadowed && !t.isDark) Modifier.shadow(2.dp, RoundedCornerShape(12.dp), spotColor = Color(0x1A5A5578)) else Modifier)
+            .then(
+                if (shadowed && !t.isDark && !tinted) {
+                    Modifier.shadow(2.dp, RoundedCornerShape(12.dp), spotColor = Color(0x1A5A5578))
+                } else {
+                    Modifier
+                }
+            )
             .clip(RoundedCornerShape(12.dp))
-            .background(if (t.isDark) Color(0x0DFFFFFF) else Color(0x99FFFFFF))
-            .border(1.dp, if (t.isDark) t.glassBorder else Color(0xD9FFFFFF), RoundedCornerShape(12.dp)),
+            .background(
+                when {
+                    tinted -> accent.copy(alpha = if (t.isDark) 0.16f else 0.12f)
+                    t.isDark -> Color(0x0DFFFFFF)
+                    else -> Color(0x99FFFFFF)
+                }
+            )
+            .border(
+                1.dp,
+                when {
+                    tinted -> accent.copy(alpha = 0.22f)
+                    t.isDark -> t.glassBorder
+                    else -> Color(0xD9FFFFFF)
+                },
+                RoundedCornerShape(12.dp),
+            ),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
@@ -728,6 +754,8 @@ fun GlassWide(
     title: String,
     subtitle: String,
     accent: Color,
+    /** true 时使用不透明「实玻璃」，用于详情页（避免透出导航栈上一页） */
+    solid: Boolean = false,
     trailing: (@Composable RowScope.() -> Unit)? = null,
     showChevron: Boolean = false,
     onClick: (() -> Unit)? = null,
@@ -736,12 +764,12 @@ fun GlassWide(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .glassCard(20.dp)
+            .then(if (solid) Modifier.glassCardSolid(20.dp) else Modifier.glassCard(20.dp))
             .clickable(enabled = onClick != null) { onClick?.invoke() }
             .padding(horizontal = 14.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        GlassChip(iconRes = iconRes, accent = accent, shadowed = true)
+        GlassChip(iconRes = iconRes, accent = accent, shadowed = true, tinted = solid)
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(title, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = t.ink, maxLines = 1)
