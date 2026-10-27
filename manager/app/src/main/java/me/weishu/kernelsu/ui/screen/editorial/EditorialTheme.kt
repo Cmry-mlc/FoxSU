@@ -263,14 +263,25 @@ fun EdStatusBand(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(t.ink)
-            .padding(start = 22.dp, end = 22.dp, top = 18.dp, bottom = 18.dp),
+            .background(t.ink),
     ) {
+        // 右上角狐尾水印（对应设计稿 .tail，opacity .14）
+        Icon(
+            painter = painterResource(R.drawable.ic_launcher_monochrome),
+            contentDescription = null,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .offset(x = 42.dp, y = (-30).dp)
+                .size(150.dp),
+            tint = t.paper.copy(alpha = 0.10f),
+        )
         Column(
-            modifier = Modifier.graphicsLayer {
-                alpha = appear.value
-                translationY = (1f - appear.value) * 14f
-            },
+            modifier = Modifier
+                .padding(start = 22.dp, end = 22.dp, top = 18.dp, bottom = 18.dp)
+                .graphicsLayer {
+                    alpha = appear.value
+                    translationY = (1f - appear.value) * 14f
+                },
         ) {
             Text(
                 text = kicker,
@@ -289,47 +300,48 @@ fun EdStatusBand(
                     lineHeight = 40.sp,
                     modifier = Modifier.padding(top = 6.dp),
                 )
-                Text(
-                    text = ".",
-                    fontSize = 38.sp,
-                    fontWeight = FontWeight.Black,
-                    color = t.acc,
-                    modifier = Modifier.padding(top = 6.dp),
+                Box(
+                    modifier = Modifier
+                        .padding(start = 4.dp, bottom = 7.dp)
+                        .size(9.dp)
+                        .clip(CircleShape)
+                        .background(t.acc),
                 )
             }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 14.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    .padding(top = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 kvs.forEach { (k, v, hot) ->
                     Column(
                         modifier = Modifier
                             .weight(1f)
-                            .padding(start = 9.dp)
+                            // 竖线与文字之间留 12dp，避免「版本｜」贴边
+                            .padding(start = 12.dp)
                             .drawBehind {
                                 drawLine(
-                                    color = t.paper.copy(alpha = 0.25f),
-                                    start = Offset(0f, 0f),
-                                    end = Offset(0f, size.height),
-                                    strokeWidth = 2f * density,
+                                    color = t.paper.copy(alpha = 0.22f),
+                                    start = Offset(0f, 1.dp.toPx()),
+                                    end = Offset(0f, size.height - 1.dp.toPx()),
+                                    strokeWidth = 1.5.dp.toPx(),
                                 )
                             },
                     ) {
                         Text(
                             text = k,
-                            fontSize = 9.sp,
-                            letterSpacing = 1.sp,
-                            color = t.paper.copy(alpha = 0.55f),
+                            fontSize = 8.5.sp,
+                            letterSpacing = 1.4.sp,
+                            color = t.paper.copy(alpha = 0.5f),
                             maxLines = 1,
                         )
                         Text(
                             text = v,
-                            fontSize = 12.sp,
+                            fontSize = 12.5.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = if (hot) t.acc else t.paper,
-                            modifier = Modifier.padding(top = 3.dp),
+                            modifier = Modifier.padding(top = 4.dp),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
