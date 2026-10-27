@@ -462,7 +462,7 @@ fun CustomizationScreen() {
                                 labelRes = R.string.customization_icon_foxsu,
                                 iconRes = R.drawable.ic_launcher_foreground,
                                 background = Brush.linearGradient(
-                                    listOf(Color(0xFFEFFBF3), Color(0xFFB7E3C6))
+                                    listOf(Color(0xFF1B1730), Color(0xFF07080B))
                                 ),
                             ),
                             IconChoice(
@@ -470,7 +470,7 @@ fun CustomizationScreen() {
                                 labelRes = R.string.customization_icon_fox2,
                                 iconRes = R.drawable.ic_launcher_fox2_foreground,
                                 background = Brush.linearGradient(
-                                    listOf(Color(0xFFF6F8F7), Color(0xFFDBE6DF))
+                                    listOf(Color(0xFF2A1E45), Color(0xFF08070C))
                                 ),
                             ),
                             IconChoice(
@@ -478,7 +478,7 @@ fun CustomizationScreen() {
                                 labelRes = R.string.customization_icon_fox3,
                                 iconRes = R.drawable.ic_launcher_fox3_foreground,
                                 background = Brush.linearGradient(
-                                    listOf(Color(0xFFFFF3E7), Color(0xFFFFD3B4))
+                                    listOf(Color(0xFF10201E), Color(0xFF06080A))
                                 ),
                             ),
                             IconChoice(
@@ -486,7 +486,7 @@ fun CustomizationScreen() {
                                 labelRes = R.string.customization_icon_fox4,
                                 iconRes = R.drawable.ic_launcher_fox4_foreground,
                                 background = Brush.linearGradient(
-                                    listOf(Color(0xFFEDFAF3), Color(0xFFBFE8D5))
+                                    listOf(Color(0xFFFAFAFF), Color(0xFFE9E9F2))
                                 ),
                             ),
                             IconChoice(

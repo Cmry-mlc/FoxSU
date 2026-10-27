@@ -157,8 +157,12 @@ fun NcHeader(
                 letterSpacing = (-1).sp,
                 lineHeight = 32.sp,
                 color = t.tx,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
+        // 有真实新版本时，标题栏右侧出现流动胶囊（无更新时零占位）
+        NcUpdateCapsule(Modifier.padding(end = 7.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
             actions()
         }

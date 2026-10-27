@@ -25,6 +25,7 @@ import me.weishu.kernelsu.ui.util.getSELinuxStatusRaw
 import me.weishu.kernelsu.ui.util.module.LatestVersionInfo
 import me.weishu.kernelsu.ui.util.resolveDeviceName
 import me.weishu.kernelsu.ui.util.rootAvailable
+import me.weishu.kernelsu.ui.util.UpdateCenter
 
 class HomeViewModel(
     private val settingsRepo: SettingsRepository = SettingsRepositoryImpl()
@@ -40,6 +41,10 @@ class HomeViewModel(
             if (baseState.checkUpdateEnabled) {
                 val latestVersionInfo = withContext(Dispatchers.IO) { checkNewVersion() }
                 _uiState.update { it.copy(latestVersionInfo = latestVersionInfo) }
+                // 标题栏更新胶囊读取同一份结果
+                UpdateCenter.publish(latestVersionInfo)
+            } else {
+                UpdateCenter.publish(LatestVersionInfo())
             }
         }
     }
