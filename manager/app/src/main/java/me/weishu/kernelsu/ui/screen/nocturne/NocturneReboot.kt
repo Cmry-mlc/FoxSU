@@ -54,6 +54,7 @@ fun NcRebootSheet(onDismiss: () -> Unit) {
         show.animateTo(1f, tween(420, easing = CubicBezierEasing(0.2f, 1.05f, 0.35f, 1f)))
     }
 
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
     Box(Modifier.fillMaxSize()) {
         // 遮罩
         Box(
@@ -211,6 +212,7 @@ fun NcRebootSheet(onDismiss: () -> Unit) {
                 Text("取 消", fontSize = 12.sp, letterSpacing = 3.sp, color = t.text2)
             }
         }
+    }
     }
 }
 

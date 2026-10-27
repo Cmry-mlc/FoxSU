@@ -236,11 +236,11 @@ fun NcRow(
 fun NcIconBox(iconRes: Int, accent: NcAccent, size: Dp = 34.dp) {
     val t = ncTokens()
     val (bg, fg) = when (accent) {
-        NcAccent.Default -> t.fill to t.iconTint
-        NcAccent.Violet -> t.violet.copy(alpha = 0.14f) to t.violetText
-        NcAccent.Mint -> t.mint.copy(alpha = 0.12f) to t.mint
-        NcAccent.Red -> t.red.copy(alpha = 0.12f) to t.red
-        NcAccent.Amber -> t.amber.copy(alpha = 0.12f) to t.amber
+        NcAccent.Default -> t.icDefaultBg to t.icDefaultFg
+        NcAccent.Violet -> t.icVioletBg to t.icVioletFg
+        NcAccent.Mint -> t.icMintBg to t.icMintFg
+        NcAccent.Red -> t.icRedBg to t.icRedFg
+        NcAccent.Amber -> t.icAmberBg to t.icAmberFg
     }
     Box(
         Modifier.size(size).clip(RoundedCornerShape(11.dp)).background(bg),
@@ -338,7 +338,7 @@ fun NcSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
         Modifier
             .size(42.dp, 25.dp)
             .clip(CircleShape)
-            .background(if (checked) Brush.horizontalGradient(listOf(t.violetDeep, t.violet)) else Brush.horizontalGradient(listOf(t.fill, t.fill)))
+            .background(if (checked) Brush.horizontalGradient(listOf(Color(0xFF6A57F5), Color(0xFF8B7BFF))) else Brush.horizontalGradient(listOf(t.fill, t.fill)))
             .clickable { onCheckedChange(!checked) },
     ) {
         Box(
@@ -425,13 +425,35 @@ fun NcGradientBorder(
     content: @Composable BoxScope.() -> Unit,
 ) {
     val t = ncTokens()
+    NcGradientBorder(
+        radius = radius,
+        borderColors = t.heroBorder,
+        borderStops = t.heroBorderStops,
+        cardColors = t.heroCard,
+        cardStops = t.heroCardStops,
+        content = content,
+    )
+}
+
+/** 自定义渐变描边卡片。 */
+@Composable
+fun NcGradientBorder(
+    radius: Dp,
+    borderColors: List<Color>,
+    borderStops: List<Float>,
+    cardColors: List<Color>,
+    cardStops: List<Float>,
+    content: @Composable BoxScope.() -> Unit,
+) {
     Box(
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(radius))
             .background(
                 Brush.linearGradient(
-                    colors = listOf(t.violet.copy(alpha = 0.75f), t.mint.copy(alpha = 0.35f), Color.White.copy(alpha = 0.06f)),
+                    colorStops = borderStops.mapIndexed { i, s -> s to borderColors[i] }.toTypedArray(),
+                    start = Offset.Zero,
+                    end = Offset(400f, 400f),
                 )
             )
             .padding(1.dp)
@@ -440,7 +462,13 @@ fun NcGradientBorder(
             Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(radius - 1.dp))
-                .background(Brush.linearGradient(listOf(t.cardTop, t.cardBottom), start = Offset.Zero, end = Offset(0f, 600f))),
+                .background(
+                    Brush.linearGradient(
+                        colorStops = cardStops.mapIndexed { i, s -> s to cardColors[i] }.toTypedArray(),
+                        start = Offset.Zero,
+                        end = Offset(0f, 600f),
+                    )
+                ),
             content = content,
         )
     }

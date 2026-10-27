@@ -137,6 +137,35 @@ data class NcTokens(
     val dangerSub: Color,      // EDL 副标题
     val dangerIcon: Color,     // EDL 图标
     val dangerChev: Color,     // EDL 箭头
+    // —— 以下为设计稿中「不随亮暗改变」的固定色 ——
+    val violetFixed: Color,    // #8B7BFF（设计稿固定紫）
+    val violetDeepFixed: Color,// #6A57F5（--vio2）
+    val mintFixed: Color,      // #4DE2C5
+    // Hero 卡
+    val heroBorder: List<Color>,   // 渐变描边三色
+    val heroBorderStops: List<Float>,
+    val heroCard: List<Color>,     // 内层渐变两色
+    val heroCardStops: List<Float>,
+    val heroGlow: Color,            // 右上光晕
+    val heroStatus: Color,          // .st 状态行文字
+    val heroBadgeBg: Color,         // LKM 徽章底
+    val heroBadgeText: Color,       // LKM 徽章字
+    val heroMetaKey: Color,         // .meta .k
+    // 模块空态光球
+    val orbInner: Color, val orbMid: Color,
+    val orbIcon: Color, val orbRing: Color, val orbShadow: Color,
+    // 底栏
+    val navActiveText: Color,
+    val navActiveIcon: Color,
+    val navInactive: Color,
+    val navIndicator: List<Color>,
+    val badgeBg: Color,
+    // 行图标四色系
+    val icDefaultBg: Color, val icDefaultFg: Color,
+    val icVioletBg: Color, val icVioletFg: Color,
+    val icMintBg: Color, val icMintFg: Color,
+    val icRedBg: Color, val icRedFg: Color,
+    val icAmberBg: Color, val icAmberFg: Color,
 ) {
     companion object {
         val dark = NcTokens(
@@ -158,6 +187,31 @@ data class NcTokens(
             onViolet = Color.White, violetSoft = Color(0xFFA9A3D8),
             dangerText = Color(0xFFFFB3A9), dangerSub = Color(0xFF8A6A66),
             dangerIcon = Color(0xFFFF8A7D), dangerChev = Color(0xFF7A5751),
+            violetFixed = Color(0xFF8B7BFF), violetDeepFixed = Color(0xFF6A57F5), mintFixed = Color(0xFF4DE2C5),
+            heroBorder = listOf(
+                Color(0xB38B7BFF),
+                Color(0x594DE2C5),
+                Color(0x0FFFFFFF),
+            ),
+            heroBorderStops = listOf(0f, 0.45f, 0.80f),
+            heroCard = listOf(Color(0xFF141724), Color(0xFF0E1018)),
+            heroCardStops = listOf(0f, 0.60f),
+            heroGlow = Color(0x598B7BFF),
+            heroStatus = Color(0xFF5D6376),
+            heroBadgeBg = Color(0x1F4DE2C5),
+            heroBadgeText = Color(0xFF4DE2C5),
+            heroMetaKey = Color(0xFF5D6376),
+            orbInner = Color(0x598B7BFF), orbMid = Color(0x0D8B7BFF),
+            orbIcon = Color(0xFF8E82FF), orbRing = Color(0x478B7BFF), orbShadow = Color(0x2E8B7BFF),
+            navActiveText = Color.White, navActiveIcon = Color(0xFFB0A4FF),
+            navInactive = Color(0xFF6A7085),
+            navIndicator = listOf(Color(0xFF8B7BFF), Color(0xFF4DE2C5)),
+            badgeBg = Color(0xFF6A57F5),
+            icDefaultBg = Color(0x0DFFFFFF), icDefaultFg = Color(0xFFA9AFC0),
+            icVioletBg = Color(0x248B7BFF), icVioletFg = Color(0xFFB0A4FF),
+            icMintBg = Color(0x1F4DE2C5), icMintFg = Color(0xFF4DE2C5),
+            icRedBg = Color(0x1FFF6B5E), icRedFg = Color(0xFFFF6B5E),
+            icAmberBg = Color(0x1FFFB35C), icAmberFg = Color(0xFFFFB35C),
         )
         val light = NcTokens(
             dark = false,
@@ -178,6 +232,31 @@ data class NcTokens(
             onViolet = Color.White, violetSoft = Color(0xFFE4E0FF),
             dangerText = Color(0xFFC0392B), dangerSub = Color(0xFFB08A86),
             dangerIcon = Color(0xFFE8503F), dangerChev = Color(0xFFC9A9A5),
+            violetFixed = Color(0xFF8B7BFF), violetDeepFixed = Color(0xFF6A57F5), mintFixed = Color(0xFF4DE2C5),
+            heroBorder = listOf(
+                Color(0x8C6A57F5),
+                Color(0x5915A98B),
+                Color(0x140F142D),
+            ),
+            heroBorderStops = listOf(0f, 0.45f, 0.85f),
+            heroCard = listOf(Color(0xFFFFFFFF), Color(0xFFF6F7FC)),
+            heroCardStops = listOf(0f, 0.62f),
+            heroGlow = Color(0x388B7BFF),
+            heroStatus = Color(0xFF8A90A2),
+            heroBadgeBg = Color(0x1F15A98B),
+            heroBadgeText = Color(0xFF0B8E75),
+            heroMetaKey = Color(0xFF9AA0B0),
+            orbInner = Color(0x388B7BFF), orbMid = Color(0x088B7BFF),
+            orbIcon = Color(0xFF6A57F5), orbRing = Color(0x336A57F5), orbShadow = Color(0x1A6A57F5),
+            navActiveText = Color(0xFF12141B), navActiveIcon = Color(0xFF6A57F5),
+            navInactive = Color(0xFF98A0AE),
+            navIndicator = listOf(Color(0xFF8B7BFF), Color(0xFF4DE2C5)),
+            badgeBg = Color(0xFF6A57F5),
+            icDefaultBg = Color(0xFFF3F4F9), icDefaultFg = Color(0xFF6F7686),
+            icVioletBg = Color(0x1A6A57F5), icVioletFg = Color(0xFF6A57F5),
+            icMintBg = Color(0x1A15A98B), icMintFg = Color(0xFF0FA98B),
+            icRedBg = Color(0x1AE8503F), icRedFg = Color(0xFFE8503F),
+            icAmberBg = Color(0x1ADE9A21), icAmberFg = Color(0xFFDE9A21),
         )
     }
 }

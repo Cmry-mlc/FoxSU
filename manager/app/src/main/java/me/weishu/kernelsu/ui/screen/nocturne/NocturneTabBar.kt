@@ -96,37 +96,37 @@ fun NocturneTabBarScreen(
                             .offset(y = 6.dp)
                             .size(24.dp, 2.5.dp)
                             .clip(CircleShape)
-                            .background(Brush.horizontalGradient(listOf(t.violet, t.mint)))
+                            .background(Brush.horizontalGradient(t.navIndicator))
                     )
                 }
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.offset(y = lift.dp).scale(sc),
+                    modifier = Modifier.offset(y = (3f + lift).dp).scale(sc),
                 ) {
                     Box {
                         Icon(
                             painter = painterResource(icon),
                             contentDescription = label,
-                            tint = if (selected) t.violet else t.text3,
+                            tint = if (selected) t.navActiveIcon else t.navInactive,
                             modifier = Modifier.size(21.dp),
                         )
                         if (count > 0) {
                             Box(
                                 Modifier
                                     .align(Alignment.TopEnd)
-                                    .offset(x = 9.dp, y = (-1).dp)
+                                    .offset(x = 8.dp, y = (-2).dp)
                                     .size(14.dp)
                                     .clip(CircleShape)
-                                    .background(t.violetDeep),
-                                contentAlignment = Alignment.Center,
+                                    .background(t.badgeBg),
                             ) {
                                 Text(
                                     text = if (count > 9) "9+" else "$count",
                                     fontSize = 8.sp,
+                                    lineHeight = 14.sp,
                                     fontWeight = FontWeight.ExtraBold,
                                     color = Color.White,
                                     textAlign = TextAlign.Center,
-                                    modifier = Modifier.offset(y = (0.5).dp),
+                                    modifier = Modifier.fillMaxWidth(),
                                 )
                             }
                         }
@@ -136,7 +136,7 @@ fun NocturneTabBarScreen(
                         text = label,
                         fontSize = 9.sp,
                         fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                        color = if (selected) t.violet else t.text3,
+                        color = if (selected) t.navActiveText else t.navInactive,
                     )
                 }
             }

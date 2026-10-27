@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -100,7 +101,7 @@ fun NocturneModuleScreen(
                 .size(56.dp)
                 .shadow(16.dp, CircleShape, ambientColor = t.violet.copy(alpha = 0.55f), spotColor = t.violet.copy(alpha = 0.55f))
                 .clip(CircleShape)
-                .background(Brush.linearGradient(listOf(t.violet, t.violetDeep)))
+                .background(Brush.linearGradient(listOf(Color(0xFF8B7BFF), Color(0xFF6A57F5))))
                 .clickable(onClick = onAddModule),
             contentAlignment = Alignment.Center,
         ) {
@@ -114,17 +115,29 @@ fun NocturneModuleScreen(
 private fun NcEmptyOrb() {
     val t = ncTokens()
     Box(Modifier.size(104.dp), contentAlignment = Alignment.Center) {
+        // 外发光（0 0 40px violet 18%）
+        Canvas(Modifier.fillMaxSize()) {
+            drawCircle(color = t.orbShadow, radius = size.width / 2 + 20f)
+        }
+        // 内描边 inset 1px
+        Canvas(Modifier.fillMaxSize()) {
+            drawCircle(
+                color = t.orbRing,
+                radius = size.width / 2 - 1,
+                style = Stroke(2f),
+            )
+        }
         Canvas(Modifier.fillMaxSize()) {
             drawCircle(
                 brush = Brush.radialGradient(
-                    colors = listOf(t.violet.copy(alpha = 0.35f), t.violet.copy(alpha = 0.05f), Color.Transparent),
+                    colors = listOf(t.orbInner, t.orbMid, Color.Transparent),
                     center = Offset(size.width * 0.3f, size.height * 0.25f),
                     radius = size.width * 0.72f,
                 ),
                 radius = size.width / 2,
             )
         }
-        Icon(painterResource(R.drawable.nc_grid), null, tint = t.violet, modifier = Modifier.size(38.dp))
+        Icon(painterResource(R.drawable.nc_grid), null, tint = t.orbIcon, modifier = Modifier.size(38.dp))
     }
 }
 

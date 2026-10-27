@@ -152,9 +152,10 @@ fun NocturneHomeScreen(
             Spacer(Modifier.height(10.dp))
             }
         }
+        // 重启弹层：覆盖整屏（含底栏），放在最外层 Box 最后绘制
+        if (showReboot) NcRebootSheet(onDismiss = { showReboot = false })
     }
 
-    if (showReboot) NcRebootSheet(onDismiss = { showReboot = false })
     if (showStylePicker) GlassStylePickerDialog(current = LocalUiMode.current, onDismiss = { showStylePicker = false })
 }
 
@@ -176,7 +177,7 @@ private fun NcHero(state: HomeUiState, ok: Boolean) {
             Canvas(Modifier.size(180.dp).align(Alignment.TopEnd)) {
                 drawCircle(
                     brush = Brush.radialGradient(
-                        colors = listOf(t.violet.copy(alpha = 0.35f), Color.Transparent),
+                        colors = listOf(t.heroGlow, Color.Transparent),
                         center = Offset(size.width * 0.6f, size.height * 0.2f),
                         radius = size.width * 0.55f,
                     ),
@@ -198,7 +199,7 @@ private fun NcHero(state: HomeUiState, ok: Boolean) {
                         text = if (ok) "RUNNING · 越狱模式" else "STOPPED · 未安装",
                         fontSize = 9.5.sp,
                         letterSpacing = 2.6.sp,
-                        color = t.text2,
+                        color = t.heroStatus,
                         fontWeight = FontWeight.Bold,
                     )
                 }
@@ -216,7 +217,7 @@ private fun NcHero(state: HomeUiState, ok: Boolean) {
                             Modifier
                                 .offset(y = (-4).dp)
                                 .clip(RoundedCornerShape(7.dp))
-                                .background(t.mint.copy(alpha = 0.12f))
+                                .background(t.heroBadgeBg)
                                 .padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
                             Text(
@@ -224,7 +225,7 @@ private fun NcHero(state: HomeUiState, ok: Boolean) {
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.sp,
-                                color = t.mint,
+                                color = t.heroBadgeText,
                             )
                         }
                     }
@@ -250,7 +251,7 @@ private fun NcHero(state: HomeUiState, ok: Boolean) {
 private fun HeroMeta(k: String, v: String, valueColor: Color, modifier: Modifier = Modifier) {
     val t = ncTokens()
     Column(modifier) {
-        Text(k, fontSize = 9.sp, letterSpacing = 1.6.sp, color = t.text3, fontWeight = FontWeight.Bold)
+        Text(k, fontSize = 9.sp, letterSpacing = 1.6.sp, color = t.heroMetaKey, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(5.dp))
         Text(v, fontSize = 12.5.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.2.sp, color = valueColor)
     }
