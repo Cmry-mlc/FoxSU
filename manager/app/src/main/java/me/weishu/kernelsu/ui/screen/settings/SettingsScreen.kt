@@ -72,7 +72,15 @@ fun SettingPager(
 
     when (LocalUiMode.current) {
         UiMode.Miuix -> SettingPagerMiuix(uiState, actions, bottomInnerPadding)
-        UiMode.Material, UiMode.Fresh -> SettingPagerMaterial(uiState, actions, bottomInnerPadding)
+        UiMode.Fresh -> SettingPagerMaterial(uiState, actions, bottomInnerPadding)
+
+        UiMode.Material -> me.weishu.kernelsu.ui.screen.editorial.EditorialSettings(
+            uiState = uiState,
+            actions = actions,
+            bottomInnerPadding = bottomInnerPadding,
+            onOpenCustomization = { navigator.push(Route.Customization) },
+            onOpenSulog = { navigator.push(Route.Sulog) },
+        )
         UiMode.Glass -> me.weishu.kernelsu.ui.screen.glass.GlassSettingsList(
             uiState = uiState,
             actions = actions,

@@ -370,7 +370,7 @@
     <string name="customization_preview_card">Working mode</string>
     <string name="settings_ui_mode_summary">Choose the interface style.</string>
     <string name="settings_ui_mode_miuix">Miuix</string>
-    <string name="settings_ui_mode_material">Material</string>
+    <string name="settings_ui_mode_material">FoxSu Editorial</string>
     <string name="settings_ui_mode_fresh">ColorUI</string>
     <string name="settings_ui_mode_glass">FoxSu Glass</string>
     <string name="fresh_home_flash_hint">Tap to flash or update the kernel</string>
@@ -546,6 +546,10 @@
     <string name="glass_clean_modules">Clean unused modules</string>
     <string name="glass_clean_modules_sub">Remove leftover modules safely</string>
     <string name="glass_profile_default_hint">Using the default profile, no extra rules</string>
+    <string name="glass_home_selinux_sub">Mandatory access control</string>
+    <string name="glass_home_seccomp_sub">Syscall filtering</string>
+    <string name="glass_repo_sub">Browse curated community modules</string>
+    <string name="glass_add_module_sub">Install a local .zip module</string>
     <string name="glass_home_fingerprint">System fingerprint</string>
     <string name="glass_reboot_hint">Choose a reboot target</string>
     <string name="glass_flash_sub">FoxSu Glass · Flashing console</string>

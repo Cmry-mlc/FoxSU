@@ -120,7 +120,11 @@ fun BottomBar(
     val mainPagerState = LocalMainPagerState.current
     when (LocalUiMode.current) {
         UiMode.Miuix -> BottomBarMiuix(blurBackdrop, backdrop, navigationBadge, modifier)
-        UiMode.Material -> BottomBarMaterial(navigationBadge)
+        UiMode.Material -> me.weishu.kernelsu.ui.screen.editorial.EdTabBar(
+            currentTab = mainPagerState.selectedPage,
+            badge = navigationBadge,
+            onOpenTab = { page -> mainPagerState.animateToPage(page) },
+        )
         UiMode.Fresh -> BottomBarFresh(navigationBadge)
         UiMode.Glass -> me.weishu.kernelsu.ui.screen.glass.GlassBottomBar(
             currentTab = mainPagerState.selectedPage,

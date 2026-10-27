@@ -346,7 +346,7 @@
     <string name="customization_preview_card">工作模式</string>
     <string name="settings_ui_mode_summary">选择应用的界面风格</string>
     <string name="settings_ui_mode_miuix">Miuix</string>
-    <string name="settings_ui_mode_material">Material</string>
+    <string name="settings_ui_mode_material">FoxSu Editorial</string>
     <string name="settings_ui_mode_fresh">ColorUI</string>
     <string name="settings_ui_mode_glass">FoxSu Glass</string>
     <string name="fresh_home_flash_hint">点按可刷入或更新内核</string>
@@ -540,6 +540,10 @@
     <string name="glass_clean_modules">清理失效模块</string>
     <string name="glass_clean_modules_sub">未加载的残留模块可安全移除</string>
     <string name="glass_profile_default_hint">使用默认配置，不附加额外规则</string>
+    <string name="glass_home_selinux_sub">强制访问控制</string>
+    <string name="glass_home_seccomp_sub">系统调用过滤</string>
+    <string name="glass_repo_sub">浏览社区精选与热门模块</string>
+    <string name="glass_add_module_sub">从本地存储安装 .zip 模块</string>
     <string name="glass_home_fingerprint">系统指纹</string>
     <string name="glass_reboot_hint">选择重启目标</string>
     <string name="glass_flash_sub">FoxSu Glass · 刷写控制台</string>

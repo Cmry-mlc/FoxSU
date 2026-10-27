@@ -297,7 +297,7 @@ class MainActivity : ComponentActivity() {
                         }
                         when (uiMode) {
                             UiMode.Material -> androidx.compose.material3.Scaffold(
-                                containerColor = scaffoldBackgroundColor(MaterialTheme.colorScheme.surfaceContainer)
+                                containerColor = me.weishu.kernelsu.ui.screen.editorial.edTokens().paper
                             ) { navDisplay() }
 
                             UiMode.Miuix -> Scaffold { navDisplay() }
@@ -443,7 +443,7 @@ fun MainScreen(
     }
     val uiMode = LocalUiMode.current
     val surfaceColor = when (uiMode) {
-        UiMode.Material -> MaterialTheme.colorScheme.surface // Blur is not used in Material, this is just a placeholder
+        UiMode.Material -> me.weishu.kernelsu.ui.screen.editorial.edTokens().paper
         UiMode.Miuix -> MiuixTheme.colorScheme.surface
         UiMode.Fresh -> MaterialTheme.colorScheme.surface
         UiMode.Glass -> glassTokens().bg

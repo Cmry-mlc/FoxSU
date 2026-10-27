@@ -90,11 +90,25 @@ fun SuperUserPager(
             bottomInnerPadding = bottomInnerPadding,
         )
 
-        UiMode.Material, UiMode.Fresh -> SuperUserPagerMaterial(
+        UiMode.Fresh -> SuperUserPagerMaterial(
             uiState = uiState,
             actions = actions,
             bottomInnerPadding = bottomInnerPadding,
         )
+
+        UiMode.Material -> {
+            val apps =
+                if (uiState.searchStatus.searchText.isBlank()) uiState.groupedApps else uiState.searchResults
+            me.weishu.kernelsu.ui.screen.editorial.EditorialSuperUser(
+                granted = apps.filter { it.anyAllowSu },
+                notGranted = apps.filterNot { it.anyAllowSu },
+                grantedCount = apps.count { it.anyAllowSu },
+                searchValue = uiState.searchStatus.searchText,
+                onSearch = actions.onSearchTextChange,
+                bottomInnerPadding = bottomInnerPadding,
+                onOpenApp = actions.onOpenProfile,
+            )
+        }
 
         UiMode.Glass -> {
             val apps =
