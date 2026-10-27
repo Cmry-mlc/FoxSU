@@ -308,19 +308,20 @@ fun EdStatusBand(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 18.dp),
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 kvs.forEach { (k, v, hot) ->
                     Column(
                         modifier = Modifier
                             .weight(1f)
-                            // 竖线→文字 10dp（设计稿 .kv padding-left:10px），右侧留 4dp 不贴下一列
+                            // 文字左侧留 10dp；竖线再往左挪 4dp → 竖线与文字实际间距 14dp
                             .padding(start = 10.dp, end = 4.dp)
                             .drawBehind {
+                                val x = (-4).dp.toPx()
                                 drawLine(
                                     color = t.paper.copy(alpha = 0.22f),
-                                    start = Offset(0f, 0f),
-                                    end = Offset(0f, size.height),
+                                    start = Offset(x, 0f),
+                                    end = Offset(x, size.height),
                                     strokeWidth = 1.5.dp.toPx(),
                                 )
                             },
