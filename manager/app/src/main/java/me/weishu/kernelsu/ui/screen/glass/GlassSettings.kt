@@ -47,9 +47,7 @@ private fun GlassSettingRowComposable(row: GlassSettingRow) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 10.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .background(t.glassPanel)
-            .border(1.dp, t.glassBorder, RoundedCornerShape(20.dp))
+            .glassCard(20.dp)
             .clickable(onClick = row.onClick)
             .padding(horizontal = 15.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically,

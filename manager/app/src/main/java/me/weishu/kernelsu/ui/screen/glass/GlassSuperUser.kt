@@ -68,9 +68,7 @@ fun GlassSuperUserRow(app: GroupedApps, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 9.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .background(if (t.isDark) t.panel2 else Color(0xD9FFFFFF))
-            .border(1.dp, if (t.isDark) t.glassBorder else Color(0xCCFFFFFF), RoundedCornerShape(20.dp))
+            .glassCard(20.dp)
             .clickable(onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,

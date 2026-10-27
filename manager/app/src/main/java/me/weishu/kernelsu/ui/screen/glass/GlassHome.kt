@@ -65,11 +65,13 @@ fun GlassHome(
         }
         item {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min),
                 horizontalArrangement = Arrangement.spacedBy(11.dp),
             ) {
                 GlassNCard(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
                     iconRes = R.drawable.ic_d_phone,
                     title = stringResource(R.string.home_device_model),
                     value = state.systemInfo.deviceModel,
@@ -77,7 +79,7 @@ fun GlassHome(
                     accent = glassTokens().mint,
                 )
                 GlassNCard(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
                     iconRes = R.drawable.ic_d_palette,
                     title = stringResource(R.string.settings_ui_mode),
                     value = stringResource(uiModeLabelRes(LocalUiMode.current))
@@ -91,11 +93,13 @@ fun GlassHome(
         item { Spacer(Modifier.height(11.dp)) }
         item {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min),
                 horizontalArrangement = Arrangement.spacedBy(11.dp),
             ) {
                 GlassNCard(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
                     iconRes = R.drawable.ic_d_shield,
                     title = stringResource(R.string.superuser),
                     value = navigationBadge.superuserCount.toString(),
@@ -104,7 +108,7 @@ fun GlassHome(
                     onClick = { onOpenTab(1) },
                 )
                 GlassNCard(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
                     iconRes = R.drawable.ic_d_grid,
                     title = stringResource(R.string.module),
                     value = navigationBadge.moduleEnabledCount.toString(),
@@ -117,11 +121,13 @@ fun GlassHome(
         item { Spacer(Modifier.height(11.dp)) }
         item {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min),
                 horizontalArrangement = Arrangement.spacedBy(11.dp),
             ) {
                 GlassStatusCard(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
                     iconRes = R.drawable.ic_d_lock,
                     title = stringResource(R.string.glass_home_selinux),
                     subtitle = if (state.isSELinuxPermissive) "Permissive" else "Enforcing",
@@ -130,7 +136,7 @@ fun GlassHome(
                     badgeColor = if (state.isSELinuxPermissive) glassTokens().amber else glassTokens().lime,
                 )
                 GlassStatusCard(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
                     iconRes = R.drawable.ic_d_sliders,
                     title = stringResource(R.string.home_seccomp_status),
                     subtitle = seccompLabel(state.systemInfo.seccompStatus),
@@ -143,11 +149,13 @@ fun GlassHome(
         item { Spacer(Modifier.height(11.dp)) }
         item {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min),
                 horizontalArrangement = Arrangement.spacedBy(11.dp),
             ) {
                 GlassLinkCard(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
                     iconRes = R.drawable.ic_d_heart,
                     title = stringResource(R.string.glass_home_support),
                     subtitle = stringResource(R.string.glass_home_support_sub),
@@ -155,7 +163,7 @@ fun GlassHome(
                     onClick = { actions.onOpenUrl("https://github.com/Cmry-mlc/FoxSu") },
                 )
                 GlassLinkCard(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
                     iconRes = R.drawable.ic_d_book,
                     title = stringResource(R.string.glass_home_learn),
                     subtitle = stringResource(R.string.glass_home_learn_sub),
@@ -473,8 +481,14 @@ fun GlassNCard(
     val t = glassTokens()
     Box(
         modifier = modifier
+            .shadow(
+                8.dp,
+                RoundedCornerShape(22.dp),
+                ambientColor = Color(0x1F5A5578),
+                spotColor = Color(0x1F5A5578),
+            )
             .clip(RoundedCornerShape(22.dp))
-            .background(if (t.isDark) t.panel2 else Color(0xD9FFFFFF))
+            .background(if (t.isDark) t.panel2 else Color(0x8CFFFFFF))
             .border(1.dp, if (t.isDark) t.glassBorder else Color(0xCCFFFFFF), RoundedCornerShape(22.dp))
             .clickable(enabled = onClick != null) { onClick?.invoke() },
     ) {
@@ -487,10 +501,15 @@ fun GlassNCard(
                 .clip(CircleShape)
                 .background(accent.copy(alpha = if (t.isDark) 0.16f else 0.13f)),
         )
-        Column(modifier = Modifier.padding(15.dp)) {
+        // 布局：chip(38) + 16 + cT(15) + cV(25) + 15 + cS(13) + padding(30) ≈ 152
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(15.dp),
+        ) {
             GlassChip(iconRes = iconRes, accent = accent, shadowed = true)
             Spacer(Modifier.height(16.dp))
-            Text(title, fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = t.sub)
+            Text(title, fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = t.sub, maxLines = 1)
             Text(
                 value,
                 fontSize = 17.sp,
@@ -530,7 +549,7 @@ fun GlassChip(iconRes: Int, accent: Color, shadowed: Boolean = false) {
 }
 
 /**
- * .wide（两列版）：20 圆角玻璃，chip + 标题（13/800）+ 副标题（10.5 sub）+ 右侧 st 徽章。
+ * .wide（两列版）：20 圆角玻璃，chip + 标题（13/800）/副标题（10.5 sub）纵向 + 右侧 st 徽章。
  * 用于 SELinux / Seccomp 这类状态条。
  */
 @Composable
@@ -546,14 +565,12 @@ fun GlassStatusCard(
     val t = glassTokens()
     Row(
         modifier = modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(if (t.isDark) t.panel2 else Color(0xD9FFFFFF))
-            .border(1.dp, if (t.isDark) t.glassBorder else Color(0xCCFFFFFF), RoundedCornerShape(20.dp))
-            .padding(horizontal = 14.dp, vertical = 13.dp),
+            .glassCard(20.dp)
+            .padding(horizontal = 12.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         GlassChip(iconRes = iconRes, accent = accent, shadowed = true)
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(10.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 title,
@@ -565,7 +582,7 @@ fun GlassStatusCard(
             )
             Text(
                 subtitle,
-                fontSize = 10.sp,
+                fontSize = 10.5.sp,
                 color = t.sub,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
@@ -590,15 +607,13 @@ fun GlassLinkCard(
     val t = glassTokens()
     Row(
         modifier = modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(if (t.isDark) t.panel2 else Color(0xD9FFFFFF))
-            .border(1.dp, if (t.isDark) t.glassBorder else Color(0xCCFFFFFF), RoundedCornerShape(20.dp))
+            .glassCard(20.dp)
             .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 13.dp),
+            .padding(horizontal = 12.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         GlassChip(iconRes = iconRes, accent = accent, shadowed = true)
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(10.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 title,
@@ -610,7 +625,7 @@ fun GlassLinkCard(
             )
             Text(
                 subtitle,
-                fontSize = 10.sp,
+                fontSize = 10.5.sp,
                 color = t.sub,
                 lineHeight = 14.sp,
                 maxLines = 2,
@@ -618,7 +633,7 @@ fun GlassLinkCard(
                 modifier = Modifier.padding(top = 2.dp),
             )
         }
-        Text("›", fontSize = 17.sp, color = t.faint)
+        Text("›", fontSize = 17.sp, color = t.faint, modifier = Modifier.padding(start = 2.dp))
     }
 }
 
@@ -629,9 +644,7 @@ fun GlassKernelRow(kernelVersion: String, fingerprint: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(if (t.isDark) t.panel2 else Color(0xD9FFFFFF))
-            .border(1.dp, if (t.isDark) t.glassBorder else Color(0xCCFFFFFF), RoundedCornerShape(20.dp))
+            .glassCard(20.dp)
             .padding(horizontal = 14.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -641,7 +654,7 @@ fun GlassKernelRow(kernelVersion: String, fingerprint: String) {
             Text(stringResource(R.string.home_kernel), fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = t.ink)
             Text(
                 text = if (kernelVersion.isNotBlank()) kernelVersion else fingerprint,
-                fontSize = 10.sp,
+                fontSize = 10.5.sp,
                 color = t.sub,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -667,9 +680,7 @@ fun GlassWide(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(if (t.isDark) t.panel2 else Color(0xD9FFFFFF))
-            .border(1.dp, if (t.isDark) t.glassBorder else Color(0xCCFFFFFF), RoundedCornerShape(20.dp))
+            .glassCard(20.dp)
             .clickable(enabled = onClick != null) { onClick?.invoke() }
             .padding(horizontal = 14.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -680,7 +691,7 @@ fun GlassWide(
             Text(title, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = t.ink, maxLines = 1)
             Text(
                 subtitle,
-                fontSize = 10.sp,
+                fontSize = 10.5.sp,
                 color = t.sub,
                 lineHeight = 14.sp,
                 maxLines = 2,
@@ -695,6 +706,22 @@ fun GlassWide(
             Text("›", fontSize = 17.sp, color = t.faint)
         }
     }
+}
+
+/** 设计稿玻璃面板：半透明白玻璃 + 白描边 + 柔和外投影（.hero,.ncard,.wide,.urow,.mod,.srow） */
+@Composable
+fun Modifier.glassCard(radius: androidx.compose.ui.unit.Dp): Modifier {
+    val t = glassTokens()
+    return this
+        .shadow(
+            8.dp,
+            RoundedCornerShape(radius),
+            ambientColor = Color(0x1F5A5578),
+            spotColor = Color(0x1F5A5578),
+        )
+        .clip(RoundedCornerShape(radius))
+        .background(if (t.isDark) Color(0x0AFFFFFF) else Color(0x8CFFFFFF))
+        .border(1.dp, if (t.isDark) Color(0x1FFFFFFF) else Color(0xCCFFFFFF), RoundedCornerShape(radius))
 }
 
 /** 界面风格切换弹窗（Glass 版） */

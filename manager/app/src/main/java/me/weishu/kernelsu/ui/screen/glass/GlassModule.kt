@@ -70,27 +70,24 @@ fun GlassModuleList(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 11.dp)
-                    .shadow(6.dp, RoundedCornerShape(22.dp), spotColor = if (t.isDark) Color.Black else Color(0x1450496E))
-                    .clip(RoundedCornerShape(22.dp))
-                    .background(if (t.isDark) t.panel2 else Color(0xD9FFFFFF))
-                    .border(1.dp, if (t.isDark) t.glassBorder else Color(0xCCFFFFFF), RoundedCornerShape(22.dp))
-                    .padding(14.dp),
+                    .glassCard(22.dp)
+                    .padding(15.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // .mico：46 圆角15 白底 + 渐变描边 + 渐变 tint 图标
+                // .mico：46 圆角15 白玻璃块 + 白描边 + 渐变 tint 图标
                 Box(
                     modifier = Modifier
                         .size(46.dp)
-                        .shadow(5.dp, RoundedCornerShape(15.dp), spotColor = Color(a1).copy(alpha = 0.35f))
+                        .shadow(3.dp, RoundedCornerShape(15.dp), spotColor = Color(0x1F5A5578))
                         .clip(RoundedCornerShape(15.dp))
-                        .background(if (t.isDark) t.panel2 else Color.White)
-                        .border(1.dp, Brush.linearGradient(listOf(Color(a1).copy(alpha = 0.55f), Color(a2).copy(alpha = 0.55f))), RoundedCornerShape(15.dp)),
+                        .background(if (t.isDark) Color(0x0FFFFFFF) else Color(0xB3FFFFFF))
+                        .border(1.dp, if (t.isDark) t.glassBorder else Color(0xE6FFFFFF), RoundedCornerShape(15.dp)),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_d_check),
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(22.dp),
                         tint = Color(a1),
                     )
                 }
