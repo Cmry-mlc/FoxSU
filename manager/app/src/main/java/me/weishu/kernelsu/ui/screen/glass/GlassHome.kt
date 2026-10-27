@@ -387,6 +387,15 @@ fun GlassHeroCard(state: HomeUiState, issueCount: Int, onInstall: () -> Unit) {
                     letterSpacing = 2.sp,
                     style = TextStyle(brush = t.glineGrad),
                 )
+                Text(
+                    text = stringResource(
+                        if (hasIssue) R.string.glass_status_issue else R.string.glass_status_ok
+                    ),
+                    fontSize = 23.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = t.ink,
+                    modifier = Modifier.padding(top = 7.dp),
+                )
                 if (hasIssue) {
                     Row(
                         modifier = Modifier
@@ -420,7 +429,7 @@ fun GlassHeroCard(state: HomeUiState, issueCount: Int, onInstall: () -> Unit) {
                 }
                 // .verrow：版本文字 + tag 组（flex-wrap，同设计稿）
                 FlowRow(
-                    modifier = Modifier.padding(top = 10.dp),
+                    modifier = Modifier.padding(top = 12.dp),
                     horizontalArrangement = Arrangement.spacedBy(9.dp),
                     verticalArrangement = Arrangement.spacedBy(7.dp),
                 ) {
