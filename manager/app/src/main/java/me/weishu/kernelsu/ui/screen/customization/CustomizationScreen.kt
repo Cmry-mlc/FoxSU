@@ -71,6 +71,8 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.dropUnlessResumed
@@ -294,23 +296,45 @@ fun CustomizationScreen() {
                         title = stringResource(R.string.customization_font),
                         subtitle = stringResource(R.string.customization_font_sub),
                     ) {
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            items(4) { index ->
-                                StyleChip(
-                                    label = stringResource(fontLabelRes(index)),
-                                    selected = custom.fontStyle == index,
-                                    onClick = { CustomizationStore.setFontStyle(index) },
-                                )
-                            }
-                            if (custom.fontPath != null) {
-                                item {
-                                    StyleChip(
-                                        label = stringResource(R.string.customization_font_custom),
-                                        selected = custom.fontStyle == 4,
-                                        onClick = { CustomizationStore.setFontStyle(4) },
-                                    )
-                                }
-                            }
+                        // 字体卡：名称 + 用该字体实时渲染的预览文字
+                        FontOptionCard(
+                            name = stringResource(R.string.customization_font_system),
+                            sample = FONT_SAMPLE,
+                            selected = custom.fontStyle == 0,
+                            fontFamily = null,
+                            onClick = { CustomizationStore.setFontStyle(0) },
+                        )
+                        FontOptionCard(
+                            name = stringResource(R.string.customization_font_name_serif),
+                            sample = FONT_SAMPLE,
+                            selected = custom.fontStyle == 1,
+                            fontFamily = FontFamily(Font(R.font.noto_serif_sc)),
+                            onClick = { CustomizationStore.setFontStyle(1) },
+                        )
+                        FontOptionCard(
+                            name = stringResource(R.string.customization_font_name_mono),
+                            sample = FONT_SAMPLE,
+                            selected = custom.fontStyle == 2,
+                            fontFamily = FontFamily(Font(R.font.jetbrains_mono)),
+                            onClick = { CustomizationStore.setFontStyle(2) },
+                        )
+                        FontOptionCard(
+                            name = stringResource(R.string.customization_font_name_wenkai),
+                            sample = FONT_SAMPLE,
+                            selected = custom.fontStyle == 3,
+                            fontFamily = FontFamily(Font(R.font.lxgw_wenkai)),
+                            onClick = { CustomizationStore.setFontStyle(3) },
+                        )
+                        if (custom.fontPath != null) {
+                            FontOptionCard(
+                                name = stringResource(R.string.customization_font_custom),
+                                sample = File(custom.fontPath).name,
+                                selected = custom.fontStyle == 4,
+                                fontFamily = runCatching {
+                                    FontFamily(Font(File(custom.fontPath)))
+                                }.getOrNull(),
+                                onClick = { CustomizationStore.setFontStyle(4) },
+                            )
                         }
 
                         Spacer(Modifier.height(10.dp))
@@ -942,10 +966,63 @@ private fun IconChip(
     }
 }
 
-/** 字体选项文案。 */
-private fun fontLabelRes(index: Int): Int = when (index) {
-    1 -> R.string.customization_font_serif
-    2 -> R.string.customization_font_mono
-    3 -> R.string.customization_font_round
-    else -> R.string.customization_font_system
+
+/** 字体预览示例文字。 */
+private const val FONT_SAMPLE = "FoxSu 定制功能 123 ABC"
+
+/** 单个字体选项卡：左侧名称与预览（预览用该字体渲染），右侧选中勾。 */
+@Composable
+private fun FontOptionCard(
+    name: String,
+    sample: String,
+    selected: Boolean,
+    fontFamily: FontFamily?,
+    onClick: () -> Unit,
+) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = if (selected) freshAccentContainer().copy(alpha = 0.55f) else freshCardColor(),
+        contentColor = cardContentColor(),
+        border = if (selected) {
+            BorderStroke(1.5.dp, freshAccent())
+        } else {
+            BorderStroke(1.dp, if (isNightScheme()) Color(0xFF2F2F3C) else Color(0xFFECECF2))
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = name,
+                    fontSize = 12.5.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = if (selected) freshAccent() else LocalContentColor.current,
+                )
+                Text(
+                    text = sample,
+                    fontSize = 15.sp,
+                    fontFamily = fontFamily,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = LocalContentColor.current.copy(alpha = 0.8f),
+                    modifier = Modifier.padding(top = 3.dp),
+                )
+            }
+            if (selected) {
+                Icon(
+                    imageVector = Icons.Filled.Check,
+                    contentDescription = null,
+                    tint = freshAccent(),
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+        }
+    }
 }

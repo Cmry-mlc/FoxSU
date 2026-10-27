@@ -240,7 +240,7 @@
     <string name="settings_grid">快捷入口</string>
     <string name="settings_grid_ui_mode">界面风格</string>
     <string name="settings_grid_theme">主题色</string>
-    <string name="settings_grid_custom">外观定制</string>
+    <string name="settings_grid_custom">定制功能</string>
     <string name="settings_grid_profile">App Profile</string>
     <string name="settings_grid_repo">模块仓库</string>
     <string name="settings_grid_log">运行日志</string>
@@ -249,7 +249,7 @@
     <string name="settings_grid_update">检查更新</string>
     <string name="settings_grid_on">已开启</string>
     <string name="settings_grid_off">已关闭</string>
-    <string name="customization_title">Fox 设置</string>
+    <string name="customization_title">定制功能</string>
     <string name="customization_entry_summary">背景壁纸、卡片样式与启动器图标</string>
     <string name="customization_wallpaper">背景壁纸</string>
     <string name="customization_card_glass">玻璃卡面</string>
@@ -261,13 +261,16 @@
     <string name="customization_wallpaper_enable">启用背景图</string>
     <string name="customization_wallpaper_enable_sum">关闭后全应用隐藏自定义背景</string>
     <string name="customization_font">字体</string>
-    <string name="customization_font_sub">ColorUI 全局字体</string>
+    <string name="customization_font_sub">全局字体，所有主题即时生效</string>
     <string name="customization_font_custom">自定义</string>
     <string name="customization_font_import">导入字体文件</string>
     <string name="customization_font_failed">字体文件读取失败</string>
     <string name="customization_font_applied">字体已应用</string>
     <string name="customization_font_idle_hint"> · 未启用</string>
-    <string name="customization_font_system">系统</string>
+    <string name="customization_font_system">系统默认</string>
+    <string name="customization_font_name_serif">思源宋体（内置）</string>
+    <string name="customization_font_name_mono">JetBrains 等宽（内置）</string>
+    <string name="customization_font_name_wenkai">霞鹜文楷（内置）</string>
     <string name="customization_font_serif">衬线</string>
     <string name="customization_font_mono">等宽</string>
     <string name="customization_font_round">手写</string>

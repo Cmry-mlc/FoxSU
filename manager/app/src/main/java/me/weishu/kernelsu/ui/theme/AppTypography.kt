@@ -7,10 +7,12 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import java.io.File
+import me.weishu.kernelsu.R
 
 /**
  * 全局字体：
- * 0 系统默认 / 1 衬线 / 2 等宽 / 3 手写体 / 4 用户导入的字体文件。
+ * 0 系统默认 / 1 思源宋体 / 2 JetBrains 等宽 / 3 霞鹜文楷 / 4 用户导入的字体文件。
+ * 内置字体随 APK 打包（res/font），中英文都有完整字形；
  * 除系统默认外，其余都基于同一套 Typography 只替换 fontFamily，字号行高不变。
  */
 fun typographyWithFont(style: Int, fontPath: String? = null): Typography {
@@ -18,9 +20,9 @@ fun typographyWithFont(style: Int, fontPath: String? = null): Typography {
         style == 4 && fontPath != null -> runCatching {
             FontFamily(Font(File(fontPath)))
         }.getOrNull()
-        style == 1 -> FontFamily.Serif
-        style == 2 -> FontFamily.Monospace
-        style == 3 -> FontFamily.Cursive
+        style == 1 -> FontFamily(Font(R.font.noto_serif_sc))
+        style == 2 -> FontFamily(Font(R.font.jetbrains_mono))
+        style == 3 -> FontFamily(Font(R.font.lxgw_wenkai))
         else -> null
     } ?: return Typography
 

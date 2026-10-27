@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import me.weishu.kernelsu.BuildConfig
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
 import me.weishu.kernelsu.ui.component.rebootlistpopup.getRebootListOption
@@ -69,7 +70,7 @@ fun EditorialHome(
                 .verticalScroll(scroll),
         ) {
             EdMasthead(
-                brand = "FoxSu",
+                brand = CustomizationStore.current.homeTitle.ifBlank { "FoxSu" },
                 tag = "ROOT",
                 left = "Kernel Management Journal",
                 right = "VOL.${BuildConfig.VERSION_CODE}",

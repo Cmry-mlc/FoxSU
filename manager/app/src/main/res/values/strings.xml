@@ -273,7 +273,7 @@
     <string name="settings_grid_update">Check update</string>
     <string name="settings_grid_on">On</string>
     <string name="settings_grid_off">Off</string>
-    <string name="customization_title">Fox settings</string>
+    <string name="customization_title">Customization</string>
     <string name="customization_entry_summary">Wallpaper, card style and launcher icon</string>
     <string name="customization_wallpaper">Wallpaper</string>
     <string name="customization_card_glass">Glass cards</string>
@@ -285,13 +285,16 @@
     <string name="customization_wallpaper_enable">Enable background image</string>
     <string name="customization_wallpaper_enable_sum">Turn off to hide the custom background everywhere</string>
     <string name="customization_font">Font</string>
-    <string name="customization_font_sub">Global typeface for the ColorUI style</string>
+    <string name="customization_font_sub">Global typeface, applies to all themes instantly</string>
     <string name="customization_font_custom">Custom</string>
     <string name="customization_font_import">Import font file</string>
     <string name="customization_font_failed">Could not read that font file</string>
     <string name="customization_font_applied">Font applied</string>
     <string name="customization_font_idle_hint"> · not in use</string>
-    <string name="customization_font_system">System</string>
+    <string name="customization_font_system">System default</string>
+    <string name="customization_font_name_serif">Noto Serif SC (built-in)</string>
+    <string name="customization_font_name_mono">JetBrains Mono (built-in)</string>
+    <string name="customization_font_name_wenkai">LXGW WenKai (built-in)</string>
     <string name="customization_font_serif">Serif</string>
     <string name="customization_font_mono">Mono</string>
     <string name="customization_font_round">Cursive</string>

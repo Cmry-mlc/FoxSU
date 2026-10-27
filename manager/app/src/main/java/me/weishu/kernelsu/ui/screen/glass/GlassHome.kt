@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.BuildConfig
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
 import me.weishu.kernelsu.ui.screen.home.HomeActions
@@ -71,7 +72,7 @@ fun GlassHome(
     ) {
         item {
             GlassTopBar(
-                title = "FoxSu",
+                title = CustomizationStore.current.homeTitle.ifBlank { "FoxSu" },
                 subtitle = stringResource(R.string.glass_home_subtitle),
                 showDot = state.isRootAvailable,
                 // 作者信息（原界面风格按钮位置）
