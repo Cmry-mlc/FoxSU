@@ -30,7 +30,7 @@ val LocalUiMode = staticCompositionLocalOf { UiMode.Fresh }
 fun uiModeLabelRes(mode: UiMode): Int = when (mode) {
     UiMode.Miuix -> R.string.settings_ui_mode_miuix
     UiMode.Material -> R.string.settings_ui_mode_material
-    UiMode.Glass, UiMode.Nocturne -> R.string.settings_ui_mode_glass
+    UiMode.Glass -> R.string.settings_ui_mode_glass
     UiMode.Nocturne -> R.string.settings_ui_mode_nocturne
     UiMode.Fresh -> R.string.settings_ui_mode_fresh
 }

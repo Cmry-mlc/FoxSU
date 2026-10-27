@@ -157,7 +157,12 @@ fun AppProfileScreen(uid: Int) {
             actions = actions,
         )
 
-        UiMode.Glass, UiMode.Nocturne -> me.weishu.kernelsu.ui.screen.glass.GlassAppProfileScreen(
+        UiMode.Glass -> me.weishu.kernelsu.ui.screen.glass.GlassAppProfileScreen(
+            state = state,
+            actions = actions,
+        )
+
+        UiMode.Nocturne -> me.weishu.kernelsu.ui.screen.glass.GlassAppProfileScreen(
             state = state,
             actions = actions,
         )

@@ -245,7 +245,7 @@ fun ModulePager(
             )
         }
 
-        UiMode.Glass, UiMode.Nocturne -> {
+        UiMode.Glass -> {
             // 「安装模块」= 从存储选择 .zip 模块走模块安装流程（不是刷写镜像页面）
             val context = LocalContext.current
             val modulePicker = rememberLauncherForActivityResult(

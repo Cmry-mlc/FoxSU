@@ -123,7 +123,7 @@ fun KernelSUTheme(
             content = content
         )
 
-        UiMode.Glass, UiMode.Nocturne -> FreshKernelSUTheme(
+        UiMode.Glass -> FreshKernelSUTheme(
             appSettings = appSettings,
             content = content
         )

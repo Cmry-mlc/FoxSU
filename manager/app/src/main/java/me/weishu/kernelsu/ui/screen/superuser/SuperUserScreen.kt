@@ -110,7 +110,7 @@ fun SuperUserPager(
             )
         }
 
-        UiMode.Glass, UiMode.Nocturne -> {
+        UiMode.Glass -> {
             val apps =
                 if (uiState.searchStatus.searchText.isBlank()) uiState.groupedApps else uiState.searchResults
             me.weishu.kernelsu.ui.screen.glass.GlassSuperUserList(

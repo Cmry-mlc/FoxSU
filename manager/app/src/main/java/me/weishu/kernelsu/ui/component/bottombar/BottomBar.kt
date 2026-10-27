@@ -126,7 +126,7 @@ fun BottomBar(
             onOpenTab = { page -> mainPagerState.animateToPage(page) },
         )
         UiMode.Fresh -> BottomBarFresh(navigationBadge)
-        UiMode.Glass, UiMode.Nocturne -> me.weishu.kernelsu.ui.screen.glass.GlassBottomBar(
+        UiMode.Glass -> me.weishu.kernelsu.ui.screen.glass.GlassBottomBar(
             currentTab = mainPagerState.selectedPage,
             badge = navigationBadge,
             onOpenTab = { page -> mainPagerState.animateToPage(page) },
@@ -150,7 +150,7 @@ fun SideRail(
         UiMode.Miuix -> NavigationRailMiuix(navigationBadge, modifier)
         UiMode.Material -> NavigationRailMaterial(navigationBadge, modifier)
         UiMode.Fresh -> NavigationRailMaterial(navigationBadge, modifier)
-        UiMode.Glass, UiMode.Nocturne -> NavigationRailMaterial(navigationBadge, modifier)
+        UiMode.Glass -> NavigationRailMaterial(navigationBadge, modifier)
         UiMode.Nocturne -> NavigationRailMaterial(navigationBadge, modifier)
     }
 }

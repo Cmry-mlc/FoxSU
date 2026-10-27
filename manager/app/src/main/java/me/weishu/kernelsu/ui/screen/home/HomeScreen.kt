@@ -108,7 +108,7 @@ fun HomePager(
             onOpenTab = { page -> mainPagerState.animateToPage(page) },
         )
 
-        UiMode.Glass, UiMode.Nocturne -> me.weishu.kernelsu.ui.screen.glass.GlassHome(
+        UiMode.Glass -> me.weishu.kernelsu.ui.screen.glass.GlassHome(
             state = uiState,
             actions = actions,
             bottomInnerPadding = bottomInnerPadding,

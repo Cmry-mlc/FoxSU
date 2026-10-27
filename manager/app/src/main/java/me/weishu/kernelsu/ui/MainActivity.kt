@@ -306,7 +306,7 @@ class MainActivity : ComponentActivity() {
                                 containerColor = scaffoldBackgroundColor(MaterialTheme.colorScheme.surface)
                             ) { navDisplay() }
 
-                            UiMode.Glass, UiMode.Nocturne -> androidx.compose.material3.Scaffold(
+                            UiMode.Glass -> androidx.compose.material3.Scaffold(
                                 containerColor = androidx.compose.ui.graphics.Color.Transparent
                             ) { navDisplay() }
 
@@ -450,7 +450,7 @@ fun MainScreen(
         UiMode.Material -> me.weishu.kernelsu.ui.screen.editorial.edTokens().paper
         UiMode.Miuix -> MiuixTheme.colorScheme.surface
         UiMode.Fresh -> MaterialTheme.colorScheme.surface
-        UiMode.Glass, UiMode.Nocturne -> glassTokens().bg
+        UiMode.Glass -> glassTokens().bg
         UiMode.Nocturne -> me.weishu.kernelsu.ui.screen.nocturne.NcColors.bg
     }
     val blurBackdrop = rememberBlurBackdrop(enableBlur)
@@ -571,7 +571,7 @@ fun MainScreen(
                     }
                 }
 
-                UiMode.Glass, UiMode.Nocturne -> androidx.compose.material3.Scaffold(
+                UiMode.Glass -> androidx.compose.material3.Scaffold(
                     containerColor = androidx.compose.ui.graphics.Color.Transparent
                 ) {
                     Row {
@@ -634,7 +634,7 @@ fun MainScreen(
                     pagerContent(innerPadding.calculateBottomPadding())
                 }
 
-                UiMode.Glass, UiMode.Nocturne -> androidx.compose.material3.Scaffold(
+                UiMode.Glass -> androidx.compose.material3.Scaffold(
                     bottomBar = bottomBar,
                     containerColor = androidx.compose.ui.graphics.Color.Transparent
                 ) { innerPadding ->
