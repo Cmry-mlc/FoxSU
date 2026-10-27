@@ -29,6 +29,7 @@
     <string name="module_failed_to_disable">无法禁用模块：%s</string>
     <string name="module_empty">没有安装模块</string>
     <string name="module">模块</string>
+    <string name="nav_more">更多</string>
     <string name="module_sort_action_first">可执行优先</string>
     <string name="module_sort_enabled_first">已启用优先</string>
     <string name="module_repos">模块仓库</string>
@@ -642,9 +643,7 @@
     <string name="style_picker_follow_system">跟随系统</string>
     <string name="style_picker_in_use">使用中</string>
     <string name="style_picker_switch">切换</string>
-    <string name="style_picker_hint">点击卡片即切换 · 无需确认</string>
-    <string name="style_picker_done">完成</string>
-    <string name="style_picker_reset">恢复默认</string>
+    <string name="style_picker_hint">点击卡片即切换 · 点击空白处关闭</string>
     <string name="style_picker_desc_nocturne">OLED 纯黑底 + 紫罗兰极光，强调色紫罗兰 / 薄荷。切换后立即生效，无需重启。</string>
     <string name="style_picker_desc_daylight">与 Nocturne 同源的亮色版本：纸白面板 + 紫 / 薄荷双色，白天户外更易读。</string>
     <string name="style_picker_desc_editorial">纸张质感 + 细分隔线 + 信号橙点缀。适合长时间阅读，字体更紧凑。</string>

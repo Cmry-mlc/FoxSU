@@ -45,10 +45,16 @@ object NcAppearance {
 
     /**
      * 当前是否处于暗夜外观。
-     * mode=2（跟随系统）时读取 App 主题的实时状态，因此用 @Composable。
+     *
+     * 全局明暗优先：设置里显式选了「浅色 / 暗色」时，Nocturne 用自己的亮色 / 暗夜配色表；
+     * 选了「跟随系统」时，再回落到 Nocturne 自己的外观模式。
      */
     @Composable
     fun resolveDarkMode(): Boolean {
+        when (me.weishu.kernelsu.ui.theme.LocalColorMode.current) {
+            1, 4 -> return false
+            2, 5, 6 -> return true
+        }
         if (followSunset) return isNightTime()
         return when (mode) {
             0 -> true

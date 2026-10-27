@@ -10,9 +10,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Cottage
 import androidx.compose.material.icons.rounded.Extension
+import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material.icons.rounded.Security
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -54,12 +59,23 @@ fun BottomBarMiuix(
     val enableFloatingBottomBar = LocalEnableFloatingBottomBar.current
     val enableFloatingBottomBarBlur = LocalEnableFloatingBottomBarBlur.current
 
-    val items = BottomBarDestination.entries.map { destination ->
+    // 底栏只保留三个图标：主页 / 超级用户 / 更多；模块与设置收进「更多」面板
+    var showMore by remember { mutableStateOf(false) }
+    val items = listOf(
         NavigationItem(
-            label = stringResource(destination.label),
-            icon = destination.icon,
-        )
-    }
+            label = stringResource(BottomBarDestination.Home.label),
+            icon = BottomBarDestination.Home.icon,
+        ),
+        NavigationItem(
+            label = stringResource(BottomBarDestination.SuperUser.label),
+            icon = BottomBarDestination.SuperUser.icon,
+        ),
+        NavigationItem(
+            label = stringResource(R.string.nav_more),
+            icon = Icons.Rounded.MoreHoriz,
+        ),
+    )
+    val moreSelected = mainState.selectedPage >= MoreDestinations.Module
     if (!enableFloatingBottomBar) {
         BlurredBar(blurBackdrop) {
             NavigationBar(
@@ -71,9 +87,13 @@ fun BottomBarMiuix(
                             modifier = Modifier.weight(1f),
                             icon = item.icon,
                             label = item.label,
-                            selected = mainState.selectedPage == index,
+                            selected = if (index == 2) moreSelected else mainState.selectedPage == index,
                             onClick = {
-                                mainState.animateToPage(index)
+                                if (index == 2) {
+                                    showMore = true
+                                } else {
+                                    mainState.animateToPage(index)
+                                }
                             },
                             badge = navigationBadgeFor(index, navigationBadge),
                         )
@@ -90,17 +110,23 @@ fun BottomBarMiuix(
                     detectTapGestures { }
                 }
                 .padding(start = 28.dp, end = 28.dp, bottom = bottomPadding),
-            selectedIndex = mainState.selectedPage,
-            onSelected = { mainState.animateToPage(it) },
+            selectedIndex = if (moreSelected) 2 else mainState.selectedPage.coerceAtMost(1),
+            onSelected = { index ->
+                if (index == 2) showMore = true else mainState.animateToPage(index)
+            },
             backdrop = backdrop,
             tabsCount = items.size,
             isBlurEnabled = enableFloatingBottomBarBlur,
         ) { activateTab ->
             items.forEachIndexed { index, item ->
                 FloatingBottomBarItem(
-                    selected = mainState.selectedPage == index,
+                    selected = if (index == 2) moreSelected else mainState.selectedPage == index,
                     onClick = {
-                        activateTab(index)
+                        if (index == 2) {
+                            showMore = true
+                        } else {
+                            activateTab(index)
+                        }
                     },
                     modifier = Modifier.defaultMinSize(minWidth = 76.dp)
                 ) {
@@ -130,6 +156,14 @@ fun BottomBarMiuix(
             }
         }
     }
+
+    MoreDestinationsSheet(
+        visible = showMore,
+        currentTab = mainState.selectedPage,
+        badge = navigationBadge,
+        onDismiss = { showMore = false },
+        onOpenTab = { page -> mainState.animateToPage(page) },
+    )
 }
 
 enum class BottomBarDestination(
@@ -169,3 +203,4 @@ internal fun navigationBadgeFor(
         }
     }
 }
+

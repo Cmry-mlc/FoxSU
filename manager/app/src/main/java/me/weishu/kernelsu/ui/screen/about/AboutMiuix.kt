@@ -309,8 +309,7 @@ private fun AboutContent(
                                 )
                             } else Modifier
                         ),
-                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                    colorFilter = ColorFilter.tint(colorScheme.onBackground),
+                    painter = painterResource(id = R.drawable.ic_fox_global),
                     contentDescription = null,
                 )
             }

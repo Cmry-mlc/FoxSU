@@ -49,6 +49,7 @@
     <string name="module_failed_to_disable">Failed to disable module: %s</string>
     <string name="module_empty">No module installed</string>
     <string name="module">Module</string>
+    <string name="nav_more">More</string>
     <string name="module_install_prompt_with_name">The following modules will be installed: %1$s</string>
     <string name="module_sort_action_first">Action first</string>
     <string name="module_sort_enabled_first">Enabled first</string>
@@ -668,9 +669,7 @@
     <string name="style_picker_follow_system">System</string>
     <string name="style_picker_in_use">IN USE</string>
     <string name="style_picker_switch">SWITCH</string>
-    <string name="style_picker_hint">TAP A CARD TO APPLY · NO CONFIRMATION</string>
-    <string name="style_picker_done">Done</string>
-    <string name="style_picker_reset">Reset</string>
+    <string name="style_picker_hint">TAP A CARD TO APPLY · TAP OUTSIDE TO CLOSE</string>
     <string name="style_picker_desc_nocturne">OLED pure black with a violet aurora; accents in violet and mint. Applies the moment you tap — no restart.</string>
     <string name="style_picker_desc_daylight">The daylight twin of Nocturne: paper-white panels with violet and mint, easier to read outdoors.</string>
     <string name="style_picker_desc_editorial">Paper texture, hairline rules and signal orange. Built for long reading sessions, tighter type.</string>

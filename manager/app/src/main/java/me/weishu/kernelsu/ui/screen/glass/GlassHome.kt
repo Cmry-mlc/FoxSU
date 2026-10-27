@@ -551,7 +551,7 @@ fun GlassHeroCard(
             GlassSeal(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(top = 12.dp, end = 12.dp),
+                    .padding(top = 8.dp, end = 8.dp),
                 checkColor = sealTint,
                 sealBg = if (t.isDark) Color(0xFF14141E) else Color(0xF2FFFFFF),
                 border = if (t.isDark) Color(0x1FFFFFFF) else Color(0xFFFFFFFF),

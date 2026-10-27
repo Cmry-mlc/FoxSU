@@ -23,6 +23,7 @@
     <string name="module_failed_to_disable">無法停用模組：%s</string>
     <string name="module_empty">查無已安裝的模組</string>
     <string name="module">模組</string>
+    <string name="nav_more">更多</string>
     <string name="uninstall">解除安裝</string>
     <string name="module_install">安裝</string>
     <string name="install">安裝</string>

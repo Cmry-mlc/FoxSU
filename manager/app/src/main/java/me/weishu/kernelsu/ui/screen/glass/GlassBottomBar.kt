@@ -11,6 +11,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,6 +26,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.ui.component.bottombar.MoreDestinations
+import me.weishu.kernelsu.ui.component.bottombar.MoreDestinationsSheet
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
 import me.weishu.kernelsu.ui.theme.glassTokens
 
@@ -43,11 +48,13 @@ fun GlassBottomBar(
     modifier: Modifier = Modifier,
 ) {
     val t = glassTokens()
+    // 底栏只保留三个图标：主页 / 超级用户 / 更多；模块与设置收进「更多」面板
+    var showMore by remember { mutableStateOf(false) }
+    val moreSelected = currentTab >= MoreDestinations.Module
     val items = listOf(
         BottomItem(R.drawable.ic_d_home, R.string.home, 0, t.cyan, 0),
         BottomItem(R.drawable.ic_d_shield, R.string.superuser, 1, t.violet, badge.superuserCount),
-        BottomItem(R.drawable.ic_d_grid, R.string.module, 2, t.pink, badge.moduleEnabledCount),
-        BottomItem(R.drawable.ic_d_tune, R.string.settings, 3, t.blue, 0),
+        BottomItem(R.drawable.ic_d_more, R.string.nav_more, 2, t.pink, badge.moduleEnabledCount),
     )
     Box(
         modifier = modifier.fillMaxWidth(),
@@ -69,7 +76,7 @@ fun GlassBottomBar(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             items.forEachIndexed { index, item ->
-                val selected = item.tab == currentTab
+                val selected = if (item.tab == 2) moreSelected else item.tab == currentTab
                 // 首项左侧、末项右侧的圆角与胶囊外轮廓一致（99dp），避免选中底角戳出胶囊
                 val isFirst = index == 0
                 val isLast = index == items.lastIndex
@@ -96,7 +103,9 @@ fun GlassBottomBar(
                         modifier = Modifier
                             .clip(pillShape)
                             .background(bg)
-                            .clickable { onOpenTab(item.tab) }
+                            .clickable {
+                                if (item.tab == 2) showMore = true else onOpenTab(item.tab)
+                            }
                             .padding(horizontal = 20.dp, vertical = 5.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
@@ -159,6 +168,14 @@ fun GlassBottomBar(
             }
         }
     }
+
+    MoreDestinationsSheet(
+        visible = showMore,
+        currentTab = currentTab,
+        badge = badge,
+        onDismiss = { showMore = false },
+        onOpenTab = onOpenTab,
+    )
 }
 
 private data class BottomItem(

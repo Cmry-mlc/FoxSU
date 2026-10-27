@@ -619,7 +619,7 @@ private fun ModuleShortcutDialog(
                                 .background(Color.White)
                         )
                         Image(
-                            painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                            painter = painterResource(id = R.drawable.ic_fox_global),
                             contentDescription = null,
                             contentScale = FixedScale(1.5f)
                         )

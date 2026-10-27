@@ -36,6 +36,7 @@
     <string name="module_failed_to_disable">無法停用模組：%s</string>
     <string name="module_empty">未安裝模組</string>
     <string name="module">模組</string>
+    <string name="nav_more">更多</string>
     <string name="module_install_prompt_with_name">將安裝以下模組：%1$s</string>
     <string name="module_sort_action_first">可執行優先</string>
     <string name="module_sort_enabled_first">已啟用優先</string>

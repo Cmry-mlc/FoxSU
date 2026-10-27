@@ -7,6 +7,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,6 +56,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -203,11 +205,11 @@ private fun OnbTopBar(page: Int, t: OnbTokens) {
                 .background(t.accent.copy(alpha = 0.16f)),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_fox_glyph),
+            Image(
+                painter = painterResource(R.drawable.ic_fox_global),
                 contentDescription = null,
-                tint = t.accent,
-                modifier = Modifier.size(17.dp),
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.size(19.dp),
             )
         }
         Spacer(Modifier.width(9.dp))
@@ -435,10 +437,10 @@ private fun HeroPanel(t: OnbTokens) {
                     alpha = 0.75f,
                 )
             }
-            Icon(
-                painter = painterResource(R.drawable.ic_fox_glyph),
+            Image(
+                painter = painterResource(R.drawable.ic_fox_global),
                 contentDescription = null,
-                tint = t.tx,
+                contentScale = ContentScale.Fit,
                 modifier = Modifier.size(96.dp),
             )
         }

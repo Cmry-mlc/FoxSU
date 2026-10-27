@@ -578,7 +578,7 @@ private fun FreshHeader() {
             .padding(top = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // 深色圆底 + 白色小狐
+        // 深色圆底 + 彩色全局狐狸
         Surface(
             shape = CircleShape,
             color = logoBg,
@@ -586,11 +586,11 @@ private fun FreshHeader() {
             modifier = Modifier.size(46.dp),
         ) {
             Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_fox_glyph),
+                Image(
+                    painter = painterResource(R.drawable.ic_fox_global),
                     contentDescription = null,
-                    tint = glyphTint,
-                    modifier = Modifier.size(26.dp),
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.size(30.dp),
                 )
             }
         }
@@ -1091,7 +1091,7 @@ private fun FreshStatusCard(
                 FreshHeroBackdrop(hero = hero, bitmap = heroBitmap)
             }
             Row(
-                modifier = Modifier.padding(start = 18.dp, top = 18.dp, bottom = 18.dp, end = 84.dp),
+                modifier = Modifier.padding(start = 18.dp, top = 18.dp, bottom = 18.dp, end = 72.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
@@ -1229,12 +1229,12 @@ private fun FreshStatusCard(
                 }
             }
 
-            // 状态徽章：贴在卡片右上角、与标题同一水平线，留 16dp 内边距不贴边
+            // 状态徽章：贴紧卡片右上角内侧（end 8dp），不与标题/版本行抢位置
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(top = 16.dp, end = 16.dp)
-                    .size(56.dp)
+                    .padding(top = 10.dp, end = 8.dp)
+                    .size(52.dp)
                     .shadow(elevation = 8.dp, shape = CircleShape, clip = false)
                     .clip(CircleShape)
                     .background(
@@ -1247,7 +1247,7 @@ private fun FreshStatusCard(
                     painter = statusIcon,
                     contentDescription = null,
                     tint = badgeTint,
-                    modifier = Modifier.size(28.dp),
+                    modifier = Modifier.size(26.dp),
                 )
             }
         }

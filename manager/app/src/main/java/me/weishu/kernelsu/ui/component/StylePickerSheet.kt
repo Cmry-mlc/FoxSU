@@ -252,7 +252,21 @@ fun StylePickerDialog(
 ) {
     val repo = remember { SettingsRepositoryImpl() }
     val appDark = isAppDark()
-    var panelMode by remember { mutableStateOf(if (appDark) 0 else 1) }
+    // 面板初始态跟随全局明暗：0 暗 / 1 亮 / 2 跟随系统
+    var panelMode by remember {
+        mutableStateOf(
+            when (me.weishu.kernelsu.ui.theme.ColorMode.fromValue(repo.themeMode)) {
+                me.weishu.kernelsu.ui.theme.ColorMode.DARK,
+                me.weishu.kernelsu.ui.theme.ColorMode.MONET_DARK,
+                me.weishu.kernelsu.ui.theme.ColorMode.DARK_AMOLED -> 0
+
+                me.weishu.kernelsu.ui.theme.ColorMode.LIGHT,
+                me.weishu.kernelsu.ui.theme.ColorMode.MONET_LIGHT -> 1
+
+                else -> 2
+            }
+        )
+    }
     val t = if (panelMode == 2) (if (appDark) PickDark else PickLight)
     else if (panelMode == 0) PickDark else PickLight
 
@@ -312,7 +326,7 @@ fun StylePickerDialog(
                         indication = null,
                         onClick = {},
                     )
-                    .padding(top = 8.dp, bottom = 16.dp),
+                    .padding(top = 8.dp, bottom = 18.dp),
             ) {
                 // grab
                 Box(
@@ -386,7 +400,10 @@ fun StylePickerDialog(
                                     if (on) Modifier.border(1.dp, t.segOnBorder, RoundedCornerShape(9.dp))
                                     else Modifier
                                 )
-                                .clickable { panelMode = index }
+                                .clickable {
+                                    panelMode = index
+                                    applyGlobalAppearance(index)
+                                }
                                 .padding(vertical = 6.dp),
                             contentAlignment = Alignment.Center,
                         ) {
@@ -454,56 +471,6 @@ fun StylePickerDialog(
                     color = t.hint,
                 )
 
-                // 按钮
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 15.dp, end = 15.dp, top = 10.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .weight(1.6f)
-                            .height(40.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(
-                                Brush.linearGradient(
-                                    listOf(Color(0xFFC9F45C), Color(0xFF6FE9C4)),
-                                )
-                            )
-                            .clickable { onDismiss() },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = stringResource(R.string.style_picker_done),
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            letterSpacing = 1.6.sp,
-                            color = Color(0xFF0B0D12),
-                        )
-                    }
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(40.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .border(1.dp, t.ghostBorder, RoundedCornerShape(12.dp))
-                            .clickable {
-                                applyUiMode(UiMode.Fresh)
-                                repo.uiMode = UiMode.Fresh.value
-                                selected = UiMode.Fresh
-                            },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = stringResource(R.string.style_picker_reset),
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 2.sp,
-                            color = t.ghostText,
-                        )
-                    }
-                }
             }
         }
     }
@@ -671,4 +638,44 @@ private fun isAppDark(): Boolean {
     val repo = remember { SettingsRepositoryImpl() }
     val mode = me.weishu.kernelsu.ui.theme.ColorMode.fromValue(repo.themeMode)
     return if (mode.isSystem) dark else mode.isDark
+}
+
+/**
+ * 全局明暗切换：写入 `color_mode`，五套皮肤各自按自己的配色表渲染亮色 / 暗色。
+ *
+ * 0 = 跟随系统 · 1 = 浅色 · 2 = 暗色
+ *
+ * 同时同步 Nocturne 自己的外观模式（它有独立的 day/night 配色表），
+ * 避免 Nocturne 与全局明暗打架。
+ */
+private fun applyGlobalAppearance(index: Int) {
+    val repo = SettingsRepositoryImpl()
+    val target = when (index) {
+        0 -> me.weishu.kernelsu.ui.theme.ColorMode.DARK
+        1 -> me.weishu.kernelsu.ui.theme.ColorMode.LIGHT
+        else -> me.weishu.kernelsu.ui.theme.ColorMode.SYSTEM
+    }
+    val current = me.weishu.kernelsu.ui.theme.ColorMode.fromValue(repo.themeMode)
+    // Monet 系（3/4/5）与 AMOLED（6）保留自己的色板，只切换明暗基底
+    val next = if (current.isMonet) {
+        when (target) {
+            me.weishu.kernelsu.ui.theme.ColorMode.DARK ->
+                me.weishu.kernelsu.ui.theme.ColorMode.MONET_DARK
+
+            me.weishu.kernelsu.ui.theme.ColorMode.LIGHT ->
+                me.weishu.kernelsu.ui.theme.ColorMode.MONET_LIGHT
+
+            else -> me.weishu.kernelsu.ui.theme.ColorMode.MONET_SYSTEM
+        }
+    } else target
+    repo.themeMode = next.value
+
+    // Nocturne 外观与全局明暗保持一致：0 暗夜 / 1 亮色 / 2 跟随系统
+    me.weishu.kernelsu.ui.screen.nocturne.NcAppearance.updateMode(
+        when (index) {
+            0 -> 0
+            1 -> 1
+            else -> 2
+        }
+    )
 }
