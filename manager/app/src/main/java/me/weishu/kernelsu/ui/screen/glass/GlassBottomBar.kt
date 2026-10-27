@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
@@ -125,24 +126,32 @@ fun GlassBottomBar(
                                 .background(t.dockGrad),
                         )
                     }
-                    // .n 角标：色彩与所在导航项图标一致
+                    // .n 角标：正圆 + 数字绝对居中（关闭字体上下留白，避免视觉偏移）
                     if (item.count > 0) {
+                        val badgeSize = if (item.count < 10) 15.dp else 17.dp
                         Box(
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
-                                .offset(x = 4.dp, y = (-2).dp)
-                                // 正圆角标：1 位数 14，2 位数 16
-                                .size(if (item.count < 10) 14.dp else 16.dp)
+                                .offset(x = 5.dp, y = (-3).dp)
+                                .size(badgeSize)
                                 .clip(CircleShape)
-                                .background(item.accent),
+                                .background(item.accent)
+                                .border(1.dp, t.dockBg, CircleShape),
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(
                                 text = if (item.count > 99) "99+" else item.count.toString(),
-                                fontSize = if (item.count < 10) 7.5.sp else 6.5.sp,
-                                fontWeight = FontWeight.ExtraBold,
                                 color = Color.White,
                                 maxLines = 1,
+                                textAlign = TextAlign.Center,
+                                style = androidx.compose.ui.text.TextStyle(
+                                    fontSize = if (item.count < 10) 8.sp else 7.sp,
+                                    lineHeight = if (item.count < 10) 8.sp else 7.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    platformStyle = androidx.compose.ui.text.PlatformTextStyle(
+                                        includeFontPadding = false
+                                    ),
+                                ),
                             )
                         }
                     }
