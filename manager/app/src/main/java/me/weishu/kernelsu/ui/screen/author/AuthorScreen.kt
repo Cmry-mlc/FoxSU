@@ -72,12 +72,22 @@ import androidx.compose.foundation.BorderStroke
 fun AuthorScreen() {
     val navigator = LocalNavigator.current
     val uriHandler = LocalUriHandler.current
-    if (LocalUiMode.current == UiMode.Material) {
-        me.weishu.kernelsu.ui.screen.editorial.EditorialAuthor(
-            onBack = dropUnlessResumed { navigator.pop() },
-            onOpenUrl = uriHandler::openUri,
-        )
-        return
+    when (LocalUiMode.current) {
+        UiMode.Material -> {
+            me.weishu.kernelsu.ui.screen.editorial.EditorialAuthor(
+                onBack = dropUnlessResumed { navigator.pop() },
+                onOpenUrl = uriHandler::openUri,
+            )
+            return
+        }
+        UiMode.Glass -> {
+            me.weishu.kernelsu.ui.screen.glass.GlassAuthor(
+                onBack = dropUnlessResumed { navigator.pop() },
+                onOpenUrl = uriHandler::openUri,
+            )
+            return
+        }
+        else -> Unit
     }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
 
