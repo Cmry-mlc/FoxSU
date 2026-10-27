@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -532,14 +533,15 @@ fun GlassNCard(
             .border(1.dp, t.glassBorder, RoundedCornerShape(22.dp))
             .clickable(enabled = onClick != null) { onClick?.invoke() },
     ) {
-        // ::after 右上角色晕 —— 74 圆，right/top -22，opacity .28 + blur(14)，被父级裁切
+        // ::after 右上角彩色扩散 —— 74 圆 / right-top -22 / opacity .28 / blur(14)
+        // 关键：blur 必须 Unbounded，否则默认 Rectangle 会把模糊裁在 74dp 边界上，变成硬边方块
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .offset(x = 22.dp, y = (-22).dp)
                 .size(74.dp)
-                .blur(14.dp)
-                .background(accent.copy(alpha = if (t.isDark) 0.30f else 0.28f), CircleShape),
+                .blur(16.dp, edgeTreatment = BlurredEdgeTreatment.Unbounded)
+                .background(accent.copy(alpha = if (t.isDark) 0.34f else 0.30f), CircleShape),
         )
         // 布局：chip(38) + 16 + cT(15) + cV(25) + 15 + cS(13) + padding(30) ≈ 152
         Column(
@@ -670,9 +672,9 @@ fun GlassLinkCard(
             )
             Text(
                 subtitle,
-                fontSize = 10.5.sp,
+                fontSize = 10.sp,
                 color = t.sub,
-                lineHeight = 14.sp,
+                lineHeight = 13.sp,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(top = 2.dp),
