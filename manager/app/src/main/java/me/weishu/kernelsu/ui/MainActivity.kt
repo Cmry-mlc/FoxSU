@@ -100,6 +100,7 @@ import me.weishu.kernelsu.ui.screen.templateeditor.TemplateEditorScreen
 import me.weishu.kernelsu.ui.theme.KernelSUTheme
 import me.weishu.kernelsu.ui.theme.glassTokens
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.graphicsLayer
 import me.weishu.kernelsu.ui.theme.LocalColorMode
 import me.weishu.kernelsu.ui.theme.LocalEnableBlur
 import me.weishu.kernelsu.ui.theme.LocalEnableFloatingBottomBar
@@ -279,16 +280,20 @@ class MainActivity : ComponentActivity() {
                         if (customNow.wallpaperUri != null && customNow.wallpaperEnabled) {
                             WallpaperBackground(customization = customNow)
                         }
-                        // Glass 模式：背景色 + 柔和霓虹光晕
+                        // Glass 模式：纯色底 + 三层独立径向光斑（.screen::before），只模糊光晕层
                         if (uiMode == UiMode.Glass) {
                             val gt = glassTokens()
+                            Box(modifier = Modifier.fillMaxSize().background(gt.bg))
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .background(gt.bg)
-                                    .blur(70.dp)
-                                    .background(gt.auraBrush(0))
-                            )
+                                    .graphicsLayer { alpha = if (gt.isDark) 0.5f else 0.75f }
+                                    .blur(64.dp)
+                            ) {
+                                gt.auraLayers(0).forEach { (brush, _) ->
+                                    Box(modifier = Modifier.fillMaxSize().background(brush))
+                                }
+                            }
                         }
                         when (uiMode) {
                             UiMode.Material -> androidx.compose.material3.Scaffold(

@@ -409,14 +409,20 @@ fun GlassHeroCard(state: HomeUiState, issueCount: Int, onInstall: () -> Unit) {
                     modifier = Modifier.padding(top = 14.dp),
                 )
             }
-            // .seal：60 圆白底 + violet 对勾，垂直居中于整个英雄卡
+            // .seal：60 圆，暗色 #0b0b12 / 亮色 rgba(255,255,255,.75)，violet 对勾，垂直居中
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
                     .size(60.dp)
-                    .shadow(10.dp, CircleShape)
+                    .shadow(
+                        16.dp,
+                        CircleShape,
+                        ambientColor = if (t.isDark) Color(0x40C77DFF) else Color(0x335A5578),
+                        spotColor = if (t.isDark) Color(0x40C77DFF) else Color(0x335A5578),
+                    )
                     .clip(CircleShape)
-                    .background(if (t.isDark) Color(0xFF0B0B12) else Color.White),
+                    .background(if (t.isDark) Color(0xFF0B0B12) else Color(0xBFFFFFFF))
+                    .border(1.dp, if (t.isDark) Color(0x14FFFFFF) else Color(0xCCFFFFFF), CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -489,7 +495,7 @@ fun GlassNCard(
                 spotColor = Color(0x1F5A5578),
             )
             .clip(RoundedCornerShape(22.dp))
-            .background(if (t.isDark) t.panel2 else Color(0x8CFFFFFF))
+            .background(if (t.isDark) Color(0x0FFFFFFF) else Color(0x8CFFFFFF))
             .border(1.dp, if (t.isDark) t.glassBorder else Color(0xCCFFFFFF), RoundedCornerShape(22.dp))
             .clickable(enabled = onClick != null) { onClick?.invoke() },
     ) {
@@ -527,17 +533,17 @@ fun GlassNCard(
     }
 }
 
-/** .chip：38 圆角12 玻璃 chip（亮色下白底带投影） */
+/** .chip：38 圆角12 玻璃 chip（亮色 rgba(255,255,255,.6) + 白描边 + 0 2 8 投影；暗色 rgba(255,255,255,.05)） */
 @Composable
 fun GlassChip(iconRes: Int, accent: Color, shadowed: Boolean = false) {
     val t = glassTokens()
     Box(
         modifier = Modifier
             .size(38.dp)
-            .then(if (shadowed && !t.isDark) Modifier.shadow(3.dp, RoundedCornerShape(12.dp)) else Modifier)
+            .then(if (shadowed && !t.isDark) Modifier.shadow(2.dp, RoundedCornerShape(12.dp), spotColor = Color(0x1A5A5578)) else Modifier)
             .clip(RoundedCornerShape(12.dp))
-            .background(if (t.isDark) Color(0x0FFFFFFF) else Color.White)
-            .border(1.dp, if (t.isDark) t.glassBorder else Color(0xE6FFFFFF), RoundedCornerShape(12.dp)),
+            .background(if (t.isDark) Color(0x0DFFFFFF) else Color(0x99FFFFFF))
+            .border(1.dp, if (t.isDark) t.glassBorder else Color(0xD9FFFFFF), RoundedCornerShape(12.dp)),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
@@ -709,7 +715,10 @@ fun GlassWide(
     }
 }
 
-/** 设计稿玻璃面板：半透明白玻璃 + 白描边 + 柔和外投影（.hero,.ncard,.wide,.urow,.mod,.srow） */
+/** 设计稿玻璃面板（.hero,.ncard,.wide,.urow,.mod,.srow,.search）：
+ *  亮色 rgba(255,255,255,.55) + 1px rgba(255,255,255,.8) + 0 8 24 rgba(90,85,120,.12) + inset 0 1 0 rgba(255,255,255,.9)
+ *  暗色 rgba(255,255,255,.03) + 1px rgba(255,255,255,.07)
+ */
 @Composable
 fun Modifier.glassCard(radius: androidx.compose.ui.unit.Dp): Modifier {
     val t = glassTokens()
@@ -717,12 +726,12 @@ fun Modifier.glassCard(radius: androidx.compose.ui.unit.Dp): Modifier {
         .shadow(
             8.dp,
             RoundedCornerShape(radius),
-            ambientColor = Color(0x1F5A5578),
-            spotColor = Color(0x1F5A5578),
+            ambientColor = if (t.isDark) Color(0x99000000) else Color(0x1F5A5578),
+            spotColor = if (t.isDark) Color(0x99000000) else Color(0x1F5A5578),
         )
         .clip(RoundedCornerShape(radius))
-        .background(if (t.isDark) Color(0x0AFFFFFF) else Color(0x8CFFFFFF))
-        .border(1.dp, if (t.isDark) Color(0x1FFFFFFF) else Color(0xCCFFFFFF), RoundedCornerShape(radius))
+        .background(if (t.isDark) Color(0x08FFFFFF) else Color(0x8CFFFFFF))
+        .border(1.dp, if (t.isDark) Color(0x12FFFFFF) else Color(0xCCFFFFFF), RoundedCornerShape(radius))
 }
 
 /** 界面风格切换弹窗（Glass 版） */

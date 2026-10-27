@@ -51,16 +51,13 @@ fun GlassBottomBar(
                 .shadow(
                     14.dp,
                     RoundedCornerShape(99.dp),
-                    ambientColor = Color(0x2E5A5578),
-                    spotColor = Color(0x2E5A5578),
+                    ambientColor = Color(0x99000000),
+                    spotColor = Color(0x99000000),
                 )
                 .clip(RoundedCornerShape(99.dp))
-                .background(if (t.isDark) Color(0xD9101018) else Color(0xB3FFFFFF))
-                .border(
-                    1.dp,
-                    if (t.isDark) Color(0x14FFFFFF) else Color(0xE6FFFFFF),
-                    RoundedCornerShape(99.dp),
-                )
+                // .dock：设计稿无论明暗都是深色胶囊 rgba(16,16,24,.85)
+                .background(Color(0xD9101018))
+                .border(1.dp, Color(0x14FFFFFF), RoundedCornerShape(99.dp))
                 .padding(6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -75,13 +72,7 @@ fun GlassBottomBar(
                     Column(
                         modifier = Modifier
                             .clip(RoundedCornerShape(18.dp))
-                            .background(
-                                if (selected) {
-                                    if (t.isDark) Color(0x14FFFFFF) else Color(0xF2FFFFFF)
-                                } else {
-                                    Color.Transparent
-                                }
-                            )
+                            .background(if (selected) Color(0x0FFFFFFF) else Color.Transparent)
                             .clickable { onOpenTab(tab) }
                             .padding(horizontal = 15.dp, vertical = 8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -90,17 +81,15 @@ fun GlassBottomBar(
                             painter = painterResource(iconRes),
                             contentDescription = null,
                             modifier = Modifier.size(17.dp),
-                            tint = when {
-                                selected -> t.ink
-                                t.isDark -> Color(0xFF6A677A)
-                                else -> Color(0xFFA3A0B2)
-                            },
+                            // .ditem svg{stroke:#6a677a} / .ditem.on svg{stroke:#fff}
+                            tint = if (selected) Color.White else Color(0xFF6A677A),
                         )
                         Text(
                             text = stringResource(labelRes),
                             fontSize = 9.sp,
                             letterSpacing = 0.5.sp,
-                            color = if (selected) t.ink else t.sub,
+                            // .ditem{color:var(--sub)} / .ditem.on{color:#fff}
+                            color = if (selected) Color.White else Color(0xFF8E8B9C),
                             maxLines = 1,
                             modifier = Modifier.padding(top = 2.dp),
                         )

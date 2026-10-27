@@ -69,7 +69,8 @@ data class GlassTokens(
     val togOff: Color get() = if (isDark) Color(0xFF2C2C38) else Color(0xFFD9D6E6)
     val togThumbOff: Color get() = if (isDark) Color(0xFF8E8B9C) else Color.White
 
-    /** 屏幕背景光晕（.screen::before 三组径向渐变，a1 变体） */
+    /** 屏幕背景光晕（.screen::before 三组径向渐变，a1 变体）。
+     *  设计稿：300×240 at 15% 8% / 280×240 at 90% 30% / 280×240 at 40% 95%，blur 64px，opacity .75 */
     fun auraBrush(seed: Int): Brush {
         val colors = if (isDark) {
             when (seed % 4) {
@@ -86,12 +87,41 @@ data class GlassTokens(
                 else -> listOf(Color(0xFFFBD0E3), Color(0xFFFDF0C4), Color(0xFFD4D2FC))
             }
         }
-        val alpha = if (isDark) 0.5f else 0.75f
-        return Brush.radialGradient(
-            colors = colors.map { it.copy(alpha = alpha) },
-            center = androidx.compose.ui.geometry.Offset(0.2f, 0.1f),
-            radius = 900f,
+        // 三个独立光斑，用横向渐变近似三色并列（Compose 单 Brush 无法叠三组径向，
+        // 故在外层由 auraLayers() 叠加三层）。
+        return Brush.horizontalGradient(colors)
+    }
+
+    /** 三层独立径向光斑（对应设计稿三个 radial-gradient），按坐标叠加 */
+    fun auraLayers(seed: Int): List<Pair<Brush, androidx.compose.ui.geometry.Offset>> {
+        val colors = if (isDark) {
+            when (seed % 4) {
+                0 -> listOf(Color(0xFF5C2B1E), Color(0xFF2B1E5C), Color(0xFF1E4230))
+                1 -> listOf(Color(0xFF1E3A5C), Color(0xFF5C1E47), Color(0xFF1E4242))
+                2 -> listOf(Color(0xFF1E4242), Color(0xFF3A2B5C), Color(0xFF5C2B1E))
+                else -> listOf(Color(0xFF5C2B47), Color(0xFF42421E), Color(0xFF2B1E5C))
+            }
+        } else {
+            when (seed % 4) {
+                0 -> listOf(Color(0xFFFFD3C2), Color(0xFFDDD0FF), Color(0xFFC2ECD4))
+                1 -> listOf(Color(0xFFC9DEFC), Color(0xFFFCC9E3), Color(0xFFC2F0EC))
+                2 -> listOf(Color(0xFFC2F0EC), Color(0xFFDED0FC), Color(0xFFFFD9C4))
+                else -> listOf(Color(0xFFFBD0E3), Color(0xFFFDF0C4), Color(0xFFD4D2FC))
+            }
+        }
+        val alpha = if (isDark) 0.5f else 1f
+        val positions = listOf(
+            androidx.compose.ui.geometry.Offset(0.15f, 0.08f),
+            androidx.compose.ui.geometry.Offset(0.90f, 0.30f),
+            androidx.compose.ui.geometry.Offset(0.40f, 0.95f),
         )
+        return colors.mapIndexed { i, c ->
+            Brush.radialGradient(
+                colors = listOf(c.copy(alpha = alpha), Color.Transparent),
+                center = positions[i],
+                radius = 750f,
+            ) to positions[i]
+        }
     }
 }
 
