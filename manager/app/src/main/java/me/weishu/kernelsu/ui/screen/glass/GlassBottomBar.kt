@@ -67,8 +67,17 @@ fun GlassBottomBar(
                 .padding(4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            items.forEach { item ->
+            items.forEachIndexed { index, item ->
                 val selected = item.tab == currentTab
+                // 首项左侧、末项右侧的圆角与胶囊外轮廓一致（99dp），避免选中底角戳出胶囊
+                val isFirst = index == 0
+                val isLast = index == items.lastIndex
+                val pillShape = RoundedCornerShape(
+                    topStart = if (isFirst) 99.dp else 16.dp,
+                    bottomStart = if (isFirst) 99.dp else 16.dp,
+                    topEnd = if (isLast) 99.dp else 16.dp,
+                    bottomEnd = if (isLast) 99.dp else 16.dp,
+                )
                 val bg by animateColorAsState(
                     if (selected) t.dockSelectedBg else Color.Transparent,
                     label = "dockBg",
@@ -84,7 +93,7 @@ fun GlassBottomBar(
                 Box {
                     Column(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(16.dp))
+                            .clip(pillShape)
                             .background(bg)
                             .clickable { onOpenTab(item.tab) }
                             .padding(horizontal = 20.dp, vertical = 5.dp),
@@ -121,16 +130,16 @@ fun GlassBottomBar(
                         Box(
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
-                                .offset(x = 4.dp, y = (-1).dp)
-                                .heightIn(min = 11.dp)
+                                .offset(x = 4.dp, y = (-2).dp)
+                                // 正圆角标：1 位数 14，2 位数 16
+                                .size(if (item.count < 10) 14.dp else 16.dp)
                                 .clip(CircleShape)
-                                .background(item.accent)
-                                .padding(horizontal = 4.dp, vertical = 0.dp),
+                                .background(item.accent),
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(
-                                text = item.count.toString(),
-                                fontSize = 7.sp,
+                                text = if (item.count > 99) "99+" else item.count.toString(),
+                                fontSize = if (item.count < 10) 7.5.sp else 6.5.sp,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = Color.White,
                                 maxLines = 1,
