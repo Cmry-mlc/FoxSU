@@ -1,7 +1,8 @@
 package me.weishu.kernelsu.ui.screen.nocturne
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -9,18 +10,24 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.BuildConfig
 import me.weishu.kernelsu.R
-import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.screen.glass.GlassStylePickerDialog
+import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.screen.settings.SettingsScreenActions
 import me.weishu.kernelsu.ui.screen.settings.SettingsUiState
-import me.weishu.kernelsu.ui.uiModeLabelRes
 
-/** Nocturne 设置页：Group r20 分组卡 + 图标盒行 + 开关/徽章/箭头。 */
+/**
+ * 设置 —— 严格对照视觉稿 s4：
+ * PREFERENCES / 设置 + 两个圆钮 → UPDATES（检查更新、检查模块更新）→
+ * APPEARANCE（界面风格 / 主题设置 / Fox 设置）→ SECURITY（软重启 / 传统 SU / 隐藏 SELinux）
+ * → 底部「NOCTURNE · V32847-6」。
+ */
 @Composable
 fun NocturneSettingsScreen(
     uiState: SettingsUiState,
@@ -32,222 +39,163 @@ fun NocturneSettingsScreen(
     val t = ncTokens()
     var showStylePicker by remember { mutableStateOf(false) }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(
-            start = NcDimens.pageX,
-            end = NcDimens.pageX,
-            top = ncStatusTop() + 20.dp,
-            bottom = bottomInnerPadding + 100.dp,
-        ),
-    ) {
-        item {
-            NcHeader(kicker = "Preferences", title = stringResource(R.string.settings))
-        }
-        item {
-            NcPanel {
-                NcGroupRow(
-                    iconRes = R.drawable.ic_d_download,
-                    accent = t.violet,
-                    title = stringResource(R.string.settings_check_update),
-                    subtitle = BuildConfig.VERSION_NAME,
-                ) {
-                    NcSwitch(
-                        checked = uiState.checkUpdate,
-                        onClick = { actions.onSetCheckUpdate(!uiState.checkUpdate) },
-                    )
-                }
-                NcGroupRow(
-                    iconRes = R.drawable.ic_d_refresh,
-                    accent = t.mint,
-                    title = stringResource(R.string.settings_module_check_update),
-                    subtitle = stringResource(R.string.settings_check_update_summary),
-                    showDivider = true,
-                ) {
-                    NcSwitch(
-                        checked = uiState.checkModuleUpdate,
-                        onClick = { actions.onSetCheckModuleUpdate(!uiState.checkModuleUpdate) },
-                    )
-                }
-                NcGroupRow(
-                    iconRes = R.drawable.ic_d_power2,
-                    accent = t.amber,
-                    title = stringResource(R.string.settings_soft_reboot),
-                    subtitle = stringResource(R.string.settings_soft_reboot_summary),
-                    showDivider = true,
-                ) {
-                    NcSwitch(
-                        checked = uiState.useSoftReboot,
-                        onClick = { actions.onSetUseSoftReboot(!uiState.useSoftReboot) },
-                    )
-                }
-                NcGroupRow(
-                    iconRes = R.drawable.ic_d_hammer,
-                    accent = t.lime,
-                    title = stringResource(R.string.settings_auto_jailbreak),
-                    subtitle = stringResource(R.string.settings_auto_jailbreak_summary),
-                    showDivider = true,
-                ) {
-                    NcSwitch(
-                        checked = uiState.autoJailbreak,
-                        onClick = { actions.onSetAutoJailbreak(!uiState.autoJailbreak) },
-                    )
-                }
+    Box(Modifier.fillMaxSize()) {
+        NcGlowBackground(t)
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(start = 18.dp, end = 18.dp, top = ncStatusTop() + 2.dp, bottom = bottomInnerPadding + 86.dp),
+        ) {
+            NcHeader(kicker = "PREFERENCES", title = "设置") {
+                NcIconButton(iconRes = R.drawable.nc_user, onClick = actions.onOpenAbout)
+                NcIconButton(iconRes = R.drawable.nc_palette, onClick = { showStylePicker = true })
             }
-        }
-        item { Spacer(Modifier.height(12.dp)) }
-        item {
-            NcPanel {
-                NcGroupRow(
-                    iconRes = R.drawable.ic_d_palette,
-                    accent = t.violet,
-                    title = stringResource(R.string.settings_ui_mode),
-                    subtitle = stringResource(uiModeLabelRes(LocalUiMode.current)),
-                    onClick = { showStylePicker = true },
-                ) { NcChevron() }
-                NcGroupRow(
-                    iconRes = R.drawable.ic_d_image,
-                    accent = t.mint,
-                    title = stringResource(R.string.customization_title),
-                    subtitle = stringResource(R.string.customization_entry_summary),
+
+            NcSectionLabel("UPDATES")
+            NcGroupCard {
+                NcRow(
+                    iconRes = R.drawable.nc_download,
+                    title = "检查更新",
+                    subtitle = "启动时自动检查最新版本",
+                    accent = NcAccent.Violet,
+                    trailing = { NcSwitch(uiState.checkUpdate) { actions.onSetCheckUpdate(it) } },
+                )
+                NcRow(
+                    iconRes = R.drawable.nc_refresh,
+                    title = "检查模块更新",
+                    subtitle = "启动时自动检查模块版本",
+                    accent = NcAccent.Violet,
                     showDivider = true,
-                    onClick = onOpenCustomization,
-                ) { NcChevron() }
-                NcGroupRow(
-                    iconRes = R.drawable.ic_d_tool,
-                    accent = t.amber,
-                    title = stringResource(R.string.settings_theme),
-                    subtitle = stringResource(R.string.settings_theme_summary),
+                    trailing = { NcSwitch(uiState.checkModuleUpdate) { actions.onSetCheckModuleUpdate(it) } },
+                )
+            }
+
+            NcSectionLabel("APPEARANCE")
+            NcGroupCard {
+                NcRow(
+                    iconRes = R.drawable.nc_sliders,
+                    title = "界面风格",
+                    subtitle = "当前使用 Nocturne 暗夜",
+                    accent = NcAccent.Default,
+                    onClick = { showStylePicker = true },
+                    trailing = {
+                        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                            Text("Nocturne", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = t.text2)
+                            Spacer(Modifier.width(6.dp))
+                            NcChevron()
+                        }
+                    },
+                )
+                NcRow(
+                    iconRes = R.drawable.nc_palette,
+                    title = "主题设置",
+                    subtitle = "强调色与光晕强度",
+                    accent = NcAccent.Violet,
                     showDivider = true,
                     onClick = actions.onOpenTheme,
-                ) { NcChevron() }
-                NcGroupRow(
-                    iconRes = R.drawable.ic_d_grid,
-                    accent = t.violet,
-                    title = stringResource(R.string.settings_profile_template),
-                    subtitle = stringResource(R.string.settings_profile_template_summary),
+                    trailing = {
+                        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                            Text("紫罗兰", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = t.violet)
+                            Spacer(Modifier.width(6.dp))
+                            NcChevron()
+                        }
+                    },
+                )
+                NcRow(
+                    iconRes = R.drawable.nc_doc,
+                    title = "定制功能",
+                    subtitle = "壁纸、圆角与启动器图标",
+                    accent = NcAccent.Default,
+                    showDivider = true,
+                    onClick = onOpenCustomization,
+                    trailing = { NcChevron() },
+                )
+                NcRow(
+                    iconRes = R.drawable.nc_grid,
+                    title = "App Profile 模板",
+                    subtitle = "管理本地和在线模板",
+                    accent = NcAccent.Violet,
                     showDivider = true,
                     onClick = actions.onOpenProfileTemplate,
-                ) { NcChevron() }
+                    trailing = { NcChevron() },
+                )
             }
-        }
-        item { Spacer(Modifier.height(12.dp)) }
-        item {
-            NcPanel {
-                NcGroupRow(
-                    iconRes = R.drawable.ic_d_terminal,
-                    accent = t.mint,
-                    title = stringResource(R.string.settings_sucompat),
-                    subtitle = uiState.suCompatStatus.ifBlank {
-                        stringResource(R.string.settings_sucompat_summary)
-                    },
-                ) {
-                    NcBadge(
-                        text = if (uiState.isSuEnabled) "开启" else "关闭",
-                        color = if (uiState.isSuEnabled) t.mint else t.text3,
-                    )
-                }
-                NcGroupRow(
-                    iconRes = R.drawable.ic_d_shield2,
-                    accent = t.violet,
-                    title = stringResource(R.string.settings_kernel_umount),
-                    subtitle = uiState.kernelUmountStatus.ifBlank {
-                        stringResource(R.string.settings_kernel_umount_summary)
-                    },
+
+            NcSectionLabel("SECURITY")
+            NcGroupCard {
+                NcRow(
+                    iconRes = R.drawable.nc_soft,
+                    title = "使用软重启",
+                    subtitle = "代替完整重启，更快生效",
+                    accent = NcAccent.Mint,
+                    trailing = { NcSwitch(uiState.useSoftReboot) { actions.onSetUseSoftReboot(it) } },
+                )
+                NcRow(
+                    iconRes = R.drawable.nc_terminal,
+                    title = "传统 SU 命令",
+                    subtitle = "/system/bin/su 获取 Root",
+                    accent = NcAccent.Default,
                     showDivider = true,
-                ) {
-                    NcSwitch(
-                        checked = uiState.isKernelUmountEnabled,
-                        onClick = { actions.onSetKernelUmountEnabled(!uiState.isKernelUmountEnabled) },
-                    )
-                }
-                NcGroupRow(
-                    iconRes = R.drawable.ic_d_lock,
-                    accent = t.amber,
-                    title = stringResource(R.string.settings_selinux_hide),
-                    subtitle = uiState.selinuxHideStatus.ifBlank {
-                        stringResource(R.string.settings_selinux_hide_summary)
+                    trailing = {
+                        NcSwitch(uiState.isSuEnabled) {
+                            actions.onSetSuCompatMode(if (it) 0 else 2)
+                        }
                     },
+                )
+                NcRow(
+                    iconRes = R.drawable.nc_lock,
+                    title = "隐藏 SELinux 修改",
+                    subtitle = "阻止应用检测修改",
+                    accent = NcAccent.Default,
                     showDivider = true,
-                ) {
-                    NcSwitch(
-                        checked = uiState.isSelinuxHideEnabled,
-                        onClick = { actions.onSetSelinuxHideEnabled(!uiState.isSelinuxHideEnabled) },
-                    )
-                }
-                NcGroupRow(
-                    iconRes = R.drawable.ic_d_log,
-                    accent = t.violet,
-                    title = stringResource(R.string.settings_sulog),
-                    subtitle = stringResource(R.string.settings_sulog_summary),
+                    trailing = { NcSwitch(uiState.isSelinuxHideEnabled) { actions.onSetSelinuxHideEnabled(it) } },
+                )
+                NcRow(
+                    iconRes = R.drawable.nc_chip,
+                    title = "卸载模块（内核级）",
+                    subtitle = "在内核层卸载挂载的模块",
+                    accent = NcAccent.Violet,
+                    showDivider = true,
+                    trailing = { NcSwitch(uiState.isKernelUmountEnabled) { actions.onSetKernelUmountEnabled(it) } },
+                )
+                NcRow(
+                    iconRes = R.drawable.nc_doc,
+                    title = "SU 日志",
+                    subtitle = "查看 Root 授权与命令记录",
+                    accent = NcAccent.Amber,
                     showDivider = true,
                     onClick = onOpenSulog,
-                ) { NcChevron() }
-                NcGroupRow(
-                    iconRes = R.drawable.ic_d_android,
-                    accent = t.mint,
-                    title = stringResource(R.string.settings_adb_root),
-                    subtitle = uiState.adbRootStatus.ifBlank {
-                        stringResource(R.string.settings_adb_root_summary)
-                    },
+                    trailing = { NcChevron() },
+                )
+                NcRow(
+                    iconRes = R.drawable.nc_terminal,
+                    title = "ADB Root",
+                    subtitle = "允许 adb 直接获得 Root",
+                    accent = NcAccent.Default,
                     showDivider = true,
-                ) {
-                    NcSwitch(
-                        checked = uiState.isAdbRootEnabled,
-                        onClick = { actions.onSetAdbRootEnabled(!uiState.isAdbRootEnabled) },
-                    )
-                }
-                NcGroupRow(
-                    iconRes = R.drawable.ic_d_terminal,
-                    accent = t.amber,
-                    title = stringResource(R.string.settings_shell_su_adb_only),
-                    subtitle = uiState.shellSuAdbOnlyStatus.ifBlank {
-                        stringResource(R.string.settings_shell_su_adb_only_summary)
-                    },
+                    trailing = { NcSwitch(uiState.isAdbRootEnabled) { actions.onSetAdbRootEnabled(it) } },
+                )
+                NcRow(
+                    iconRes = R.drawable.nc_shield,
+                    title = "自动越狱",
+                    subtitle = "开机检测到 Permissive 时自动处理",
+                    accent = NcAccent.Mint,
                     showDivider = true,
-                ) {
-                    NcSwitch(
-                        checked = uiState.isShellSuAdbOnlyEnabled,
-                        onClick = { actions.onSetShellSuAdbOnlyEnabled(!uiState.isShellSuAdbOnlyEnabled) },
-                    )
-                }
+                    trailing = { NcSwitch(uiState.autoJailbreak) { actions.onSetAutoJailbreak(it) } },
+                )
             }
-        }
-        item { Spacer(Modifier.height(12.dp)) }
-        item {
-            NcPanel {
-                NcGroupRow(
-                    iconRes = R.drawable.ic_d_grid,
-                    accent = t.red,
-                    title = stringResource(R.string.settings_umount_modules_default),
-                    subtitle = stringResource(R.string.settings_umount_modules_default_summary),
-                ) {
-                    NcSwitch(
-                        checked = uiState.isDefaultUmountModules,
-                        onClick = { actions.onSetDefaultUmountModules(!uiState.isDefaultUmountModules) },
-                    )
-                }
-                NcGroupRow(
-                    iconRes = R.drawable.ic_d_tool,
-                    accent = t.violet,
-                    title = stringResource(R.string.enable_web_debugging),
-                    subtitle = stringResource(R.string.enable_web_debugging_summary),
-                    showDivider = true,
-                ) {
-                    NcSwitch(
-                        checked = uiState.enableWebDebugging,
-                        onClick = { actions.onSetEnableWebDebugging(!uiState.enableWebDebugging) },
-                    )
-                }
-                NcGroupRow(
-                    iconRes = R.drawable.ic_d_book,
-                    accent = t.mint,
-                    title = stringResource(R.string.about),
-                    subtitle = "FoxSu Nocturne",
-                    showDivider = true,
-                    onClick = actions.onOpenAbout,
-                ) { NcChevron() }
-            }
+
+            Spacer(Modifier.height(18.dp))
+            Text(
+                text = "NOCTURNE · V${BuildConfig.VERSION_NAME}",
+                fontSize = 9.sp,
+                letterSpacing = 2.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = t.text3,
+                modifier = Modifier.padding(start = 2.dp),
+            )
+            Spacer(Modifier.height(16.dp))
         }
     }
 

@@ -1,19 +1,34 @@
 package me.weishu.kernelsu.ui.screen.nocturne
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.ui.component.AppIconImage
 import me.weishu.kernelsu.ui.screen.superuser.GroupedApps
 
-/** Nocturne 超级用户：大标题头部 + 已授权胶囊 + 搜索框 r15 + 应用行分组。 */
+/**
+ * 超级用户 —— 严格对照视觉稿 s2：
+ * ROOT ACCESS / 超级用户 + 两个圆钮 → 搜索框 → stat3（已授权 / 待确认 / 已拒绝）→
+ * AUTHORIZED · 已授权 分组 → PENDING · 未授权 分组。
+ */
 @Composable
 fun NocturneSuperUserScreen(
     granted: List<GroupedApps>,
@@ -25,57 +40,136 @@ fun NocturneSuperUserScreen(
     onOpenApp: (GroupedApps) -> Unit,
 ) {
     val t = ncTokens()
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(
-            start = NcDimens.pageX,
-            end = NcDimens.pageX,
-            top = ncStatusTop() + 20.dp,
-            bottom = bottomInnerPadding + 96.dp,
-        ),
-    ) {
-        item {
-            NcHeader(
-                kicker = "Superuser",
-                title = stringResource(R.string.superuser),
-                trailing = {
-                    NcBadge(text = "已授权 $grantedCount", color = t.mint)
-                },
-            )
-        }
-        item {
-            NcSearchField(
-                value = searchValue,
-                onValueChange = onSearch,
-                hint = "搜索应用…",
-            )
-            Spacer(Modifier.height(12.dp))
-        }
-        items(granted.size) { index ->
-            Box(Modifier.padding(bottom = 9.dp)) {
-                NcAppRow(app = granted[index], onClick = { onOpenApp(granted[index]) })
+
+    Box(Modifier.fillMaxSize()) {
+        NcGlowBackground(t)
+        LazyColumn(
+            Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = 18.dp, end = 18.dp,
+                top = ncStatusTop() + 2.dp,
+                bottom = bottomInnerPadding + 86.dp,
+            ),
+        ) {
+            item {
+                NcHeader(kicker = "ROOT ACCESS", title = "超级用户") {
+                    NcIconButton(iconRes = R.drawable.nc_user, onClick = {})
+                    NcIconButton(iconRes = R.drawable.nc_sliders, onClick = {})
+                }
             }
-        }
-        if (notGranted.isNotEmpty()) {
-            item { NcSectionHead("未授权应用") }
-            items(notGranted.size) { index ->
-                Box(Modifier.padding(bottom = 9.dp)) {
-                    NcAppRow(app = notGranted[index], onClick = { onOpenApp(notGranted[index]) })
+            item {
+                NcSearchField(searchValue, onSearch, "搜索应用或包名", R.drawable.nc_search_glyph)
+                Spacer(Modifier.height(12.dp))
+            }
+            item {
+                NcStat3(
+                    listOf(
+                        Triple("已授权", grantedCount.toString(), t.mint),
+                        Triple("待确认", "0", t.text2),
+                        Triple("已拒绝", notGranted.size.toString(), t.red),
+                    )
+                )
+                Spacer(Modifier.height(4.dp))
+            }
+            if (granted.isNotEmpty()) {
+                item { NcSectionLabel("AUTHORIZED · 已授权") }
+                item {
+                    NcGroupCard {
+                        granted.forEachIndexed { i, app ->
+                            NcAppRow(
+                                app = app,
+                                badge = "ROOT",
+                                badgeColor = t.mint,
+                                showDivider = i > 0,
+                                onClick = { onOpenApp(app) },
+                            )
+                        }
+                    }
+                }
+            }
+            if (notGranted.isNotEmpty()) {
+                item { NcSectionLabel("PENDING · 未授权") }
+                item {
+                    NcGroupCard {
+                        notGranted.forEachIndexed { i, app ->
+                            NcAppRow(
+                                app = app,
+                                badge = "未授权",
+                                badgeColor = t.text3,
+                                showDivider = i > 0,
+                                onClick = { onOpenApp(app) },
+                            )
+                        }
+                    }
                 }
             }
         }
-        if (granted.isEmpty() && notGranted.isEmpty()) {
-            item {
-                Text(
-                    text = "暂无应用",
-                    fontSize = 12.sp,
-                    color = t.text3,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 40.dp),
-                    textAlign = TextAlign.Center,
+    }
+}
+
+/** App 行：头像 36 r12 真实图标 + 名字 13/650 + 包名 mono 9.5 tx2 + 徽章。 */
+@Composable
+private fun NcAppRow(
+    app: GroupedApps,
+    badge: String,
+    badgeColor: Color,
+    showDivider: Boolean,
+    onClick: () -> Unit,
+) {
+    val t = ncTokens()
+    Column(Modifier.fillMaxWidth()) {
+        if (showDivider) {
+            Canvas1px(startInset = 57, color = t.line)
+        }
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(horizontal = 15.dp, vertical = 9.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                Modifier
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .border(1.dp, Color(0x0FFFFFFF), RoundedCornerShape(12.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                AppIconImage(
+                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(12.dp)),
+                    packageInfo = app.primary.packageInfo,
+                    label = app.primary.label,
                 )
             }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = app.primary.label,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = t.text1,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(Modifier.height(3.dp))
+                Text(
+                    text = app.primary.displayIdentifier,
+                    fontSize = 9.5.sp,
+                    fontFamily = ncMono,
+                    color = t.text2,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Spacer(Modifier.width(10.dp))
+            NcBadge(badge, badgeColor, if (badgeColor == t.text3) 0.05f else 0.12f)
         }
     }
+}
+
+@Composable
+private fun Canvas1px(startInset: Int, color: Color) {
+    androidx.compose.foundation.Canvas(
+        Modifier.fillMaxWidth().padding(start = startInset.dp, end = 16.dp).height(1.dp)
+    ) { drawRect(color) }
 }

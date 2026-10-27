@@ -5,9 +5,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,247 +21,179 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.BuildConfig
 import me.weishu.kernelsu.R
 
-/** Nocturne 作者页：返回 + acard r24 渐变描边 + 头像虚线环 + 引言 + stat3 + GitHub 按钮。 */
+/**
+ * 关于作者 —— 严格对照视觉稿 s6：
+ * AUTHOR · 造物者 / 关于 + 返回/资料按钮 → acard（66 头像 + 虚线外环 + 名字 @handle +
+ * mint 两行角色 + 徽章行）→ aquote 引言 → stat3 四列 → CONTACT · 联系 → PROJECTS · 作品。
+ */
 @Composable
-fun NocturneAuthorScreen(onBack: () -> Unit, onOpenUrl: (String) -> Unit) {
+fun NocturneAuthorScreen(
+    onBack: () -> Unit,
+    onOpenUrl: (String) -> Unit,
+) {
     val t = ncTokens()
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(
-            start = NcDimens.pageX,
-            end = NcDimens.pageX,
-            top = ncStatusTop() + 20.dp,
-            bottom = 40.dp,
-        ),
-    ) {
-        item {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                NcRoundButton(iconRes = R.drawable.ic_d_back, onClick = onBack)
-                Spacer(Modifier.width(12.dp))
-                Text(
-                    text = stringResource(R.string.author_title),
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = t.text1,
-                )
+
+    Box(Modifier.fillMaxSize()) {
+        NcGlowBackground(t)
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(start = 18.dp, end = 18.dp, top = ncStatusTop() + 2.dp, bottom = 40.dp),
+        ) {
+            NcHeader(kicker = "AUTHOR · 造物者", title = "关于") {
+                NcIconButton(iconRes = R.drawable.nc_back, onClick = onBack)
+                NcIconButton(iconRes = R.drawable.nc_user, onClick = {}, primary = true)
             }
-            Spacer(Modifier.height(16.dp))
-        }
-        item {
-            // acard：外层 1dp 渐变描边 + 内层 r23
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(NcRadius.hero))
-                    .background(
-                        Brush.linearGradient(
-                            listOf(t.violet.copy(alpha = 0.55f), t.mint.copy(alpha = 0.35f), t.violet.copy(alpha = 0.55f))
-                        )
-                    )
-                    .padding(1.dp)
-            ) {
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(NcRadius.hero - 1.dp))
-                        .background(t.surface1)
-                        .padding(18.dp)
+
+            // acard
+            NcGradientBorder(radius = 24.dp) {
+                Row(
+                    Modifier.padding(horizontal = 17.dp, vertical = 18.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    // 左下光晕
-                    Box(
-                        Modifier
-                            .align(Alignment.BottomStart)
-                            .offset(x = (-40).dp, y = 40.dp)
-                            .size(170.dp)
-                            .background(
-                                Brush.radialGradient(listOf(t.violet.copy(alpha = 0.14f), Color.Transparent))
+                    // 66 头像 + 虚线外环
+                    Box(Modifier.size(78.dp), contentAlignment = Alignment.Center) {
+                        Canvas(Modifier.fillMaxSize()) {
+                            drawCircle(
+                                color = Color(0x38FFFFFF),
+                                radius = size.width / 2 - 3.dp.toPx(),
+                                style = Stroke(
+                                    width = 1.dp.toPx(),
+                                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx())),
+                                ),
                             )
-                    )
+                        }
+                        Box(
+                            Modifier
+                                .size(66.dp)
+                                .clip(CircleShape)
+                                .background(Brush.linearGradient(listOf(Color(0xFF8B7BFF), Color(0xFF6A57F5)))),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text("FOX", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp, color = Color.White)
+                        }
+                    }
+                    Spacer(Modifier.width(14.dp))
                     Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            // 66dp 头像（首字母 + violet 渐变）+ 外虚线环
-                            Box(Modifier.size(80.dp), contentAlignment = Alignment.Center) {
-                                Canvas(Modifier.size(78.dp)) {
-                                    drawCircle(
-                                        color = t.violet.copy(alpha = 0.55f),
-                                        radius = size.minDimension / 2 - 1.dp.toPx(),
-                                        style = Stroke(
-                                            width = 1.2.dp.toPx(),
-                                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f)),
-                                        ),
-                                    )
-                                }
-                                Box(
-                                    Modifier
-                                        .size(NcDimens.authorAvatar)
-                                        .clip(CircleShape)
-                                        .background(Brush.linearGradient(listOf(t.violet, t.violetDeep))),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Text(
-                                        text = "F",
-                                        fontSize = 26.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = Color.White,
-                                    )
-                                }
-                            }
-                            Spacer(Modifier.width(14.dp))
-                            Column(Modifier.weight(1f)) {
-                                Text(
-                                    text = stringResource(R.string.author_name),
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = t.text1,
-                                )
-                                Text(
-                                    text = stringResource(R.string.author_role),
-                                    fontSize = 9.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 2.sp,
-                                    color = t.violetText,
-                                    modifier = Modifier.padding(top = 5.dp),
-                                )
-                                Text(
-                                    text = "v${BuildConfig.VERSION_NAME}",
-                                    fontSize = 9.5.sp,
-                                    color = t.text3,
-                                    modifier = Modifier.padding(top = 4.dp),
-                                )
-                            }
+                        Row(verticalAlignment = Alignment.Bottom) {
+                            Text("尘梦如烟", fontSize = 21.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.6).sp, color = t.text1)
+                            Spacer(Modifier.width(7.dp))
+                            Text("@foxsu", fontSize = 10.5.sp, fontWeight = FontWeight.SemiBold, color = t.text2)
                         }
-                        // 引言块：左 2dp violet 竖线
-                        Row(
-                            Modifier
-                                .padding(top = 16.dp)
-                                .height(IntrinsicSize.Min)
-                        ) {
-                            Box(
-                                Modifier
-                                    .width(2.dp)
-                                    .fillMaxHeight()
-                                    .background(t.violet.copy(alpha = 0.55f))
-                            )
-                            Text(
-                                text = stringResource(R.string.author_desc),
-                                fontSize = 10.5.sp,
-                                lineHeight = 18.sp,
-                                color = t.text2,
-                                modifier = Modifier.padding(start = 12.dp),
-                            )
-                        }
-                        Spacer(Modifier.height(16.dp))
-                        // stat3 三列数据条
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(NcRadius.card))
-                                .background(t.surface2)
-                                .border(1.dp, t.line, RoundedCornerShape(NcRadius.card))
-                                .padding(vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            NcStat("项目", "FoxSu", t.violet, Modifier.weight(1f))
-                            Box(Modifier.width(1.dp).height(28.dp).background(t.line))
-                            NcStat("内核", "KernelSU", t.mint, Modifier.weight(1f))
-                            Box(Modifier.width(1.dp).height(28.dp).background(t.line))
-                            NcStat("版本", BuildConfig.VERSION_NAME, t.text1, Modifier.weight(1f))
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            "FOXSU 维护者 ·\nINTERFACE DESIGNER",
+                            fontSize = 9.sp,
+                            letterSpacing = 1.8.sp,
+                            lineHeight = 14.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = t.mint,
+                        )
+                        Spacer(Modifier.height(9.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            AuthorChip("MAINTAINER", t.violetText, t.violet.copy(alpha = 0.16f))
+                            AuthorChip("GPL-3.0", t.text2)
+                            AuthorChip("SINCE 2020", t.text2)
                         }
                     }
                 }
             }
-        }
-        item { Spacer(Modifier.height(12.dp)) }
-        item {
-            // GitHub 按钮
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(NcRadius.panel))
-                    .background(t.surface1)
-                    .border(1.dp, t.line, RoundedCornerShape(NcRadius.panel))
-                    .clickable { onOpenUrl("https://github.com/Cmry-mlc/FoxSu") }
-                    .padding(horizontal = 15.dp, vertical = 13.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                NcIconBox(iconRes = R.drawable.ic_d_link, accent = t.violet)
-                Spacer(Modifier.width(13.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.author_project),
-                        fontSize = 13.5.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = t.text1,
-                    )
-                    Text(
-                        text = stringResource(R.string.author_project_value),
-                        fontSize = 10.sp,
-                        color = t.text2,
-                        modifier = Modifier.padding(top = 2.dp),
-                    )
-                }
-                NcChevron()
+
+            // aquote
+            Spacer(Modifier.height(14.dp))
+            Row(Modifier.padding(horizontal = 14.dp)) {
+                Box(Modifier.width(2.dp).height(46.dp).background(t.violet.copy(alpha = 0.55f)))
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    "感谢使用 FoxSu。这是基于 KernelSU 管理器深度定制的版本，为 KernelSU 管理器重新设计了界面风格。",
+                    fontSize = 10.5.sp,
+                    lineHeight = 18.sp,
+                    color = t.text2,
+                )
             }
-        }
-        item { Spacer(Modifier.height(10.dp)) }
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(NcRadius.panel))
-                    .background(t.surface1)
-                    .border(1.dp, t.line, RoundedCornerShape(NcRadius.panel))
-                    .clickable { onOpenUrl("https://github.com/tiann/KernelSU") }
-                    .padding(horizontal = 15.dp, vertical = 13.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                NcIconBox(iconRes = R.drawable.ic_d_book, accent = t.mint)
-                Spacer(Modifier.width(13.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.author_upstream),
-                        fontSize = 13.5.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = t.text1,
-                    )
-                    Text(
-                        text = stringResource(R.string.author_upstream_value),
-                        fontSize = 10.sp,
-                        color = t.text2,
-                        modifier = Modifier.padding(top = 2.dp),
-                    )
-                }
-                NcChevron()
+
+            Spacer(Modifier.height(12.dp))
+            NcStat3(
+                listOf(
+                    Triple("项目", "12", t.text1),
+                    Triple("版本", BuildConfig.VERSION_NAME, t.violet),
+                    Triple("年限", "6y", t.mint),
+                )
+            )
+
+            NcSectionLabel("CONTACT · 联系")
+            NcGroupCard {
+                NcRow(
+                    iconRes = R.drawable.nc_link,
+                    title = "GitHub",
+                    subtitle = "github.com/Cmry-mlc/FoxSu",
+                    subtitleMono = true,
+                    accent = NcAccent.Violet,
+                    onClick = { onOpenUrl("https://github.com/Cmry-mlc/FoxSu") },
+                    trailing = { NcChevron() },
+                )
+                NcRow(
+                    iconRes = R.drawable.nc_sliders,
+                    title = "Telegram",
+                    subtitle = "@foxsu_dev",
+                    subtitleMono = true,
+                    accent = NcAccent.Default,
+                    showDivider = true,
+                    onClick = { onOpenUrl("https://t.me/foxsu_dev") },
+                    trailing = { NcChevron() },
+                )
+                NcRow(
+                    iconRes = R.drawable.nc_shield,
+                    title = "电子邮箱",
+                    subtitle = "fox@foxsu.dev",
+                    subtitleMono = true,
+                    accent = NcAccent.Mint,
+                    showDivider = true,
+                    onClick = { onOpenUrl("mailto:fox@foxsu.dev") },
+                    trailing = { NcChevron() },
+                )
             }
+
+            NcSectionLabel("PROJECTS · 作品")
+            NcGroupCard {
+                NcRow(
+                    iconRes = R.drawable.nc_power,
+                    title = "FoxSu Manager",
+                    subtitle = "内核级 Root 管理器 · 主项目",
+                    accent = NcAccent.Violet,
+                    onClick = { onOpenUrl("https://github.com/Cmry-mlc/FoxSu") },
+                    trailing = { Text("★ 32.8k", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = t.violet) },
+                )
+                NcRow(
+                    iconRes = R.drawable.nc_palette,
+                    title = "Nocturne Theme",
+                    subtitle = "暗夜主题引擎 · 本界面",
+                    accent = NcAccent.Mint,
+                    showDivider = true,
+                    onClick = { onOpenUrl("https://github.com/Cmry-mlc/FoxSu") },
+                    trailing = { Text("★ 6.1k", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = t.mint) },
+                )
+            }
+            Spacer(Modifier.height(24.dp))
         }
     }
 }
 
 @Composable
-private fun NcStat(label: String, value: String, color: Color, modifier: Modifier = Modifier) {
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = value,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.ExtraBold,
-            color = color,
-            maxLines = 1,
-        )
-        Text(
-            text = label,
-            fontSize = 9.sp,
-            color = t_text3(),
-            modifier = Modifier.padding(top = 3.dp),
-        )
+private fun AuthorChip(text: String, color: Color, bg: Color = Color(0x0FFFFFFF)) {
+    Box(
+        Modifier
+            .clip(RoundedCornerShape(6.dp))
+            .background(bg)
+            .padding(horizontal = 7.dp, vertical = 3.dp)
+    ) {
+        Text(text, fontSize = 8.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.9.sp, color = color)
     }
 }
-
-@Composable
-private fun t_text3(): Color = ncTokens().text3
