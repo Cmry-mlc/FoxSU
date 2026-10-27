@@ -451,7 +451,7 @@ fun MainScreen(
         UiMode.Miuix -> MiuixTheme.colorScheme.surface
         UiMode.Fresh -> MaterialTheme.colorScheme.surface
         UiMode.Glass -> glassTokens().bg
-        UiMode.Nocturne -> me.weishu.kernelsu.ui.screen.nocturne.NcColors.bg
+        UiMode.Nocturne -> me.weishu.kernelsu.ui.screen.nocturne.ncTokens().bg
     }
     val blurBackdrop = rememberBlurBackdrop(enableBlur)
 

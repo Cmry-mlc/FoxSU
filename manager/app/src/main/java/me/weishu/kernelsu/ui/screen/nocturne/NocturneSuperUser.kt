@@ -30,7 +30,7 @@ fun NocturneSuperUserScreen(
         contentPadding = PaddingValues(
             start = NcDimens.pageX,
             end = NcDimens.pageX,
-            top = ncStatusTop() + 8.dp,
+            top = ncStatusTop() + 20.dp,
             bottom = bottomInnerPadding + 96.dp,
         ),
     ) {

@@ -88,7 +88,8 @@ object NcDimens {
 /** 亮暗感知 token 入口：Nocturne 屏幕统一从这里取色。 */
 @Composable
 fun ncTokens(): NcTokens {
-    return if (isSystemInDarkTheme()) NcTokens.dark else NcTokens.light
+    // Nocturne 是 OLED 暗夜主题：固定使用设计稿暗夜 token，不随系统/应用亮色设置切换
+    return NcTokens.dark
 }
 
 data class NcTokens(

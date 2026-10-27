@@ -36,7 +36,7 @@ fun NocturneAuthorScreen(onBack: () -> Unit, onOpenUrl: (String) -> Unit) {
         contentPadding = PaddingValues(
             start = NcDimens.pageX,
             end = NcDimens.pageX,
-            top = ncStatusTop() + 8.dp,
+            top = ncStatusTop() + 20.dp,
             bottom = 40.dp,
         ),
     ) {
