@@ -92,7 +92,7 @@ fun UiModeSwitchButton(modifier: Modifier = Modifier) {
 /**
  * 与设置页的切换保持一致：Miuix/Material 之间的 Monet 状态需要同步，否则会出现配色错乱。
  */
-private fun applyUiMode(next: UiMode) {
+internal fun applyUiMode(next: UiMode) {
     val repo = SettingsRepositoryImpl()
     val old = UiMode.fromValue(repo.uiMode)
     if (old == next) return
