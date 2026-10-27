@@ -93,6 +93,6 @@ fun FlashScreen(flashIt: FlashIt, onBackEnabledChange: (Boolean) -> Unit) {
 
     when (LocalUiMode.current) {
         UiMode.Miuix -> FlashScreenMiuix(state, actions)
-        UiMode.Material, UiMode.Fresh -> FlashScreenMaterial(state, actions, snackbarHost)
+        UiMode.Material, UiMode.Fresh, UiMode.Glass -> FlashScreenMaterial(state, actions, snackbarHost)
     }
 }

@@ -117,7 +117,7 @@ fun ScriptRunScreen(arg: ScriptRunArg, onBackEnabledChange: (Boolean) -> Unit) {
         )
         when (uiMode) {
             UiMode.Miuix -> ExecuteModuleActionScreenMiuix(outputState, outputActions)
-            UiMode.Material, UiMode.Fresh -> ExecuteModuleActionScreenMaterial(outputState, outputActions, snackbarHost)
+            UiMode.Material, UiMode.Fresh, UiMode.Glass -> ExecuteModuleActionScreenMaterial(outputState, outputActions, snackbarHost)
         }
         return
     }
@@ -141,7 +141,7 @@ fun ScriptRunScreen(arg: ScriptRunArg, onBackEnabledChange: (Boolean) -> Unit) {
 
     when (uiMode) {
         UiMode.Miuix -> ScriptRunScreenMiuix(state, actions)
-        UiMode.Material, UiMode.Fresh -> ScriptRunScreenMaterial(state, actions)
+        UiMode.Material, UiMode.Fresh, UiMode.Glass -> ScriptRunScreenMaterial(state, actions)
     }
 }
 

@@ -162,7 +162,7 @@ import me.weishu.kernelsu.ui.util.savePickedImage
 
 /** Resolved colours for one card: global settings with optional per-card override. */
 /** Things worth telling the user about, all derived from real state. */
-private enum class FreshIssue {
+internal enum class FreshIssue {
     RootMissing,
     KernelOutdated,
     ManagerOutdated,
@@ -173,7 +173,7 @@ private enum class FreshIssue {
     LkmUpdate,
 }
 
-private fun HomeUiState.freshIssues(): List<FreshIssue> = buildList {
+internal fun HomeUiState.freshIssues(): List<FreshIssue> = buildList {
     if (ksuVersion != null && !isRootAvailable) add(FreshIssue.RootMissing)
     if (requiresNewKernel) add(FreshIssue.KernelOutdated)
     if (requiresNewManager) add(FreshIssue.ManagerOutdated)

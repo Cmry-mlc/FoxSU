@@ -98,6 +98,8 @@ import me.weishu.kernelsu.ui.screen.superuser.SuperUserPager
 import me.weishu.kernelsu.ui.screen.template.AppProfileTemplateScreen
 import me.weishu.kernelsu.ui.screen.templateeditor.TemplateEditorScreen
 import me.weishu.kernelsu.ui.theme.KernelSUTheme
+import me.weishu.kernelsu.ui.theme.glassTokens
+import androidx.compose.ui.draw.blur
 import me.weishu.kernelsu.ui.theme.LocalColorMode
 import me.weishu.kernelsu.ui.theme.LocalEnableBlur
 import me.weishu.kernelsu.ui.theme.LocalEnableFloatingBottomBar
@@ -272,13 +274,20 @@ class MainActivity : ComponentActivity() {
                     }
 
                     Box(modifier = Modifier.fillMaxSize()) {
-                        // 背景：全局壁纸优先（所有界面生效），否则玻璃模式的磨砂壁纸
+                        // 背景：全局壁纸优先（所有界面生效）
                         val customNow = CustomizationStore.current
                         if (customNow.wallpaperUri != null && customNow.wallpaperEnabled) {
-                            WallpaperBackground(customization = customNow.copy(cardGlass = false))
-                        } else if (customNow.cardGlass) {
-                            WallpaperBackground(
-                                customization = customNow.copy(wallpaperUri = customNow.glassWallpaper)
+                            WallpaperBackground(customization = customNow)
+                        }
+                        // Glass 模式：背景色 + 柔和霓虹光晕
+                        if (uiMode == UiMode.Glass) {
+                            val gt = glassTokens()
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(gt.bg)
+                                    .blur(70.dp)
+                                    .background(gt.auraBrush(0))
                             )
                         }
                         when (uiMode) {
@@ -290,6 +299,10 @@ class MainActivity : ComponentActivity() {
 
                             UiMode.Fresh -> androidx.compose.material3.Scaffold(
                                 containerColor = scaffoldBackgroundColor(MaterialTheme.colorScheme.surface)
+                            ) { navDisplay() }
+
+                            UiMode.Glass -> androidx.compose.material3.Scaffold(
+                                containerColor = androidx.compose.ui.graphics.Color.Transparent
                             ) { navDisplay() }
                         }
 
@@ -428,6 +441,7 @@ fun MainScreen(
         UiMode.Material -> MaterialTheme.colorScheme.surface // Blur is not used in Material, this is just a placeholder
         UiMode.Miuix -> MiuixTheme.colorScheme.surface
         UiMode.Fresh -> MaterialTheme.colorScheme.surface
+        UiMode.Glass -> glassTokens().bg
     }
     val blurBackdrop = rememberBlurBackdrop(enableBlur)
 
@@ -546,6 +560,21 @@ fun MainScreen(
                         }
                     }
                 }
+
+                UiMode.Glass -> androidx.compose.material3.Scaffold(
+                    containerColor = androidx.compose.ui.graphics.Color.Transparent
+                ) {
+                    Row {
+                        SideRail(navigationBadge)
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .consumeWindowInsets(startInsets)
+                        ) {
+                            pagerContent(navBarBottomPadding)
+                        }
+                    }
+                }
             }
         } else {
             val bottomBar = @Composable {
@@ -576,6 +605,13 @@ fun MainScreen(
                 UiMode.Fresh -> androidx.compose.material3.Scaffold(
                     bottomBar = bottomBar,
                     containerColor = scaffoldBackgroundColor(MaterialTheme.colorScheme.surface)
+                ) { innerPadding ->
+                    pagerContent(innerPadding.calculateBottomPadding())
+                }
+
+                UiMode.Glass -> androidx.compose.material3.Scaffold(
+                    bottomBar = bottomBar,
+                    containerColor = androidx.compose.ui.graphics.Color.Transparent
                 ) { innerPadding ->
                     pagerContent(innerPadding.calculateBottomPadding())
                 }

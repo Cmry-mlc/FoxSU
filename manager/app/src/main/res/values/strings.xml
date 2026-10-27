@@ -243,6 +243,8 @@
     <string name="module_undo_uninstall_success">Successfully canceled uninstall of %s</string>
     <string name="module_undo_uninstall_failed">Failed to undo uninstall: %s</string>
     <string name="group_contains_apps">Contains %d apps</string>
+    <string name="glass_granted_count">%d granted</string>
+    <string name="glass_search_apps">Search apps or packages</string>
     <string name="settings_theme">Theme</string>
     <string name="settings_theme_summary">Choose the app theme mode.</string>
     <string name="settings_theme_mode_system">Follow system</string>
@@ -370,12 +372,16 @@
     <string name="settings_ui_mode_miuix">Miuix</string>
     <string name="settings_ui_mode_material">Material</string>
     <string name="settings_ui_mode_fresh">ColorUI</string>
+    <string name="settings_ui_mode_glass">FoxSu Glass</string>
     <string name="fresh_home_flash_hint">Tap to flash or update the kernel</string>
+    <string name="fresh_home_issue_count">%d issue(s) need attention</string>
+    <string name="fresh_home_install">Install</string>
     <string name="fresh_reboot_slide_hint">Slide the bar to confirm; tap a card for other modes</string>
     <string name="fresh_home_cancel">Cancel</string>
     <string name="fresh_home_superuser_sub">apps granted</string>
     <string name="fresh_home_device_sub">Device</string>
     <string name="fresh_home_style_switch">Tap to switch</string>
+    <string name="glass_home_hint">Long press cards to restyle · Glass</string>
     <string name="fresh_home_module_sub">modules enabled</string>
     <string name="fresh_issue_root">Root is not available right now</string>
     <string name="fresh_issue_kernel_old">Kernel version does not match the manager</string>

@@ -146,7 +146,7 @@ fun AppProfileScreen(uid: Int) {
             actions = actions,
         )
 
-        UiMode.Material, UiMode.Fresh -> AppProfileScreenMaterial(
+        UiMode.Material, UiMode.Fresh, UiMode.Glass -> AppProfileScreenMaterial(
             state = state,
             actions = actions,
             snackBarHost = snackbarHost,

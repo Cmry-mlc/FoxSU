@@ -207,12 +207,20 @@ fun ModulePager(
             bottomInnerPadding = bottomInnerPadding,
         )
 
-        UiMode.Material, UiMode.Fresh -> ModulePagerMaterial(
+        UiMode.Material, UiMode.Fresh, UiMode.Glass -> ModulePagerMaterial(
             uiState = rawUiState,
             confirmDialogState = rawUiState.confirmDialogState,
             moduleEvent = viewModel.moduleEvent,
             actions = actions,
             bottomInnerPadding = bottomInnerPadding,
+        )
+
+        UiMode.Glass -> me.weishu.kernelsu.ui.screen.glass.GlassModuleList(
+            modules = if (rawUiState.searchStatus.searchText.isBlank()) rawUiState.modules else rawUiState.searchResults,
+            bottomInnerPadding = bottomInnerPadding,
+            onModuleClick = { /* 详情入口预留 */ },
+            onToggle = actions.onToggleModule,
+            onAddModule = { navigator.push(Route.Install) },
         )
     }
 }

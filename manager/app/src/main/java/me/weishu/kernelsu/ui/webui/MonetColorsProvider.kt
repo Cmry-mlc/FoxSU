@@ -28,7 +28,7 @@ object MonetColorsProvider {
     fun UpdateCss(materialColorScheme: ColorScheme? = null) {
         when (LocalUiMode.current) {
             UiMode.Miuix -> UpdateCssMiuix()
-            UiMode.Material, UiMode.Fresh -> UpdateCssMaterial(materialColorScheme ?: MaterialTheme.colorScheme)
+            UiMode.Material, UiMode.Fresh, UiMode.Glass -> UpdateCssMaterial(materialColorScheme ?: MaterialTheme.colorScheme)
         }
     }
 

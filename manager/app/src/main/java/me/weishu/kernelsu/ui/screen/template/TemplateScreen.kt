@@ -115,7 +115,7 @@ fun AppProfileTemplateScreen() {
                     requestKey,
                 )
 
-                UiMode.Material, UiMode.Fresh -> navigator.push(
+                UiMode.Material, UiMode.Fresh, UiMode.Glass -> navigator.push(
                     Route.TemplateEditor(TemplateViewModel.TemplateInfo(), false)
                 )
             }
@@ -127,7 +127,7 @@ fun AppProfileTemplateScreen() {
                     requestKey,
                 )
 
-                UiMode.Material, UiMode.Fresh -> navigator.push(
+                UiMode.Material, UiMode.Fresh, UiMode.Glass -> navigator.push(
                     Route.TemplateEditor(template, !template.local)
                 )
             }
@@ -141,7 +141,7 @@ fun AppProfileTemplateScreen() {
             snackBarHost = miuixSnackbarHost,
         )
 
-        UiMode.Material, UiMode.Fresh -> AppProfileTemplateScreenMaterial(
+        UiMode.Material, UiMode.Fresh, UiMode.Glass -> AppProfileTemplateScreenMaterial(
             state = uiState,
             actions = actions,
             snackBarHost = snackBarHost,

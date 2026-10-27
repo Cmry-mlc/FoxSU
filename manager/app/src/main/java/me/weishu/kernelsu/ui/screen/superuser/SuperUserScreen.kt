@@ -1,5 +1,7 @@
 package me.weishu.kernelsu.ui.screen.superuser
 
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Modifier
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -7,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -87,10 +90,47 @@ fun SuperUserPager(
             bottomInnerPadding = bottomInnerPadding,
         )
 
-        UiMode.Material, UiMode.Fresh -> SuperUserPagerMaterial(
+        UiMode.Material, UiMode.Fresh, UiMode.Glass -> SuperUserPagerMaterial(
             uiState = uiState,
             actions = actions,
             bottomInnerPadding = bottomInnerPadding,
         )
+
+        UiMode.Glass -> SuperUserPagerGlass(
+            uiState = uiState,
+            actions = actions,
+            bottomInnerPadding = bottomInnerPadding,
+        )
+    }
+}
+
+@Composable
+private fun SuperUserPagerGlass(
+    uiState: SuperUserUiState,
+    actions: SuperUserActions,
+    bottomInnerPadding: Dp,
+) {
+    val granted = uiState.groupedApps.count { it.anyAllowSu }
+    val apps = if (uiState.searchStatus.searchText.isBlank()) uiState.groupedApps else uiState.searchResults
+    androidx.compose.foundation.lazy.LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(
+            start = 13.dp, end = 13.dp, top = 8.dp, bottom = bottomInnerPadding + 90.dp
+        ),
+    ) {
+        item {
+            me.weishu.kernelsu.ui.screen.glass.GlassSuperUserHeader(
+                grantedCount = granted,
+                searchValue = uiState.searchStatus.searchText,
+                onSearch = actions.onSearchTextChange,
+            )
+        }
+        items(apps.size) { index ->
+            val app = apps[index]
+            me.weishu.kernelsu.ui.screen.glass.GlassSuperUserRow(
+                app = app,
+                onClick = { actions.onOpenProfile(app) },
+            )
+        }
     }
 }

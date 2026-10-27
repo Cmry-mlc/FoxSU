@@ -190,6 +190,7 @@ private fun modeLabelRes(mode: UiMode): Int = when (mode) {
     UiMode.Miuix -> R.string.settings_ui_mode_miuix
     UiMode.Material -> R.string.settings_ui_mode_material
     UiMode.Fresh -> R.string.settings_ui_mode_fresh
+    UiMode.Glass -> R.string.settings_ui_mode_glass
 }
 
 @Composable

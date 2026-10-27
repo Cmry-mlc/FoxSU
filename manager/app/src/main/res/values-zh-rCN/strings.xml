@@ -219,6 +219,8 @@
     <string name="module_undo_uninstall_success">成功撤销卸载 %s</string>
     <string name="module_undo_uninstall_failed">撤销卸载 %s 失败</string>
     <string name="group_contains_apps">包含 %d 个应用</string>
+    <string name="glass_granted_count">已授权 %d 个</string>
+    <string name="glass_search_apps">搜索应用或包名</string>
     <string name="settings_theme">主题设置</string>
     <string name="settings_theme_summary">自定义更多主题选项</string>
     <string name="settings_theme_mode_system">跟随系统</string>
@@ -346,12 +348,16 @@
     <string name="settings_ui_mode_miuix">Miuix</string>
     <string name="settings_ui_mode_material">Material</string>
     <string name="settings_ui_mode_fresh">ColorUI</string>
+    <string name="settings_ui_mode_glass">FoxSu Glass</string>
     <string name="fresh_home_flash_hint">点按可刷入或更新内核</string>
+    <string name="fresh_home_issue_count">%d 个问题需要处理</string>
+    <string name="fresh_home_install">安装</string>
     <string name="fresh_reboot_slide_hint">滑动以确认重启，其他模式点选卡片</string>
     <string name="fresh_home_cancel">取消</string>
     <string name="fresh_home_superuser_sub">已授权应用</string>
     <string name="fresh_home_device_sub">当前设备</string>
     <string name="fresh_home_style_switch">点击切换</string>
+    <string name="glass_home_hint">长按卡片自定义 · Glass</string>
     <string name="fresh_home_module_sub">已启用模块</string>
     <string name="fresh_issue_root">当前没有 Root 权限</string>
     <string name="fresh_issue_kernel_old">内核版本与 Manager 不匹配</string>

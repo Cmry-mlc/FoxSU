@@ -14,6 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import me.weishu.kernelsu.ui.LocalMainPagerState
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.UiMode
 import me.weishu.kernelsu.ui.util.shouldShowSplitPane
@@ -116,10 +117,17 @@ fun BottomBar(
     navigationBadge: NavigationBadgeState,
     modifier: Modifier = Modifier,
 ) {
+    val mainPagerState = LocalMainPagerState.current
     when (LocalUiMode.current) {
         UiMode.Miuix -> BottomBarMiuix(blurBackdrop, backdrop, navigationBadge, modifier)
         UiMode.Material -> BottomBarMaterial(navigationBadge)
         UiMode.Fresh -> BottomBarFresh(navigationBadge)
+        UiMode.Glass -> me.weishu.kernelsu.ui.screen.glass.GlassBottomBar(
+            currentTab = mainPagerState.selectedPage,
+            badge = navigationBadge,
+            onOpenTab = { page -> mainPagerState.animateToPage(page) },
+            modifier = modifier,
+        )
     }
 }
 
@@ -132,5 +140,6 @@ fun SideRail(
         UiMode.Miuix -> NavigationRailMiuix(navigationBadge, modifier)
         UiMode.Material -> NavigationRailMaterial(navigationBadge, modifier)
         UiMode.Fresh -> NavigationRailMaterial(navigationBadge, modifier)
+        UiMode.Glass -> NavigationRailMaterial(navigationBadge, modifier)
     }
 }

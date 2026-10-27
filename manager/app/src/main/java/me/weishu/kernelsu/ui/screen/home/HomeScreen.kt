@@ -104,5 +104,13 @@ fun HomePager(
             navigationBadge = navigationBadge,
             onOpenTab = { page -> mainPagerState.animateToPage(page) },
         )
+
+        UiMode.Glass -> me.weishu.kernelsu.ui.screen.glass.GlassHome(
+            state = uiState,
+            actions = actions,
+            bottomInnerPadding = bottomInnerPadding,
+            navigationBadge = navigationBadge,
+            onOpenTab = { page -> mainPagerState.animateToPage(page) },
+        )
     }
 }
