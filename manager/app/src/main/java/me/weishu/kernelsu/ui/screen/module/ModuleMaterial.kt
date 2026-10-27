@@ -174,6 +174,7 @@ fun ModulePagerMaterial(
     moduleEvent: Flow<ModuleEffect>,
     actions: ModuleActions,
     bottomInnerPadding: Dp,
+    onOpenActions: (Module) -> Unit = {},
 ) {
     val snackBarHost = remember { SnackbarHostState() }
     val haptic = LocalHapticFeedback.current
@@ -514,6 +515,7 @@ fun ModulePagerMaterial(
                 updateInfoMap = uiState.updateInfo,
                 actions = actions,
                 onModuleAddShortcut = { module, type -> onModuleAddShortcut(module, type) },
+                onOpenActions = onOpenActions,
             )
         }
     }
@@ -543,6 +545,7 @@ private fun ModuleList(
     updateInfoMap: Map<String, ModuleUpdateInfo>,
     actions: ModuleActions,
     onModuleAddShortcut: (Module, ShortcutType) -> Unit,
+    onOpenActions: (Module) -> Unit = {},
     closeSearch: () -> Unit? = {},
 ) {
     val loadingDialog = rememberLoadingDialog()
@@ -587,6 +590,7 @@ private fun ModuleList(
                     }
                 },
                 onExecuteAction = { actions.onExecuteModuleAction(module) },
+                onOpenActions = { onOpenActions(module) },
                 closeSearch = { closeSearch() }
             )
         }
@@ -759,6 +763,7 @@ private fun ModuleItem(
     onAddShortcut: (ShortcutType) -> Unit,
     onOpenWebUi: () -> Unit,
     onExecuteAction: () -> Unit,
+    onOpenActions: () -> Unit = {},
     closeSearch: () -> Unit
 ) {
     val hasDescription = module.description.isNotBlank()
@@ -796,14 +801,8 @@ private fun ModuleItem(
         contentColor = surface.content,
         interactionSource = cardInteractionSource,
         onLongClick = { showAppearance = true },
-        onClick = {
-            if (canOpenWebUi) {
-                onOpenWebUi()
-                closeSearch()
-            } else if (hasDescription) {
-                expanded = !expanded
-            }
-        }
+        // 点卡片打开操作面板（执行 / 取消），不再只是展开描述这种「看着像没反应」的行为
+        onClick = { onOpenActions() }
     ) {
         val haptic = LocalHapticFeedback.current
         val textDecoration = if (!module.remove) null else TextDecoration.LineThrough

@@ -3,6 +3,7 @@ package me.weishu.kernelsu.ui.screen.glass
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -49,6 +50,7 @@ fun GlassModuleList(
     onRefresh: () -> Unit,
     onOpenRepo: () -> Unit = {},
     onCleanModules: () -> Unit = onRefresh,
+    onOpenActions: (Module) -> Unit = {},
 ) {
     val t = glassTokens()
     val enabledCount = modules.count { it.enabled }
@@ -75,6 +77,10 @@ fun GlassModuleList(
                     .fillMaxWidth()
                     .padding(bottom = 11.dp)
                     .glassCard(22.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ) { onOpenActions(m) }
                     .padding(15.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {

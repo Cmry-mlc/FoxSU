@@ -42,10 +42,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -124,15 +122,13 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
         null
     }
 
-    // 底栏只保留三个图标：主页 / 超级用户 / 更多；模块与设置收进「更多」面板
-    var showMore by remember { mutableStateOf(false) }
     val items = listOf(
-        // 设计稿同款描边图标：选中/未选中同一枚，仅颜色与底色区分
+        // 设计稿三页同款描边图标：选中/未选中同一枚，仅颜色与底色区分
         FreshNavItem(R.string.home, R.drawable.ic_d_home, R.drawable.ic_d_home),
         FreshNavItem(R.string.superuser, R.drawable.ic_d_shield, R.drawable.ic_d_shield),
-        FreshNavItem(R.string.nav_more, R.drawable.ic_d_more, R.drawable.ic_d_more),
+        FreshNavItem(R.string.module, R.drawable.ic_d_grid, R.drawable.ic_d_grid),
+        FreshNavItem(R.string.settings, R.drawable.ic_d_sliders, R.drawable.ic_d_sliders),
     )
-    val moreSelected = mainPagerState.selectedPage >= MoreDestinations.Module
 
     // 在 composable 作用域里先把 4 个 tab 的颜色都算好：
     // 默认单色；开七彩走随机彩色；开莫奈走系统动态色（七彩优先）
@@ -345,31 +341,23 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
                         if (drawerStyle) {
                             DrawerNavItem(
                                 item = item,
-                                selected = if (index == 2) moreSelected else selected,
+                                selected = selected,
                                 badge = badgeFor(index, navigationBadge),
                                 accent = accents[index],
                                 onClick = {
-                                    if (index == 2) {
-                                        showMore = true
-                                    } else if (!selected) {
-                                        mainPagerState.animateToPage(index)
-                                    }
+                                    if (!selected) mainPagerState.animateToPage(index)
                                 },
                             )
                         } else {
                             FreshNavItemView(
                                 modifier = Modifier.weight(1f),
                                 item = item,
-                                selected = if (index == 2) moreSelected else selected,
+                                selected = selected,
                                 badge = badgeFor(index, navigationBadge),
                                 accent = accents[index],
                                 defaultStyle = defaultNavStyle,
                                 onClick = {
-                                    if (index == 2) {
-                                        showMore = true
-                                    } else if (!selected) {
-                                        mainPagerState.animateToPage(index)
-                                    }
+                                    if (!selected) mainPagerState.animateToPage(index)
                                 },
                                 onPressChange = { down ->
                                     if (down) {
@@ -388,14 +376,6 @@ fun BottomBarFresh(navigationBadge: NavigationBadgeState) {
             }
         }
     }
-
-    MoreDestinationsSheet(
-        visible = showMore,
-        currentTab = mainPagerState.selectedPage,
-        badge = navigationBadge,
-        onDismiss = { showMore = false },
-        onOpenTab = { page -> mainPagerState.animateToPage(page) },
-    )
 }
 
 /**

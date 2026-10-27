@@ -3,6 +3,7 @@ package me.weishu.kernelsu.ui.screen.nocturne
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -36,6 +37,7 @@ fun NocturneModuleScreen(
     onAddModule: () -> Unit,
     onRefresh: () -> Unit,
     onOpenRepo: () -> Unit,
+    onOpenActions: (Module) -> Unit = {},
 ) {
     val t = ncTokens()
     var query by remember { mutableStateOf("") }
@@ -78,7 +80,7 @@ fun NocturneModuleScreen(
                 } else {
                     item { NcSectionLabel("INSTALLED · 已安装 ${list.size}") }
                     items(list, key = { it.id }) { m ->
-                        ModuleRow(m, onToggle)
+                        ModuleRow(m, onToggle, onOpenActions)
                         Spacer(Modifier.height(7.dp))
                     }
                 }
@@ -98,7 +100,7 @@ fun NocturneModuleScreen(
 
 /** 模块行：图标盒 + 名称 + 描述 + 版本 + 开关。 */
 @Composable
-private fun ModuleRow(m: Module, onToggle: (Module) -> Unit) {
+private fun ModuleRow(m: Module, onToggle: (Module) -> Unit, onOpenActions: (Module) -> Unit = {}) {
     val t = ncTokens()
     Row(
         Modifier
@@ -106,6 +108,10 @@ private fun ModuleRow(m: Module, onToggle: (Module) -> Unit) {
             .clip(RoundedCornerShape(20.dp))
             .background(t.s1)
             .border(1.dp, t.line, RoundedCornerShape(20.dp))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+            ) { onOpenActions(m) }
             .padding(horizontal = 15.dp, vertical = 11.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

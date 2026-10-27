@@ -36,6 +36,14 @@
     <string name="module_failed_to_disable">無法停用模組：%s</string>
     <string name="module_empty">未安裝模組</string>
     <string name="module">模組</string>
+    <string name="module_enabled">已啟用</string>
+    <string name="module_disabled">已停用</string>
+    <string name="module_action_sheet_run">執行</string>
+    <string name="module_action_cancel">取消</string>
+    <string name="module_action_sheet_no_action">該模組沒有 action.sh</string>
+    <string name="module_action_sheet_removing">已標記卸載，重啟後再執行</string>
+    <string name="module_action_sheet_disabled">請先啟用該模組</string>
+    <string name="module_action_sheet_pending">等待更新完成</string>
     <string name="nav_more">更多</string>
     <string name="module_install_prompt_with_name">將安裝以下模組：%1$s</string>
     <string name="module_sort_action_first">可執行優先</string>

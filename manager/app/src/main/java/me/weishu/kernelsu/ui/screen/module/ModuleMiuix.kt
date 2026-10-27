@@ -22,6 +22,8 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -167,6 +169,7 @@ fun ModulePagerMiuix(
     moduleEvent: Flow<ModuleEffect>,
     actions: ModuleActions,
     bottomInnerPadding: Dp,
+    onOpenActions: (Module) -> Unit = {},
 ) {
     val modules = uiState.moduleList
     val searchStatus = uiState.searchStatus
@@ -439,6 +442,7 @@ fun ModulePagerMiuix(
                     updateInfoMap = uiState.updateInfo,
                     actions = actions,
                     onModuleAddShortcut = ::onModuleAddShortcut,
+                    onOpenActions = onOpenActions,
                     contentPadding = PaddingValues(
                         top = 6.dp,
                         start = 0.dp,
@@ -545,6 +549,7 @@ fun ModulePagerMiuix(
                             onModuleAddShortcut = { module, type ->
                                 onModuleAddShortcut(module, type)
                             },
+                            onOpenActions = onOpenActions,
                             contentPadding = contentPadding,
                             listState = listState,
                         )
@@ -699,6 +704,7 @@ private fun ModuleList(
     actions: ModuleActions,
     onModuleAddShortcut: (Module, ShortcutType) -> Unit,
     contentPadding: PaddingValues,
+    onOpenActions: (Module) -> Unit = {},
     listState: LazyListState = rememberLazyListState(),
 ) {
     val loadingDialog = rememberLoadingDialog()
@@ -752,7 +758,8 @@ private fun ModuleList(
                         if (module.hasWebUi) {
                             actions.onOpenWebUi(module)
                         }
-                    }
+                    },
+                    onOpenActions = { onOpenActions(currentModuleState.value) }
                 )
             }
 
@@ -772,7 +779,8 @@ fun ModuleItem(
     onUpdate: () -> Unit,
     onExecuteAction: () -> Unit,
     onAddActionShortcut: (ShortcutType) -> Unit,
-    onOpenWebUi: () -> Unit
+    onOpenWebUi: () -> Unit,
+    onOpenActions: () -> Unit = {},
 ) {
     val secondaryContainer = colorScheme.secondaryContainer.copy(alpha = 0.8f)
     val updateBg = colorScheme.tertiaryContainer.copy(alpha = 0.6f)
@@ -800,9 +808,8 @@ fun ModuleItem(
             color = cardContainer,
             contentColor = cardContent,
         ),
-        onClick = if (hasDescription) {
-            { expanded = !expanded }
-        } else null
+        // 点卡片打开操作面板（执行 / 取消）；长按仍可展开描述
+        onClick = onOpenActions,
     ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -903,7 +910,12 @@ fun ModuleItem(
                 maxLinesLimit = maxLinesLimit,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 2.dp),
+                    .padding(top = 2.dp)
+                    // 卡片点击已让给操作面板，描述展开改由点描述本身触发
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ) { expanded = !expanded },
                 fontSize = 14.sp,
                 color = cardContent.copy(alpha = 0.72f),
                 textDecoration = textDecoration

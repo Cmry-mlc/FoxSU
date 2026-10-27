@@ -37,8 +37,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
-import me.weishu.kernelsu.ui.component.bottombar.MoreDestinations
-import me.weishu.kernelsu.ui.component.bottombar.MoreDestinationsSheet
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
 import me.weishu.kernelsu.ui.screen.glass.marquee
 import me.weishu.kernelsu.ui.component.isNightScheme
@@ -654,13 +652,11 @@ fun EdTabBar(
     onOpenTab: (Int) -> Unit,
 ) {
     val t = edTokens()
-    // 底栏只保留三个图标：主页 / 超级用户 / 更多；模块与设置收进「更多」面板
-    var showMore by remember { mutableStateOf(false) }
-    val moreSelected = currentTab >= MoreDestinations.Module
     val items = listOf(
         Triple(R.drawable.ic_d_home, R.string.home, 0),
         Triple(R.drawable.ic_d_shield, R.string.superuser, 1),
-        Triple(R.drawable.ic_d_more, R.string.nav_more, 2),
+        Triple(R.drawable.ic_d_grid, R.string.module, 2),
+        Triple(R.drawable.ic_d_tune, R.string.settings, 3),
     )
     Column(
         modifier = Modifier
@@ -670,10 +666,9 @@ fun EdTabBar(
         Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(t.ink))
         Row(modifier = Modifier.fillMaxWidth()) {
             items.forEach { (iconRes, labelRes, tab) ->
-                val selected = if (tab == 2) moreSelected else tab == currentTab
+                val selected = tab == currentTab
                 val count = when (tab) {
                     1 -> badge.superuserCount
-                    // 「更多」承载模块页，模块角标提示挪到这里
                     2 -> badge.moduleEnabledCount
                     else -> 0
                 }
@@ -692,9 +687,7 @@ fun EdTabBar(
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
-                        ) {
-                            if (tab == 2) showMore = true else onOpenTab(tab)
-                        },
+                        ) { onOpenTab(tab) },
                 ) {
                     Column(
                         modifier = Modifier
@@ -764,14 +757,6 @@ fun EdTabBar(
             }
         }
     }
-
-    MoreDestinationsSheet(
-        visible = showMore,
-        currentTab = currentTab,
-        badge = badge,
-        onDismiss = { showMore = false },
-        onOpenTab = onOpenTab,
-    )
 }
 
 /** 数字统计带（.statband）：等分单元格 + 竖发丝线 + 大数字 */

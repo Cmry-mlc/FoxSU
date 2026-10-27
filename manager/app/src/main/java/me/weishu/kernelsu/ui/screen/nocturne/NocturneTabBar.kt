@@ -15,9 +15,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,8 +27,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
-import me.weishu.kernelsu.ui.component.bottombar.MoreDestinations
-import me.weishu.kernelsu.ui.component.bottombar.MoreDestinationsSheet
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
 
 /**
@@ -46,13 +42,11 @@ fun NocturneTabBarScreen(
     modifier: Modifier = Modifier,
 ) {
     val t = ncTokens()
-    // 底栏只保留三个图标：主页 / 超级用户 / 更多；模块与设置收进「更多」面板
-    var showMore by remember { mutableStateOf(false) }
-    val moreSelected = currentTab >= MoreDestinations.Module
     val tabs = listOf(
         Triple("主页", R.drawable.nc_home, 0),
         Triple("超级用户", R.drawable.nc_shield, 1),
-        Triple("更多", R.drawable.nc_more, 2),
+        Triple("模块", R.drawable.nc_grid, 2),
+        Triple("设置", R.drawable.nc_sliders, 3),
     )
     Row(
         modifier
@@ -66,10 +60,9 @@ fun NocturneTabBarScreen(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         tabs.forEach { (label, icon, index) ->
-            val selected = if (index == 2) moreSelected else currentTab == index
+            val selected = currentTab == index
             val count = when (index) {
                 1 -> badge.superuserCount
-                // 「更多」承载模块页，模块角标提示挪到这里
                 2 -> badge.moduleEnabledCount
                 else -> 0
             }
@@ -89,9 +82,7 @@ fun NocturneTabBarScreen(
                 Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .clickable(interactionSource = src, indication = null) {
-                        if (index == 2) showMore = true else onOpenTab(index)
-                    },
+                    .clickable(interactionSource = src, indication = null) { onOpenTab(index) },
                 contentAlignment = Alignment.Center,
             ) {
                 // 顶部指示条 24×2.5
@@ -136,12 +127,4 @@ fun NocturneTabBarScreen(
             }
         }
     }
-
-    MoreDestinationsSheet(
-        visible = showMore,
-        currentTab = currentTab,
-        badge = badge,
-        onDismiss = { showMore = false },
-        onOpenTab = onOpenTab,
-    )
 }

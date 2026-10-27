@@ -49,6 +49,14 @@
     <string name="module_failed_to_disable">Failed to disable module: %s</string>
     <string name="module_empty">No module installed</string>
     <string name="module">Module</string>
+    <string name="module_enabled">Enabled</string>
+    <string name="module_disabled">Disabled</string>
+    <string name="module_action_sheet_run">Run</string>
+    <string name="module_action_cancel">Cancel</string>
+    <string name="module_action_sheet_no_action">This module ships no action.sh</string>
+    <string name="module_action_sheet_removing">Pending removal, run after reboot</string>
+    <string name="module_action_sheet_disabled">Enable the module first</string>
+    <string name="module_action_sheet_pending">Waiting for update to finish</string>
     <string name="nav_more">More</string>
     <string name="module_install_prompt_with_name">The following modules will be installed: %1$s</string>
     <string name="module_sort_action_first">Action first</string>
