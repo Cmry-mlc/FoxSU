@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.ui.component.AppIconImage
 import me.weishu.kernelsu.ui.screen.superuser.GroupedApps
 import me.weishu.kernelsu.ui.theme.glassTokens
 
@@ -44,19 +45,6 @@ private fun neonFor(uid: Int): Pair<Color, Color> {
     return Color(a) to Color(b)
 }
 
-/** 取标签首字/首字母作为渐变方块内的文字（同设计稿 ⬆ / ✦ / MT / C17） */
-private fun iconText(label: String): String {
-    val trimmed = label.trim()
-    if (trimmed.isEmpty()) return "?"
-    // 拉丁字符取前两位大写，中文取首字
-    val first = trimmed.first()
-    return if (first.code < 128) {
-        trimmed.take(2).uppercase()
-    } else {
-        trimmed.take(1)
-    }
-}
-
 /**
  * .urow：20 圆角白玻璃行 —— 40 圆角13 霓虹渐变方块（内嵌首字）+ 名称/包名 + 渐变 ROOT tag + .tog 开关
  */
@@ -73,28 +61,20 @@ fun GlassSuperUserRow(app: GroupedApps, onClick: () -> Unit) {
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // .uico：渐变方块 + 深色首字（设计稿 color:#0b0b12 / 亮色 #3a3a46）
-        Box(
+        // .uico：真实应用图标（40 圆角13 + 轻投影）
+        AppIconImage(
             modifier = Modifier
                 .size(40.dp)
                 .shadow(
                     6.dp,
                     RoundedCornerShape(13.dp),
-                    ambientColor = c1.copy(alpha = 0.3f),
-                    spotColor = c1.copy(alpha = 0.3f),
+                    ambientColor = c1.copy(alpha = 0.22f),
+                    spotColor = c1.copy(alpha = 0.22f),
                 )
-                .clip(RoundedCornerShape(13.dp))
-                .background(Brush.linearGradient(listOf(c1, c2))),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = iconText(app.primary.label),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = if (t.isDark) Color(0xFF0B0B12) else Color(0xFF3A3A46),
-                maxLines = 1,
-            )
-        }
+                .clip(RoundedCornerShape(13.dp)),
+            packageInfo = app.primary.packageInfo,
+            label = app.primary.label,
+        )
         Spacer(Modifier.width(13.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -114,12 +94,12 @@ fun GlassSuperUserRow(app: GroupedApps, onClick: () -> Unit) {
                 modifier = Modifier.padding(top = 2.dp),
             )
         }
-        // .uact：渐变 ROOT tag（深色字）+ tog
+        // .uact：单色 ROOT tag + tog
         if (app.anyAllowSu) {
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(7.dp))
-                    .background(Brush.horizontalGradient(listOf(c1, c2)))
+                    .background(t.rootTagBg)
                     .padding(horizontal = 8.dp, vertical = 4.dp),
             ) {
                 Text(
@@ -127,7 +107,7 @@ fun GlassSuperUserRow(app: GroupedApps, onClick: () -> Unit) {
                     fontSize = 8.5.sp,
                     fontWeight = FontWeight.ExtraBold,
                     letterSpacing = 0.5.sp,
-                    color = if (t.isDark) Color(0xFF0B0B12) else Color(0xFF3A3A46),
+                    color = t.rootTagInk,
                     maxLines = 1,
                 )
             }

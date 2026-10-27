@@ -21,25 +21,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.ui.component.AppIconImage
 import me.weishu.kernelsu.ui.screen.superuser.GroupedApps
 import me.weishu.kernelsu.ui.theme.glassTokens
-
-/** 目录式渐变方块（.idx .app） */
-private fun iconText(label: String): String {
-    val trimmed = label.trim()
-    if (trimmed.isEmpty()) return "?"
-    val first = trimmed.first()
-    return if (first.code < 128) trimmed.take(2).uppercase() else trimmed.take(1)
-}
-
-private val idxPairs = listOf(
-    0xFFFF7A59L to 0xFFFF4D6DL,
-    0xFFFFE45CL to 0xFFFFC300L,
-    0xFFC77DFFL to 0xFF8A2BE2L,
-    0xFF5CE1E6L to 0xFF00B8D9L,
-    0xFF7AA2FFL to 0xFF4D5CE5L,
-    0xFF8E8B9CL to 0xFF55525FL,
-)
 
 @Composable
 private fun EdSuperUserRow(
@@ -48,7 +32,6 @@ private fun EdSuperUserRow(
     onClick: () -> Unit,
 ) {
     val t = edTokens()
-    val (c1, c2) = idxPairs[Math.floorMod(app.uid, idxPairs.size)]
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -65,20 +48,14 @@ private fun EdSuperUserRow(
             fontFamily = FontFamily.Monospace,
             modifier = Modifier.width(26.dp),
         )
-        Box(
+        // 真实应用图标（38 圆角11）
+        AppIconImage(
             modifier = Modifier
                 .size(38.dp)
-                .clip(RoundedCornerShape(11.dp))
-                .background(Brush.linearGradient(listOf(Color(c1), Color(c2)))),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = iconText(app.primary.label),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = Color.White,
-            )
-        }
+                .clip(RoundedCornerShape(11.dp)),
+            packageInfo = app.primary.packageInfo,
+            label = app.primary.label,
+        )
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(

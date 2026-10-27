@@ -86,6 +86,10 @@ data class GlassTokens(
     val dockGrad: Brush get() = horizontalGradient(listOf(flame, violet))
     val switchGrad: Brush get() = horizontalGradient(listOf(flame, violet))
     val togOff: Color get() = if (isDark) Color(0xFF2C2C38) else Color(0xFFD9D6E6)
+
+    /** ROOT 标签：单色，不再跟随应用霓虹渐变 */
+    val rootTagBg: Color get() = if (isDark) Color(0xFF3A3550) else Color(0xFFE4DFF5)
+    val rootTagInk: Color get() = if (isDark) Color(0xFFEDE9FF) else Color(0xFF4B3E7A)
     val togThumbOff: Color get() = if (isDark) Color(0xFF8E8B9C) else Color.White
 
     /** .screen::before 三层独立径向光斑（设计稿 a1–a4 变体） */
