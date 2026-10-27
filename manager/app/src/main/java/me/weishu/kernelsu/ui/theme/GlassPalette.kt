@@ -46,7 +46,7 @@ data class GlassTokens(
     val mint: Color,
 ) {
     // ---- 玻璃面板 ----
-    val glassPanel: Color get() = if (isDark) Color(0x08FFFFFF) else Color(0x8CFFFFFF)
+    val glassPanel: Color get() = if (isDark) Color(0x08FFFFFF) else Color(0x9EFFFFFF)
     val glassPanelStrong: Color get() = if (isDark) Color(0x0FFFFFFF) else Color(0xCCFFFFFF)
     val glassBorder: Color get() = if (isDark) Color(0x12FFFFFF) else Color(0xCCFFFFFF)
     val glassShadow: Color get() = if (isDark) Color(0xB3000000) else Color(0x1F5A5578)

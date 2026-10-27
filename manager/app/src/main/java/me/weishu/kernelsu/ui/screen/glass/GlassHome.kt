@@ -10,6 +10,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,11 +20,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.annotation.StringRes
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -42,6 +46,7 @@ import me.weishu.kernelsu.ui.theme.glassTokens
 import me.weishu.kernelsu.ui.uiModeLabelRes
 
 /** FoxSu Glass 主页：环境光晕 + 白色玻璃面板 + 霓虹描边英雄卡 + 2×2 统计卡。 */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun GlassHome(
     state: HomeUiState,
@@ -142,7 +147,10 @@ fun GlassHome(
                     modifier = Modifier.weight(1f).fillMaxHeight(),
                     iconRes = R.drawable.ic_d_lock,
                     title = stringResource(R.string.glass_home_selinux),
-                    subtitle = if (state.isSELinuxPermissive) "Permissive" else "Enforcing",
+                    subtitle = stringResource(
+                        if (state.isSELinuxPermissive) R.string.selinux_status_permissive
+                        else R.string.selinux_status_enforcing
+                    ),
                     accent = glassTokens().blue,
                     badge = if (state.isSELinuxPermissive) "Permissive" else "Enforcing",
                     badgeColor = if (state.isSELinuxPermissive) glassTokens().amber else glassTokens().lime,
@@ -151,7 +159,7 @@ fun GlassHome(
                     modifier = Modifier.weight(1f).fillMaxHeight(),
                     iconRes = R.drawable.ic_d_sliders,
                     title = stringResource(R.string.home_seccomp_status),
-                    subtitle = seccompLabel(state.systemInfo.seccompStatus),
+                    subtitle = seccompLabelRes(state.systemInfo.seccompStatus).let { stringResource(it) },
                     accent = glassTokens().amber,
                     badge = seccompShort(state.systemInfo.seccompStatus),
                     badgeColor = glassTokens().amber,
@@ -208,11 +216,12 @@ fun GlassHome(
     }
 }
 
-private fun seccompLabel(status: Int): String = when (status) {
-    2 -> "Strict"
-    1 -> "Filter"
-    -1 -> "Disabled"
-    else -> "Not supported"
+@StringRes
+private fun seccompLabelRes(status: Int): Int = when (status) {
+    2 -> R.string.seccomp_status_strict
+    1 -> R.string.seccomp_status_filter
+    -1 -> R.string.seccomp_status_disabled
+    else -> R.string.seccomp_status_not_supported
 }
 
 private fun seccompShort(status: Int): String = when (status) {
@@ -356,12 +365,12 @@ fun GlassHeroCard(state: HomeUiState, issueCount: Int, onInstall: () -> Unit) {
                 spotColor = t.glassShadow,
             )
             .clip(RoundedCornerShape(26.dp))
-            .background(if (t.isDark) Color(0x08FFFFFF) else Color(0x8CFFFFFF))
+            .background(if (t.isDark) Color(0x08FFFFFF) else Color(0x9EFFFFFF))
             .border(1.dp, t.heroGrad, RoundedCornerShape(26.dp)),
     ) {
         Box(modifier = Modifier.padding(20.dp)) {
             // 对勾已移到右上角，正文只需让出右上徽章宽度
-            Column(modifier = Modifier.padding(end = 52.dp)) {
+            Column(modifier = Modifier.padding(end = 58.dp)) {
                 Text(
                     text = stringResource(
                         if (hasIssue) R.string.glass_hero_attention else R.string.glass_hero_working
@@ -411,11 +420,11 @@ fun GlassHeroCard(state: HomeUiState, issueCount: Int, onInstall: () -> Unit) {
                         )
                     }
                 }
-                // .verrow：版本文字 + tag 组（横向排列，可换行）
-                Row(
+                // .verrow：版本文字 + tag 组（flex-wrap，同设计稿）
+                FlowRow(
                     modifier = Modifier.padding(top = 12.dp),
                     horizontalArrangement = Arrangement.spacedBy(9.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalArrangement = Arrangement.spacedBy(7.dp),
                 ) {
                     Text(
                         text = stringResource(R.string.glass_version_fmt, BuildConfig.VERSION_NAME),
@@ -446,16 +455,14 @@ fun GlassHeroCard(state: HomeUiState, issueCount: Int, onInstall: () -> Unit) {
                     modifier = Modifier.padding(top = 14.dp),
                 )
             }
-            // .seal：移到右上角，44 圆玻璃徽章（对勾 20）+ 呼吸七彩外圈
+            // .seal：卡内右上角 40 圆玻璃徽章（对勾 18）+ 呼吸七彩外圈，内收不越界
             GlassSeal(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .offset(x = 4.dp, y = (-4).dp),
+                modifier = Modifier.align(Alignment.TopEnd),
                 checkColor = t.violet,
-                sealBg = if (t.isDark) Color(0xFF14141E) else Color(0xE6FFFFFF),
+                sealBg = if (t.isDark) Color(0xFF14141E) else Color(0xF2FFFFFF),
                 border = if (t.isDark) Color(0x1FFFFFFF) else Color(0xFFFFFFFF),
-                coreSize = 44,
-                iconSize = 20,
+                coreSize = 40,
+                iconSize = 18,
             )
         }
     }
@@ -521,18 +528,18 @@ fun GlassNCard(
             )
             .clip(RoundedCornerShape(22.dp))
             // .ncard：暗色 --panel2 #1c1c28（实色）/ 亮色 rgba(255,255,255,.55)
-            .background(if (t.isDark) t.panel2 else Color(0x8CFFFFFF))
+            .background(if (t.isDark) t.panel2 else Color(0x9EFFFFFF))
             .border(1.dp, t.glassBorder, RoundedCornerShape(22.dp))
             .clickable(enabled = onClick != null) { onClick?.invoke() },
     ) {
-        // ::after 右上角色晕 —— 74 圆，右/上各溢出 22px，被父级裁切（设计稿 opacity .16 + blur 14）
+        // ::after 右上角色晕 —— 74 圆，right/top -22，opacity .28 + blur(14)，被父级裁切
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .offset(x = 26.dp, y = (-26).dp)
+                .offset(x = 22.dp, y = (-22).dp)
                 .size(74.dp)
-                .clip(CircleShape)
-                .background(accent.copy(alpha = if (t.isDark) 0.20f else 0.15f)),
+                .blur(14.dp)
+                .background(accent.copy(alpha = if (t.isDark) 0.30f else 0.28f), CircleShape),
         )
         // 布局：chip(38) + 16 + cT(15) + cV(25) + 15 + cS(13) + padding(30) ≈ 152
         Column(
@@ -761,7 +768,7 @@ fun Modifier.glassCard(radius: androidx.compose.ui.unit.Dp): Modifier {
             spotColor = if (t.isDark) Color(0x99000000) else Color(0x1F5A5578),
         )
         .clip(RoundedCornerShape(radius))
-        .background(if (t.isDark) Color(0x08FFFFFF) else Color(0x8CFFFFFF))
+        .background(if (t.isDark) Color(0x08FFFFFF) else Color(0x9EFFFFFF))
         .border(1.dp, if (t.isDark) Color(0x12FFFFFF) else Color(0xCCFFFFFF), RoundedCornerShape(radius))
 }
 
