@@ -306,7 +306,11 @@ class MainActivity : ComponentActivity() {
                                 containerColor = scaffoldBackgroundColor(MaterialTheme.colorScheme.surface)
                             ) { navDisplay() }
 
-                            UiMode.Glass -> androidx.compose.material3.Scaffold(
+                            UiMode.Glass, UiMode.Nocturne -> androidx.compose.material3.Scaffold(
+                                containerColor = androidx.compose.ui.graphics.Color.Transparent
+                            ) { navDisplay() }
+
+                            UiMode.Nocturne -> androidx.compose.material3.Scaffold(
                                 containerColor = androidx.compose.ui.graphics.Color.Transparent
                             ) { navDisplay() }
                         }
@@ -446,7 +450,8 @@ fun MainScreen(
         UiMode.Material -> me.weishu.kernelsu.ui.screen.editorial.edTokens().paper
         UiMode.Miuix -> MiuixTheme.colorScheme.surface
         UiMode.Fresh -> MaterialTheme.colorScheme.surface
-        UiMode.Glass -> glassTokens().bg
+        UiMode.Glass, UiMode.Nocturne -> glassTokens().bg
+        UiMode.Nocturne -> me.weishu.kernelsu.ui.screen.nocturne.NcColors.bg
     }
     val blurBackdrop = rememberBlurBackdrop(enableBlur)
 
@@ -566,7 +571,22 @@ fun MainScreen(
                     }
                 }
 
-                UiMode.Glass -> androidx.compose.material3.Scaffold(
+                UiMode.Glass, UiMode.Nocturne -> androidx.compose.material3.Scaffold(
+                    containerColor = androidx.compose.ui.graphics.Color.Transparent
+                ) {
+                    Row {
+                        SideRail(navigationBadge)
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .consumeWindowInsets(startInsets)
+                        ) {
+                            pagerContent(navBarBottomPadding)
+                        }
+                    }
+                }
+
+                UiMode.Nocturne -> androidx.compose.material3.Scaffold(
                     containerColor = androidx.compose.ui.graphics.Color.Transparent
                 ) {
                     Row {
@@ -614,7 +634,14 @@ fun MainScreen(
                     pagerContent(innerPadding.calculateBottomPadding())
                 }
 
-                UiMode.Glass -> androidx.compose.material3.Scaffold(
+                UiMode.Glass, UiMode.Nocturne -> androidx.compose.material3.Scaffold(
+                    bottomBar = bottomBar,
+                    containerColor = androidx.compose.ui.graphics.Color.Transparent
+                ) { innerPadding ->
+                    pagerContent(innerPadding.calculateBottomPadding())
+                }
+
+                UiMode.Nocturne -> androidx.compose.material3.Scaffold(
                     bottomBar = bottomBar,
                     containerColor = androidx.compose.ui.graphics.Color.Transparent
                 ) { innerPadding ->

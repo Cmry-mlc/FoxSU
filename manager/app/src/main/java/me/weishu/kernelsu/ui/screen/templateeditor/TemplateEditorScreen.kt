@@ -134,7 +134,7 @@ fun TemplateEditorScreen(template: TemplateViewModel.TemplateInfo, readOnly: Boo
             actions = actions,
         )
 
-        UiMode.Material, UiMode.Fresh, UiMode.Glass -> TemplateEditorScreenMaterial(
+        UiMode.Material, UiMode.Fresh, UiMode.Glass, UiMode.Nocturne -> TemplateEditorScreenMaterial(
             state = uiState,
             actions = actions,
         )

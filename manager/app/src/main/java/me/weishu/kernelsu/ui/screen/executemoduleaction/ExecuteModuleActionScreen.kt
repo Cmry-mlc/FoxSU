@@ -78,6 +78,6 @@ fun ExecuteModuleActionScreen(moduleId: String, fromShortcut: Boolean = false) {
 
     when (uiMode) {
         UiMode.Miuix -> ExecuteModuleActionScreenMiuix(state, actions)
-        UiMode.Material, UiMode.Fresh, UiMode.Glass -> ExecuteModuleActionScreenMaterial(state, actions, snackbarHost)
+        UiMode.Material, UiMode.Fresh, UiMode.Glass, UiMode.Nocturne -> ExecuteModuleActionScreenMaterial(state, actions, snackbarHost)
     }
 }

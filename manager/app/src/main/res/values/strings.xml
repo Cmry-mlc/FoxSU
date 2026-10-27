@@ -376,6 +376,8 @@
     <string name="settings_ui_mode_material">FoxSu Editorial</string>
     <string name="settings_ui_mode_fresh">FoxSu Pages</string>
     <string name="settings_ui_mode_glass">FoxSu Glass</string>
+
+    <string name="settings_ui_mode_nocturne">FoxSu Nocturne</string>
     <string name="fresh_home_flash_hint">Tap to flash or update the kernel</string>
     <string name="fresh_home_issue_count">%d issue(s) need attention</string>
     <string name="fresh_home_install">Install</string>

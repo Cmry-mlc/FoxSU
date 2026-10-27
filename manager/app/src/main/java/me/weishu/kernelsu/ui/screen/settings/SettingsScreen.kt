@@ -81,7 +81,15 @@ fun SettingPager(
             onOpenCustomization = { navigator.push(Route.Customization) },
             onOpenSulog = { navigator.push(Route.Sulog) },
         )
-        UiMode.Glass -> me.weishu.kernelsu.ui.screen.glass.GlassSettingsList(
+        UiMode.Glass, UiMode.Nocturne -> me.weishu.kernelsu.ui.screen.glass.GlassSettingsList(
+            uiState = uiState,
+            actions = actions,
+            bottomInnerPadding = bottomInnerPadding,
+            onOpenCustomization = { navigator.push(Route.Customization) },
+            onOpenSulog = { navigator.push(Route.Sulog) },
+        )
+
+        UiMode.Nocturne -> me.weishu.kernelsu.ui.screen.nocturne.NocturneSettingsList(
             uiState = uiState,
             actions = actions,
             bottomInnerPadding = bottomInnerPadding,

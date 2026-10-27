@@ -127,7 +127,7 @@ private fun LoadingContent() {
             }
         }
 
-        UiMode.Material, UiMode.Fresh, UiMode.Glass -> {
+        UiMode.Material, UiMode.Fresh, UiMode.Glass, UiMode.Nocturne -> {
             Box(
                 modifier = Modifier
                     .fillMaxSize()

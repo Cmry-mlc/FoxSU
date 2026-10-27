@@ -61,6 +61,6 @@ fun rememberRebootAction(): (String) -> Unit {
 fun RebootListPopup() {
     when (LocalUiMode.current) {
         UiMode.Miuix -> RebootListPopupMiuix()
-        UiMode.Material, UiMode.Fresh, UiMode.Glass -> RebootListPopupMaterial()
+        UiMode.Material, UiMode.Fresh, UiMode.Glass, UiMode.Nocturne -> RebootListPopupMaterial()
     }
 }

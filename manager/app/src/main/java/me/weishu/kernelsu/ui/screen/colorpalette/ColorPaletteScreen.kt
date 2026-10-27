@@ -64,6 +64,6 @@ fun ColorPaletteScreen() {
 
     when (LocalUiMode.current) {
         UiMode.Miuix -> ColorPaletteScreenMiuix(state, actions)
-        UiMode.Material, UiMode.Fresh, UiMode.Glass -> ColorPaletteScreenMaterial(state, actions)
+        UiMode.Material, UiMode.Fresh, UiMode.Glass, UiMode.Nocturne -> ColorPaletteScreenMaterial(state, actions)
     }
 }

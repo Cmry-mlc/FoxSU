@@ -100,7 +100,7 @@ fun ModuleRepoScreen() {
 
     when (LocalUiMode.current) {
         UiMode.Miuix -> ModuleRepoScreenMiuix(state, actions)
-        UiMode.Fresh, UiMode.Glass -> ModuleRepoScreenMaterial(state, actions)
+        UiMode.Fresh, UiMode.Glass, UiMode.Nocturne -> ModuleRepoScreenMaterial(state, actions)
         UiMode.Material -> me.weishu.kernelsu.ui.screen.editorial.EditorialModuleRepo(
             state = state,
             onBack = actions.onBack,
@@ -167,7 +167,7 @@ fun ModuleRepoDetailScreen(module: RepoModuleArg) {
 
     when (LocalUiMode.current) {
         UiMode.Miuix -> ModuleRepoDetailScreenMiuix(state, actions)
-        UiMode.Material, UiMode.Fresh, UiMode.Glass -> ModuleRepoDetailScreenMaterial(state, actions)
+        UiMode.Material, UiMode.Fresh, UiMode.Glass, UiMode.Nocturne -> ModuleRepoDetailScreenMaterial(state, actions)
     }
 }
 

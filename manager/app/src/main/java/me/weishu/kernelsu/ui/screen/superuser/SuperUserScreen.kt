@@ -110,10 +110,24 @@ fun SuperUserPager(
             )
         }
 
-        UiMode.Glass -> {
+        UiMode.Glass, UiMode.Nocturne -> {
             val apps =
                 if (uiState.searchStatus.searchText.isBlank()) uiState.groupedApps else uiState.searchResults
             me.weishu.kernelsu.ui.screen.glass.GlassSuperUserList(
+                granted = apps.filter { it.anyAllowSu },
+                notGranted = apps.filterNot { it.anyAllowSu },
+                grantedCount = apps.count { it.anyAllowSu },
+                searchValue = uiState.searchStatus.searchText,
+                onSearch = actions.onSearchTextChange,
+                bottomInnerPadding = bottomInnerPadding,
+                onOpenApp = actions.onOpenProfile,
+            )
+        }
+
+        UiMode.Nocturne -> {
+            val apps =
+                if (uiState.searchStatus.searchText.isBlank()) uiState.groupedApps else uiState.searchResults
+            me.weishu.kernelsu.ui.screen.nocturne.NocturneSuperUserList(
                 granted = apps.filter { it.anyAllowSu },
                 notGranted = apps.filterNot { it.anyAllowSu },
                 grantedCount = apps.count { it.anyAllowSu },

@@ -80,8 +80,15 @@ fun AuthorScreen() {
             )
             return
         }
-        UiMode.Glass -> {
+        UiMode.Glass, UiMode.Nocturne -> {
             me.weishu.kernelsu.ui.screen.glass.GlassAuthor(
+                onBack = dropUnlessResumed { navigator.pop() },
+                onOpenUrl = uriHandler::openUri,
+            )
+            return
+        }
+        UiMode.Nocturne -> {
+            me.weishu.kernelsu.ui.screen.nocturne.NocturneAuthor(
                 onBack = dropUnlessResumed { navigator.pop() },
                 onOpenUrl = uriHandler::openUri,
             )
