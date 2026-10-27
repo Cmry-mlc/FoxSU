@@ -544,6 +544,7 @@
     <string name="glass_home_seccomp_sub">系统调用过滤</string>
     <string name="glass_repo_sub">浏览社区精选与热门模块</string>
     <string name="glass_add_module_sub">从本地存储安装 .zip 模块</string>
+    <string name="glass_search_modules">搜索模块</string>
     <string name="glass_home_fingerprint">系统指纹</string>
     <string name="glass_reboot_hint">选择重启目标</string>
     <string name="glass_flash_sub">FoxSu Glass · 刷写控制台</string>

@@ -100,7 +100,15 @@ fun ModuleRepoScreen() {
 
     when (LocalUiMode.current) {
         UiMode.Miuix -> ModuleRepoScreenMiuix(state, actions)
-        UiMode.Material, UiMode.Fresh, UiMode.Glass -> ModuleRepoScreenMaterial(state, actions)
+        UiMode.Fresh, UiMode.Glass -> ModuleRepoScreenMaterial(state, actions)
+        UiMode.Material -> me.weishu.kernelsu.ui.screen.editorial.EditorialModuleRepo(
+            state = state,
+            onBack = actions.onBack,
+            onRefresh = actions.onRefresh,
+            onSearchTextChange = actions.onSearchTextChange,
+            onOpenDetail = actions.onOpenRepoDetail,
+            onSetSortOrder = actions.onSetSortOrder,
+        )
     }
 }
 

@@ -53,6 +53,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.dropUnlessResumed
 import me.weishu.kernelsu.BuildConfig
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.ui.LocalUiMode
+import me.weishu.kernelsu.ui.UiMode
 import me.weishu.kernelsu.ui.component.freshCardBorder
 import me.weishu.kernelsu.ui.component.freshCardColor
 import me.weishu.kernelsu.ui.component.material.ExpressiveScaffold
@@ -70,6 +72,13 @@ import androidx.compose.foundation.BorderStroke
 fun AuthorScreen() {
     val navigator = LocalNavigator.current
     val uriHandler = LocalUriHandler.current
+    if (LocalUiMode.current == UiMode.Material) {
+        me.weishu.kernelsu.ui.screen.editorial.EditorialAuthor(
+            onBack = dropUnlessResumed { navigator.pop() },
+            onOpenUrl = uriHandler::openUri,
+        )
+        return
+    }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
 
     ExpressiveScaffold(

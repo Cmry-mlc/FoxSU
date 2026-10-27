@@ -550,6 +550,7 @@
     <string name="glass_home_seccomp_sub">Syscall filtering</string>
     <string name="glass_repo_sub">Browse curated community modules</string>
     <string name="glass_add_module_sub">Install a local .zip module</string>
+    <string name="glass_search_modules">Search modules</string>
     <string name="glass_home_fingerprint">System fingerprint</string>
     <string name="glass_reboot_hint">Choose a reboot target</string>
     <string name="glass_flash_sub">FoxSu Glass · Flashing console</string>

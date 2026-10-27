@@ -93,7 +93,8 @@ fun FlashScreen(flashIt: FlashIt, onBackEnabledChange: (Boolean) -> Unit) {
 
     when (LocalUiMode.current) {
         UiMode.Miuix -> FlashScreenMiuix(state, actions)
-        UiMode.Material, UiMode.Fresh -> FlashScreenMaterial(state, actions, snackbarHost)
+        UiMode.Fresh -> FlashScreenMaterial(state, actions, snackbarHost)
+        UiMode.Material -> me.weishu.kernelsu.ui.screen.editorial.EditorialFlash(state, actions)
         UiMode.Glass -> me.weishu.kernelsu.ui.screen.glass.GlassFlashScreen(state, actions)
     }
 }

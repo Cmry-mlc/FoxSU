@@ -32,6 +32,7 @@ fun AboutScreen() {
 
     when (LocalUiMode.current) {
         UiMode.Miuix -> AboutScreenMiuix(state, actions)
-        UiMode.Material, UiMode.Fresh, UiMode.Glass -> AboutScreenMaterial(state, actions)
+        UiMode.Fresh, UiMode.Glass -> AboutScreenMaterial(state, actions)
+        UiMode.Material -> me.weishu.kernelsu.ui.screen.editorial.EditorialAbout(state, actions)
     }
 }

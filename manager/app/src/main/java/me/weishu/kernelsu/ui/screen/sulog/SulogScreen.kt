@@ -57,7 +57,8 @@ fun SulogScreen() {
     )
 
     when (uiMode) {
-        UiMode.Material, UiMode.Fresh, UiMode.Glass -> SulogScreenMaterial(state, actions)
+        UiMode.Fresh, UiMode.Glass -> SulogScreenMaterial(state, actions)
+        UiMode.Material -> me.weishu.kernelsu.ui.screen.editorial.EditorialSulog(state, actions)
         UiMode.Miuix -> SulogScreenMiuix(state, actions)
     }
 }
