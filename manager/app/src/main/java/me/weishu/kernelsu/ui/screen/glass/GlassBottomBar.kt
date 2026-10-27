@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -22,7 +23,10 @@ import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
 import me.weishu.kernelsu.ui.theme.glassTokens
 
-/** .dock：悬浮胶囊底栏 —— 选中项 pill 底色 + 顶部 22x3 霓虹条 + flame 徽标 */
+/**
+ * .dock：悬浮胶囊底栏（设计稿 fit-content + 居中，外层 padding 6，item padding 8×15）。
+ * 选中项：白色 pill + 顶部上移 7dp 的 22×3 霓虹条 + 深色图标。
+ */
 @Composable
 fun GlassBottomBar(
     currentTab: Int,
@@ -37,10 +41,19 @@ fun GlassBottomBar(
         Triple(R.drawable.ic_d_grid, R.string.module, 2),
         Triple(R.drawable.ic_d_tune, R.string.settings, 3),
     )
-    Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.BottomCenter) {
+    Box(
+        modifier = modifier.fillMaxWidth(),
+        contentAlignment = Alignment.BottomCenter,
+    ) {
         Row(
             modifier = Modifier
                 .padding(bottom = 14.dp)
+                .shadow(
+                    14.dp,
+                    RoundedCornerShape(99.dp),
+                    ambientColor = Color(0x2E5A5578),
+                    spotColor = Color(0x2E5A5578),
+                )
                 .clip(RoundedCornerShape(99.dp))
                 .background(if (t.isDark) Color(0xD9101018) else Color(0xB3FFFFFF))
                 .border(
@@ -58,25 +71,21 @@ fun GlassBottomBar(
                     2 -> badge.moduleEnabledCount
                     else -> 0
                 }
-                Box(modifier = Modifier.clip(RoundedCornerShape(18.dp))) {
+                Box {
                     Column(
                         modifier = Modifier
-                            .background(if (selected) (if (t.isDark) Color(0x0FFFFFFF) else Color(0xF2FFFFFF)) else Color.Transparent)
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(
+                                if (selected) {
+                                    if (t.isDark) Color(0x14FFFFFF) else Color(0xF2FFFFFF)
+                                } else {
+                                    Color.Transparent
+                                }
+                            )
                             .clickable { onOpenTab(tab) }
                             .padding(horizontal = 15.dp, vertical = 8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        if (selected) {
-                            Box(
-                                modifier = Modifier
-                                    .padding(bottom = 3.dp)
-                                    .size(width = 22.dp, height = 3.dp)
-                                    .clip(RoundedCornerShape(3.dp))
-                                    .background(t.dockGrad),
-                            )
-                        } else {
-                            Spacer(Modifier.height(6.dp))
-                        }
                         Icon(
                             painter = painterResource(iconRes),
                             contentDescription = null,
@@ -92,7 +101,19 @@ fun GlassBottomBar(
                             fontSize = 9.sp,
                             letterSpacing = 0.5.sp,
                             color = if (selected) t.ink else t.sub,
+                            maxLines = 1,
                             modifier = Modifier.padding(top = 2.dp),
+                        )
+                    }
+                    // .ditem.on::before —— 顶部霓虹条
+                    if (selected) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .offset(y = (-7).dp)
+                                .size(width = 22.dp, height = 3.dp)
+                                .clip(RoundedCornerShape(3.dp))
+                                .background(t.dockGrad),
                         )
                     }
                     if (badgeCount > 0) {
@@ -101,6 +122,7 @@ fun GlassBottomBar(
                             fontSize = 7.5.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = Color.White,
+                            maxLines = 1,
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
                                 .padding(top = 2.dp, end = 10.dp)

@@ -146,7 +146,7 @@ fun GlassHome(
                 )
             }
         }
-        item { Spacer(Modifier.height(11.dp)) }
+        item { Spacer(Modifier.height(12.dp)) }
         item {
             Row(
                 modifier = Modifier
@@ -305,7 +305,7 @@ fun GlassTopButton(iconRes: Int, onClick: () -> Unit) {
 }
 
 /**
- * .hero：26 圆角白玻璃 + 120° 霓虹渐变描边。
+ * .hero：26 圆角白玻璃 + 120° 霓虹渐变描边（仅 1dp 描边，卡面是白玻璃，不是彩色块）。
  * 内容顺序：gline 渐变小字 → 23/800 状态 → 「版本：xxx」+ tag 组同一行 → hint；
  * 右侧 60 圆白 seal（violet 对勾）垂直居中并压住 tag 行。
  */
@@ -313,6 +313,7 @@ fun GlassTopButton(iconRes: Int, onClick: () -> Unit) {
 fun GlassHeroCard(state: HomeUiState, issueCount: Int, onInstall: () -> Unit) {
     val t = glassTokens()
     val hasIssue = issueCount > 0
+    // 外层刷渐变只用于 1dp 描边，内层再盖白玻璃，避免整张卡变彩色
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -320,7 +321,7 @@ fun GlassHeroCard(state: HomeUiState, issueCount: Int, onInstall: () -> Unit) {
             .background(t.heroGrad)
             .padding(1.dp)
             .clip(RoundedCornerShape(26.dp))
-            .background(if (t.isDark) Color(0x0AFFFFFF) else Color(0xEBFFFFFF)),
+            .background(if (t.isDark) Color(0x0AFFFFFF) else Color(0x8CFFFFFF)),
     ) {
         Box(modifier = Modifier.padding(20.dp)) {
             Column(modifier = Modifier.padding(end = 58.dp)) {
@@ -449,10 +450,10 @@ fun GlassTag(text: String, color: Color, bgAlpha: Float = 0.15f) {
 
 /** .st：行尾状态徽章 */
 @Composable
-fun GlassStBadge(text: String, color: Color) {
+fun GlassStBadge(text: String, color: Color, compact: Boolean = false) {
     Text(
         text = text,
-        fontSize = 9.5.sp,
+        fontSize = if (compact) 9.sp else 9.5.sp,
         fontWeight = FontWeight.ExtraBold,
         color = color,
         maxLines = 1,
@@ -460,7 +461,7 @@ fun GlassStBadge(text: String, color: Color) {
             .clip(RoundedCornerShape(8.dp))
             .background(color.copy(alpha = 0.12f))
             .border(1.dp, color.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
-            .padding(horizontal = 10.dp, vertical = 4.dp),
+            .padding(horizontal = if (compact) 7.dp else 10.dp, vertical = if (compact) 3.dp else 4.dp),
     )
 }
 
@@ -492,14 +493,14 @@ fun GlassNCard(
             .border(1.dp, if (t.isDark) t.glassBorder else Color(0xCCFFFFFF), RoundedCornerShape(22.dp))
             .clickable(enabled = onClick != null) { onClick?.invoke() },
     ) {
-        // ::after 右上角色晕 —— 74 圆，右/上各溢出 22px，被父级裁切
+        // ::after 右上角色晕 —— 74 圆，右/上各溢出 22px，被父级裁切（设计稿 opacity .16 + blur 14）
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .offset(x = 22.dp, y = (-22).dp)
+                .offset(x = 26.dp, y = (-26).dp)
                 .size(74.dp)
                 .clip(CircleShape)
-                .background(accent.copy(alpha = if (t.isDark) 0.16f else 0.13f)),
+                .background(accent.copy(alpha = if (t.isDark) 0.20f else 0.15f)),
         )
         // 布局：chip(38) + 16 + cT(15) + cV(25) + 15 + cS(13) + padding(30) ≈ 152
         Column(
@@ -566,11 +567,11 @@ fun GlassStatusCard(
     Row(
         modifier = modifier
             .glassCard(20.dp)
-            .padding(horizontal = 12.dp, vertical = 13.dp),
+            .padding(horizontal = 14.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         GlassChip(iconRes = iconRes, accent = accent, shadowed = true)
-        Spacer(Modifier.width(10.dp))
+        Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 title,
@@ -590,7 +591,7 @@ fun GlassStatusCard(
             )
         }
         Spacer(Modifier.width(6.dp))
-        GlassStBadge(text = badge, color = badgeColor)
+        GlassStBadge(text = badge, color = badgeColor, compact = true)
     }
 }
 
