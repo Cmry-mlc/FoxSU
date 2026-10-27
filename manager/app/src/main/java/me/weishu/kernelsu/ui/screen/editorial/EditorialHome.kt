@@ -33,9 +33,12 @@ import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
 import me.weishu.kernelsu.ui.component.rebootlistpopup.getRebootListOption
 import me.weishu.kernelsu.ui.component.rebootlistpopup.rememberRebootAction
+import me.weishu.kernelsu.ui.screen.home.HeroPhase
 import me.weishu.kernelsu.ui.screen.home.HomeActions
+import me.weishu.kernelsu.ui.screen.home.HomeIssueStrip
 import me.weishu.kernelsu.ui.screen.home.HomeUiState
 import me.weishu.kernelsu.ui.screen.home.freshIssues
+import me.weishu.kernelsu.ui.screen.home.heroState
 import me.weishu.kernelsu.ui.uiModeLabelRes
 
 /**
@@ -81,14 +84,41 @@ fun EditorialHome(
                 ),
             )
 
+            val hero = state.heroState()
+            // 真实告警条：与 Fresh / Miuix / Glass / Nocturne 对齐
+            HomeIssueStrip(
+                state = state,
+                accent = t.rose,
+                onInstall = if (hero.canFlash) ({ actions.onInstallClick() }) else null,
+            )
+            Spacer(Modifier.height(12.dp))
             EdStatusBand(
                 kicker = "CURRENT STATUS · 当前状态",
-                big = if (issues.isEmpty()) "工作中" else "需注意",
+                big = when (hero.phase) {
+                    HeroPhase.NOT_INSTALLED -> "未安装"
+                    HeroPhase.FLASHING -> "刷写中"
+                    HeroPhase.PENDING_REBOOT -> "待重启"
+                    HeroPhase.WORKING -> "工作中"
+                    HeroPhase.ATTENTION -> "需注意"
+                    HeroPhase.FLASH_FAILED -> "未工作"
+                    HeroPhase.UNSUPPORTED -> "不支持"
+                },
                 kvs = listOf(
-                    Triple("版本", BuildConfig.VERSION_NAME, false),
-                    Triple("模式", if (state.lkmMode == true) "LKM · 越狱" else "GKI", false),
+                    Triple("版本", hero.versionName, false),
+                    // 模式：真实 LKM/GKI/越狱，非 GKI 内核不瞎写
+                    Triple(
+                        "模式",
+                        listOfNotNull(
+                            hero.modeLabel,
+                            if (hero.jailbreakMode) "越狱" else null,
+                        ).joinToString(" · ").ifEmpty { "—" },
+                        false,
+                    ),
                     Triple("界面", stringResource(uiModeLabelRes(LocalUiMode.current)), true),
                 ),
+                onClick = if (hero.canFlash) ({ actions.onInstallClick() }) else null,
+                onCheckUpdate = { actions.onCheckUpdate() },
+                onRefreshImage = if (hero.canFlash) ({ actions.onRefreshImage() }) else null,
             )
 
             EdSection("01", "设备概况")
@@ -157,6 +187,16 @@ fun EditorialHome(
                 trailing = { Text("›", fontSize = 13.sp, color = t.faint) },
                 onClick = { actions.onOpenUrl("https://github.com/Cmry-mlc/FoxSu") },
             )
+            // 越狱模式入口：真实启动 MagicaService（条件与 Fresh / Miuix / Glass / Nocturne 一致）
+            if (state.ksuVersion == null && state.kernelVersion.isGKI() && state.isSELinuxPermissive) {
+                EdRow(
+                    iconRes = R.drawable.ic_d_terminal, glyphBg = t.amber.copy(alpha = 0.10f), glyphColor = t.amber,
+                    title = stringResource(R.string.home_jailbreak),
+                    subtitle = stringResource(R.string.fresh_home_jailbreak_sub),
+                    trailing = { Text("›", fontSize = 13.sp, color = t.faint) },
+                    onClick = { actions.onJailbreakClick() },
+                )
+            }
             EdRow(
                 iconRes = R.drawable.ic_d_book, glyphBg = t.ink2.copy(alpha = 0.08f), glyphColor = t.ink2,
                 title = stringResource(R.string.glass_home_learn),

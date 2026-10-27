@@ -257,13 +257,17 @@ fun EdStatusBand(
     kicker: String,
     big: String,
     kvs: List<Triple<String, String, Boolean>>,
+    onClick: (() -> Unit)? = null,
+    onCheckUpdate: (() -> Unit)? = null,
+    onRefreshImage: (() -> Unit)? = null,
 ) {
     val t = edTokens()
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .clipToBounds()
-            .background(t.ink),
+            .background(t.ink)
+            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier),
     ) {
         // 右上角狐尾水印（设计稿 .tail）：放在顶部角落，尺寸收小，不侵入 KV 区
         Icon(
@@ -343,6 +347,52 @@ fun EdStatusBand(
                             modifier = Modifier.padding(top = 5.dp),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+            }
+            // 真实操作行：版本号可点检查更新 / 刷新镜像
+            if (onCheckUpdate != null || onRefreshImage != null) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (onCheckUpdate != null) {
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .clickable { onCheckUpdate() }
+                                .padding(vertical = 4.dp, horizontal = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = "VERSION",
+                                fontSize = 8.5.sp,
+                                letterSpacing = 1.4.sp,
+                                color = t.paper.copy(alpha = 0.5f),
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(R.string.home_check_update),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = t.acc,
+                            )
+                        }
+                    }
+                    if (onRefreshImage != null) {
+                        Spacer(Modifier.width(16.dp))
+                        Text(
+                            text = stringResource(R.string.home_refresh_image),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = t.acc,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .clickable { onRefreshImage() }
+                                .padding(vertical = 4.dp, horizontal = 2.dp),
                         )
                     }
                 }

@@ -24,6 +24,7 @@ import me.weishu.kernelsu.data.repository.isSoftRebootPreferred
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.UiMode
 import me.weishu.kernelsu.ui.navigation3.LocalNavigator
+import me.weishu.kernelsu.ui.screen.home.FlashTracker
 import me.weishu.kernelsu.ui.util.reboot
 
 @Composable
@@ -66,7 +67,15 @@ fun FlashScreen(flashIt: FlashIt, onBackEnabledChange: (Boolean) -> Unit) {
         logContent = logContent,
         onTextUpdate = { text = it },
         onShowRebootChange = { showRebootAction = it },
-        onFlashingStatusChange = { flashingStatus = it },
+        onFlashingStatusChange = {
+            flashingStatus = it
+            // 真实回写全局刷写状态：主页 Hero 大卡片据此显示刷写中 / 成功 / 失败
+            when (it) {
+                FlashingStatus.FLASHING -> FlashTracker.begin()
+                FlashingStatus.SUCCESS -> FlashTracker.succeed()
+                FlashingStatus.FAILED -> FlashTracker.fail()
+            }
+        },
         enabled = flashingEnabled,
     )
 

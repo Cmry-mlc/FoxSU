@@ -5,6 +5,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +30,8 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.DeveloperBoard
 import androidx.compose.material.icons.filled.FilterList
@@ -75,6 +78,9 @@ import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold
+import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
+import me.weishu.kernelsu.ui.screen.home.HeroPhase
+import me.weishu.kernelsu.ui.screen.home.heroState
 import me.weishu.kernelsu.ui.theme.NocturneGlowBackdrop
 import top.yukonga.miuix.kmp.basic.ScrollBehavior
 import top.yukonga.miuix.kmp.basic.Text
@@ -95,6 +101,9 @@ fun HomePagerMiuix(
     state: HomeUiState,
     actions: HomeActions,
     bottomInnerPadding: Dp,
+    navigationBadge: NavigationBadgeState = NavigationBadgeState(),
+    onOpenTab: (Int) -> Unit = {},
+    onOpenAuthor: () -> Unit = {},
 ) {
     val scrollBehavior = MiuixScrollBehavior()
     val enableBlur = LocalEnableBlur.current
@@ -107,6 +116,7 @@ fun HomePagerMiuix(
                 scrollBehavior = scrollBehavior,
                 backdrop = backdrop,
                 barColor = barColor,
+                onOpenAuthor = onOpenAuthor,
             )
         },
         popupHost = { },
@@ -171,6 +181,26 @@ fun HomePagerMiuix(
                             state = state,
                             actions = actions,
                         )
+                        // 功能入口卡：超级用户 / 模块 / 设备 —— 全部可点并绑定真实跳转
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            MiuixKpiCard(
+                                modifier = Modifier.weight(1f),
+                                title = stringResource(R.string.superuser),
+                                value = navigationBadge.superuserCount.toString(),
+                                caption = stringResource(R.string.fresh_home_superuser_sub),
+                                onClick = { onOpenTab(1) },
+                            )
+                            MiuixKpiCard(
+                                modifier = Modifier.weight(1f),
+                                title = stringResource(R.string.module),
+                                value = navigationBadge.moduleEnabledCount.toString(),
+                                caption = stringResource(R.string.fresh_home_module_sub),
+                                onClick = { onOpenTab(2) },
+                            )
+                        }
                         InfoCard(
                             systemInfo = state.systemInfo,
                             modifier = Modifier.fillMaxWidth(),
@@ -231,12 +261,21 @@ private fun TopBar(
     scrollBehavior: ScrollBehavior,
     backdrop: LayerBackdrop?,
     barColor: Color,
+    onOpenAuthor: () -> Unit,
 ) {
     BlurredBar(backdrop) {
         TopAppBar(
             color = barColor,
             title = stringResource(R.string.app_name),
             actions = {
+                // 作者页入口（与其余主题对齐）
+                IconButton(onClick = onOpenAuthor) {
+                    Icon(
+                        Icons.Rounded.Person,
+                        contentDescription = stringResource(R.string.fresh_home_about_author),
+                        tint = colorScheme.onBackground,
+                    )
+                }
                 UiModeSwitchButton()
                 RebootListPopupMiuix()
             },
@@ -253,6 +292,7 @@ private fun StatusCard(
     Column {
         when {
             state.ksuVersion != null -> {
+                val hero = state.heroState()
                 val workingState = buildString {
                     if (state.isSafeMode) {
                         append(" [${stringResource(id = R.string.safe_mode)}]")
@@ -261,12 +301,15 @@ private fun StatusCard(
                         append(" [${stringResource(id = R.string.jailbreak_mode)}]")
                     }
                 }
-                val workingMode = when (state.lkmMode) {
-                    null -> null
-                    true -> "LKM"
-                    else -> "GKI"
+                // 运行模式：仅在真实 LKM/GKI 时显示
+                val workingMode = hero.modeLabel
+                val workingText = when (hero.phase) {
+                    HeroPhase.FLASHING -> stringResource(id = R.string.home_flashing_now)
+                    HeroPhase.PENDING_REBOOT -> stringResource(id = R.string.home_pending_reboot)
+                    HeroPhase.ATTENTION -> stringResource(id = R.string.glass_status_issue)
+                    HeroPhase.FLASH_FAILED -> stringResource(id = R.string.home_flash_failed)
+                    else -> "${stringResource(id = R.string.home_working)}$workingState"
                 }
-                val workingText = "${stringResource(id = R.string.home_working)}$workingState"
 
                 Row(
                     modifier = Modifier
@@ -365,6 +408,63 @@ private fun StatusCard(
                                                 },
                                             )
                                         }
+                                    }
+                                    Spacer(Modifier.height(8.dp))
+                                    // 版本号：随应用版本自动更新，点击真实检查更新
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = stringResource(R.string.glass_version_fmt, hero.versionName),
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = if (isDynamicColor) {
+                                                colorScheme.onSurfaceVariantSummary
+                                            } else {
+                                                Color(0xFF164A29)
+                                            },
+                                            modifier = Modifier.clickable { actions.onCheckUpdate() },
+                                        )
+                                        if (hero.hasUpdate) {
+                                            Spacer(Modifier.width(8.dp))
+                                            StatusTag(
+                                                label = stringResource(R.string.glass_tag_update, hero.latestVersionCode),
+                                                contentColor = if (isDynamicColor) {
+                                                    colorScheme.onTertiaryContainer
+                                                } else {
+                                                    Color(0xFF164A29)
+                                                },
+                                                backgroundColor = if (isDynamicColor) {
+                                                    colorScheme.tertiaryContainer
+                                                } else {
+                                                    Color(0xFFB8E8C5)
+                                                },
+                                            )
+                                        }
+                                        Spacer(Modifier.width(10.dp))
+                                        Text(
+                                            text = stringResource(R.string.home_check_update),
+                                            fontSize = 13.sp,
+                                            color = if (isDynamicColor) {
+                                                colorScheme.onSurfaceVariantSummary
+                                            } else {
+                                                Color(0xFF164A29)
+                                            },
+                                            modifier = Modifier.clickable { actions.onCheckUpdate() },
+                                        )
+                                        Spacer(Modifier.width(10.dp))
+                                        // 刷新镜像：真实执行 ksud boot-patch -f
+                                        Text(
+                                            text = stringResource(R.string.home_refresh_image),
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (isDynamicColor) {
+                                                colorScheme.onSurface
+                                            } else {
+                                                Color(0xFF164A29)
+                                            },
+                                            modifier = Modifier.clickable(enabled = hero.canFlash) {
+                                                actions.onRefreshImage()
+                                            },
+                                        )
                                     }
                                 }
                             }
@@ -472,6 +572,45 @@ private fun SupportLinks(
             },
             onClick = { onOpenUrl(learnMoreUrl) },
         )
+    }
+}
+
+/** 功能入口卡：超级用户 / 模块 —— 点击跳转到对应主页面（真实功能）。 */
+@Composable
+private fun MiuixKpiCard(
+    modifier: Modifier = Modifier,
+    title: String,
+    value: String,
+    caption: String,
+    onClick: () -> Unit,
+) {
+    Card(
+        modifier = modifier,
+        onClick = onClick,
+        showIndication = true,
+        pressFeedbackType = PressFeedbackType.Tilt,
+    ) {
+        Column(Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
+            Text(
+                text = title,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = colorScheme.onSurfaceVariantSummary,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = value,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = colorScheme.onSurface,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = caption,
+                fontSize = 12.sp,
+                color = colorScheme.onSurfaceVariantSummary,
+            )
+        }
     }
 }
 

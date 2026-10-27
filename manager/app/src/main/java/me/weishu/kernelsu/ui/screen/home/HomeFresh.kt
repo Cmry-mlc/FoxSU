@@ -339,6 +339,8 @@ fun HomePagerFresh(
                     state = state,
                     onInstall = actions.onInstallClick,
                     onJailbreak = actions.onJailbreakClick,
+                    onCheckUpdate = actions.onCheckUpdate,
+                    onRefreshImage = actions.onRefreshImage,
                     containerColor = if (heroOn) Color.Transparent else heroSurface.container,
                     contentColor = heroContent,
                     hero = heroCustom,
@@ -1062,6 +1064,8 @@ private fun FreshStatusCard(
     state: HomeUiState,
     onInstall: () -> Unit,
     onJailbreak: () -> Unit,
+    onCheckUpdate: () -> Unit,
+    onRefreshImage: () -> Unit,
     containerColor: Color,
     contentColor: Color,
     hero: Customization?,
@@ -1071,31 +1075,38 @@ private fun FreshStatusCard(
 ) {
     val ksuActive = state.ksuVersion != null
     val notInstalled = !ksuActive && state.kernelVersion.isGKI()
+    val heroSt = state.heroState()
 
+    // 状态图标跟随真实阶段
     val statusIcon = painterResource(
-        when {
-            ksuActive -> R.drawable.ic_home_status_ok
-            notInstalled -> R.drawable.ic_home_status_warn
+        when (heroSt.phase) {
+            HeroPhase.WORKING -> R.drawable.ic_home_status_ok
+            HeroPhase.NOT_INSTALLED, HeroPhase.ATTENTION, HeroPhase.FLASHING,
+            HeroPhase.PENDING_REBOOT -> R.drawable.ic_home_status_warn
             else -> R.drawable.ic_home_status_fail
         }
     )
-    val statusTitle = when {
-        ksuActive -> stringResource(R.string.home_working)
-        notInstalled -> stringResource(R.string.home_not_installed)
-        else -> stringResource(R.string.home_unsupported)
+    // 状态文字由真实运行态推导（刷写中 / 待重启 / 工作中 / 需注意 / 未安装 / 不支持）
+    val statusTitle = when (heroSt.phase) {
+        HeroPhase.NOT_INSTALLED -> stringResource(R.string.home_not_installed)
+        HeroPhase.FLASHING -> stringResource(R.string.home_flashing_now)
+        HeroPhase.PENDING_REBOOT -> stringResource(R.string.home_pending_reboot)
+        HeroPhase.WORKING -> stringResource(R.string.home_working)
+        HeroPhase.ATTENTION -> stringResource(R.string.glass_status_issue)
+        HeroPhase.FLASH_FAILED -> stringResource(R.string.home_flash_failed)
+        HeroPhase.UNSUPPORTED -> stringResource(R.string.home_unsupported)
     }
-    val statusSummary = when {
-        ksuActive -> stringResource(R.string.home_working_version, "${state.ksuVersion}-${state.kernelUAPIVersion}")
-        notInstalled -> stringResource(R.string.home_click_to_install)
-        else -> stringResource(R.string.home_unsupported_reason)
+    val statusSummary = when (heroSt.phase) {
+        HeroPhase.WORKING -> stringResource(R.string.home_working_version, "${state.ksuVersion}-${state.kernelUAPIVersion}")
+        HeroPhase.NOT_INSTALLED -> stringResource(R.string.home_click_to_install)
+        HeroPhase.FLASHING -> stringResource(R.string.home_flashing_now)
+        HeroPhase.PENDING_REBOOT -> stringResource(R.string.home_pending_reboot)
+        HeroPhase.ATTENTION -> stringResource(R.string.fresh_home_issue_count, state.freshIssues().size)
+        HeroPhase.FLASH_FAILED -> stringResource(R.string.home_flash_failed)
+        HeroPhase.UNSUPPORTED -> stringResource(R.string.home_unsupported_reason)
     }
-    val workingMode = if (ksuActive) {
-        when (state.lkmMode) {
-            null -> ""
-            true -> "LKM"
-            else -> "GKI"
-        }
-    } else ""
+    // 运行模式：仅在真实 LKM/GKI 时显示，非 GKI 内核不瞎写
+    val workingMode = heroSt.modeLabel.orEmpty()
 
     // 运行模式 / 越狱模式标签配色：薄荷绿 + 琥珀，和卡片底色协调且不刺眼
     val night = isNightScheme()
@@ -1104,7 +1115,7 @@ private fun FreshStatusCard(
     val jailContainer = if (night) Color(0xFF2E2716) else UiPalette.KpiCream.first
     val jailContent = if (night) Color(0xFFEFD79A) else UiPalette.KpiCream.second
 
-    val canJailbreak = notInstalled && state.isSELinuxPermissive
+    val canJailbreak = !ksuActive && state.kernelVersion.isGKI() && state.isSELinuxPermissive
     val glassBackdrop = CustomizationStore.current.cardGlass
     val hasHero = !glassBackdrop && hero != null && heroBitmap != null
     // 状态徽章：参考图是薰衣草紫的细描边徽章，工作态用主卡强调紫
@@ -1205,8 +1216,8 @@ private fun FreshStatusCard(
                                 container = lkmContainer,
                                 content = lkmContent,
                             )
-                            // 越狱模式紧跟运行模式之后
-                            if (ksuActive && state.isLateLoadMode) {
+                            // 越狱模式紧跟运行模式之后（仅在真实越狱模式时显示）
+                            if (ksuActive && heroSt.jailbreakMode) {
                                 Spacer(Modifier.width(8.dp))
                                 FreshTag(
                                     text = stringResource(R.string.jailbreak_mode),
@@ -1223,6 +1234,43 @@ private fun FreshStatusCard(
                                 )
                             }
                         }
+                    }
+                    // 版本号 + 更新入口：版本号随应用版本自动更新，点击可真实检查更新
+                    Spacer(Modifier.height(10.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = stringResource(R.string.glass_version_fmt, heroSt.versionName),
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Bold,
+                            color = contentColor.copy(alpha = 0.85f),
+                            modifier = Modifier.clickable { onCheckUpdate() },
+                        )
+                        if (heroSt.hasUpdate) {
+                            Spacer(Modifier.width(8.dp))
+                            FreshTag(
+                                text = stringResource(R.string.glass_tag_update, heroSt.latestVersionCode),
+                                container = lkmContainer,
+                                content = lkmContent,
+                            )
+                        }
+                        Spacer(Modifier.width(10.dp))
+                        Text(
+                            text = stringResource(R.string.home_check_update),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = contentColor.copy(alpha = 0.7f),
+                            modifier = Modifier.clickable { onCheckUpdate() },
+                        )
+                        Spacer(Modifier.width(10.dp))
+                        // 刷新镜像：真实执行 ksud boot-patch -f
+                        Text(
+                            text = stringResource(R.string.home_refresh_image),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = contentColor.copy(alpha = 0.85f),
+                            modifier = Modifier.clickable(enabled = state.heroState().canFlash) {
+                                onRefreshImage()
+                            },
+                        )
                     }
                     if (!hasHero) {
                         Spacer(Modifier.height(10.dp))

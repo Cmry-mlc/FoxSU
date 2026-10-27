@@ -45,9 +45,12 @@ import me.weishu.kernelsu.R
 import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
+import me.weishu.kernelsu.ui.screen.home.HeroPhase
 import me.weishu.kernelsu.ui.screen.home.HomeActions
+import me.weishu.kernelsu.ui.screen.home.HomeIssueStrip
 import me.weishu.kernelsu.ui.screen.home.HomeUiState
 import me.weishu.kernelsu.ui.screen.home.freshIssues
+import me.weishu.kernelsu.ui.screen.home.heroState
 import me.weishu.kernelsu.ui.theme.glassTokens
 import me.weishu.kernelsu.ui.uiModeLabelRes
 
@@ -84,7 +87,12 @@ fun GlassHome(
             )
         }
         item {
-            GlassHeroCard(state = state, issueCount = issues.size, onInstall = actions.onInstallClick)
+            HomeIssueStrip(
+                state = state,
+                accent = glassTokens().amber,
+                onInstall = if (state.heroState().canFlash) ({ actions.onInstallClick() }) else null,
+            )
+            GlassHeroCard(state = state, actions = actions, issueCount = issues.size, onInstall = actions.onInstallClick)
         }
         item {
             Row(
@@ -111,6 +119,21 @@ fun GlassHome(
                     accent = glassTokens().cyan,
                     onClick = { showStylePicker = true },
                 )
+            }
+        }
+        // 越狱模式入口：真实启动 MagicaService（条件与 Fresh / Miuix / Nocturne 一致）
+        if (state.ksuVersion == null && state.kernelVersion.isGKI() && state.isSELinuxPermissive) {
+            item {
+                GlassNCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    iconRes = R.drawable.ic_d_terminal,
+                    title = stringResource(R.string.home_jailbreak),
+                    value = stringResource(R.string.jailbreak_mode),
+                    caption = stringResource(R.string.fresh_home_jailbreak_sub),
+                    accent = glassTokens().amber,
+                    onClick = { actions.onJailbreakClick() },
+                )
+                Spacer(Modifier.height(11.dp))
             }
         }
         item { Spacer(Modifier.height(11.dp)) }
@@ -359,10 +382,27 @@ fun GlassTopButton(iconRes: Int, onClick: () -> Unit) {
  * 右侧 60 圆白 seal（violet 对勾）垂直居中并压住 tag 行。
  */
 @Composable
-fun GlassHeroCard(state: HomeUiState, issueCount: Int, onInstall: () -> Unit) {
+fun GlassHeroCard(
+    state: HomeUiState,
+    actions: HomeActions,
+    issueCount: Int,
+    onInstall: () -> Unit,
+) {
     val t = glassTokens()
+    val hero = state.heroState()
     val hasIssue = issueCount > 0
-    // 卡面 = 白玻璃（.55），渐变**只作为 1dp 描边**（等价设计稿 ::before + mask），不透到卡面
+    // 状态语义由真实运行态推导
+    val (kickerText, statusText) = when (hero.phase) {
+        HeroPhase.NOT_INSTALLED -> R.string.glass_hero_stopped to R.string.glass_status_not_installed
+        HeroPhase.FLASHING -> R.string.glass_hero_flashing to R.string.glass_status_flashing
+        HeroPhase.PENDING_REBOOT -> R.string.glass_hero_pending to R.string.glass_status_pending_reboot
+        HeroPhase.WORKING -> R.string.glass_hero_working to R.string.glass_status_ok
+        HeroPhase.ATTENTION -> R.string.glass_hero_attention to R.string.glass_status_issue
+        HeroPhase.FLASH_FAILED -> R.string.glass_hero_failed to R.string.glass_status_flash_failed
+        HeroPhase.UNSUPPORTED -> R.string.glass_hero_unsupported to R.string.glass_status_unsupported
+    }
+    // 刷写入口：越狱模式下刷写会变砖
+    val flashable = hero.canFlash
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -374,24 +414,21 @@ fun GlassHeroCard(state: HomeUiState, issueCount: Int, onInstall: () -> Unit) {
             )
             .clip(RoundedCornerShape(26.dp))
             .background(if (t.isDark) Color(0x08FFFFFF) else Color(0x9EFFFFFF))
-            .border(1.dp, t.heroGrad, RoundedCornerShape(26.dp)),
+            .border(1.dp, t.heroGrad, RoundedCornerShape(26.dp))
+            .clickable(enabled = flashable) { onInstall() },
     ) {
         Box(modifier = Modifier.padding(20.dp)) {
             // 对勾已移到右上角，正文只需让出右上徽章宽度
             Column(modifier = Modifier.padding(end = 58.dp)) {
                 Text(
-                    text = stringResource(
-                        if (hasIssue) R.string.glass_hero_attention else R.string.glass_hero_working
-                    ),
+                    text = stringResource(kickerText),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.ExtraBold,
                     letterSpacing = 2.sp,
                     style = TextStyle(brush = t.glineGrad),
                 )
                 Text(
-                    text = stringResource(
-                        if (hasIssue) R.string.glass_status_issue else R.string.glass_status_ok
-                    ),
+                    text = stringResource(statusText),
                     fontSize = 23.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = t.ink,
@@ -434,30 +471,70 @@ fun GlassHeroCard(state: HomeUiState, issueCount: Int, onInstall: () -> Unit) {
                     horizontalArrangement = Arrangement.spacedBy(9.dp),
                     verticalArrangement = Arrangement.spacedBy(7.dp),
                 ) {
+                    // 版本号：点击真实检查更新
                     Text(
-                        text = stringResource(R.string.glass_version_fmt, BuildConfig.VERSION_NAME),
+                        text = stringResource(R.string.glass_version_fmt, hero.versionName),
                         fontSize = 12.5.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = t.ink2,
+                        color = if (hero.hasUpdate) t.flame else t.ink2,
+                        modifier = Modifier.clickable { actions.onCheckUpdate() },
                     )
-                    GlassTag(
-                        text = stringResource(R.string.glass_tag_custom),
-                        color = t.amber,
-                        bgAlpha = 0.15f,
-                    )
-                    GlassTag(
-                        text = if (state.lkmMode == true) "LKM" else "GKI",
+                    // 自定义 LKM：仅在真实自定义时显示
+                    if (hero.customLkm) {
+                        GlassTag(
+                            text = stringResource(R.string.glass_tag_custom),
+                            color = t.amber,
+                            bgAlpha = 0.15f,
+                        )
+                    }
+                    // 运行模式：仅在真实 LKM/GKI 时显示
+                    if (hero.modeLabel != null) {
+                        GlassTag(
+                            text = hero.modeLabel,
+                            color = t.violet,
+                            bgAlpha = 0.12f,
+                        )
+                    }
+                    // 越狱模式：仅在真实越狱时显示
+                    if (hero.jailbreakMode) {
+                        GlassTag(
+                            text = stringResource(R.string.glass_tag_jailbreak),
+                            color = t.cyan,
+                            bgAlpha = 0.12f,
+                        )
+                    }
+                    // 安全模式：仅在真实安全模式时显示
+                    if (hero.safeMode) {
+                        GlassTag(
+                            text = stringResource(R.string.safe_mode),
+                            color = t.amber,
+                            bgAlpha = 0.15f,
+                        )
+                    }
+                    // 刷新镜像：真实执行 ksud boot-patch -f
+                    Text(
+                        text = stringResource(R.string.home_refresh_image),
+                        fontSize = 12.5.sp,
+                        fontWeight = FontWeight.Bold,
                         color = t.violet,
-                        bgAlpha = 0.12f,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable(enabled = hero.canFlash) { actions.onRefreshImage() }
+                            .padding(horizontal = 10.dp, vertical = 4.dp),
                     )
-                    GlassTag(
-                        text = stringResource(R.string.glass_tag_jailbreak),
-                        color = t.cyan,
-                        bgAlpha = 0.12f,
-                    )
+                    // 有新版本：真实徽标
+                    if (hero.hasUpdate) {
+                        GlassTag(
+                            text = stringResource(R.string.glass_tag_update, hero.latestVersionCode),
+                            color = t.flame,
+                            bgAlpha = 0.15f,
+                        )
+                    }
                 }
                 Text(
-                    text = stringResource(R.string.fresh_home_hero_hint),
+                    text = stringResource(
+                        if (hero.installed) R.string.fresh_home_flash_hint else R.string.home_click_to_install
+                    ),
                     fontSize = 10.5.sp,
                     color = if (t.isDark) t.faint else Color(0xFFA39AB2),
                     modifier = Modifier.padding(top = 14.dp),

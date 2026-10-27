@@ -64,4 +64,8 @@ data class HomeActions(
     val onInstallClick: () -> Unit,
     val onOpenUrl: (String) -> Unit,
     val onJailbreakClick: () -> Unit = {},
+    /** 真实检查新版本：命中 GitHub Releases，有更新则弹更新说明并可跳转下载。 */
+    val onCheckUpdate: () -> Unit = {},
+    /** 刷新镜像：直接执行 ksud boot-patch -f 重新刷写当前分区（真实动作）。 */
+    val onRefreshImage: () -> Unit = {},
 )

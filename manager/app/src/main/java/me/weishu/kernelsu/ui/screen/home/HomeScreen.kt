@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -26,9 +27,13 @@ import me.weishu.kernelsu.ui.LocalMainPagerState
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.UiMode
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
+import me.weishu.kernelsu.ui.component.dialog.rememberConfirmDialog
 import me.weishu.kernelsu.ui.component.dialog.rememberLoadingDialog
 import me.weishu.kernelsu.ui.navigation3.Navigator
 import me.weishu.kernelsu.ui.navigation3.Route
+import me.weishu.kernelsu.ui.screen.flash.FlashIt
+import me.weishu.kernelsu.ui.util.LkmSelection
+import me.weishu.kernelsu.ui.util.checkNewVersion
 import me.weishu.kernelsu.ui.viewmodel.HomeViewModel
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -45,6 +50,13 @@ fun HomePager(
     val context = LocalContext.current
     val loadingDialog = rememberLoadingDialog()
     val scope = rememberCoroutineScope()
+    var pendingUpdateUrl by remember { mutableStateOf("") }
+    val updateDialog = rememberConfirmDialog(
+        onConfirm = {
+            val url = pendingUpdateUrl
+            if (url.isNotEmpty()) uriHandler.openUri(url)
+        },
+    )
     val latestIsCurrentPage by rememberUpdatedState(isCurrentPage)
     val initialResumeHandled = rememberSaveable { mutableStateOf(false) }
 
@@ -80,6 +92,43 @@ fun HomePager(
                 }
             }
         },
+        onCheckUpdate = {
+            scope.launch {
+                loadingDialog.showLoading()
+                val latest = withContext(Dispatchers.IO) { checkNewVersion() }
+                loadingDialog.hide()
+                val current = uiState.currentManagerVersionCode
+                if (latest.versionCode > current && latest.downloadUrl.isNotEmpty()) {
+                    pendingUpdateUrl = latest.downloadUrl
+                    updateDialog.showConfirm(
+                        title = context.getString(R.string.module_changelog),
+                        content = latest.changelog.ifEmpty {
+                            context.getString(R.string.new_version_available, latest.versionCode)
+                        },
+                        markdown = true,
+                        confirm = context.getString(R.string.module_update),
+                    )
+                } else {
+                    Toast.makeText(
+                        context,
+                        R.string.home_no_update_found,
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                }
+            }
+        },
+        // 刷新镜像：真实执行 ksud boot-patch -f（走标准刷写页，可看实时日志）
+        onRefreshImage = {
+            navigator.push(
+                Route.Flash(
+                    FlashIt.FlashBoot(
+                        boot = null,
+                        lkm = LkmSelection.KmiNone,
+                        ota = false,
+                    )
+                )
+            )
+        },
     )
 
     val mainPagerState = LocalMainPagerState.current
@@ -89,6 +138,9 @@ fun HomePager(
             state = uiState,
             actions = actions,
             bottomInnerPadding = bottomInnerPadding,
+            navigationBadge = navigationBadge,
+            onOpenTab = { page -> mainPagerState.animateToPage(page) },
+            onOpenAuthor = { navigator.push(Route.Author) },
         )
 
         UiMode.Material -> me.weishu.kernelsu.ui.screen.editorial.EditorialHome(
