@@ -355,7 +355,7 @@
     <string name="author_title">About the author</string>
     <string name="author_name">Chenmeng Ruyan</string>
     <string name="author_role">FoxSu maintainer</string>
-    <string name="author_desc">Thanks for using FoxSu. This is a personal build of the KernelSU manager with a fully redesigned ColorUI style.</string>
+    <string name="author_desc">Thanks for using FoxSu. This is a customized build of the KernelSU manager with a fully redesigned interface.</string>
     <string name="author_project">Project</string>
     <string name="author_project_value">FoxSu · KernelSU fork</string>
     <string name="author_contact">Feedback</string>

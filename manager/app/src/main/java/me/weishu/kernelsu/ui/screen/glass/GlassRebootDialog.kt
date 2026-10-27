@@ -59,6 +59,14 @@ fun GlassRebootDialog(onDismiss: () -> Unit) {
     val primary = options.firstOrNull()
     val others = options.drop(1)
 
+    // 面板共用的随机七彩：取自 Glass 调色板的 9 个霓虹色，每次打开顺序不同
+    val rainbow = remember {
+        listOf(
+            t.flame, t.amber, t.lemon, t.lime, t.mint,
+            t.cyan, t.blue, t.violet, t.pink,
+        ).shuffled()
+    }
+
     val enter = remember { androidx.compose.animation.core.Animatable(0f) }
     LaunchedEffect(Unit) { enter.animateTo(1f, tween(260)) }
 
@@ -148,7 +156,7 @@ fun GlassRebootDialog(onDismiss: () -> Unit) {
             )
             Spacer(Modifier.height(18.dp))
 
-            // 主操作：重启（整行渐变胶囊）
+            // 主操作：重启（白玻璃 + 七彩外圈，与英雄卡同一套描边语言）
             if (primary != null) {
                 val interaction = remember { MutableInteractionSource() }
                 val pressed by interaction.collectIsPressedAsState()
@@ -161,13 +169,20 @@ fun GlassRebootDialog(onDismiss: () -> Unit) {
                             scaleY = scale
                         }
                         .shadow(
-                            12.dp,
+                            14.dp,
                             RoundedCornerShape(99.dp),
-                            ambientColor = t.flame.copy(alpha = 0.35f),
-                            spotColor = t.violet.copy(alpha = 0.35f),
+                            ambientColor = rainbow.first().copy(alpha = 0.30f),
+                            spotColor = rainbow.last().copy(alpha = 0.30f),
                         )
                         .clip(RoundedCornerShape(99.dp))
-                        .background(Brush.horizontalGradient(listOf(t.flame, t.violet)))
+                        .background(
+                            if (t.isDark) {
+                                Brush.linearGradient(listOf(Color(0xF71A1A24), Color(0xF71A1A24)))
+                            } else {
+                                Brush.linearGradient(listOf(Color(0xFFFFFAF8), Color(0xFFFCF8FF)))
+                            }
+                        )
+                        .rainbowRing(RoundedCornerShape(99.dp), 1.7.dp, rainbow)
                         .clickable(interactionSource = interaction, indication = null) {
                             onDismiss()
                             doReboot(primary.reason)
@@ -180,14 +195,14 @@ fun GlassRebootDialog(onDismiss: () -> Unit) {
                             painter = painterResource(R.drawable.ic_d_refresh),
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
-                            tint = Color.White,
+                            tint = t.flame,
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(
                             text = stringResource(primary.labelRes),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.ExtraBold,
-                            color = Color.White,
+                            style = androidx.compose.ui.text.TextStyle(brush = t.glineGrad),
                         )
                     }
                 }
@@ -195,20 +210,18 @@ fun GlassRebootDialog(onDismiss: () -> Unit) {
             }
 
             // 其余选项：两列玻璃胶囊
-            others.chunked(2).forEach { chunk ->
+            others.chunked(2).forEachIndexed { chunkIndex, chunk ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     chunk.forEachIndexed { i, option ->
-                        val accent = when (i) {
-                            0 -> t.amber
-                            else -> t.cyan
-                        }
+                        val accent = rainbow[(chunkIndex * 2 + i) % rainbow.size]
                         GlassOptionChip(
                             modifier = Modifier.weight(1f),
                             label = stringResource(option.labelRes),
                             accent = accent,
+                            ring = rainbow,
                             onClick = {
                                 onDismiss()
                                 doReboot(option.reason)
@@ -244,6 +257,7 @@ private fun GlassOptionChip(
     modifier: Modifier = Modifier,
     label: String,
     accent: Color,
+    ring: List<Color>,
     onClick: () -> Unit,
 ) {
     val t = glassTokens()
@@ -257,8 +271,8 @@ private fun GlassOptionChip(
                 scaleY = scale
             }
             .clip(RoundedCornerShape(14.dp))
-            .background(if (t.isDark) Color(0x0FFFFFFF) else Color(0xB3FFFFFF))
-            .border(1.dp, if (t.isDark) t.glassBorder else Color(0xE6FFFFFF), RoundedCornerShape(14.dp))
+            .background(if (t.isDark) Color(0x14FFFFFF) else Color(0xE6FFFFFF))
+            .rainbowRing(RoundedCornerShape(14.dp), 1.2.dp, ring)
             .clickable(interactionSource = interaction, indication = null, onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -280,3 +294,18 @@ private fun GlassOptionChip(
         )
     }
 }
+
+/**
+ * 七彩外圈：把调色板色首尾闭合后做 sweep 渐变描边，
+ * 视觉上与英雄卡外圈一致，但换成整圈彩虹（对应「七彩圈」）。
+ */
+@Composable
+private fun Modifier.rainbowRing(
+    shape: RoundedCornerShape,
+    width: androidx.compose.ui.unit.Dp,
+    colors: List<Color>,
+): Modifier = this.border(
+    width = width,
+    brush = Brush.sweepGradient(colors + colors.first()),
+    shape = shape,
+)
