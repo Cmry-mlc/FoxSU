@@ -1,5 +1,11 @@
 package me.weishu.kernelsu.ui.screen.glass
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -201,7 +208,8 @@ private fun seccompShort(status: Int): String = when (status) {
 }
 
 /**
- * .top：46 圆白底头像（狐头 + 右下 lime 点）+ 22/800 标题 + 11 sub 副标题 + 右侧 38×34 白圆按钮
+ * .top：46 圆头像（狐头，颜色随页面：主页 flame / 超管 amber / 模块 cyan / 设置 violet）
+ * + 22/800 标题 + 11 sub + 右侧 38×34 圆按钮（gap 8）
  */
 @Composable
 fun GlassTopBar(
@@ -212,9 +220,11 @@ fun GlassTopBar(
     onActionClick: (() -> Unit)? = null,
     actionIconRes: Int = R.drawable.ic_d_user,
     titleSize: Int = 22,
+    accent: Color? = null,
     trailing: (@Composable RowScope.() -> Unit)? = null,
 ) {
     val t = glassTokens()
+    val foxColor = accent ?: t.flame
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -225,16 +235,21 @@ fun GlassTopBar(
             Box(
                 modifier = Modifier
                     .size(46.dp)
-                    .shadow(6.dp, CircleShape)
+                    .shadow(
+                        6.dp,
+                        CircleShape,
+                        ambientColor = foxColor.copy(alpha = 0.22f),
+                        spotColor = foxColor.copy(alpha = 0.22f),
+                    )
                     .clip(CircleShape)
-                    .background(Color.White),
+                    .background(t.avaBg),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_launcher_monochrome),
                     contentDescription = null,
                     modifier = Modifier.size(28.dp),
-                    tint = t.flame,
+                    tint = foxColor,
                 )
             }
             if (showDot) {
@@ -243,7 +258,8 @@ fun GlassTopBar(
                         .align(Alignment.BottomEnd)
                         .size(12.dp)
                         .clip(CircleShape)
-                        .background(t.lime),
+                        .background(t.lime)
+                        .border(2.dp, t.avaBg, CircleShape),
                 )
             }
         }
@@ -324,7 +340,8 @@ fun GlassHeroCard(state: HomeUiState, issueCount: Int, onInstall: () -> Unit) {
             .background(if (t.isDark) Color(0x0AFFFFFF) else Color(0x8CFFFFFF)),
     ) {
         Box(modifier = Modifier.padding(20.dp)) {
-            Column(modifier = Modifier.padding(end = 58.dp)) {
+            // 右侧留出 seal（60 圆 + 外圈 84）的位置，避免文字压到对勾下
+            Column(modifier = Modifier.padding(end = 76.dp)) {
                 Text(
                     text = stringResource(
                         if (hasIssue) R.string.glass_hero_attention else R.string.glass_hero_working
@@ -409,29 +426,13 @@ fun GlassHeroCard(state: HomeUiState, issueCount: Int, onInstall: () -> Unit) {
                     modifier = Modifier.padding(top = 14.dp),
                 )
             }
-            // .seal：60 圆，暗色 #0b0b12 / 亮色 rgba(255,255,255,.75)，violet 对勾，垂直居中
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .size(60.dp)
-                    .shadow(
-                        16.dp,
-                        CircleShape,
-                        ambientColor = if (t.isDark) Color(0x40C77DFF) else Color(0x335A5578),
-                        spotColor = if (t.isDark) Color(0x40C77DFF) else Color(0x335A5578),
-                    )
-                    .clip(CircleShape)
-                    .background(if (t.isDark) Color(0xFF0B0B12) else Color(0xBFFFFFFF))
-                    .border(1.dp, if (t.isDark) Color(0x14FFFFFF) else Color(0xCCFFFFFF), CircleShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_d_check),
-                    contentDescription = null,
-                    modifier = Modifier.size(26.dp),
-                    tint = t.violet,
-                )
-            }
+            // .seal：60 圆 + 呼吸霓虹外圈（七彩随机色缓慢流转）
+            GlassSeal(
+                modifier = Modifier.align(Alignment.CenterEnd),
+                checkColor = t.violet,
+                sealBg = t.sealBg,
+                border = if (t.isDark) Color(0x14FFFFFF) else Color(0xCCFFFFFF),
+            )
         }
     }
     Spacer(Modifier.height(13.dp))
@@ -491,12 +492,13 @@ fun GlassNCard(
             .shadow(
                 8.dp,
                 RoundedCornerShape(22.dp),
-                ambientColor = Color(0x1F5A5578),
-                spotColor = Color(0x1F5A5578),
+                ambientColor = t.glassShadow,
+                spotColor = t.glassShadow,
             )
             .clip(RoundedCornerShape(22.dp))
-            .background(if (t.isDark) Color(0x0FFFFFFF) else Color(0x8CFFFFFF))
-            .border(1.dp, if (t.isDark) t.glassBorder else Color(0xCCFFFFFF), RoundedCornerShape(22.dp))
+            // .ncard：暗色 --panel2 #1c1c28（实色）/ 亮色 rgba(255,255,255,.55)
+            .background(if (t.isDark) t.panel2 else Color(0x8CFFFFFF))
+            .border(1.dp, t.glassBorder, RoundedCornerShape(22.dp))
             .clickable(enabled = onClick != null) { onClick?.invoke() },
     ) {
         // ::after 右上角色晕 —— 74 圆，右/上各溢出 22px，被父级裁切（设计稿 opacity .16 + blur 14）
@@ -789,5 +791,108 @@ fun GlassStylePickerDialog(
                 Text(stringResource(android.R.string.cancel), color = t.sub)
             }
         },
+    )
+}
+
+/**
+ * 英雄卡右侧 .seal：60 圆 + 双层呼吸霓虹外圈（随机七彩，色相缓慢流转）。
+ * - 外圈 1：scale 1.0→1.22 + alpha 0.55→0 的扩散环（呼吸）
+ * - 外圈 2：固定 1px 七彩描边，色相随时间旋转
+ * - 内核 60 圆白/黑底 + 对勾，对勾自带轻微呼吸透明度
+ */
+@Composable
+fun GlassSeal(
+    modifier: Modifier = Modifier,
+    checkColor: Color,
+    sealBg: Color,
+    border: Color,
+) {
+    val hud = rememberInfiniteTransition(label = "seal")
+    val breath by hud.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(2200, easing = LinearEasing), RepeatMode.Restart),
+        label = "breath",
+    )
+    val huePhase by hud.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(6000, easing = LinearEasing), RepeatMode.Restart),
+        label = "hue",
+    )
+    // 随机七彩：以当前时间为种子，每次进入页面得到一组随机起始色
+    val palette = remember {
+        listOf(
+            Color(0xFFFF7A59), Color(0xFFFFB35C), Color(0xFFFFE45C), Color(0xFF6EF08A),
+            Color(0xFF6EF0C0), Color(0xFF5CE1E6), Color(0xFF7AA2FF), Color(0xFFC77DFF), Color(0xFFFF7AC8),
+        ).shuffled()
+    }
+    val ringColor = lerpHue(palette, huePhase)
+    val ringColor2 = lerpHue(palette, (huePhase + 0.35f) % 1f)
+
+    Box(modifier = modifier.size(84.dp), contentAlignment = Alignment.Center) {
+        // 扩散呼吸环
+        Box(
+            modifier = Modifier
+                .size(60.dp)
+                .graphicsLayer {
+                    val s = 1f + breath * 0.34f
+                    scaleX = s
+                    scaleY = s
+                    alpha = (1f - breath) * 0.55f
+                }
+                .border(1.5.dp, Brush.sweepGradient(listOf(ringColor.copy(alpha = 0f), ringColor, ringColor2, ringColor.copy(alpha = 0f))), CircleShape),
+        )
+        // 固定七彩描边（色相流转）
+        Box(
+            modifier = Modifier
+                .size(64.dp)
+                .graphicsLayer { alpha = 0.5f + 0.3f * (1f - Math.abs(breath - 0.5f) * 2f) }
+                .border(
+                    1.dp,
+                    Brush.sweepGradient(listOf(ringColor, ringColor2, ringColor)),
+                    CircleShape,
+                ),
+        )
+        // 内核
+        Box(
+            modifier = Modifier
+                .size(60.dp)
+                .shadow(
+                    14.dp,
+                    CircleShape,
+                    ambientColor = ringColor.copy(alpha = 0.32f),
+                    spotColor = ringColor.copy(alpha = 0.32f),
+                )
+                .clip(CircleShape)
+                .background(sealBg)
+                .border(1.dp, border, CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_d_check),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(26.dp)
+                    .graphicsLayer { alpha = 0.85f + 0.15f * breath },
+                tint = checkColor,
+            )
+        }
+    }
+}
+
+/** 在调色板里按 t∈[0,1) 线性插值取色，用于色相缓慢流转 */
+private fun lerpHue(palette: List<Color>, t: Float): Color {
+    val n = palette.size
+    val pos = (t % 1f + 1f) % 1f * n
+    val i = pos.toInt() % n
+    val f = pos - pos.toInt()
+    val a = palette[i]
+    val b = palette[(i + 1) % n]
+    return Color(
+        red = a.red + (b.red - a.red) * f,
+        green = a.green + (b.green - a.green) * f,
+        blue = a.blue + (b.blue - a.blue) * f,
+        alpha = 1f,
     )
 }

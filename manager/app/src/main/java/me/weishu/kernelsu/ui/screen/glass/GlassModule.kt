@@ -46,6 +46,7 @@ fun GlassModuleList(
     onToggle: (Module) -> Unit,
     onAddModule: () -> Unit,
     onRefresh: () -> Unit,
+    onCleanModules: () -> Unit = onRefresh,
 ) {
     val t = glassTokens()
     val enabledCount = modules.count { it.enabled }
@@ -58,6 +59,7 @@ fun GlassModuleList(
                 title = stringResource(R.string.module),
                 subtitle = stringResource(R.string.glass_module_count, modules.size, enabledCount),
                 titleSize = 19,
+                accent = t.cyan,
                 trailing = {
                     GlassTopButton(iconRes = R.drawable.ic_d_search, onClick = onRefresh)
                 },
@@ -150,9 +152,18 @@ fun GlassModuleList(
                 onClick = onRefresh,
             )
         }
+        item {
+            GlassWide(
+                iconRes = R.drawable.ic_d_trash,
+                title = stringResource(R.string.glass_clean_modules),
+                subtitle = stringResource(R.string.glass_clean_modules_sub),
+                accent = t.flame,
+                onClick = onCleanModules,
+            )
+        }
         item { Spacer(Modifier.height(10.dp)) }
         item {
-            // .addmod：1.5 虚线感圆角22 添加入口（模块安装 + 模块仓库）
+            // .addmod：1.5 虚线圆角22 添加入口（+ 从存储导入 / 在线浏览模块仓库）
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

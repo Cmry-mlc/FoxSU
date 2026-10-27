@@ -73,20 +73,25 @@ fun GlassSuperUserRow(app: GroupedApps, onClick: () -> Unit) {
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // .uico：渐变方块 + 白色首字
+        // .uico：渐变方块 + 深色首字（设计稿 color:#0b0b12 / 亮色 #3a3a46）
         Box(
             modifier = Modifier
                 .size(40.dp)
-                .shadow(6.dp, RoundedCornerShape(13.dp))
+                .shadow(
+                    6.dp,
+                    RoundedCornerShape(13.dp),
+                    ambientColor = c1.copy(alpha = 0.3f),
+                    spotColor = c1.copy(alpha = 0.3f),
+                )
                 .clip(RoundedCornerShape(13.dp))
                 .background(Brush.linearGradient(listOf(c1, c2))),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = iconText(app.primary.label),
-                fontSize = if (app.primary.label.firstOrNull()?.code ?: 0 < 128) 13.sp else 15.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = Color.White,
+                color = if (t.isDark) Color(0xFF0B0B12) else Color(0xFF3A3A46),
                 maxLines = 1,
             )
         }
@@ -109,20 +114,20 @@ fun GlassSuperUserRow(app: GroupedApps, onClick: () -> Unit) {
                 modifier = Modifier.padding(top = 2.dp),
             )
         }
-        // .uact：渐变 ROOT tag + tog
+        // .uact：渐变 ROOT tag（深色字）+ tog
         if (app.anyAllowSu) {
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(7.dp))
                     .background(Brush.horizontalGradient(listOf(c1, c2)))
-                    .padding(horizontal = 9.dp, vertical = 4.dp),
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
             ) {
                 Text(
                     text = "ROOT",
                     fontSize = 8.5.sp,
                     fontWeight = FontWeight.ExtraBold,
                     letterSpacing = 0.5.sp,
-                    color = Color.White,
+                    color = if (t.isDark) Color(0xFF0B0B12) else Color(0xFF3A3A46),
                     maxLines = 1,
                 )
             }
@@ -221,6 +226,7 @@ fun GlassSuperUserList(
                 title = stringResource(R.string.superuser),
                 subtitle = stringResource(R.string.glass_superuser_sub),
                 titleSize = 19,
+                accent = t.amber,
                 trailing = {
                     Box(
                         modifier = Modifier

@@ -537,6 +537,8 @@
     <string name="glass_quick_actions">快捷操作</string>
     <string name="glass_refresh_modules">刷新模块列表</string>
     <string name="glass_refresh_modules_sub">重新扫描模块目录</string>
+    <string name="glass_clean_modules">清理失效模块</string>
+    <string name="glass_clean_modules_sub">未加载的残留模块可安全移除</string>
     <string name="glass_add_module"><![CDATA[＋ 从存储安装模块，或 <b>在线浏览模块仓库</b>]]></string>
     <string name="glass_group_general">通用</string>
     <string name="glass_group_appearance">外观</string>
@@ -544,6 +546,14 @@
     <string name="glass_su_compat">传统 SU 命令支持</string>
     <string name="glass_sulog">SU 日志</string>
     <string name="glass_settings_sub">FoxSu Glass · 液态玻璃</string>
+    <string name="glass_settings_font">字体</string>
+    <string name="glass_settings_font_sub">跟随系统</string>
+    <string name="glass_settings_bottom_bar">底部导航栏</string>
+    <string name="glass_settings_bottom_bar_sub">胶囊 · 不透明度 100%</string>
+    <string name="glass_settings_selinux_hide">隐藏 SELinux 修改</string>
+    <string name="glass_settings_selinux_hide_sub">内核不支持此特性</string>
+    <string name="glass_settings_su_compat_sub">启用（默认）</string>
+    <string name="glass_st_na">N/A</string>
     <string name="glass_st_on">开</string>
     <string name="glass_st_off">关</string>
     <string name="glass_st_latest">最新</string>

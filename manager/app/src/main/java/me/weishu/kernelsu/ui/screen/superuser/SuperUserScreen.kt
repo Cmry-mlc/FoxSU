@@ -90,7 +90,7 @@ fun SuperUserPager(
             bottomInnerPadding = bottomInnerPadding,
         )
 
-        UiMode.Material, UiMode.Fresh, UiMode.Glass -> SuperUserPagerMaterial(
+        UiMode.Material, UiMode.Fresh -> SuperUserPagerMaterial(
             uiState = uiState,
             actions = actions,
             bottomInnerPadding = bottomInnerPadding,

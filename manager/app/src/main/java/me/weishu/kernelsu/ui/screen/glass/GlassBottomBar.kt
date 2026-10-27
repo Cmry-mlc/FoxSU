@@ -1,5 +1,6 @@
 package me.weishu.kernelsu.ui.screen.glass
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,8 +26,13 @@ import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
 import me.weishu.kernelsu.ui.theme.glassTokens
 
 /**
- * .dock：悬浮胶囊底栏（设计稿 fit-content + 居中，外层 padding 6，item padding 8×15）。
- * 选中项：白色 pill + 顶部上移 7dp 的 22×3 霓虹条 + 深色图标。
+ * .dock 悬浮胶囊底栏 —— 严格按设计稿：
+ *   bottom:14px; 居中; padding:6px; border-radius:99px
+ *   暗色 bg rgba(16,16,24,.85) + 1px rgba(255,255,255,.08) + 阴影 0 14 34 rgba(0,0,0,.6)
+ *   亮色 bg rgba(255,255,255,.7)  + 1px rgba(255,255,255,.9)  + 阴影 0 14 34 rgba(90,85,120,.25)
+ *   .ditem padding 8×15, radius 18, icon 17px, font 9px/ls .5px
+ *   .ditem.on：pill 底色 + 顶部 22×3 霓虹条（top:-7）+ 文字/图标反色
+ *   .n 角标：top2 right10, font 7.5→8.5, 背景取导航项对应霓虹色
  */
 @Composable
 fun GlassBottomBar(
@@ -36,10 +43,10 @@ fun GlassBottomBar(
 ) {
     val t = glassTokens()
     val items = listOf(
-        Triple(R.drawable.ic_d_home, R.string.home, 0),
-        Triple(R.drawable.ic_d_shield, R.string.superuser, 1),
-        Triple(R.drawable.ic_d_grid, R.string.module, 2),
-        Triple(R.drawable.ic_d_tune, R.string.settings, 3),
+        BottomItem(R.drawable.ic_d_home, R.string.home, 0, t.cyan, 0),
+        BottomItem(R.drawable.ic_d_shield, R.string.superuser, 1, t.violet, badge.superuserCount),
+        BottomItem(R.drawable.ic_d_grid, R.string.module, 2, t.pink, badge.moduleEnabledCount),
+        BottomItem(R.drawable.ic_d_tune, R.string.settings, 3, t.blue, 0),
     )
     Box(
         modifier = modifier.fillMaxWidth(),
@@ -51,50 +58,54 @@ fun GlassBottomBar(
                 .shadow(
                     14.dp,
                     RoundedCornerShape(99.dp),
-                    ambientColor = Color(0x99000000),
-                    spotColor = Color(0x99000000),
+                    ambientColor = t.dockShadow,
+                    spotColor = t.dockShadow,
                 )
                 .clip(RoundedCornerShape(99.dp))
-                // .dock：设计稿无论明暗都是深色胶囊 rgba(16,16,24,.85)
-                .background(Color(0xD9101018))
-                .border(1.dp, Color(0x14FFFFFF), RoundedCornerShape(99.dp))
+                .background(t.dockBg)
+                .border(1.dp, t.dockBorder, RoundedCornerShape(99.dp))
                 .padding(6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            items.forEach { (iconRes, labelRes, tab) ->
-                val selected = tab == currentTab
-                val badgeCount = when (tab) {
-                    1 -> badge.superuserCount
-                    2 -> badge.moduleEnabledCount
-                    else -> 0
-                }
+            items.forEach { item ->
+                val selected = item.tab == currentTab
+                val bg by animateColorAsState(
+                    if (selected) t.dockSelectedBg else Color.Transparent,
+                    label = "dockBg",
+                )
+                val fg by animateColorAsState(
+                    if (selected) t.dockInk else t.dockSub,
+                    label = "dockFg",
+                )
+                val iconTint by animateColorAsState(
+                    if (selected) t.dockInk else t.dockIconOff,
+                    label = "dockIcon",
+                )
                 Box {
                     Column(
                         modifier = Modifier
                             .clip(RoundedCornerShape(18.dp))
-                            .background(if (selected) Color(0x0FFFFFFF) else Color.Transparent)
-                            .clickable { onOpenTab(tab) }
+                            .background(bg)
+                            .clickable { onOpenTab(item.tab) }
                             .padding(horizontal = 15.dp, vertical = 8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Icon(
-                            painter = painterResource(iconRes),
+                            painter = painterResource(item.iconRes),
                             contentDescription = null,
                             modifier = Modifier.size(17.dp),
-                            // .ditem svg{stroke:#6a677a} / .ditem.on svg{stroke:#fff}
-                            tint = if (selected) Color.White else Color(0xFF6A677A),
+                            tint = iconTint,
                         )
                         Text(
-                            text = stringResource(labelRes),
+                            text = stringResource(item.labelRes),
                             fontSize = 9.sp,
                             letterSpacing = 0.5.sp,
-                            // .ditem{color:var(--sub)} / .ditem.on{color:#fff}
-                            color = if (selected) Color.White else Color(0xFF8E8B9C),
+                            color = fg,
                             maxLines = 1,
                             modifier = Modifier.padding(top = 2.dp),
                         )
                     }
-                    // .ditem.on::before —— 顶部霓虹条
+                    // .ditem.on::before —— 顶部 22×3 霓虹条，位于 pill 外 7dp
                     if (selected) {
                         Box(
                             modifier = Modifier
@@ -105,23 +116,37 @@ fun GlassBottomBar(
                                 .background(t.dockGrad),
                         )
                     }
-                    if (badgeCount > 0) {
-                        Text(
-                            text = badgeCount.toString(),
-                            fontSize = 7.5.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Color.White,
-                            maxLines = 1,
+                    // .n 角标：色彩与所在导航项图标一致
+                    if (item.count > 0) {
+                        Box(
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
                                 .padding(top = 2.dp, end = 10.dp)
+                                .heightIn(min = 14.dp)
                                 .clip(CircleShape)
-                                .background(t.flame)
-                                .padding(horizontal = 5.dp, vertical = 1.dp),
-                        )
+                                .background(item.accent)
+                                .padding(horizontal = 6.dp, vertical = 1.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = item.count.toString(),
+                                fontSize = 8.5.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color.White,
+                                maxLines = 1,
+                            )
+                        }
                     }
                 }
             }
         }
     }
 }
+
+private data class BottomItem(
+    val iconRes: Int,
+    val labelRes: Int,
+    val tab: Int,
+    val accent: Color,
+    val count: Int,
+)

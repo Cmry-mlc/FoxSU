@@ -543,6 +543,8 @@
     <string name="glass_quick_actions">Quick actions</string>
     <string name="glass_refresh_modules">Refresh modules</string>
     <string name="glass_refresh_modules_sub">Rescan module directory</string>
+    <string name="glass_clean_modules">Clean unused modules</string>
+    <string name="glass_clean_modules_sub">Remove leftover modules safely</string>
     <string name="glass_add_module">Install .zip from storage, or <b>browse repo online</b></string>
     <string name="glass_group_general">General</string>
     <string name="glass_group_appearance">Appearance</string>
@@ -550,6 +552,14 @@
     <string name="glass_su_compat">Legacy SU support</string>
     <string name="glass_sulog">SU log</string>
     <string name="glass_settings_sub">FoxSu Glass · Liquid</string>
+    <string name="glass_settings_font">Font</string>
+    <string name="glass_settings_font_sub">Follow system</string>
+    <string name="glass_settings_bottom_bar">Bottom navigation</string>
+    <string name="glass_settings_bottom_bar_sub">Capsule · opacity 100%</string>
+    <string name="glass_settings_selinux_hide">Hide SELinux changes</string>
+    <string name="glass_settings_selinux_hide_sub">Kernel does not support this</string>
+    <string name="glass_settings_su_compat_sub">Enabled (default)</string>
+    <string name="glass_st_na">N/A</string>
     <string name="glass_st_on">ON</string>
     <string name="glass_st_off">OFF</string>
     <string name="glass_st_latest">Latest</string>

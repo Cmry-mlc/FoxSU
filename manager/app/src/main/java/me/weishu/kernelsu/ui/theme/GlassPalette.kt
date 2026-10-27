@@ -4,19 +4,26 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush.Companion.horizontalGradient
-import androidx.compose.ui.graphics.Brush.Companion.radialGradient
 import me.weishu.kernelsu.ui.component.isNightScheme
 
 /**
- * FoxSu Glass 设计稿 token：
- * 暗色 :root{--bg:#0d0d14 --panel #16161f --panel2 #1c1c28 --line rgba(255,255,255,.07)
- *            --ink #f0eef6 --ink2 #c9c6d6 --sub #8e8b9c --faint #55525f}
- * 亮色（液态玻璃覆盖）：--bg #eef0f7 --panel rgba(255,255,255,.55) --line rgba(255,255,255,.7)
- *            --ink #26262e --ink2 #55525f --sub #7a7788 --faint #a3a0b2
- * 霓虹色暗色版：flame #ff7a59 amber #ffb35c lemon #ffe45c lime #6ef08a
- *               cyan #5ce1e6 blue #7aa2ff violet #c77dff pink #ff7ac8 mint #6ef0c0
- * 霓虹色亮色版：flame #d94f2e amber #c97a10 lemon #a8860e lime #2e9a50
- *               cyan #0e8a99 blue #4d6fd8 violet #8a3fd0 pink #d84f9a mint #1e9a78
+ * FoxSu Glass 设计稿 token（严格对应 foxsu-glass-ui.html）
+ *
+ * 暗色默认：
+ *   --bg #0d0d14  --panel #16161f  --panel2 #1c1c28  --line rgba(255,255,255,.07)
+ *   --ink #f0eef6  --ink2 #c9c6d6  --sub #8e8b9c  --faint #55525f
+ *   霓虹：flame #ff7a59 amber #ffb35c lemon #ffe45c lime #6ef08a
+ *         cyan #5ce1e6 blue #7aa2ff violet #c77dff pink #ff7ac8 mint #6ef0c0
+ *   面板（.hero/.ncard/.wide/.urow/.mod/.srow）rgba(255,255,255,.03) + 1px var(--line)
+ *   底栏 .dock rgba(16,16,24,.85) + 1px rgba(255,255,255,.08)
+ *
+ * 亮色覆盖（液态玻璃）：
+ *   --bg #eef0f7  --panel/panel2 rgba(255,255,255,.55)  --line rgba(255,255,255,.7)
+ *   --ink #26262e  --ink2 #55525f  --sub #7a7788  --faint #a3a0b2
+ *   霓虹：flame #d94f2e amber #c97a10 lemon #a8860e lime #2e9a50
+ *         cyan #0e8a99 blue #4d6fd8 violet #8a3fd0 pink #d84f9a mint #1e9a78
+ *   面板 rgba(255,255,255,.55) + 1px rgba(255,255,255,.8) + 0 8 24 rgba(90,85,120,.12) + inset 0 1 0 rgba(255,255,255,.9)
+ *   底栏 .dock rgba(255,255,255,.7) + 1px rgba(255,255,255,.9)
  */
 data class GlassTokens(
     val isDark: Boolean,
@@ -38,40 +45,51 @@ data class GlassTokens(
     val pink: Color,
     val mint: Color,
 ) {
-    /** 黑玻璃/白玻璃面板底 */
-    val glassPanel: Color get() = if (isDark) Color(0x08FFFFFF) else Color(0xD9FFFFFF)
-    val glassPanelStrong: Color get() = if (isDark) Color(0x0FFFFFFF) else Color(0x99FFFFFF)
+    // ---- 玻璃面板 ----
+    val glassPanel: Color get() = if (isDark) Color(0x08FFFFFF) else Color(0x8CFFFFFF)
+    val glassPanelStrong: Color get() = if (isDark) Color(0x0FFFFFFF) else Color(0xCCFFFFFF)
     val glassBorder: Color get() = if (isDark) Color(0x12FFFFFF) else Color(0xCCFFFFFF)
+    val glassShadow: Color get() = if (isDark) Color(0xB3000000) else Color(0x1F5A5578)
+
+    // ---- .chip ----
+    val chipBg: Color get() = if (isDark) Color(0x0DFFFFFF) else Color(0x99FFFFFF)
+    val chipBorder: Color get() = if (isDark) Color(0x12FFFFFF) else Color(0xD9FFFFFF)
+
+    // ---- .tbtn（顶栏按钮）----
+    val tbtnBg: Color get() = if (isDark) Color(0x0DFFFFFF) else Color(0x99FFFFFF)
+    val tbtnBorder: Color get() = if (isDark) Color(0x12FFFFFF) else Color(0xD9FFFFFF)
+    val tbtnIcon: Color get() = if (isDark) ink2 else Color(0xFF55525F)
+
+    // ---- .ava（头像）----
+    val avaBg: Color get() = if (isDark) Color(0xFF050508) else Color.White
+
+    // ---- .hero .seal ----
+    val sealBg: Color get() = if (isDark) Color(0xFF0B0B12) else Color(0xBFFFFFFF)
+
+    // ---- .dock（底栏：亮色白玻璃 / 暗色深玻璃）----
+    val dockBg: Color get() = if (isDark) Color(0xD9101018) else Color(0xB3FFFFFF)
+    val dockBorder: Color get() = if (isDark) Color(0x14FFFFFF) else Color(0xE6FFFFFF)
+    val dockShadow: Color get() = if (isDark) Color(0x99000000) else Color(0x405A5578)
+    val dockInk: Color get() = if (isDark) Color.White else ink
+    val dockSub: Color get() = if (isDark) Color(0xFF8E8B9C) else Color(0xFF7A7788)
+    val dockIconOff: Color get() = if (isDark) Color(0xFF6A677A) else Color(0xFFA3A0B2)
+    val dockSelectedBg: Color get() = if (isDark) Color(0x0FFFFFFF) else Color(0xE6FFFFFF)
+
+    // ---- 渐变 ----
     val heroGrad: Brush
         get() = if (isDark) {
             horizontalGradient(listOf(Color(0xFFFF7A59), Color(0xFFC77DFF), Color(0xFF5CE1E6)))
         } else {
             horizontalGradient(listOf(Color(0xFFD94F2E), Color(0xFF8A3FD0), Color(0xFF0E8A99)))
         }
-    val glineGrad: Brush
-        get() = if (isDark) {
-            horizontalGradient(listOf(Color(0xFFFF7A59), Color(0xFFC77DFF)))
-        } else {
-            horizontalGradient(listOf(Color(0xFFD94F2E), Color(0xFF8A3FD0)))
-        }
-    val dockGrad: Brush
-        get() = if (isDark) {
-            horizontalGradient(listOf(Color(0xFFFF7A59), Color(0xFFC77DFF)))
-        } else {
-            horizontalGradient(listOf(Color(0xFFD94F2E), Color(0xFF8A3FD0)))
-        }
-    val switchGrad: Brush
-        get() = if (isDark) {
-            horizontalGradient(listOf(Color(0xFFFF7A59), Color(0xFFC77DFF)))
-        } else {
-            horizontalGradient(listOf(Color(0xFFD94F2E), Color(0xFF8A3FD0)))
-        }
+    val glineGrad: Brush get() = horizontalGradient(listOf(flame, violet))
+    val dockGrad: Brush get() = horizontalGradient(listOf(flame, violet))
+    val switchGrad: Brush get() = horizontalGradient(listOf(flame, violet))
     val togOff: Color get() = if (isDark) Color(0xFF2C2C38) else Color(0xFFD9D6E6)
     val togThumbOff: Color get() = if (isDark) Color(0xFF8E8B9C) else Color.White
 
-    /** 屏幕背景光晕（.screen::before 三组径向渐变，a1 变体）。
-     *  设计稿：300×240 at 15% 8% / 280×240 at 90% 30% / 280×240 at 40% 95%，blur 64px，opacity .75 */
-    fun auraBrush(seed: Int): Brush {
+    /** .screen::before 三层独立径向光斑（设计稿 a1–a4 变体） */
+    fun auraLayers(seed: Int): List<Brush> {
         val colors = if (isDark) {
             when (seed % 4) {
                 0 -> listOf(Color(0xFF5C2B1E), Color(0xFF2B1E5C), Color(0xFF1E4230))
@@ -87,42 +105,23 @@ data class GlassTokens(
                 else -> listOf(Color(0xFFFBD0E3), Color(0xFFFDF0C4), Color(0xFFD4D2FC))
             }
         }
-        // 三个独立光斑，用横向渐变近似三色并列（Compose 单 Brush 无法叠三组径向，
-        // 故在外层由 auraLayers() 叠加三层）。
-        return Brush.horizontalGradient(colors)
-    }
-
-    /** 三层独立径向光斑（对应设计稿三个 radial-gradient），按坐标叠加 */
-    fun auraLayers(seed: Int): List<Pair<Brush, androidx.compose.ui.geometry.Offset>> {
-        val colors = if (isDark) {
-            when (seed % 4) {
-                0 -> listOf(Color(0xFF5C2B1E), Color(0xFF2B1E5C), Color(0xFF1E4230))
-                1 -> listOf(Color(0xFF1E3A5C), Color(0xFF5C1E47), Color(0xFF1E4242))
-                2 -> listOf(Color(0xFF1E4242), Color(0xFF3A2B5C), Color(0xFF5C2B1E))
-                else -> listOf(Color(0xFF5C2B47), Color(0xFF42421E), Color(0xFF2B1E5C))
-            }
-        } else {
-            when (seed % 4) {
-                0 -> listOf(Color(0xFFFFD3C2), Color(0xFFDDD0FF), Color(0xFFC2ECD4))
-                1 -> listOf(Color(0xFFC9DEFC), Color(0xFFFCC9E3), Color(0xFFC2F0EC))
-                2 -> listOf(Color(0xFFC2F0EC), Color(0xFFDED0FC), Color(0xFFFFD9C4))
-                else -> listOf(Color(0xFFFBD0E3), Color(0xFFFDF0C4), Color(0xFFD4D2FC))
-            }
-        }
-        val alpha = if (isDark) 0.5f else 1f
-        val positions = listOf(
+        val centers = listOf(
             androidx.compose.ui.geometry.Offset(0.15f, 0.08f),
             androidx.compose.ui.geometry.Offset(0.90f, 0.30f),
             androidx.compose.ui.geometry.Offset(0.40f, 0.95f),
         )
+        // 设计稿亮色 opacity .75 / 暗色 .5，由调用方统一乘到图层 alpha 上
         return colors.mapIndexed { i, c ->
             Brush.radialGradient(
-                colors = listOf(c.copy(alpha = alpha), Color.Transparent),
-                center = positions[i],
-                radius = 750f,
-            ) to positions[i]
+                colors = listOf(c, Color.Transparent),
+                center = centers[i],
+                radius = 720f,
+            )
         }
     }
+
+    /** 兼容旧调用 */
+    fun auraBrush(seed: Int): Brush = auraLayers(seed).first()
 }
 
 @Composable
@@ -142,7 +141,7 @@ fun glassTokens(): GlassTokens {
         GlassTokens(
             isDark = false,
             bg = Color(0xFFEEF0F7), panel = Color(0x8CFFFFFF), panel2 = Color(0x8CFFFFFF),
-            line = Color(0xCCFFFFFF),
+            line = Color(0xB3FFFFFF),
             ink = Color(0xFF26262E), ink2 = Color(0xFF55525F), sub = Color(0xFF7A7788), faint = Color(0xFFA3A0B2),
             flame = Color(0xFFD94F2E), amber = Color(0xFFC97A10), lemon = Color(0xFFA8860E), lime = Color(0xFF2E9A50),
             cyan = Color(0xFF0E8A99), blue = Color(0xFF4D6FD8), violet = Color(0xFF8A3FD0), pink = Color(0xFFD84F9A),

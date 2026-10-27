@@ -290,7 +290,7 @@ class MainActivity : ComponentActivity() {
                                     .graphicsLayer { alpha = if (gt.isDark) 0.5f else 0.75f }
                                     .blur(64.dp)
                             ) {
-                                gt.auraLayers(0).forEach { (brush, _) ->
+                                gt.auraLayers(0).forEach { brush ->
                                     Box(modifier = Modifier.fillMaxSize().background(brush))
                                 }
                             }

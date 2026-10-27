@@ -16,25 +16,25 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.LocalUiMode
-import me.weishu.kernelsu.ui.UiMode
 import me.weishu.kernelsu.ui.screen.settings.SettingsScreenActions
 import me.weishu.kernelsu.ui.screen.settings.SettingsUiState
 import me.weishu.kernelsu.ui.theme.glassTokens
 import me.weishu.kernelsu.ui.uiModeLabelRes
 
-/** .srow：20 圆角玻璃设置行 —— chip + (sT 13.5/700 + sS 10 faint) + 右侧 st 徽章 / .tog / ›箭头 */
+/** .srow：20 圆角玻璃行 —— chip 38 + sT 13.5/700 + sS 10 faint + 右侧 st/tog/chevron */
 private data class GlassSettingRow(
     val iconRes: Int,
     val title: String,
     val subtitle: String,
-    val accent: Long,
+    val accent: Color,
     val stText: String? = null,
-    val stColor: Long = 0xFF6EF08A,
+    val stColor: Color? = null,
     val checked: Boolean? = null,
     val showChevron: Boolean = false,
     val onClick: () -> Unit = {},
@@ -52,29 +52,54 @@ private fun GlassSettingRowComposable(row: GlassSettingRow) {
             .padding(horizontal = 15.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        GlassChip(iconRes = row.iconRes, accent = Color(row.accent))
+        Box(
+            modifier = Modifier
+                .size(38.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(t.chipBg)
+                .border(1.dp, t.chipBorder, RoundedCornerShape(12.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(row.iconRes),
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+                tint = row.accent,
+            )
+        }
         Spacer(Modifier.width(13.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(row.title, fontSize = 13.5.sp, fontWeight = FontWeight.Bold, color = t.ink)
             Text(
-                row.subtitle,
-                fontSize = 10.sp,
-                color = t.faint,
-                modifier = Modifier.padding(top = 2.dp),
+                row.title,
+                fontSize = 13.5.sp,
+                fontWeight = FontWeight.Bold,
+                color = t.ink,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
+            if (row.subtitle.isNotBlank()) {
+                Text(
+                    row.subtitle,
+                    fontSize = 10.sp,
+                    color = t.faint,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+            }
         }
         when {
             row.stText != null -> {
-                Spacer(Modifier.width(8.dp))
-                GlassStBadge(text = row.stText, color = Color(row.stColor))
+                Spacer(Modifier.width(10.dp))
+                GlassStBadge(text = row.stText, color = row.stColor ?: t.lime)
             }
             row.checked != null -> {
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(10.dp))
                 GlassToggle(checked = row.checked, onClick = row.onClick)
             }
             row.showChevron -> {
-                Spacer(Modifier.width(8.dp))
-                Text("›", fontSize = 16.sp, color = t.faint)
+                Spacer(Modifier.width(6.dp))
+                Text("›", fontSize = 17.sp, color = t.faint)
             }
         }
     }
@@ -88,7 +113,13 @@ private fun GlassSettingGroup(title: String, rows: List<GlassSettingRow>) {
     }
 }
 
-/** Glass 设置页整页：头像标题行 + 通用 / 外观 / 安全与调试 三组（同设计稿） */
+/**
+ * Glass 设置页整页 —— 严格按设计稿 ④ 设置：
+ *   顶栏 violet 狐头像（19px 标题 + 副标题）+ 搜索按钮
+ *   通用：检查更新 / 检查模块更新
+ *   外观：界面风格 / 背景与壁纸 / 字体 / 底部导航栏
+ *   安全与调试：传统 SU 命令支持 / 隐藏 SELinux 修改 / SU 日志
+ */
 @Composable
 fun GlassSettingsList(
     uiState: SettingsUiState,
@@ -102,13 +133,14 @@ fun GlassSettingsList(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 13.dp, end = 13.dp, top = 8.dp, bottom = bottomInnerPadding + 96.dp),
+        contentPadding = PaddingValues(start = 13.dp, end = 13.dp, top = 4.dp, bottom = bottomInnerPadding + 92.dp),
     ) {
         item {
             GlassTopBar(
                 title = stringResource(R.string.settings),
                 subtitle = stringResource(R.string.glass_settings_sub),
                 titleSize = 19,
+                accent = t.violet,
                 trailing = {
                     GlassTopButton(iconRes = R.drawable.ic_d_search, onClick = {})
                 },
@@ -125,15 +157,15 @@ fun GlassSettingsList(
                             R.string.glass_version_fmt,
                             me.weishu.kernelsu.BuildConfig.VERSION_NAME
                         ),
-                        accent = 0xFF5CE1E6,
+                        accent = t.cyan,
                         stText = stringResource(R.string.glass_st_latest),
-                        stColor = 0xFF6EF08A,
+                        stColor = t.lime,
                     ),
                     GlassSettingRow(
                         iconRes = R.drawable.ic_d_refresh,
                         title = stringResource(R.string.settings_module_check_update),
                         subtitle = stringResource(R.string.settings_check_update_summary),
-                        accent = 0xFFFFB35C,
+                        accent = t.amber,
                         checked = uiState.checkModuleUpdate,
                         onClick = { actions.onSetCheckModuleUpdate(!uiState.checkModuleUpdate) },
                     ),
@@ -148,7 +180,7 @@ fun GlassSettingsList(
                         iconRes = R.drawable.ic_d_palette,
                         title = stringResource(R.string.settings_ui_mode),
                         subtitle = stringResource(uiModeLabelRes(LocalUiMode.current)),
-                        accent = 0xFFFF7AC8,
+                        accent = t.pink,
                         showChevron = true,
                         onClick = { showStylePicker = true },
                     ),
@@ -156,15 +188,23 @@ fun GlassSettingsList(
                         iconRes = R.drawable.ic_d_image,
                         title = stringResource(R.string.customization_title),
                         subtitle = stringResource(R.string.customization_entry_summary),
-                        accent = 0xFFC77DFF,
+                        accent = t.violet,
                         showChevron = true,
                         onClick = onOpenCustomization,
                     ),
                     GlassSettingRow(
-                        iconRes = R.drawable.ic_d_tool,
-                        title = stringResource(R.string.settings_theme),
-                        subtitle = stringResource(R.string.settings_theme_summary),
-                        accent = 0xFFFFE45C,
+                        iconRes = R.drawable.ic_d_font,
+                        title = stringResource(R.string.glass_settings_font),
+                        subtitle = stringResource(R.string.glass_settings_font_sub),
+                        accent = t.lemon,
+                        showChevron = true,
+                        onClick = actions.onOpenTheme,
+                    ),
+                    GlassSettingRow(
+                        iconRes = R.drawable.ic_d_card,
+                        title = stringResource(R.string.glass_settings_bottom_bar),
+                        subtitle = stringResource(R.string.glass_settings_bottom_bar_sub),
+                        accent = t.cyan,
                         showChevron = true,
                         onClick = actions.onOpenTheme,
                     ),
@@ -178,29 +218,30 @@ fun GlassSettingsList(
                     GlassSettingRow(
                         iconRes = R.drawable.ic_d_terminal,
                         title = stringResource(R.string.glass_su_compat),
-                        subtitle = uiState.suCompatStatus.ifBlank {
-                            stringResource(R.string.settings_sucompat_summary)
-                        },
-                        accent = 0xFF6EF08A,
+                        subtitle = stringResource(R.string.glass_settings_su_compat_sub),
+                        accent = t.lime,
                         stText = if (uiState.isSuEnabled) stringResource(R.string.glass_st_on)
                         else stringResource(R.string.glass_st_off),
-                        stColor = if (uiState.isSuEnabled) 0xFF6EF08A else 0xFF55525F,
+                        stColor = if (uiState.isSuEnabled) t.lime else t.faint,
+                    ),
+                    GlassSettingRow(
+                        iconRes = R.drawable.ic_d_lock,
+                        title = stringResource(R.string.glass_settings_selinux_hide),
+                        subtitle = uiState.selinuxHideStatus.ifBlank {
+                            stringResource(R.string.glass_settings_selinux_hide_sub)
+                        },
+                        accent = t.blue,
+                        stText = if (uiState.isSelinuxHideEnabled) stringResource(R.string.glass_st_on)
+                        else stringResource(R.string.glass_st_na),
+                        stColor = if (uiState.isSelinuxHideEnabled) t.lime else t.violet,
                     ),
                     GlassSettingRow(
                         iconRes = R.drawable.ic_d_log,
                         title = stringResource(R.string.glass_sulog),
                         subtitle = stringResource(R.string.settings_sulog_summary),
-                        accent = 0xFFFFB35C,
+                        accent = t.amber,
                         showChevron = true,
                         onClick = onOpenSulog,
-                    ),
-                    GlassSettingRow(
-                        iconRes = R.drawable.ic_d_book,
-                        title = stringResource(R.string.settings_grid_about),
-                        subtitle = "FoxSu Glass",
-                        accent = 0xFF7AA2FF,
-                        showChevron = true,
-                        onClick = actions.onOpenAbout,
                     ),
                 ),
             )
