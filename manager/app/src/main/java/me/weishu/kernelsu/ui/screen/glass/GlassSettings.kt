@@ -158,8 +158,8 @@ fun GlassSettingsList(
                             me.weishu.kernelsu.BuildConfig.VERSION_NAME
                         ),
                         accent = t.cyan,
-                        stText = stringResource(R.string.glass_st_latest),
-                        stColor = t.lime,
+                        checked = uiState.checkUpdate,
+                        onClick = { actions.onSetCheckUpdate(!uiState.checkUpdate) },
                     ),
                     GlassSettingRow(
                         iconRes = R.drawable.ic_d_refresh,
@@ -168,6 +168,22 @@ fun GlassSettingsList(
                         accent = t.amber,
                         checked = uiState.checkModuleUpdate,
                         onClick = { actions.onSetCheckModuleUpdate(!uiState.checkModuleUpdate) },
+                    ),
+                    GlassSettingRow(
+                        iconRes = R.drawable.ic_d_power2,
+                        title = stringResource(R.string.settings_soft_reboot),
+                        subtitle = stringResource(R.string.settings_soft_reboot_summary),
+                        accent = t.flame,
+                        checked = uiState.useSoftReboot,
+                        onClick = { actions.onSetUseSoftReboot(!uiState.useSoftReboot) },
+                    ),
+                    GlassSettingRow(
+                        iconRes = R.drawable.ic_d_hammer,
+                        title = stringResource(R.string.settings_auto_jailbreak),
+                        subtitle = stringResource(R.string.settings_auto_jailbreak_summary),
+                        accent = t.lime,
+                        checked = uiState.autoJailbreak,
+                        onClick = { actions.onSetAutoJailbreak(!uiState.autoJailbreak) },
                     ),
                 ),
             )
@@ -193,20 +209,20 @@ fun GlassSettingsList(
                         onClick = onOpenCustomization,
                     ),
                     GlassSettingRow(
-                        iconRes = R.drawable.ic_d_font,
-                        title = stringResource(R.string.glass_settings_font),
-                        subtitle = stringResource(R.string.glass_settings_font_sub),
+                        iconRes = R.drawable.ic_d_tool,
+                        title = stringResource(R.string.settings_theme),
+                        subtitle = stringResource(R.string.settings_theme_summary),
                         accent = t.lemon,
                         showChevron = true,
                         onClick = actions.onOpenTheme,
                     ),
                     GlassSettingRow(
-                        iconRes = R.drawable.ic_d_card,
-                        title = stringResource(R.string.glass_settings_bottom_bar),
-                        subtitle = stringResource(R.string.glass_settings_bottom_bar_sub),
+                        iconRes = R.drawable.ic_d_grid,
+                        title = stringResource(R.string.settings_profile_template),
+                        subtitle = stringResource(R.string.settings_profile_template_summary),
                         accent = t.cyan,
                         showChevron = true,
-                        onClick = actions.onOpenTheme,
+                        onClick = actions.onOpenProfileTemplate,
                     ),
                 ),
             )
@@ -217,31 +233,93 @@ fun GlassSettingsList(
                 rows = listOf(
                     GlassSettingRow(
                         iconRes = R.drawable.ic_d_terminal,
-                        title = stringResource(R.string.glass_su_compat),
-                        subtitle = stringResource(R.string.glass_settings_su_compat_sub),
+                        title = stringResource(R.string.settings_sucompat),
+                        subtitle = uiState.suCompatStatus.ifBlank {
+                            stringResource(R.string.settings_sucompat_summary)
+                        },
                         accent = t.lime,
                         stText = if (uiState.isSuEnabled) stringResource(R.string.glass_st_on)
                         else stringResource(R.string.glass_st_off),
                         stColor = if (uiState.isSuEnabled) t.lime else t.faint,
                     ),
                     GlassSettingRow(
+                        iconRes = R.drawable.ic_d_shield2,
+                        title = stringResource(R.string.settings_kernel_umount),
+                        subtitle = uiState.kernelUmountStatus.ifBlank {
+                            stringResource(R.string.settings_kernel_umount_summary)
+                        },
+                        accent = t.violet,
+                        checked = uiState.isKernelUmountEnabled,
+                        onClick = { actions.onSetKernelUmountEnabled(!uiState.isKernelUmountEnabled) },
+                    ),
+                    GlassSettingRow(
                         iconRes = R.drawable.ic_d_lock,
-                        title = stringResource(R.string.glass_settings_selinux_hide),
+                        title = stringResource(R.string.settings_selinux_hide),
                         subtitle = uiState.selinuxHideStatus.ifBlank {
-                            stringResource(R.string.glass_settings_selinux_hide_sub)
+                            stringResource(R.string.settings_selinux_hide_summary)
                         },
                         accent = t.blue,
-                        stText = if (uiState.isSelinuxHideEnabled) stringResource(R.string.glass_st_on)
-                        else stringResource(R.string.glass_st_na),
-                        stColor = if (uiState.isSelinuxHideEnabled) t.lime else t.violet,
+                        checked = uiState.isSelinuxHideEnabled,
+                        onClick = { actions.onSetSelinuxHideEnabled(!uiState.isSelinuxHideEnabled) },
                     ),
                     GlassSettingRow(
                         iconRes = R.drawable.ic_d_log,
-                        title = stringResource(R.string.glass_sulog),
+                        title = stringResource(R.string.settings_sulog),
                         subtitle = stringResource(R.string.settings_sulog_summary),
                         accent = t.amber,
                         showChevron = true,
                         onClick = onOpenSulog,
+                    ),
+                    GlassSettingRow(
+                        iconRes = R.drawable.ic_d_android,
+                        title = stringResource(R.string.settings_adb_root),
+                        subtitle = uiState.adbRootStatus.ifBlank {
+                            stringResource(R.string.settings_adb_root_summary)
+                        },
+                        accent = t.mint,
+                        checked = uiState.isAdbRootEnabled,
+                        onClick = { actions.onSetAdbRootEnabled(!uiState.isAdbRootEnabled) },
+                    ),
+                    GlassSettingRow(
+                        iconRes = R.drawable.ic_d_terminal,
+                        title = stringResource(R.string.settings_shell_su_adb_only),
+                        subtitle = uiState.shellSuAdbOnlyStatus.ifBlank {
+                            stringResource(R.string.settings_shell_su_adb_only_summary)
+                        },
+                        accent = t.cyan,
+                        checked = uiState.isShellSuAdbOnlyEnabled,
+                        onClick = { actions.onSetShellSuAdbOnlyEnabled(!uiState.isShellSuAdbOnlyEnabled) },
+                    ),
+                ),
+            )
+        }
+        item {
+            GlassSettingGroup(
+                title = stringResource(R.string.glass_group_advanced),
+                rows = listOf(
+                    GlassSettingRow(
+                        iconRes = R.drawable.ic_d_grid,
+                        title = stringResource(R.string.settings_umount_modules_default),
+                        subtitle = stringResource(R.string.settings_umount_modules_default_summary),
+                        accent = t.pink,
+                        checked = uiState.isDefaultUmountModules,
+                        onClick = { actions.onSetDefaultUmountModules(!uiState.isDefaultUmountModules) },
+                    ),
+                    GlassSettingRow(
+                        iconRes = R.drawable.ic_d_tool,
+                        title = stringResource(R.string.enable_web_debugging),
+                        subtitle = stringResource(R.string.enable_web_debugging_summary),
+                        accent = t.blue,
+                        checked = uiState.enableWebDebugging,
+                        onClick = { actions.onSetEnableWebDebugging(!uiState.enableWebDebugging) },
+                    ),
+                    GlassSettingRow(
+                        iconRes = R.drawable.ic_d_book,
+                        title = stringResource(R.string.about),
+                        subtitle = "FoxSu Glass",
+                        accent = t.violet,
+                        showChevron = true,
+                        onClick = actions.onOpenAbout,
                     ),
                 ),
             )

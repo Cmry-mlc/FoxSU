@@ -111,6 +111,7 @@ fun HomePager(
             bottomInnerPadding = bottomInnerPadding,
             navigationBadge = navigationBadge,
             onOpenTab = { page -> mainPagerState.animateToPage(page) },
+            onOpenAuthor = { navigator.push(Route.Author) },
         )
     }
 }

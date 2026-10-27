@@ -545,6 +545,8 @@
     <string name="glass_refresh_modules_sub">Rescan module directory</string>
     <string name="glass_clean_modules">Clean unused modules</string>
     <string name="glass_clean_modules_sub">Remove leftover modules safely</string>
+    <string name="glass_home_fingerprint">System fingerprint</string>
+    <string name="glass_reboot_hint">Choose a reboot target</string>
     <string name="glass_flash_sub">FoxSu Glass · Flashing console</string>
     <string name="glass_add_module_hint">Import .zip module</string>
     <string name="glass_add_module">Install .zip from storage, or <b>browse repo online</b></string>
@@ -554,6 +556,7 @@
     <string name="glass_su_compat">Legacy SU support</string>
     <string name="glass_sulog">SU log</string>
     <string name="glass_settings_sub">FoxSu Glass · Liquid</string>
+    <string name="glass_group_advanced">Advanced</string>
     <string name="glass_settings_font">Font</string>
     <string name="glass_settings_font_sub">Follow system</string>
     <string name="glass_settings_bottom_bar">Bottom navigation</string>

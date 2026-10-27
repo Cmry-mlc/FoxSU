@@ -49,9 +49,11 @@ fun GlassHome(
     bottomInnerPadding: Dp,
     navigationBadge: NavigationBadgeState,
     onOpenTab: (Int) -> Unit,
+    onOpenAuthor: () -> Unit = {},
 ) {
     val issues = state.freshIssues()
     var showStylePicker by remember { mutableStateOf(false) }
+    var showRebootDialog by remember { mutableStateOf(false) }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -62,8 +64,11 @@ fun GlassHome(
                 title = "FoxSu",
                 subtitle = stringResource(R.string.glass_home_subtitle),
                 showDot = state.isRootAvailable,
-                onStyleClick = { showStylePicker = true },
-                onActionClick = actions.onInstallClick,
+                // 作者信息（原界面风格按钮位置）
+                onStyleClick = onOpenAuthor,
+                styleIconRes = R.drawable.ic_d_user,
+                // 重启（真正的重启面板，不是刷写页）
+                onActionClick = { showRebootDialog = true },
                 actionIconRes = R.drawable.ic_d_power2,
             )
         }
@@ -181,15 +186,25 @@ fun GlassHome(
         }
         item { Spacer(Modifier.height(11.dp)) }
         item {
-            GlassKernelRow(
-                kernelVersion = state.systemInfo.kernelVersion,
-                fingerprint = state.systemInfo.fingerprint,
+            GlassKernelRow(kernelVersion = state.systemInfo.kernelVersion)
+        }
+        item { Spacer(Modifier.height(10.dp)) }
+        item {
+            // 系统指纹（单独一行，可长按复制由系统选择器处理，此处只展示）
+            GlassWide(
+                iconRes = R.drawable.ic_d_android,
+                title = stringResource(R.string.glass_home_fingerprint),
+                subtitle = state.systemInfo.fingerprint.ifBlank { "—" },
+                accent = glassTokens().blue,
             )
         }
     }
 
     if (showStylePicker) {
         GlassStylePickerDialog(current = LocalUiMode.current, onDismiss = { showStylePicker = false })
+    }
+    if (showRebootDialog) {
+        GlassRebootDialog(onDismiss = { showRebootDialog = false })
     }
 }
 
@@ -219,6 +234,7 @@ fun GlassTopBar(
     onStyleClick: (() -> Unit)? = null,
     onActionClick: (() -> Unit)? = null,
     actionIconRes: Int = R.drawable.ic_d_user,
+    styleIconRes: Int = R.drawable.ic_d_palette,
     titleSize: Int = 22,
     accent: Color? = null,
     trailing: (@Composable RowScope.() -> Unit)? = null,
@@ -287,7 +303,7 @@ fun GlassTopBar(
         } else {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (onStyleClick != null) {
-                    GlassTopButton(iconRes = R.drawable.ic_d_palette, onClick = onStyleClick)
+                    GlassTopButton(iconRes = styleIconRes, onClick = onStyleClick)
                 }
                 if (onActionClick != null) {
                     GlassTopButton(iconRes = actionIconRes, onClick = onActionClick)
@@ -344,8 +360,8 @@ fun GlassHeroCard(state: HomeUiState, issueCount: Int, onInstall: () -> Unit) {
             .border(1.dp, t.heroGrad, RoundedCornerShape(26.dp)),
     ) {
         Box(modifier = Modifier.padding(20.dp)) {
-            // 右侧留出 seal（60 圆 + 外圈 84）的位置，避免文字压到对勾下
-            Column(modifier = Modifier.padding(end = 76.dp)) {
+            // 对勾已移到右上角，正文只需让出右上徽章宽度
+            Column(modifier = Modifier.padding(end = 52.dp)) {
                 Text(
                     text = stringResource(
                         if (hasIssue) R.string.glass_hero_attention else R.string.glass_hero_working
@@ -430,12 +446,16 @@ fun GlassHeroCard(state: HomeUiState, issueCount: Int, onInstall: () -> Unit) {
                     modifier = Modifier.padding(top = 14.dp),
                 )
             }
-            // .seal：60 圆 + 呼吸霓虹外圈（七彩随机色缓慢流转）
+            // .seal：移到右上角，44 圆玻璃徽章（对勾 20）+ 呼吸七彩外圈
             GlassSeal(
-                modifier = Modifier.align(Alignment.CenterEnd),
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = 4.dp, y = (-4).dp),
                 checkColor = t.violet,
-                sealBg = t.sealBg,
-                border = if (t.isDark) Color(0x14FFFFFF) else Color(0xCCFFFFFF),
+                sealBg = if (t.isDark) Color(0xFF14141E) else Color(0xE6FFFFFF),
+                border = if (t.isDark) Color(0x1FFFFFFF) else Color(0xFFFFFFFF),
+                coreSize = 44,
+                iconSize = 20,
             )
         }
     }
@@ -657,7 +677,7 @@ fun GlassLinkCard(
 
 /** 单列整行 .wide：内核版本 */
 @Composable
-fun GlassKernelRow(kernelVersion: String, fingerprint: String) {
+fun GlassKernelRow(kernelVersion: String) {
     val t = glassTokens()
     Row(
         modifier = Modifier
@@ -671,7 +691,7 @@ fun GlassKernelRow(kernelVersion: String, fingerprint: String) {
         Column(modifier = Modifier.weight(1f)) {
             Text(stringResource(R.string.home_kernel), fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = t.ink)
             Text(
-                text = if (kernelVersion.isNotBlank()) kernelVersion else fingerprint,
+                text = kernelVersion.ifBlank { "—" },
                 fontSize = 10.5.sp,
                 color = t.sub,
                 maxLines = 1,
@@ -815,6 +835,8 @@ fun GlassSeal(
     checkColor: Color,
     sealBg: Color,
     border: Color,
+    coreSize: Int = 44,
+    iconSize: Int = 20,
 ) {
     val hud = rememberInfiniteTransition(label = "seal")
     val breath by hud.animateFloat(
@@ -839,11 +861,12 @@ fun GlassSeal(
     val ringColor = lerpHue(palette, huePhase)
     val ringColor2 = lerpHue(palette, (huePhase + 0.35f) % 1f)
 
-    Box(modifier = modifier.size(84.dp), contentAlignment = Alignment.Center) {
+    val boxSize = (coreSize + 22).dp
+    Box(modifier = modifier.size(boxSize), contentAlignment = Alignment.Center) {
         // 扩散呼吸环
         Box(
             modifier = Modifier
-                .size(60.dp)
+                .size(coreSize.dp)
                 .graphicsLayer {
                     val s = 1f + breath * 0.34f
                     scaleX = s
@@ -855,7 +878,7 @@ fun GlassSeal(
         // 固定七彩描边（色相流转）
         Box(
             modifier = Modifier
-                .size(64.dp)
+                .size((coreSize + 3).dp)
                 .graphicsLayer { alpha = 0.5f + 0.3f * (1f - Math.abs(breath - 0.5f) * 2f) }
                 .border(
                     1.dp,
@@ -866,9 +889,9 @@ fun GlassSeal(
         // 内核
         Box(
             modifier = Modifier
-                .size(60.dp)
+                .size(coreSize.dp)
                 .shadow(
-                    14.dp,
+                    12.dp,
                     CircleShape,
                     ambientColor = ringColor.copy(alpha = 0.32f),
                     spotColor = ringColor.copy(alpha = 0.32f),
@@ -882,7 +905,7 @@ fun GlassSeal(
                 painter = painterResource(R.drawable.ic_d_check),
                 contentDescription = null,
                 modifier = Modifier
-                    .size(26.dp)
+                    .size(iconSize.dp)
                     .graphicsLayer { alpha = 0.85f + 0.15f * breath },
                 tint = checkColor,
             )
