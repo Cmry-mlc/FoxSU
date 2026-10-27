@@ -961,3 +961,19 @@ fun Modifier.marquee(): Modifier = this.basicMarquee(
     spacing = MarqueeSpacing(6.dp),
     velocity = 28.dp,
 )
+
+/** 详情页用「实玻璃」：比列表页更不透明，保证文字可读、不透视下层内容 */
+@Composable
+fun Modifier.glassCardSolid(radius: androidx.compose.ui.unit.Dp): Modifier {
+    val t = glassTokens()
+    return this
+        .shadow(
+            8.dp,
+            RoundedCornerShape(radius),
+            ambientColor = t.glassShadow,
+            spotColor = t.glassShadow,
+        )
+        .clip(RoundedCornerShape(radius))
+        .background(if (t.isDark) Color(0xFF16161F) else Color(0xF2FFFFFF))
+        .border(1.dp, if (t.isDark) Color(0x14FFFFFF) else Color(0xFFFFFFFF), RoundedCornerShape(radius))
+}

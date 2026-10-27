@@ -69,6 +69,12 @@ fun GlassAppProfileScreen(
     var showModeDialog by remember { mutableStateOf(false) }
     val scroll = rememberScrollState()
 
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            // 详情页需要自己的实底，否则会透出导航栈上一页（悬浮卡片感会变成"半透明弹窗"）
+            .background(if (t.isDark) Color(0xFF0D0D14) else Color(0xFFEEF0F7)),
+    ) {
     Column(modifier = Modifier.fillMaxSize()) {
         // ---- 顶栏 ----
         Row(
@@ -112,7 +118,7 @@ fun GlassAppProfileScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .glassCard(22.dp)
+                    .glassCardSolid(22.dp)
                     .padding(15.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -170,7 +176,7 @@ fun GlassAppProfileScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .glassCard(20.dp)
+                        .glassCardSolid(20.dp)
                         .padding(horizontal = 15.dp, vertical = 13.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -250,7 +256,7 @@ fun GlassAppProfileScreen(
             // ---- 模式对应配置区 ----
             Spacer(Modifier.height(11.dp))
             when (mode) {
-                Mode.Template -> Box(modifier = Modifier.glassCard(20.dp)) {
+                Mode.Template -> Box(modifier = Modifier.glassCardSolid(20.dp)) {
                     Column(modifier = Modifier.padding(vertical = 4.dp)) {
                         TemplateConfig(
                             profile = profile,
@@ -261,7 +267,7 @@ fun GlassAppProfileScreen(
                     }
                 }
 
-                Mode.Custom -> Box(modifier = Modifier.glassCard(20.dp)) {
+                Mode.Custom -> Box(modifier = Modifier.glassCardSolid(20.dp)) {
                     Column(modifier = Modifier.padding(vertical = 4.dp)) {
                         if (isRootGranted) {
                             RootProfileConfig(
@@ -284,7 +290,7 @@ fun GlassAppProfileScreen(
                 Mode.Default -> Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .glassCard(20.dp)
+                        .glassCardSolid(20.dp)
                         .padding(horizontal = 15.dp, vertical = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -313,7 +319,7 @@ fun GlassAppProfileScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(bottom = 9.dp)
-                                .glassCard(18.dp)
+                                .glassCardSolid(18.dp)
                                 .padding(horizontal = 13.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -347,6 +353,7 @@ fun GlassAppProfileScreen(
                 }
             }
         }
+    }
     }
 
     if (showModeDialog) {

@@ -147,6 +147,7 @@ fun GlassModuleList(
         item { GlassSectionHead(stringResource(R.string.glass_quick_actions)) }
         item {
             GlassWide(
+                modifier = Modifier.padding(bottom = 10.dp),
                 iconRes = R.drawable.ic_d_refresh,
                 title = stringResource(R.string.glass_refresh_modules),
                 subtitle = stringResource(R.string.glass_refresh_modules_sub),
@@ -156,6 +157,7 @@ fun GlassModuleList(
         }
         item {
             GlassWide(
+                modifier = Modifier.padding(bottom = 14.dp),
                 iconRes = R.drawable.ic_d_trash,
                 title = stringResource(R.string.glass_clean_modules),
                 subtitle = stringResource(R.string.glass_clean_modules_sub),
@@ -163,7 +165,6 @@ fun GlassModuleList(
                 onClick = onCleanModules,
             )
         }
-        item { Spacer(Modifier.height(10.dp)) }
         item {
             // .addmod：1.5 虚线圆角22 —— 点左侧「安装模块」选 zip，点右侧「模块仓库」浏览在线
             Row(
