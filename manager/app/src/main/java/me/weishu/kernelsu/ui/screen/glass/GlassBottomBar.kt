@@ -54,7 +54,7 @@ fun GlassBottomBar(
     ) {
         Row(
             modifier = Modifier
-                .padding(bottom = 14.dp)
+                .padding(bottom = 10.dp)
                 .shadow(
                     14.dp,
                     RoundedCornerShape(99.dp),
@@ -64,7 +64,7 @@ fun GlassBottomBar(
                 .clip(RoundedCornerShape(99.dp))
                 .background(t.dockBg)
                 .border(1.dp, t.dockBorder, RoundedCornerShape(99.dp))
-                .padding(6.dp),
+                .padding(5.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             items.forEach { item ->
@@ -84,21 +84,21 @@ fun GlassBottomBar(
                 Box {
                     Column(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(18.dp))
+                            .clip(RoundedCornerShape(16.dp))
                             .background(bg)
                             .clickable { onOpenTab(item.tab) }
-                            .padding(horizontal = 15.dp, vertical = 8.dp),
+                            .padding(horizontal = 13.dp, vertical = 6.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Icon(
                             painter = painterResource(item.iconRes),
                             contentDescription = null,
-                            modifier = Modifier.size(17.dp),
+                            modifier = Modifier.size(16.dp),
                             tint = iconTint,
                         )
                         Text(
                             text = stringResource(item.labelRes),
-                            fontSize = 9.sp,
+                            fontSize = 8.5.sp,
                             letterSpacing = 0.5.sp,
                             color = fg,
                             maxLines = 1,
@@ -121,8 +121,8 @@ fun GlassBottomBar(
                         Box(
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
-                                .padding(top = 2.dp, end = 10.dp)
-                                .heightIn(min = 14.dp)
+                                .padding(top = 1.dp, end = 8.dp)
+                                .heightIn(min = 13.dp)
                                 .clip(CircleShape)
                                 .background(item.accent)
                                 .padding(horizontal = 6.dp, vertical = 1.dp),
@@ -130,7 +130,7 @@ fun GlassBottomBar(
                         ) {
                             Text(
                                 text = item.count.toString(),
-                                fontSize = 8.5.sp,
+                                fontSize = 8.sp,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = Color.White,
                                 maxLines = 1,

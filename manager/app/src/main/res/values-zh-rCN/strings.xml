@@ -539,6 +539,8 @@
     <string name="glass_refresh_modules_sub">重新扫描模块目录</string>
     <string name="glass_clean_modules">清理失效模块</string>
     <string name="glass_clean_modules_sub">未加载的残留模块可安全移除</string>
+    <string name="glass_flash_sub">FoxSu Glass · 刷写控制台</string>
+    <string name="glass_add_module_hint">导入 .zip 模块</string>
     <string name="glass_add_module"><![CDATA[＋ 从存储安装模块，或 <b>在线浏览模块仓库</b>]]></string>
     <string name="glass_group_general">通用</string>
     <string name="glass_group_appearance">外观</string>

@@ -545,6 +545,8 @@
     <string name="glass_refresh_modules_sub">Rescan module directory</string>
     <string name="glass_clean_modules">Clean unused modules</string>
     <string name="glass_clean_modules_sub">Remove leftover modules safely</string>
+    <string name="glass_flash_sub">FoxSu Glass · Flashing console</string>
+    <string name="glass_add_module_hint">Import .zip module</string>
     <string name="glass_add_module">Install .zip from storage, or <b>browse repo online</b></string>
     <string name="glass_group_general">General</string>
     <string name="glass_group_appearance">Appearance</string>

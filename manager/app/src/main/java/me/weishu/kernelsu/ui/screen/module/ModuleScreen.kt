@@ -215,12 +215,35 @@ fun ModulePager(
             bottomInnerPadding = bottomInnerPadding,
         )
 
-        UiMode.Glass -> me.weishu.kernelsu.ui.screen.glass.GlassModuleList(
-            modules = if (rawUiState.searchStatus.searchText.isBlank()) rawUiState.modules else rawUiState.searchResults,
-            bottomInnerPadding = bottomInnerPadding,
-            onToggle = actions.onToggleModule,
-            onAddModule = { navigator.push(Route.Install) },
-            onRefresh = actions.onRefresh,
-        )
+        UiMode.Glass -> {
+            // 「安装模块」= 从存储选择 .zip 模块走模块安装流程（不是刷写镜像页面）
+            val context = LocalContext.current
+            val modulePicker = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.StartActivityForResult()
+            ) { activityResult ->
+                if (activityResult.resultCode != android.app.Activity.RESULT_OK) return@rememberLauncherForActivityResult
+                val data = activityResult.data ?: return@rememberLauncherForActivityResult
+                val uris = mutableListOf<android.net.Uri>()
+                data.clipData?.let { clip ->
+                    for (i in 0 until clip.itemCount) clip.getItemAt(i)?.uri?.let { uris.add(it) }
+                } ?: data.data?.let { uris.add(it) }
+                actions.onOpenFlash(uris)
+            }
+            me.weishu.kernelsu.ui.screen.glass.GlassModuleList(
+                modules = if (rawUiState.searchStatus.searchText.isBlank()) rawUiState.modules else rawUiState.searchResults,
+                bottomInnerPadding = bottomInnerPadding,
+                onToggle = actions.onToggleModule,
+                onAddModule = {
+                    modulePicker.launch(
+                        Intent(Intent.ACTION_GET_CONTENT).apply {
+                            type = "application/zip"
+                            putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+                        }
+                    )
+                },
+                onRefresh = actions.onRefresh,
+                onOpenRepo = actions.onOpenRepo,
+            )
+        }
     }
 }

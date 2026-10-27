@@ -46,13 +46,14 @@ fun GlassModuleList(
     onToggle: (Module) -> Unit,
     onAddModule: () -> Unit,
     onRefresh: () -> Unit,
+    onOpenRepo: () -> Unit = {},
     onCleanModules: () -> Unit = onRefresh,
 ) {
     val t = glassTokens()
     val enabledCount = modules.count { it.enabled }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 13.dp, end = 13.dp, top = 4.dp, bottom = bottomInnerPadding + 96.dp),
+        contentPadding = PaddingValues(start = 13.dp, end = 13.dp, top = glassStatusBarTop() + 4.dp, bottom = bottomInnerPadding + 96.dp),
     ) {
         item {
             GlassTopBar(
@@ -163,48 +164,42 @@ fun GlassModuleList(
         }
         item { Spacer(Modifier.height(10.dp)) }
         item {
-            // .addmod：1.5 虚线圆角22 添加入口（+ 从存储导入 / 在线浏览模块仓库）
-            Box(
+            // .addmod：1.5 虚线圆角22 —— 点左侧「安装模块」选 zip，点右侧「模块仓库」浏览在线
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(22.dp))
                     .background(if (t.isDark) Color.Transparent else Color(0x66FFFFFF))
-                    .border(
-                        width = 1.5.dp,
-                        brush = Brush.horizontalGradient(
-                            listOf(
-                                if (t.isDark) Color(0xFF2E2E3C) else Color(0xFFC9C6DA),
-                                if (t.isDark) Color(0xFF2E2E3C) else Color(0xFFC9C6DA),
-                            )
-                        ),
-                        shape = RoundedCornerShape(22.dp),
-                    )
+                    .border(1.5.dp, if (t.isDark) Color(0xFF2E2E3C) else Color(0xFFC9C6DA), RoundedCornerShape(22.dp))
                     .clickable(onClick = onAddModule)
-                    .padding(vertical = 18.dp),
-                contentAlignment = Alignment.Center,
+                    .padding(vertical = 16.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_d_plus),
-                        contentDescription = null,
-                        modifier = Modifier.size(14.dp),
-                        tint = t.violet,
-                    )
-                    Spacer(Modifier.width(7.dp))
-                    Text(
-                        text = stringResource(R.string.module_install),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = t.sub,
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(R.string.module_repos),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = t.violet,
-                    )
-                }
+                Icon(
+                    painter = painterResource(R.drawable.ic_d_plus),
+                    contentDescription = null,
+                    modifier = Modifier.size(15.dp),
+                    tint = t.sub,
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.glass_add_module_hint),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = t.sub,
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = stringResource(R.string.module_repos),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = t.violet,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(onClick = onOpenRepo)
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                )
             }
         }
     }

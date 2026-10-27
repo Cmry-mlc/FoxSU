@@ -55,7 +55,7 @@ fun GlassHome(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 13.dp, end = 13.dp, top = 4.dp, bottom = bottomInnerPadding + 88.dp),
+        contentPadding = PaddingValues(start = 13.dp, end = 13.dp, top = glassStatusBarTop() + 4.dp, bottom = bottomInnerPadding + 88.dp),
     ) {
         item {
             GlassTopBar(
@@ -329,15 +329,19 @@ fun GlassTopButton(iconRes: Int, onClick: () -> Unit) {
 fun GlassHeroCard(state: HomeUiState, issueCount: Int, onInstall: () -> Unit) {
     val t = glassTokens()
     val hasIssue = issueCount > 0
-    // 外层刷渐变只用于 1dp 描边，内层再盖白玻璃，避免整张卡变彩色
+    // 卡面 = 白玻璃（.55），渐变**只作为 1dp 描边**（等价设计稿 ::before + mask），不透到卡面
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(27.dp))
-            .background(t.heroGrad)
-            .padding(1.dp)
+            .shadow(
+                10.dp,
+                RoundedCornerShape(26.dp),
+                ambientColor = t.glassShadow,
+                spotColor = t.glassShadow,
+            )
             .clip(RoundedCornerShape(26.dp))
-            .background(if (t.isDark) Color(0x0AFFFFFF) else Color(0x8CFFFFFF)),
+            .background(if (t.isDark) Color(0x08FFFFFF) else Color(0x8CFFFFFF))
+            .border(1.dp, t.heroGrad, RoundedCornerShape(26.dp)),
     ) {
         Box(modifier = Modifier.padding(20.dp)) {
             // 右侧留出 seal（60 圆 + 外圈 84）的位置，避免文字压到对勾下
@@ -534,6 +538,11 @@ fun GlassNCard(
         }
     }
 }
+
+/** Glass 页面统一的状态栏顶部内边距（避免标题栏与状态栏重叠） */
+@Composable
+fun glassStatusBarTop(): Dp =
+    WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
 /** .chip：38 圆角12 玻璃 chip（亮色 rgba(255,255,255,.6) + 白描边 + 0 2 8 投影；暗色 rgba(255,255,255,.05)） */
 @Composable

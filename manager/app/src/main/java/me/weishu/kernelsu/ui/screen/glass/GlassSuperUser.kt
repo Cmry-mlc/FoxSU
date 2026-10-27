@@ -219,7 +219,7 @@ fun GlassSuperUserList(
     val t = glassTokens()
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 13.dp, end = 13.dp, top = 4.dp, bottom = bottomInnerPadding + 88.dp),
+        contentPadding = PaddingValues(start = 13.dp, end = 13.dp, top = glassStatusBarTop() + 4.dp, bottom = bottomInnerPadding + 88.dp),
     ) {
         item {
             GlassTopBar(
