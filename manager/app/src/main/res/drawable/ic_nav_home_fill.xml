@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp" android:height="24dp"
-    android:viewportWidth="24" android:viewportHeight="24">
-    <!-- 全新一代（选中）：实心圆弧顶小屋，舷窗用负空间镂空 -->
-    <path
-        android:fillColor="#FF000000" android:fillType="evenOdd"
-        android:pathData="M4.8,10.2 A7.2,7.4 0 0 1 19.2,10.2 L19.2,17.8 C19.2,19.3 18,20.5 16.5,20.5 L7.5,20.5 C6,20.5 4.8,19.3 4.8,17.8 Z M12,13.5 A2.1,2.1 0 1 0 12,17.7 A2.1,2.1 0 1 0 12,13.5 Z" />
-</vector>
