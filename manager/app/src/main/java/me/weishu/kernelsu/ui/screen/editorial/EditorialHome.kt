@@ -92,7 +92,7 @@ fun EditorialHome(
 
             EdSection("01", "设备概况")
             EdRow(
-                glyph = "▢", glyphBg = t.cyan.copy(alpha = 0.10f), glyphColor = t.cyan,
+                iconRes = R.drawable.ic_d_phone, glyphBg = t.cyan.copy(alpha = 0.10f), glyphColor = t.cyan,
                 title = stringResource(R.string.home_device_model),
                 subtitle = stringResource(R.string.fresh_home_device_sub),
                 trailing = {
@@ -106,14 +106,14 @@ fun EditorialHome(
                 },
             )
             EdRow(
-                glyph = "◈", glyphBg = t.violet.copy(alpha = 0.10f), glyphColor = t.violet,
+                iconRes = R.drawable.ic_d_shield, glyphBg = t.violet.copy(alpha = 0.10f), glyphColor = t.violet,
                 title = stringResource(R.string.superuser),
                 subtitle = stringResource(R.string.fresh_home_superuser_sub),
                 trailing = { EdNum(navigationBadge.superuserCount.toString(), t.violet) },
                 onClick = { onOpenTab(1) },
             )
             EdRow(
-                glyph = "▦", glyphBg = t.rose.copy(alpha = 0.10f), glyphColor = t.rose,
+                iconRes = R.drawable.ic_d_grid, glyphBg = t.rose.copy(alpha = 0.10f), glyphColor = t.rose,
                 title = stringResource(R.string.module),
                 subtitle = stringResource(R.string.fresh_home_module_sub),
                 trailing = { EdNum(navigationBadge.moduleEnabledCount.toString(), t.rose) },
@@ -122,7 +122,7 @@ fun EditorialHome(
 
             EdSection("02", "安全状态")
             EdRow(
-                glyph = "🔒", glyphBg = t.lime.copy(alpha = 0.10f), glyphColor = t.lime,
+                iconRes = R.drawable.ic_d_lock, glyphBg = t.lime.copy(alpha = 0.10f), glyphColor = t.lime,
                 title = "SELinux",
                 subtitle = stringResource(R.string.glass_home_selinux_sub),
                 trailing = {
@@ -136,7 +136,7 @@ fun EditorialHome(
                 },
             )
             EdRow(
-                glyph = "⚙", glyphBg = t.amber.copy(alpha = 0.10f), glyphColor = t.amber,
+                iconRes = R.drawable.ic_d_sliders, glyphBg = t.amber.copy(alpha = 0.10f), glyphColor = t.amber,
                 title = "Seccomp",
                 subtitle = stringResource(R.string.glass_home_seccomp_sub),
                 trailing = {
@@ -150,22 +150,34 @@ fun EditorialHome(
 
             EdSection("03", "了解更多")
             EdRow(
-                glyph = "♡", glyphBg = t.acc.copy(alpha = 0.10f), glyphColor = t.acc,
+                iconRes = R.drawable.ic_d_heart, glyphBg = t.acc.copy(alpha = 0.10f), glyphColor = t.acc,
                 title = stringResource(R.string.glass_home_support),
                 subtitle = stringResource(R.string.glass_home_support_sub),
                 trailing = { Text("›", fontSize = 13.sp, color = t.faint) },
                 onClick = { actions.onOpenUrl("https://github.com/Cmry-mlc/FoxSu") },
             )
             EdRow(
-                glyph = "❑", glyphBg = t.ink2.copy(alpha = 0.08f), glyphColor = t.ink2,
+                iconRes = R.drawable.ic_d_book, glyphBg = t.ink2.copy(alpha = 0.08f), glyphColor = t.ink2,
                 title = stringResource(R.string.glass_home_learn),
                 subtitle = stringResource(R.string.glass_home_learn_sub),
                 trailing = { Text("›", fontSize = 13.sp, color = t.faint) },
                 onClick = { actions.onOpenUrl("https://kernelsu.org") },
             )
 
-            EdCode(state.systemInfo.kernelVersion.ifBlank { "—" }, label = "内核版本")
-            EdCode(state.systemInfo.fingerprint.ifBlank { "—" }, label = "指纹信息")
+            // 规格卡：内核 / 指纹（设计稿 .spec）
+            EdSpec(
+                title = "KERNEL · 内核版本",
+                tag = "KMI " + state.systemInfo.kernelVersion.substringBefore(".").let { major ->
+                    val parts = state.systemInfo.kernelVersion.split(".")
+                    if (parts.size >= 2) "${parts[0]}.${parts[1]}" else major
+                },
+                value = state.systemInfo.kernelVersion.ifBlank { "—" },
+            )
+            EdSpec(
+                title = "FINGERPRINT · 指纹信息",
+                tag = "RO 只读",
+                value = state.systemInfo.fingerprint.ifBlank { "—" },
+            )
             Spacer(Modifier.height(bottomInnerPadding + 20.dp))
         }
     }

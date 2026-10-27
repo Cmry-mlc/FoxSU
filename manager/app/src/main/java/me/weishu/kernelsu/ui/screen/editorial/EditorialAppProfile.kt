@@ -221,7 +221,7 @@ fun EditorialAppProfile(
                 }
 
                 Mode.Default -> EdRow(
-                    glyph = "✓",
+                    iconRes = R.drawable.ic_d_check,
                     glyphBg = t.lime.copy(alpha = 0.10f),
                     glyphColor = t.lime,
                     title = "默认配置",

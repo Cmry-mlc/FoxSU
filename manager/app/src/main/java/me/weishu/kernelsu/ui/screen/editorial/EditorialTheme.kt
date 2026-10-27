@@ -397,11 +397,12 @@ fun EdSection(number: String, title: String, topPadding: Dp = 22.dp) {
 /** 条目行：圆形字形 + 标题/说明 + 右侧数值（发丝线分隔，无卡片） */
 @Composable
 fun EdRow(
-    glyph: String,
+    glyph: String = "",
     glyphBg: Color,
     glyphColor: Color,
     title: String,
     subtitle: String,
+    iconRes: Int? = null,
     trailing: (@Composable RowScope.() -> Unit)? = null,
     onClick: (() -> Unit)? = null,
 ) {
@@ -418,7 +419,16 @@ fun EdRow(
             modifier = Modifier.size(34.dp).clip(CircleShape).background(glyphBg),
             contentAlignment = Alignment.Center,
         ) {
-            Text(text = glyph, fontSize = 14.sp, color = glyphColor)
+            if (iconRes != null) {
+                Icon(
+                    painter = painterResource(iconRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(17.dp),
+                    tint = glyphColor,
+                )
+            } else {
+                Text(text = glyph, fontSize = 14.sp, color = glyphColor)
+            }
         }
         Spacer(Modifier.width(14.dp))
         Column(modifier = Modifier.weight(1f)) {
@@ -519,44 +529,68 @@ fun EdSwitch(checked: Boolean, onToggle: (() -> Unit)? = null) {
     }
 }
 
-/** 代码条（.code）：墨底 + 荧光绿等宽字 + KERNEL 角标 */
+/**
+ * 规格卡（设计稿 .spec）：浅纸底 + 左侧红色竖条 + 双语标题行 + 等宽值。
+ * 用于内核版本 / 指纹信息。
+ */
 @Composable
-fun EdCode(text: String, label: String) {
+fun EdSpec(title: String, tag: String, value: String) {
     val t = edTokens()
-    // 外层留出 top 空间给标签，标签压在色块上边缘（等价 .code::before top:-8px）
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 22.dp, end = 22.dp, top = 18.dp, bottom = 2.dp),
+            .padding(start = 22.dp, end = 22.dp, top = 9.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (t.dark) Color(0xFF1C1B18) else Color(0xFFF5F3ED))
+            .border(
+                1.dp,
+                if (t.dark) Color(0xFF2E2C26) else Color(0xFFE7E3D8),
+                RoundedCornerShape(12.dp),
+            )
+            .drawBehind {
+                val barW = 3.dp.toPx()
+                drawRoundRect(
+                    color = t.acc,
+                    topLeft = Offset(0f, 11.dp.toPx()),
+                    size = androidx.compose.ui.geometry.Size(barW, size.height - 22.dp.toPx()),
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(0f, barW),
+                )
+            }
+            .padding(start = 16.dp, end = 15.dp, top = 9.dp, bottom = 10.dp),
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(t.ink)
-                .padding(start = 14.dp, end = 14.dp, top = 16.dp, bottom = 12.dp),
-        ) {
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = title,
+                    fontSize = 8.5.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 2.2.sp,
+                    color = t.acc,
+                    maxLines = 1,
+                )
+                Spacer(Modifier.weight(1f))
+                Text(
+                    text = tag,
+                    fontSize = 7.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.2.sp,
+                    color = if (t.dark) Color(0xFF6B675C) else Color(0xFFB6B1A4),
+                    maxLines = 1,
+                )
+            }
             Text(
-                text = text,
-                fontSize = 10.5.sp,
+                text = value,
+                fontSize = 9.8.sp,
+                lineHeight = 17.sp,
+                letterSpacing = (-0.15).sp,
                 fontFamily = t.mono,
-                lineHeight = 16.sp,
-                color = Color(0xFFC9F0A8),
+                color = if (t.dark) Color(0xFFD6D2C7) else Color(0xFF45423B),
+                modifier = Modifier.padding(top = 6.dp),
             )
         }
-        Text(
-            text = label,
-            fontSize = 8.sp,
-            fontWeight = FontWeight.ExtraBold,
-            letterSpacing = 2.sp,
-            color = Color.White,
-            modifier = Modifier
-                .offset(x = 12.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .background(t.acc)
-                .padding(horizontal = 8.dp, vertical = 2.dp),
-        )
     }
 }
 

@@ -138,21 +138,21 @@ fun EditorialAuthor(onBack: () -> Unit, onOpenUrl: (String) -> Unit) {
         )
 
         EdSection("01", "信息", topPadding = 18.dp)
-        EdRow("◈", t.violet.copy(alpha = 0.10f), t.violet, stringResource(R.string.author_version),
+        EdRow(iconRes = R.drawable.ic_d_tool, glyphBg = t.violet.copy(alpha = 0.10f), glyphColor = t.violet, title = stringResource(R.string.author_version), subtitle =
             "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
-        EdRow("⌘", t.cyan.copy(alpha = 0.10f), t.cyan, stringResource(R.string.author_project),
+        EdRow(iconRes = R.drawable.ic_d_terminal, glyphBg = t.cyan.copy(alpha = 0.10f), glyphColor = t.cyan, title = stringResource(R.string.author_project), subtitle =
             stringResource(R.string.author_project_value),
             trailing = { Text("›", fontSize = 13.sp, color = t.faint) },
             onClick = { onOpenUrl("https://github.com/Cmry-mlc/FoxSu") })
-        EdRow("♡", t.acc.copy(alpha = 0.10f), t.acc, stringResource(R.string.author_contact),
+        EdRow(iconRes = R.drawable.ic_d_heart, glyphBg = t.acc.copy(alpha = 0.10f), glyphColor = t.acc, title = stringResource(R.string.author_contact), subtitle =
             stringResource(R.string.author_contact_value),
             trailing = { Text("›", fontSize = 13.sp, color = t.faint) },
             onClick = { onOpenUrl("https://github.com/Cmry-mlc/FoxSu/issues") })
-        EdRow("◎", t.amber.copy(alpha = 0.10f), t.amber, stringResource(R.string.author_qq),
+        EdRow(iconRes = R.drawable.ic_d_user, glyphBg = t.amber.copy(alpha = 0.10f), glyphColor = t.amber, title = stringResource(R.string.author_qq), subtitle =
             stringResource(R.string.author_qq_value),
             trailing = { Text("›", fontSize = 13.sp, color = t.faint) },
             onClick = { onOpenUrl("https://pd.qq.com/s/8glxclfk6?b=9") })
-        EdRow("❑", t.ink2.copy(alpha = 0.08f), t.ink2, stringResource(R.string.author_upstream),
+        EdRow(iconRes = R.drawable.ic_d_book, glyphBg = t.ink2.copy(alpha = 0.08f), glyphColor = t.ink2, title = stringResource(R.string.author_upstream), subtitle =
             stringResource(R.string.author_upstream_value),
             trailing = { Text("›", fontSize = 13.sp, color = t.faint) },
             onClick = { onOpenUrl("https://github.com/tiann/KernelSU") })

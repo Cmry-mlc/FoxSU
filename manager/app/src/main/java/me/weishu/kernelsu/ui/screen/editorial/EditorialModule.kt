@@ -147,14 +147,14 @@ fun EditorialModule(
 
         item { EdSection("02", "获取更多") }
         EdRow(
-            glyph = "⌕", glyphBg = t.violet.copy(alpha = 0.10f), glyphColor = t.violet,
+            iconRes = R.drawable.ic_d_search, glyphBg = t.violet.copy(alpha = 0.10f), glyphColor = t.violet,
             title = repoTitle,
             subtitle = repoSub,
             trailing = chevron,
             onClick = onOpenRepo,
         )
         EdRow(
-            glyph = "＋", glyphBg = t.cyan.copy(alpha = 0.10f), glyphColor = t.cyan,
+            iconRes = R.drawable.ic_d_plus, glyphBg = t.cyan.copy(alpha = 0.10f), glyphColor = t.cyan,
             title = addTitle,
             subtitle = addSub,
             trailing = chevron,
@@ -162,14 +162,14 @@ fun EditorialModule(
         )
         item { EdSection("03", "维护") }
         EdRow(
-            glyph = "↻", glyphBg = t.violet.copy(alpha = 0.10f), glyphColor = t.violet,
+            iconRes = R.drawable.ic_d_refresh, glyphBg = t.violet.copy(alpha = 0.10f), glyphColor = t.violet,
             title = refreshTitle,
             subtitle = refreshSub,
             trailing = chevron,
             onClick = onRefresh,
         )
         EdRow(
-            glyph = "⌫", glyphBg = t.acc.copy(alpha = 0.10f), glyphColor = t.acc,
+            iconRes = R.drawable.ic_d_trash, glyphBg = t.acc.copy(alpha = 0.10f), glyphColor = t.acc,
             title = cleanTitle,
             subtitle = cleanSub,
             trailing = chevron,
@@ -180,7 +180,8 @@ fun EditorialModule(
 
 /** EdRow 的 LazyListScope 版本（避免在 item 外调用） */
 private fun androidx.compose.foundation.lazy.LazyListScope.EdRow(
-    glyph: String,
+    iconRes: Int? = null,
+    glyph: String = "",
     glyphBg: Color,
     glyphColor: Color,
     title: String,
@@ -190,6 +191,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.EdRow(
 ) {
     item {
         me.weishu.kernelsu.ui.screen.editorial.EdRow(
+            iconRes = iconRes,
             glyph = glyph,
             glyphBg = glyphBg,
             glyphColor = glyphColor,

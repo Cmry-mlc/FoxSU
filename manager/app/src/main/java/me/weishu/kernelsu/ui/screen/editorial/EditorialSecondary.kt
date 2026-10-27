@@ -279,14 +279,14 @@ fun EditorialAbout(state: AboutUiState, actions: AboutScreenActions) {
         )
 
         EdSection("01", "应用信息", topPadding = 18.dp)
-        EdRow("▢", t.cyan.copy(alpha = 0.10f), t.cyan, state.appName, "应用名称")
-        EdRow("◈", t.violet.copy(alpha = 0.10f), t.violet, state.versionName, "版本号")
-        EdRow("⌗", t.amber.copy(alpha = 0.10f), t.amber, "基于 KernelSU", "内核级 Root 方案")
+        EdRow(iconRes = R.drawable.ic_d_android, glyphBg = t.cyan.copy(alpha = 0.10f), glyphColor = t.cyan, title = state.appName, subtitle = "应用名称")
+        EdRow(iconRes = R.drawable.ic_d_tool, glyphBg = t.violet.copy(alpha = 0.10f), glyphColor = t.violet, title = state.versionName, subtitle = "版本号")
+        EdRow(iconRes = R.drawable.ic_d_shield2, glyphBg = t.amber.copy(alpha = 0.10f), glyphColor = t.amber, title = "基于 KernelSU", subtitle = "内核级 Root 方案")
 
         EdSection("02", "链接")
         state.links.forEachIndexed { index, link ->
             EdRow(
-                glyph = "↗",
+                iconRes = R.drawable.ic_d_link,
                 glyphBg = t.acc.copy(alpha = 0.10f),
                 glyphColor = t.acc,
                 title = link.fullText,
