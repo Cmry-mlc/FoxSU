@@ -119,54 +119,56 @@ fun GlassRebootDialog(onDismiss: () -> Unit) {
                     animationSpec = infiniteRepeatable(tween(2200, easing = LinearEasing), RepeatMode.Restart),
                     label = "breath",
                 )
-                // 呼吸扩散环：与下方胶囊同一组七彩
+                // 外层呼吸辉光环：纯圆环（不用 blur，避免被裁成方框），沿圈扩散
                 Box(
                     modifier = Modifier
                         .size(56.dp)
                         .graphicsLayer {
-                            val s = 1f + breath * 0.3f
+                            val s = 1f + breath * 0.20f
                             scaleX = s
                             scaleY = s
-                            alpha = (1f - breath) * 0.45f
+                            alpha = (0.55f + 0.45f * (1f - breath)) * 0.7f
                         }
                         .border(
-                            1.5.dp,
-                            Brush.sweepGradient(rainbow + rainbow.first()),
-                            CircleShape,
+                            width = 2.dp,
+                            brush = Brush.sweepGradient(
+                                hueShift(rainbow, hue) + hueShift(rainbow, hue).first()
+                            ),
+                            shape = CircleShape,
                         ),
                 )
-                // 内核圆：半透明玻璃 + 动态七彩圈 + 呼吸光晕，与下方胶囊统一
+                // 第二层外扩环：更细、更淡，形成双环呼吸
                 Box(
                     modifier = Modifier
-                        .size(64.dp)
+                        .size(56.dp)
                         .graphicsLayer {
-                            scaleX = 1f + breath * 0.05f
-                            scaleY = 1f + breath * 0.05f
+                            val s = 1f + breath * 0.34f
+                            scaleX = s
+                            scaleY = s
+                            alpha = (1f - breath) * 0.42f
                         }
-                        .blur(8.dp)
                         .border(
-                            5.dp,
-                            Brush.sweepGradient(hueShift(rainbow, hue) + hueShift(rainbow, hue).first()),
-                            CircleShape,
-                        )
-                        .graphicsLayer { alpha = (0.30f + 0.45f * (1f - breath)) },
+                            width = 1.5.dp,
+                            brush = Brush.sweepGradient(rainbow + rainbow.first()),
+                            shape = CircleShape,
+                        ),
                 )
+                // 内核圆：真正的七彩描边，紧紧贴着圆边
                 Box(
                     modifier = Modifier
                         .size(56.dp)
                         .shadow(
-                            14.dp,
+                            12.dp,
                             CircleShape,
-                            ambientColor = rainbow.first().copy(alpha = 0.30f),
-                            spotColor = rainbow.last().copy(alpha = 0.30f),
+                            ambientColor = rainbow.first().copy(alpha = 0.26f),
+                            spotColor = rainbow.last().copy(alpha = 0.26f),
                         )
                         .clip(CircleShape)
-                        .background(
-                            if (t.isDark) Color(0xCC1A1A24) else Color(0xCCFFFAF8)
-                        )
-                        .animatedRainbowRing(CircleShape, 1.7.dp, rainbow, hue, breath),
+                        .background(if (t.isDark) Color(0xCC1A1A24) else Color(0xCCFFFAF8))
+                        .animatedRainbowRing(CircleShape, 2.dp, rainbow, hue, breath),
                     contentAlignment = Alignment.Center,
                 ) {
+
                     Icon(
                         painter = painterResource(R.drawable.ic_d_power2),
                         contentDescription = null,
@@ -448,8 +450,8 @@ private fun GlassWidePill(
 }
 
 /**
- * 呼吸七彩光晕：形状外扩一圈的 sweep 渐变描边，
- * 透明度随 pulse 呼吸、色相随 hue 缓慢旋转，形成"外圈在缓缓发光"的效果。
+ * 呼吸七彩光晕：不用 blur（Compose 的 blur 会把结果裁在组件矩形内，出现方框），
+ * 改为 3 层逐渐外扩、逐渐变淡的圆角描边环，贴着卡边向外呼吸。
  */
 @Composable
 private fun BreathAura(
@@ -460,22 +462,38 @@ private fun BreathAura(
     spread: Float,
     strength: Float,
 ) {
+    // ring: scale 倍数 / 描边宽度 / 透明度权重
+    val layers = listOf(
+        Triple(1.035f, 3.5.dp, 0.55f),
+        Triple(1.075f, 2.5.dp, 0.32f),
+        Triple(1.115f, 1.5.dp, 0.16f),
+    )
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(50.dp)
-            .graphicsLayer {
-                scaleX = spread + pulse * 0.03f
-                scaleY = 1f + pulse * 0.12f
-                alpha = (0.35f + 0.65f * pulse) * strength
-            }
-            .blur(9.dp)
-            .border(
-                width = 5.dp,
-                brush = Brush.sweepGradient(hueShift(colors, hue) + hueShift(colors, hue).first()),
-                shape = shape,
-            ),
-    )
+            .height(46.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        layers.forEachIndexed { index, (scale, width, weight) ->
+            val shifted = hueShift(colors, hue + index * 0.12f)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(46.dp)
+                    .graphicsLayer {
+                        scaleX = spread + (scale - 1f) + pulse * 0.012f
+                        scaleY = scale + pulse * 0.06f
+                        // 呼吸：pulse 越大越亮，但外圈始终比内圈淡
+                        alpha = (0.30f + 0.70f * pulse) * weight * strength * 2.2f
+                    }
+                    .border(
+                        width = width,
+                        brush = Brush.sweepGradient(shifted + shifted.first()),
+                        shape = shape,
+                    ),
+            )
+        }
+    }
 }
 
 /**
@@ -500,7 +518,7 @@ private fun Modifier.animatedRainbowRing(
         brush = Brush.sweepGradient(
             hueShift(colors, hue).mapIndexed { i, c ->
                 // 前 1/4 段提亮，其余压低 → 一道高光沿圈流动
-                if (i < colors.size / 4 + 1) c.copy(alpha = 0.30f + 0.45f * pulse)
+                if (i < colors.size / 4 + 1) c.copy(alpha = 0.45f + 0.50f * pulse)
                 else c.copy(alpha = 0f)
             }
         ),
