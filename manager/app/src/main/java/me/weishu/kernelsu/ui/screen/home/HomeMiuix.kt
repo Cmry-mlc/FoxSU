@@ -75,6 +75,7 @@ import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold
+import me.weishu.kernelsu.ui.theme.NocturneGlowBackdrop
 import top.yukonga.miuix.kmp.basic.ScrollBehavior
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
@@ -112,6 +113,8 @@ fun HomePagerMiuix(
         contentWindowInsets = WindowInsets.systemBars.add(WindowInsets.displayCutout).only(WindowInsetsSides.Horizontal)
     ) { innerPadding ->
         Box(modifier = if (backdrop != null) Modifier.layerBackdrop(backdrop) else Modifier) {
+            // Nocturne 双径向光晕（OLED 暗夜左上紫晕 + 右上薄荷晕）
+            NocturneGlowBackdrop(Modifier.matchParentSize())
             LazyColumn(
                 modifier = Modifier
                     .fillMaxHeight()
