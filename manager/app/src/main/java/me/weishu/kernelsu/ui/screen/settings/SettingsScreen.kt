@@ -73,91 +73,12 @@ fun SettingPager(
     when (LocalUiMode.current) {
         UiMode.Miuix -> SettingPagerMiuix(uiState, actions, bottomInnerPadding)
         UiMode.Material, UiMode.Fresh, UiMode.Glass -> SettingPagerMaterial(uiState, actions, bottomInnerPadding)
-        UiMode.Glass -> SettingPagerGlass(navigator, uiState, actions, bottomInnerPadding)
-    }
-}
-
-@Composable
-private fun SettingPagerGlass(
-    navigator: Navigator,
-    uiState: SettingsUiState,
-    actions: SettingsScreenActions,
-    bottomInnerPadding: Dp,
-) {
-    var showStylePicker by remember { mutableStateOf(false) }
-    androidx.compose.foundation.lazy.LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(
-            start = 13.dp, end = 13.dp, top = 18.dp, bottom = bottomInnerPadding + 90.dp
-        ),
-    ) {
-        item {
-            me.weishu.kernelsu.ui.screen.glass.GlassTopBar(
-                title = stringResource(R.string.settings),
-                subtitle = "FoxSu Glass",
-            )
-        }
-        item {
-            me.weishu.kernelsu.ui.screen.glass.GlassSettingsGroup(
-                title = stringResource(R.string.customization_title),
-                items = listOf(
-                    me.weishu.kernelsu.ui.screen.glass.GlassSettingItem(
-                        iconRes = R.drawable.ic_d_palette,
-                        title = stringResource(R.string.settings_ui_mode),
-                        subtitle = stringResource(me.weishu.kernelsu.ui.uiModeLabelRes(me.weishu.kernelsu.ui.UiMode.fromValue(uiState.uiMode))),
-                        accentColor = 0xFFC77DFF,
-                        onClick = { showStylePicker = true },
-                    ),
-                    me.weishu.kernelsu.ui.screen.glass.GlassSettingItem(
-                        iconRes = R.drawable.ic_d_image,
-                        title = stringResource(R.string.customization_title),
-                        subtitle = stringResource(R.string.customization_entry_summary),
-                        accentColor = 0xFF5CE1E6,
-                        onClick = { navigator.push(Route.Customization) },
-                    ),
-                    me.weishu.kernelsu.ui.screen.glass.GlassSettingItem(
-                        iconRes = R.drawable.ic_d_power2,
-                        title = stringResource(R.string.settings_theme),
-                        subtitle = stringResource(R.string.settings_theme_summary),
-                        accentColor = 0xFFFF7AC8,
-                        onClick = actions.onOpenTheme,
-                    ),
-                ),
-            )
-        }
-        item {
-            me.weishu.kernelsu.ui.screen.glass.GlassSettingsGroup(
-                title = stringResource(R.string.superuser),
-                items = listOf(
-                    me.weishu.kernelsu.ui.screen.glass.GlassSettingItem(
-                        iconRes = R.drawable.ic_d_user,
-                        title = stringResource(R.string.settings_profile_template),
-                        subtitle = stringResource(R.string.settings_profile_template_summary),
-                        accentColor = 0xFF6EF08A,
-                        onClick = actions.onOpenProfileTemplate,
-                    ),
-                ),
-            )
-        }
-        item {
-            me.weishu.kernelsu.ui.screen.glass.GlassSettingsGroup(
-                title = stringResource(R.string.about),
-                items = listOf(
-                    me.weishu.kernelsu.ui.screen.glass.GlassSettingItem(
-                        iconRes = R.drawable.ic_d_book,
-                        title = stringResource(R.string.settings_grid_about),
-                        subtitle = "FoxSu · Glass",
-                        accentColor = 0xFF7AA2FF,
-                        onClick = actions.onOpenAbout,
-                    ),
-                ),
-            )
-        }
-    }
-    if (showStylePicker) {
-        me.weishu.kernelsu.ui.screen.glass.GlassStylePickerDialog(
-            current = me.weishu.kernelsu.ui.UiMode.fromValue(uiState.uiMode),
-            onDismiss = { showStylePicker = false },
+        UiMode.Glass -> me.weishu.kernelsu.ui.screen.glass.GlassSettingsList(
+            uiState = uiState,
+            actions = actions,
+            bottomInnerPadding = bottomInnerPadding,
+            onOpenCustomization = { navigator.push(Route.Customization) },
+            onOpenSulog = { navigator.push(Route.Sulog) },
         )
     }
 }

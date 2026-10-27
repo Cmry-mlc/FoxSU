@@ -22,7 +22,7 @@ import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
 import me.weishu.kernelsu.ui.theme.glassTokens
 
-/** Glass dock 悬浮底栏：胶囊玻璃条 + 选中顶部霓虹渐变条。 */
+/** .dock：悬浮胶囊底栏 —— 选中项 pill 底色 + 顶部 22x3 霓虹条 + flame 徽标 */
 @Composable
 fun GlassBottomBar(
     currentTab: Int,
@@ -42,9 +42,7 @@ fun GlassBottomBar(
             modifier = Modifier
                 .padding(bottom = 14.dp)
                 .clip(RoundedCornerShape(99.dp))
-                .background(
-                    if (t.isDark) Color(0xD9101018) else Color(0xB3FFFFFF)
-                )
+                .background(if (t.isDark) Color(0xD9101018) else Color(0xB3FFFFFF))
                 .border(
                     1.dp,
                     if (t.isDark) Color(0x14FFFFFF) else Color(0xE6FFFFFF),
@@ -63,6 +61,7 @@ fun GlassBottomBar(
                 Box(modifier = Modifier.clip(RoundedCornerShape(18.dp))) {
                     Column(
                         modifier = Modifier
+                            .background(if (selected) Color(0x0FFFFFFF) else Color.Transparent)
                             .clickable { onOpenTab(tab) }
                             .padding(horizontal = 15.dp, vertical = 8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -82,7 +81,11 @@ fun GlassBottomBar(
                             painter = painterResource(iconRes),
                             contentDescription = null,
                             modifier = Modifier.size(17.dp),
-                            tint = if (selected) t.ink else if (t.isDark) Color(0xFF6A677A) else Color(0xFFA3A0B2),
+                            tint = when {
+                                selected -> t.ink
+                                t.isDark -> Color(0xFF6A677A)
+                                else -> Color(0xFFA3A0B2)
+                            },
                         )
                         Text(
                             text = stringResource(labelRes),

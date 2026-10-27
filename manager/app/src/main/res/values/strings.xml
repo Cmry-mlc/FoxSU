@@ -524,4 +524,34 @@
         <item>Updates come to those who wait</item>
     </string-array>
     <string name="fresh_profile_mode_title">Run configuration</string>
+    <string name="glass_status_ok">All good</string>
+    <string name="glass_status_issue">Needs attention</string>
+    <string name="glass_hero_working">WORKING · 工作中</string>
+    <string name="glass_hero_attention">ATTENTION · 需要注意</string>
+    <string name="glass_version_fmt">Version: %s</string>
+    <string name="glass_tag_custom">Custom</string>
+    <string name="glass_tag_jailbreak">Jailbreak</string>
+    <string name="glass_home_support">Support dev</string>
+    <string name="glass_home_support_sub">Free &amp; open source, donations welcome</string>
+    <string name="glass_home_learn">About KernelSU</string>
+    <string name="glass_home_learn_sub">Install guide &amp; module dev</string>
+    <string name="glass_home_selinux">SELinux</string>
+    <string name="glass_superuser_sub">Manage root for every app</string>
+    <string name="glass_module_count">%d modules · %d enabled</string>
+    <string name="glass_mod_enabled">Enabled</string>
+    <string name="glass_mod_disabled">Disabled</string>
+    <string name="glass_quick_actions">Quick actions</string>
+    <string name="glass_refresh_modules">Refresh modules</string>
+    <string name="glass_refresh_modules_sub">Rescan module directory</string>
+    <string name="glass_add_module">Install .zip from storage, or <b>browse repo online</b></string>
+    <string name="glass_group_general">General</string>
+    <string name="glass_group_appearance">Appearance</string>
+    <string name="glass_group_security">Security &amp; debug</string>
+    <string name="glass_su_compat">Legacy SU support</string>
+    <string name="glass_sulog">SU log</string>
+    <string name="glass_settings_sub">FoxSu Glass · Liquid</string>
+    <string name="glass_st_on">ON</string>
+    <string name="glass_st_off">OFF</string>
+    <string name="glass_st_latest">Latest</string>
+    <string name="glass_group_not_granted">Not granted</string>
 </resources>

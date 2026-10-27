@@ -218,9 +218,9 @@ fun ModulePager(
         UiMode.Glass -> me.weishu.kernelsu.ui.screen.glass.GlassModuleList(
             modules = if (rawUiState.searchStatus.searchText.isBlank()) rawUiState.modules else rawUiState.searchResults,
             bottomInnerPadding = bottomInnerPadding,
-            onModuleClick = { /* 详情入口预留 */ },
             onToggle = actions.onToggleModule,
             onAddModule = { navigator.push(Route.Install) },
+            onRefresh = actions.onRefresh,
         )
     }
 }

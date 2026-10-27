@@ -96,40 +96,17 @@ fun SuperUserPager(
             bottomInnerPadding = bottomInnerPadding,
         )
 
-        UiMode.Glass -> SuperUserPagerGlass(
-            uiState = uiState,
-            actions = actions,
-            bottomInnerPadding = bottomInnerPadding,
-        )
-    }
-}
-
-@Composable
-private fun SuperUserPagerGlass(
-    uiState: SuperUserUiState,
-    actions: SuperUserActions,
-    bottomInnerPadding: Dp,
-) {
-    val granted = uiState.groupedApps.count { it.anyAllowSu }
-    val apps = if (uiState.searchStatus.searchText.isBlank()) uiState.groupedApps else uiState.searchResults
-    androidx.compose.foundation.lazy.LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(
-            start = 13.dp, end = 13.dp, top = 8.dp, bottom = bottomInnerPadding + 90.dp
-        ),
-    ) {
-        item {
-            me.weishu.kernelsu.ui.screen.glass.GlassSuperUserHeader(
-                grantedCount = granted,
+        UiMode.Glass -> {
+            val apps =
+                if (uiState.searchStatus.searchText.isBlank()) uiState.groupedApps else uiState.searchResults
+            me.weishu.kernelsu.ui.screen.glass.GlassSuperUserList(
+                granted = apps.filter { it.anyAllowSu },
+                notGranted = apps.filterNot { it.anyAllowSu },
+                grantedCount = apps.count { it.anyAllowSu },
                 searchValue = uiState.searchStatus.searchText,
                 onSearch = actions.onSearchTextChange,
-            )
-        }
-        items(apps.size) { index ->
-            val app = apps[index]
-            me.weishu.kernelsu.ui.screen.glass.GlassSuperUserRow(
-                app = app,
-                onClick = { actions.onOpenProfile(app) },
+                bottomInnerPadding = bottomInnerPadding,
+                onOpenApp = actions.onOpenProfile,
             )
         }
     }
