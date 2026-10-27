@@ -84,7 +84,9 @@ private fun GlassSettingRowComposable(row: GlassSettingRow) {
                     color = t.faint,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(top = 2.dp),
+                    modifier = Modifier
+                        .padding(top = 2.dp)
+                        .marquee(),
                 )
             }
         }

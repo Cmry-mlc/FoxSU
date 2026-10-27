@@ -87,7 +87,7 @@ fun GlassBottomBar(
                             .clip(RoundedCornerShape(16.dp))
                             .background(bg)
                             .clickable { onOpenTab(item.tab) }
-                            .padding(horizontal = 15.dp, vertical = 5.dp),
+                            .padding(horizontal = 20.dp, vertical = 5.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Icon(
@@ -121,7 +121,7 @@ fun GlassBottomBar(
                         Box(
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
-                                .offset(x = 2.dp, y = (-1).dp)
+                                .offset(x = 4.dp, y = (-1).dp)
                                 .heightIn(min = 11.dp)
                                 .clip(CircleShape)
                                 .background(item.accent)

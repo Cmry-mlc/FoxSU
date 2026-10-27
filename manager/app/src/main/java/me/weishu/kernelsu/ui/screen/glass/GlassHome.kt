@@ -6,7 +6,11 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.MarqueeAnimationMode
+import androidx.compose.foundation.MarqueeSpacing
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -305,7 +309,9 @@ fun GlassTopBar(
                 color = t.sub,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(top = 3.dp),
+                modifier = Modifier
+                    .padding(top = 3.dp)
+                    .marquee(),
             )
         }
         if (trailing != null) {
@@ -323,17 +329,17 @@ fun GlassTopBar(
     }
 }
 
-/** 38×34 白色圆胶囊按钮（.tbtn） */
+/** .tbtn：36 正圆玻璃按钮（与 46 头像同为圆形，边界更整齐） */
 @Composable
 fun GlassTopButton(iconRes: Int, onClick: () -> Unit) {
     val t = glassTokens()
     Box(
         modifier = Modifier
-            .size(width = 38.dp, height = 34.dp)
-            .shadow(4.dp, RoundedCornerShape(99.dp))
-            .clip(RoundedCornerShape(99.dp))
-            .background(if (t.isDark) Color(0x14FFFFFF) else Color.White)
-            .border(1.dp, if (t.isDark) Color(0x1AFFFFFF) else Color(0xD9FFFFFF), RoundedCornerShape(99.dp))
+            .size(36.dp)
+            .shadow(4.dp, CircleShape, spotColor = t.glassShadow, ambientColor = t.glassShadow)
+            .clip(CircleShape)
+            .background(t.tbtnBg)
+            .border(1.dp, t.tbtnBorder, CircleShape)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -341,7 +347,7 @@ fun GlassTopButton(iconRes: Int, onClick: () -> Unit) {
             painter = painterResource(iconRes),
             contentDescription = null,
             modifier = Modifier.size(15.dp),
-            tint = t.ink2,
+            tint = t.tbtnIcon,
         )
     }
 }
@@ -631,9 +637,11 @@ fun GlassStatusCard(
                 subtitle,
                 fontSize = 10.5.sp,
                 color = t.sub,
-                maxLines = 2,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(top = 2.dp),
+                modifier = Modifier
+                    .padding(top = 2.dp)
+                    .marquee(),
             )
         }
         Spacer(Modifier.width(6.dp))
@@ -674,10 +682,11 @@ fun GlassLinkCard(
                 subtitle,
                 fontSize = 10.sp,
                 color = t.sub,
-                lineHeight = 13.sp,
-                maxLines = 2,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(top = 2.dp),
+                modifier = Modifier
+                    .padding(top = 2.dp)
+                    .marquee(),
             )
         }
         Text("›", fontSize = 17.sp, color = t.faint, modifier = Modifier.padding(start = 2.dp))
@@ -740,10 +749,11 @@ fun GlassWide(
                 subtitle,
                 fontSize = 10.5.sp,
                 color = t.sub,
-                lineHeight = 14.sp,
-                maxLines = 2,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(top = 2.dp),
+                modifier = Modifier
+                    .padding(top = 2.dp)
+                    .marquee(),
             )
         }
         if (trailing != null) {
@@ -937,3 +947,17 @@ private fun lerpHue(palette: List<Color>, t: Float): Color {
         alpha = 1f,
     )
 }
+
+/**
+ * 单行文字自动横向滚动（跑马灯）：文字超出可用宽度时循环滚动，未超出时静止不动。
+ * 用于设置项 / 功能名的副标题，避免「显示不完整」。
+ */
+@OptIn(ExperimentalFoundationApi::class)
+fun Modifier.marquee(): Modifier = this.basicMarquee(
+    iterations = Int.MAX_VALUE,
+    animationMode = MarqueeAnimationMode.Immediately,
+    repeatDelayMillis = 1600,
+    initialDelayMillis = 1200,
+    spacing = MarqueeSpacing(6.dp),
+    velocity = 28.dp,
+)
