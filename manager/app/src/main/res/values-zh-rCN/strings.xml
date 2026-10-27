@@ -634,4 +634,20 @@
     <string name="onboarding_skip">跳过</string>
     <string name="onboarding_next">下一步</string>
     <string name="onboarding_start">开始使用</string>
+    <string name="style_picker_kicker">APPEARANCE · 外观</string>
+    <string name="style_picker_title">界面风格</string>
+    <string name="style_picker_caption">左右滑动预览\n5 种主题 · 即时生效</string>
+    <string name="style_picker_dark">深色</string>
+    <string name="style_picker_light">浅色</string>
+    <string name="style_picker_follow_system">跟随系统</string>
+    <string name="style_picker_in_use">使用中</string>
+    <string name="style_picker_switch">切换</string>
+    <string name="style_picker_hint">点击卡片即切换 · 无需确认</string>
+    <string name="style_picker_done">完成</string>
+    <string name="style_picker_reset">恢复默认</string>
+    <string name="style_picker_desc_nocturne">OLED 纯黑底 + 紫罗兰极光，强调色紫罗兰 / 薄荷。切换后立即生效，无需重启。</string>
+    <string name="style_picker_desc_daylight">与 Nocturne 同源的亮色版本：纸白面板 + 紫 / 薄荷双色，白天户外更易读。</string>
+    <string name="style_picker_desc_editorial">纸张质感 + 细分隔线 + 信号橙点缀。适合长时间阅读，字体更紧凑。</string>
+    <string name="style_picker_desc_pages">纯白留白 + 单一蓝点，最少的装饰。信息密度最低，适合极简用户。</string>
+    <string name="style_picker_desc_miuix">HyperOS 风格浅紫面板：薰衣草灰底 + 白卡片 + 紫罗兰强调色，大圆角分组。</string>
 </resources>

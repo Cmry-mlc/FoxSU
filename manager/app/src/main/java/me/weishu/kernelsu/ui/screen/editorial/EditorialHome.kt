@@ -375,46 +375,8 @@ private fun rebootDesc(reason: String): String = when (reason) {
 /** 界面风格切换（编辑风） */
 @Composable
 fun EdStyleSheet(onDismiss: () -> Unit) {
-    val t = edTokens()
-    val repo = remember { me.weishu.kernelsu.data.repository.SettingsRepositoryImpl() }
-    Dialog(onDismissRequest = onDismiss) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(20.dp))
-                .background(t.paper)
-                .border(1.5.dp, t.ink, RoundedCornerShape(20.dp))
-                .padding(vertical = 14.dp),
-        ) {
-            Text(
-                text = stringResource(R.string.settings_ui_mode),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Black,
-                color = t.ink,
-                modifier = Modifier.padding(horizontal = 18.dp, vertical = 6.dp),
-            )
-            me.weishu.kernelsu.ui.UiMode.entries.forEach { mode ->
-                val selected = mode == LocalUiMode.current
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            repo.uiMode = mode.value
-                            onDismiss()
-                        }
-                        .padding(horizontal = 18.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = stringResource(uiModeLabelRes(mode)),
-                        fontSize = 13.5.sp,
-                        fontWeight = if (selected) FontWeight.Black else FontWeight.Normal,
-                        color = if (selected) t.acc else t.ink,
-                        modifier = Modifier.weight(1f),
-                    )
-                    if (selected) Text("●", fontSize = 10.sp, color = t.acc)
-                }
-            }
-        }
-    }
+    me.weishu.kernelsu.ui.component.StylePickerDialog(
+        current = LocalUiMode.current,
+        onDismiss = onDismiss,
+    )
 }

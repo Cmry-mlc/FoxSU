@@ -660,4 +660,20 @@
     <string name="onboarding_skip">Skip</string>
     <string name="onboarding_next">Next</string>
     <string name="onboarding_start">Get started</string>
+    <string name="style_picker_kicker">APPEARANCE · STYLE</string>
+    <string name="style_picker_title">Interface style</string>
+    <string name="style_picker_caption">Swipe to preview\n5 styles · apply instantly</string>
+    <string name="style_picker_dark">Dark</string>
+    <string name="style_picker_light">Light</string>
+    <string name="style_picker_follow_system">System</string>
+    <string name="style_picker_in_use">IN USE</string>
+    <string name="style_picker_switch">SWITCH</string>
+    <string name="style_picker_hint">TAP A CARD TO APPLY · NO CONFIRMATION</string>
+    <string name="style_picker_done">Done</string>
+    <string name="style_picker_reset">Reset</string>
+    <string name="style_picker_desc_nocturne">OLED pure black with a violet aurora; accents in violet and mint. Applies the moment you tap — no restart.</string>
+    <string name="style_picker_desc_daylight">The daylight twin of Nocturne: paper-white panels with violet and mint, easier to read outdoors.</string>
+    <string name="style_picker_desc_editorial">Paper texture, hairline rules and signal orange. Built for long reading sessions, tighter type.</string>
+    <string name="style_picker_desc_pages">Pure white, a single blue accent, the least decoration. Lowest information density.</string>
+    <string name="style_picker_desc_miuix">HyperOS-flavoured lavender panels: white cards, violet accents, large grouped corners.</string>
 </resources>

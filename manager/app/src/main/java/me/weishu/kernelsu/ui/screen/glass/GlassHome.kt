@@ -906,56 +906,7 @@ fun GlassStylePickerDialog(
     current: me.weishu.kernelsu.ui.UiMode,
     onDismiss: () -> Unit,
 ) {
-    val repo = remember { me.weishu.kernelsu.data.repository.SettingsRepositoryImpl() }
-    val t = glassTokens()
-    androidx.compose.material3.AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = if (t.isDark) Color(0xFF16161F) else Color.White,
-        titleContentColor = t.ink,
-        textContentColor = t.ink2,
-        title = { Text(stringResource(R.string.settings_ui_mode), fontWeight = FontWeight.ExtraBold) },
-        text = {
-            Column {
-                me.weishu.kernelsu.ui.UiMode.entries.forEach { mode ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(
-                                if (mode == current) t.violet.copy(alpha = 0.1f) else Color.Transparent
-                            )
-                            .clickable {
-                                repo.uiMode = mode.value
-                                onDismiss()
-                            }
-                            .padding(horizontal = 12.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = stringResource(uiModeLabelRes(mode)),
-                            fontSize = 14.sp,
-                            fontWeight = if (mode == current) FontWeight.Bold else FontWeight.Normal,
-                            color = if (mode == current) t.violet else t.ink2,
-                            modifier = Modifier.weight(1f),
-                        )
-                        if (mode == current) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_d_check),
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp),
-                                tint = t.violet,
-                            )
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            androidx.compose.material3.TextButton(onClick = onDismiss) {
-                Text(stringResource(android.R.string.cancel), color = t.sub)
-            }
-        },
-    )
+    me.weishu.kernelsu.ui.component.StylePickerDialog(current = current, onDismiss = onDismiss)
 }
 
 /**
