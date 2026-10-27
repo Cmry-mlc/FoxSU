@@ -89,6 +89,7 @@ import me.weishu.kernelsu.ui.screen.flash.FlashScreen
 import me.weishu.kernelsu.ui.screen.home.HomePager
 import me.weishu.kernelsu.ui.screen.install.InstallScreen
 import me.weishu.kernelsu.ui.screen.module.ModulePager
+import me.weishu.kernelsu.ui.screen.onboarding.WelcomeOverlay
 import me.weishu.kernelsu.ui.screen.modulerepo.ModuleRepoDetailScreen
 import me.weishu.kernelsu.ui.screen.modulerepo.ModuleRepoScreen
 import me.weishu.kernelsu.ui.screen.scriptrun.ScriptRunScreen
@@ -108,6 +109,7 @@ import me.weishu.kernelsu.ui.theme.LocalEnableFloatingBottomBarBlur
 import me.weishu.kernelsu.ui.theme.LocalEnableNavigationBadge
 import me.weishu.kernelsu.ui.theme.LocalModuleDescriptionMaxLines
 import me.weishu.kernelsu.ui.util.getSuperuserCount
+import me.weishu.kernelsu.ui.util.OnboardingPrefs
 import me.weishu.kernelsu.ui.util.install
 import me.weishu.kernelsu.ui.util.rememberBlurBackdrop
 import me.weishu.kernelsu.ui.util.rememberContentReady
@@ -313,6 +315,19 @@ class MainActivity : ComponentActivity() {
                             UiMode.Nocturne -> androidx.compose.material3.Scaffold(
                                 containerColor = androidx.compose.ui.graphics.Color.Transparent
                             ) { navDisplay() }
+                        }
+
+                        // 首次安装引导：只在从未标记过的情况下出现一次（Dialog 承载，天然屏蔽底层交互）
+                        var showWelcome by remember {
+                            mutableStateOf(!OnboardingPrefs.seen(this@MainActivity))
+                        }
+                        if (showWelcome) {
+                            WelcomeOverlay(
+                                onFinish = {
+                                    OnboardingPrefs.markSeen(this@MainActivity)
+                                    showWelcome = false
+                                },
+                            )
                         }
 
                         // 启动动画：小狐从略小位置放大到居中后淡出

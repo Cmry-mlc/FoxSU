@@ -11,8 +11,11 @@ data class AppIconVisual(
 
 fun appIconVisual(style: Int): AppIconVisual = when (style) {
     1 -> AppIconVisual(R.drawable.ic_launcher_kernelsu_foreground, Color(0xFF14721F))
-    2 -> AppIconVisual(R.drawable.ic_launcher_fox2_foreground, Color(0xFFDBE6DF))
-    3 -> AppIconVisual(R.drawable.ic_launcher_fox3_foreground, Color(0xFFFFD3B4))
-    4 -> AppIconVisual(R.drawable.ic_launcher_fox4_foreground, Color(0xFFBFE8D5))
-    else -> AppIconVisual(R.drawable.ic_launcher_foreground, Color(0xFFB7E3C6))
+    // 七彩：白底彩虹描边
+    2 -> AppIconVisual(R.drawable.ic_launcher_fox2_foreground, Color.White)
+    // 夜：墨底月白描边
+    3 -> AppIconVisual(R.drawable.ic_launcher_fox3_foreground, Color(0xFF0B0B0C))
+    4 -> AppIconVisual(R.drawable.ic_launcher_fox4_foreground, Color(0xFF0B0B0C))
+    // 默认：白底墨线
+    else -> AppIconVisual(R.drawable.ic_launcher_foreground, Color.White)
 }

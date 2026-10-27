@@ -547,9 +547,11 @@ fun GlassHeroCard(
                     modifier = Modifier.padding(top = 14.dp),
                 )
             }
-            // .seal：卡内右上角 40 圆玻璃徽章（✓ / × 18）+ 呼吸七彩外圈，内收不越界
+            // .seal：卡内右上角玻璃徽章（✓ / × 18）+ 呼吸七彩外圈；留 12dp 内边距，扩散环不撞圆角
             GlassSeal(
-                modifier = Modifier.align(Alignment.TopEnd),
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 12.dp, end = 12.dp),
                 checkColor = sealTint,
                 sealBg = if (t.isDark) Color(0xFF14141E) else Color(0xF2FFFFFF),
                 border = if (t.isDark) Color(0x1FFFFFFF) else Color(0xFFFFFFFF),

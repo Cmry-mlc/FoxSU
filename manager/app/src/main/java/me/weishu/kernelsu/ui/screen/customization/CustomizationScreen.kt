@@ -457,36 +457,40 @@ fun CustomizationScreen() {
                         subtitle = stringResource(R.string.customization_icon_hint),
                     ) {
                         val iconChoices = listOf(
+                            // 白底墨线（默认）
                             IconChoice(
                                 style = LauncherIconManager.STYLE_FOXSU,
                                 labelRes = R.string.customization_icon_foxsu,
                                 iconRes = R.drawable.ic_launcher_foreground,
                                 background = Brush.linearGradient(
-                                    listOf(Color(0xFF1B1730), Color(0xFF07080B))
+                                    listOf(Color(0xFFFFFFFF), Color(0xFFF1F1EE))
                                 ),
                             ),
+                            // 白底七彩
                             IconChoice(
                                 style = LauncherIconManager.STYLE_FOX2,
                                 labelRes = R.string.customization_icon_fox2,
                                 iconRes = R.drawable.ic_launcher_fox2_foreground,
                                 background = Brush.linearGradient(
-                                    listOf(Color(0xFF2A1E45), Color(0xFF08070C))
+                                    listOf(Color(0xFFFFFFFF), Color(0xFFF6F1FF))
                                 ),
                             ),
+                            // 墨底月白
                             IconChoice(
                                 style = LauncherIconManager.STYLE_FOX3,
                                 labelRes = R.string.customization_icon_fox3,
                                 iconRes = R.drawable.ic_launcher_fox3_foreground,
                                 background = Brush.linearGradient(
-                                    listOf(Color(0xFF10201E), Color(0xFF06080A))
+                                    listOf(Color(0xFF1C1C21), Color(0xFF08080A))
                                 ),
                             ),
+                            // 墨底七彩
                             IconChoice(
                                 style = LauncherIconManager.STYLE_FOX4,
                                 labelRes = R.string.customization_icon_fox4,
                                 iconRes = R.drawable.ic_launcher_fox4_foreground,
                                 background = Brush.linearGradient(
-                                    listOf(Color(0xFFFAFAFF), Color(0xFFE9E9F2))
+                                    listOf(Color(0xFF191922), Color(0xFF08080A))
                                 ),
                             ),
                             IconChoice(
@@ -523,6 +527,28 @@ fun CustomizationScreen() {
                             }
                             Spacer(Modifier.height(10.dp))
                         }
+
+                        // 七彩狐狸：与上面的选择器共用同一份持久化状态（真实切换启动器图标）
+                        val rainbowOn = custom.iconStyle == LauncherIconManager.STYLE_FOX2
+                        ToggleRow(
+                            title = stringResource(R.string.customization_icon_rainbow),
+                            subtitle = stringResource(R.string.customization_icon_rainbow_sum),
+                            checked = rainbowOn,
+                            onChange = { on ->
+                                val style = if (on) {
+                                    LauncherIconManager.STYLE_FOX2
+                                } else {
+                                    LauncherIconManager.STYLE_FOXSU
+                                }
+                                CustomizationStore.setIconStyle(style)
+                                LauncherIconManager.apply(style)
+                                Toast.makeText(
+                                    context,
+                                    R.string.customization_icon_hint,
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            },
+                        )
                     }
                 }
 

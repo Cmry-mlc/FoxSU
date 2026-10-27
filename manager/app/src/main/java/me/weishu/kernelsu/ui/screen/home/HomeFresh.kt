@@ -1163,7 +1163,7 @@ private fun FreshStatusCard(
                 FreshHeroBackdrop(hero = hero, bitmap = heroBitmap)
             }
             Row(
-                modifier = Modifier.padding(start = 18.dp, top = 18.dp, bottom = 18.dp, end = 100.dp),
+                modifier = Modifier.padding(start = 18.dp, top = 18.dp, bottom = 18.dp, end = 84.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
@@ -1301,12 +1301,12 @@ private fun FreshStatusCard(
                 }
             }
 
-            // 设计稿 seal：右侧垂直居中的 66dp 白底圆 + 柔和投影，波浪章 32dp 玫红描边，静态无动画
+            // 状态徽章：贴在卡片右上角、与标题同一水平线，留 16dp 内边距不贴边
             Box(
                 modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(end = 20.dp)
-                    .size(66.dp)
+                    .align(Alignment.TopEnd)
+                    .padding(top = 16.dp, end = 16.dp)
+                    .size(56.dp)
                     .shadow(elevation = 8.dp, shape = CircleShape, clip = false)
                     .clip(CircleShape)
                     .background(
@@ -1319,7 +1319,7 @@ private fun FreshStatusCard(
                     painter = statusIcon,
                     contentDescription = null,
                     tint = badgeTint,
-                    modifier = Modifier.size(34.dp),
+                    modifier = Modifier.size(28.dp),
                 )
             }
         }
