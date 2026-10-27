@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -25,7 +26,7 @@ import me.weishu.kernelsu.R
 import me.weishu.kernelsu.data.model.Module
 import me.weishu.kernelsu.ui.theme.glassTokens
 
-/** 设计稿 .mod 图标的霓虹渐变轮换（lime/blue/pink/flame/cyan） */
+/** 设计稿 .mod 图标 mico 的霓虹渐变轮换（lime/blue/pink/flame/cyan） */
 private val modAccents = listOf(
     0xFF6EF08AL to 0xFF2ECC71L,
     0xFF7AA2FFL to 0xFF4D5CE5L,
@@ -35,8 +36,8 @@ private val modAccents = listOf(
 )
 
 /**
- * Glass 模块页整页：头像标题行（x 个模块 · y 个已启用）+ .mod 卡列表（版本行徽章 + tog）
- * + 快捷操作 + .addmod 虚线入口。
+ * Glass 模块页整页：cyan 狐头像顶栏（右侧搜索按钮）+ .mod 白玻璃卡列表
+ * （46 渐变描边 mico + 版本行内已启用/已停用徽章 + tog）+ 快捷操作 + .addmod 虚线入口。
  */
 @Composable
 fun GlassModuleList(
@@ -50,13 +51,16 @@ fun GlassModuleList(
     val enabledCount = modules.count { it.enabled }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 13.dp, end = 13.dp, top = 8.dp, bottom = bottomInnerPadding + 96.dp),
+        contentPadding = PaddingValues(start = 13.dp, end = 13.dp, top = 4.dp, bottom = bottomInnerPadding + 96.dp),
     ) {
         item {
             GlassTopBar(
                 title = stringResource(R.string.module),
                 subtitle = stringResource(R.string.glass_module_count, modules.size, enabledCount),
                 titleSize = 19,
+                trailing = {
+                    GlassTopButton(iconRes = R.drawable.ic_d_search, onClick = onRefresh)
+                },
             )
         }
         items(modules.size) { index ->
@@ -66,41 +70,27 @@ fun GlassModuleList(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 11.dp)
+                    .shadow(6.dp, RoundedCornerShape(22.dp), spotColor = if (t.isDark) Color.Black else Color(0x1450496E))
                     .clip(RoundedCornerShape(22.dp))
-                    .background(t.glassPanel)
-                    .border(1.dp, t.glassBorder, RoundedCornerShape(22.dp))
-                    .padding(15.dp),
+                    .background(if (t.isDark) t.panel2 else Color(0xD9FFFFFF))
+                    .border(1.dp, if (t.isDark) t.glassBorder else Color(0xCCFFFFFF), RoundedCornerShape(22.dp))
+                    .padding(14.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // .mico：46 圆角15 玻璃块 + 渐变描边图标
+                // .mico：46 圆角15 白底 + 渐变描边 + 渐变 tint 图标
                 Box(
                     modifier = Modifier
                         .size(46.dp)
+                        .shadow(5.dp, RoundedCornerShape(15.dp), spotColor = Color(a1).copy(alpha = 0.35f))
                         .clip(RoundedCornerShape(15.dp))
-                        .background(
-                            Brush.linearGradient(
-                                listOf(
-                                    Color(a1).copy(alpha = if (t.isDark) 0.18f else 0.22f),
-                                    Color(a2).copy(alpha = if (t.isDark) 0.08f else 0.10f),
-                                )
-                            )
-                        )
-                        .border(1.dp, Color(a1).copy(alpha = 0.35f), RoundedCornerShape(15.dp)),
+                        .background(if (t.isDark) t.panel2 else Color.White)
+                        .border(1.dp, Brush.linearGradient(listOf(Color(a1).copy(alpha = 0.55f), Color(a2).copy(alpha = 0.55f))), RoundedCornerShape(15.dp)),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(46.dp)
-                            .background(
-                                Brush.verticalGradient(
-                                    listOf(Color.Transparent, t.bg.copy(alpha = if (t.isDark) 0.55f else 0.25f))
-                                )
-                            ),
-                    )
                     Icon(
                         painter = painterResource(R.drawable.ic_d_check),
                         contentDescription = null,
-                        modifier = Modifier.size(22.dp),
+                        modifier = Modifier.size(20.dp),
                         tint = Color(a1),
                     )
                 }
@@ -114,21 +104,23 @@ fun GlassModuleList(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    Text(
-                        text = m.description,
-                        fontSize = 10.5.sp,
-                        color = t.sub,
-                        lineHeight = 16.sp,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(top = 3.dp),
-                    )
-                    // .mver：版本号 + 已启用/已停用徽章（同设计稿位置）
+                    if (m.description.isNotBlank()) {
+                        Text(
+                            text = m.description,
+                            fontSize = 10.5.sp,
+                            color = t.sub,
+                            lineHeight = 16.sp,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(top = 3.dp),
+                        )
+                    }
+                    // .mver：版本号 + 已启用/已停用徽章（同一行，同设计稿）
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(top = 6.dp),
                     ) {
-                        Text("v" + m.version, fontSize = 9.5.sp, color = t.faint)
+                        Text("v" + m.version, fontSize = 9.5.sp, color = t.faint, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Spacer(Modifier.width(8.dp))
                         Text(
                             text = stringResource(if (m.enabled) R.string.glass_mod_enabled else R.string.glass_mod_disabled),
@@ -137,12 +129,10 @@ fun GlassModuleList(
                             color = if (m.enabled) t.lime else t.faint,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(6.dp))
-                                .background(
-                                    if (m.enabled) t.lime.copy(alpha = 0.12f) else Color(0x0DFFFFFF)
-                                )
+                                .background(if (m.enabled) t.lime.copy(alpha = 0.14f) else if (t.isDark) Color(0x0DFFFFFF) else Color(0x0A5A5578))
                                 .border(
                                     1.dp,
-                                    if (m.enabled) t.lime.copy(alpha = 0.3f) else t.glassBorder,
+                                    if (m.enabled) t.lime.copy(alpha = 0.32f) else t.glassBorder,
                                     RoundedCornerShape(6.dp),
                                 )
                                 .padding(horizontal = 8.dp, vertical = 2.dp),
@@ -150,7 +140,7 @@ fun GlassModuleList(
                     }
                 }
                 Spacer(Modifier.width(10.dp))
-                GlassToggle(checked = m.enabled, onClick = { onToggle(m) })
+                GlassToggle(checked = m.enabled, on1 = Color(a1), on2 = Color(a2), onClick = { onToggle(m) })
             }
         }
         item { GlassSectionHead(stringResource(R.string.glass_quick_actions)) }
@@ -163,14 +153,14 @@ fun GlassModuleList(
                 onClick = onRefresh,
             )
         }
-        item { Spacer(Modifier.height(1.dp)) }
+        item { Spacer(Modifier.height(10.dp)) }
         item {
-            // .addmod：1.5 虚线圆角22 添加入口
+            // .addmod：1.5 虚线感圆角22 添加入口（模块安装 + 模块仓库）
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(22.dp))
-                    .background(Color.Transparent)
+                    .background(if (t.isDark) Color.Transparent else Color(0x66FFFFFF))
                     .border(
                         width = 1.5.dp,
                         brush = Brush.horizontalGradient(
@@ -186,13 +176,20 @@ fun GlassModuleList(
                 contentAlignment = Alignment.Center,
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_d_plus),
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp),
+                        tint = t.violet,
+                    )
+                    Spacer(Modifier.width(7.dp))
                     Text(
                         text = stringResource(R.string.module_install),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = t.sub,
                     )
-                    Spacer(Modifier.width(6.dp))
+                    Spacer(Modifier.width(8.dp))
                     Text(
                         text = stringResource(R.string.module_repos),
                         fontSize = 12.sp,

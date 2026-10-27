@@ -554,4 +554,5 @@
     <string name="glass_st_off">OFF</string>
     <string name="glass_st_latest">Latest</string>
     <string name="glass_group_not_granted">Not granted</string>
+    <string name="glass_home_subtitle">Kernel temp today: just right</string>
 </resources>

@@ -72,7 +72,7 @@ private fun GlassSettingRowComposable(row: GlassSettingRow) {
             }
             row.checked != null -> {
                 Spacer(Modifier.width(8.dp))
-                GlassToggle(checked = row.checked, gradientOn = false, onClick = row.onClick)
+                GlassToggle(checked = row.checked, onClick = row.onClick)
             }
             row.showChevron -> {
                 Spacer(Modifier.width(8.dp))
@@ -111,6 +111,9 @@ fun GlassSettingsList(
                 title = stringResource(R.string.settings),
                 subtitle = stringResource(R.string.glass_settings_sub),
                 titleSize = 19,
+                trailing = {
+                    GlassTopButton(iconRes = R.drawable.ic_d_search, onClick = {})
+                },
             )
         }
         item {

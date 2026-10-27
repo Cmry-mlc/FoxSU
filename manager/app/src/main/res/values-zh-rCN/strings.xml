@@ -548,4 +548,5 @@
     <string name="glass_st_off">关</string>
     <string name="glass_st_latest">最新</string>
     <string name="glass_group_not_granted">未授权应用</string>
+    <string name="glass_home_subtitle">今日内核温度：恰到好处</string>
 </resources>

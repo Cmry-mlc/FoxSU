@@ -14,12 +14,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,13 +29,14 @@ import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.screen.superuser.GroupedApps
 import me.weishu.kernelsu.ui.theme.glassTokens
 
-/** 设计稿 .uact 中每个应用轮换的霓虹渐变（flame/lemon/violet/cyan/blue） */
+/** 设计稿 .uico 的霓虹渐变对（135°） */
 private val neonPairs = listOf(
     0xFFFF7A59L to 0xFFFF4D6DL,
     0xFFFFE45CL to 0xFFFFC300L,
     0xFFC77DFFL to 0xFF8A2BE2L,
     0xFF5CE1E6L to 0xFF00B8D9L,
     0xFF7AA2FFL to 0xFF4D5CE5L,
+    0xFF8E8B9CL to 0xFF55525FL,
 )
 
 private fun neonFor(uid: Int): Pair<Color, Color> {
@@ -41,12 +44,24 @@ private fun neonFor(uid: Int): Pair<Color, Color> {
     return Color(a) to Color(b)
 }
 
-/** .urow：20 圆角玻璃应用行 —— 40 圆角13 图标 + 包名副标题 + 渐变 ROOT 徽章 + .tog 开关 */
+/** 取标签首字/首字母作为渐变方块内的文字（同设计稿 ⬆ / ✦ / MT / C17） */
+private fun iconText(label: String): String {
+    val trimmed = label.trim()
+    if (trimmed.isEmpty()) return "?"
+    // 拉丁字符取前两位大写，中文取首字
+    val first = trimmed.first()
+    return if (first.code < 128) {
+        trimmed.take(2).uppercase()
+    } else {
+        trimmed.take(1)
+    }
+}
+
+/**
+ * .urow：20 圆角白玻璃行 —— 40 圆角13 霓虹渐变方块（内嵌首字）+ 名称/包名 + 渐变 ROOT tag + .tog 开关
+ */
 @Composable
-fun GlassSuperUserRow(
-    app: GroupedApps,
-    onClick: () -> Unit,
-) {
+fun GlassSuperUserRow(app: GroupedApps, onClick: () -> Unit) {
     val t = glassTokens()
     val (c1, c2) = neonFor(app.uid)
     Row(
@@ -54,19 +69,29 @@ fun GlassSuperUserRow(
             .fillMaxWidth()
             .padding(bottom = 9.dp)
             .clip(RoundedCornerShape(20.dp))
-            .background(t.glassPanel)
-            .border(1.dp, t.glassBorder, RoundedCornerShape(20.dp))
+            .background(if (t.isDark) t.panel2 else Color(0xD9FFFFFF))
+            .border(1.dp, if (t.isDark) t.glassBorder else Color(0xCCFFFFFF), RoundedCornerShape(20.dp))
             .clickable(onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        me.weishu.kernelsu.ui.component.AppIconImage(
-            packageInfo = app.primary.packageInfo,
-            label = app.primary.label,
+        // .uico：渐变方块 + 白色首字
+        Box(
             modifier = Modifier
                 .size(40.dp)
-                .clip(RoundedCornerShape(13.dp)),
-        )
+                .shadow(6.dp, RoundedCornerShape(13.dp))
+                .clip(RoundedCornerShape(13.dp))
+                .background(Brush.linearGradient(listOf(c1, c2))),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = iconText(app.primary.label),
+                fontSize = if (app.primary.label.firstOrNull()?.code ?: 0 < 128) 13.sp else 15.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = Color.White,
+                maxLines = 1,
+            )
+        }
         Spacer(Modifier.width(13.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -75,44 +100,44 @@ fun GlassSuperUserRow(
                 fontWeight = FontWeight.Bold,
                 color = t.ink,
                 maxLines = 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                overflow = TextOverflow.Ellipsis,
             )
             Text(
                 text = app.primary.displayIdentifier,
                 fontSize = 9.5.sp,
                 color = t.faint,
                 maxLines = 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(top = 2.dp),
             )
         }
-        // .uact：渐变 ROOT 徽章 + .tog 开关
+        // .uact：渐变 ROOT tag + tog
         if (app.anyAllowSu) {
-            Row(
+            Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(7.dp))
                     .background(Brush.horizontalGradient(listOf(c1, c2)))
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                    .padding(horizontal = 9.dp, vertical = 4.dp),
             ) {
                 Text(
                     text = "ROOT",
                     fontSize = 8.5.sp,
                     fontWeight = FontWeight.ExtraBold,
                     letterSpacing = 0.5.sp,
-                    color = if (t.isDark) Color(0xFF0D0D14) else Color(0xFF3A3A46),
+                    color = Color.White,
+                    maxLines = 1,
                 )
             }
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(9.dp))
         }
-        GlassToggle(checked = app.anyAllowSu, gradientOn = app.anyAllowSu, on1 = c1, on2 = c2)
+        GlassToggle(checked = app.anyAllowSu, on1 = c1, on2 = c2)
     }
 }
 
-/** .tog：42x24 开关，on 时霓虹渐变底 + 白圆点 */
+/** .tog：42×24 —— on 时霓虹渐变底 + 白圆点靠右；off 时浅灰底 + 白圆点 */
 @Composable
 fun GlassToggle(
     checked: Boolean,
-    gradientOn: Boolean = true,
     on1: Color = Color(0xFFFF7A59),
     on2: Color = Color(0xFFC77DFF),
     onClick: (() -> Unit)? = null,
@@ -123,11 +148,8 @@ fun GlassToggle(
             .size(width = 42.dp, height = 24.dp)
             .clip(RoundedCornerShape(99.dp))
             .background(
-                when {
-                    checked && gradientOn -> Brush.horizontalGradient(listOf(on1, on2))
-                    checked -> Brush.horizontalGradient(listOf(t.flame, t.violet))
-                    else -> Brush.horizontalGradient(listOf(t.togOff, t.togOff))
-                }
+                if (checked) Brush.horizontalGradient(listOf(on1, on2))
+                else Brush.horizontalGradient(listOf(t.togOff, t.togOff))
             )
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
     ) {
@@ -137,20 +159,21 @@ fun GlassToggle(
                 .padding(3.dp)
                 .offset(x = if (checked) 18.dp else 0.dp)
                 .size(18.dp)
+                .shadow(if (checked) 2.dp else 0.dp, CircleShape)
                 .clip(CircleShape)
-                .background(if (checked) Color.White else t.togThumbOff),
+                .background(if (checked) Color.White else Color(0xFFA9A6B6)),
         )
     }
 }
 
-/** .shead：分组标题 + 渐隐分割线（超级用户/模块/设置共用） */
+/** .shead：分组标题 + 渐隐分割线 */
 @Composable
 fun GlassSectionHead(title: String) {
     val t = glassTokens()
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 16.dp, bottom = 8.dp, start = 4.dp, end = 4.dp),
+            .padding(top = 16.dp, bottom = 9.dp, start = 4.dp, end = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -177,7 +200,9 @@ fun GlassSectionHead(title: String) {
     }
 }
 
-/** 超级用户页整页（Glass）：头像标题行 + 搜索条 + 已授权/未授权分组列表 */
+/**
+ * 超级用户页整页（Glass）：头像顶栏（右侧 lime 已授权胶囊）+ 搜索条 + 已授权行 + 「未授权应用」分组
+ */
 @Composable
 fun GlassSuperUserList(
     granted: List<GroupedApps>,
@@ -191,45 +216,42 @@ fun GlassSuperUserList(
     val t = glassTokens()
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 13.dp, end = 13.dp, top = 8.dp, bottom = bottomInnerPadding + 96.dp),
+        contentPadding = PaddingValues(start = 13.dp, end = 13.dp, top = 4.dp, bottom = bottomInnerPadding + 88.dp),
     ) {
         item {
             GlassTopBar(
                 title = stringResource(R.string.superuser),
                 subtitle = stringResource(R.string.glass_superuser_sub),
                 titleSize = 19,
+                trailing = {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(99.dp))
+                            .background(t.lime.copy(alpha = 0.12f))
+                            .border(1.dp, t.lime.copy(alpha = 0.28f), RoundedCornerShape(99.dp))
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                    ) {
+                        Text(
+                            text = stringResource(R.string.glass_granted_count, grantedCount),
+                            fontSize = 10.5.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = t.lime,
+                            maxLines = 1,
+                        )
+                    }
+                },
             )
         }
         item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 14.dp, start = 4.dp, end = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Spacer(Modifier.weight(1f))
-                Text(
-                    text = stringResource(R.string.glass_granted_count, grantedCount),
-                    fontSize = 10.5.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = t.lime,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(99.dp))
-                        .background(t.lime.copy(alpha = 0.1f))
-                        .border(1.dp, t.lime.copy(alpha = 0.25f), RoundedCornerShape(99.dp))
-                        .padding(horizontal = 12.dp, vertical = 5.dp),
-                )
-            }
-        }
-        item {
+            // .search：胶囊玻璃搜索条
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 14.dp)
                     .clip(RoundedCornerShape(99.dp))
-                    .background(if (t.isDark) Color(0x0AFFFFFF) else Color(0x80FFFFFF))
-                    .border(1.dp, t.glassBorder, RoundedCornerShape(99.dp))
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                    .background(if (t.isDark) Color(0x0AFFFFFF) else Color(0x99FFFFFF))
+                    .border(1.dp, if (t.isDark) t.glassBorder else Color(0xCCFFFFFF), RoundedCornerShape(99.dp))
+                    .padding(horizontal = 16.dp, vertical = 11.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
@@ -261,10 +283,8 @@ fun GlassSuperUserList(
                 )
             }
         }
-        if (granted.isNotEmpty()) {
-            items(granted.size) { index ->
-                GlassSuperUserRow(app = granted[index], onClick = { onOpenApp(granted[index]) })
-            }
+        items(granted.size) { index ->
+            GlassSuperUserRow(app = granted[index], onClick = { onOpenApp(granted[index]) })
         }
         if (notGranted.isNotEmpty()) {
             item { GlassSectionHead(stringResource(R.string.glass_group_not_granted)) }

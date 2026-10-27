@@ -61,7 +61,7 @@ fun GlassBottomBar(
                 Box(modifier = Modifier.clip(RoundedCornerShape(18.dp))) {
                     Column(
                         modifier = Modifier
-                            .background(if (selected) Color(0x0FFFFFFF) else Color.Transparent)
+                            .background(if (selected) (if (t.isDark) Color(0x0FFFFFFF) else Color(0xF2FFFFFF)) else Color.Transparent)
                             .clickable { onOpenTab(tab) }
                             .padding(horizontal = 15.dp, vertical = 8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
