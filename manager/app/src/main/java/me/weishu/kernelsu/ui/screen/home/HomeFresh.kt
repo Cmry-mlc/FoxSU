@@ -1077,12 +1077,11 @@ private fun FreshStatusCard(
     val notInstalled = !ksuActive && state.kernelVersion.isGKI()
     val heroSt = state.heroState()
 
-    // 状态图标跟随真实阶段
+    // 状态图标跟随真实阶段：只有刷写成功（待重启 / 工作中）才是对勾，未安装 / 失败 / 不支持一律叉号
     val statusIcon = painterResource(
         when (heroSt.phase) {
-            HeroPhase.WORKING -> R.drawable.ic_home_status_ok
-            HeroPhase.NOT_INSTALLED, HeroPhase.ATTENTION, HeroPhase.FLASHING,
-            HeroPhase.PENDING_REBOOT -> R.drawable.ic_home_status_warn
+            HeroPhase.WORKING, HeroPhase.PENDING_REBOOT -> R.drawable.ic_home_status_ok
+            HeroPhase.ATTENTION, HeroPhase.FLASHING -> R.drawable.ic_home_status_warn
             else -> R.drawable.ic_home_status_fail
         }
     )
@@ -1120,6 +1119,8 @@ private fun FreshStatusCard(
     val hasHero = !glassBackdrop && hero != null && heroBitmap != null
     // 状态徽章：参考图是薰衣草紫的细描边徽章，工作态用主卡强调紫
     val badgeTint = when {
+        // 刷写已成功、等待重启：用琥珀色对勾，和错误红区分开
+        heroSt.phase == HeroPhase.PENDING_REBOOT || heroSt.phase == HeroPhase.FLASHING -> Color(0xFFB07C10)
         !ksuActive -> MaterialTheme.colorScheme.error
         hasHero || isNightScheme() -> Color.White
         else -> UiPalette.StatusRose

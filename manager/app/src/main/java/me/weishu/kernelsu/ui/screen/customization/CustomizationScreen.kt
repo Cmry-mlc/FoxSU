@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -173,9 +174,11 @@ fun CustomizationScreen() {
         containerColor = scaffoldBackgroundColor(MaterialTheme.colorScheme.surface),
         topBar = {
             // 设计稿 .phead：40dp 白圆返回钮（带投影）+ 24/800 标题，padding 20x(20/10)
+            // statusBarsPadding 必须加：本页 topBar 是自绘 Row，不像 TopAppBar 会自动让开状态栏
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .statusBarsPadding()
                     .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {

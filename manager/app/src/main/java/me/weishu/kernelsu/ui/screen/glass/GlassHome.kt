@@ -403,6 +403,13 @@ fun GlassHeroCard(
     }
     // 刷写入口：越狱模式下刷写会变砖
     val flashable = hero.canFlash
+    // seal 字形跟着真实阶段走：工作中 / 待重启（刷写已成功）才是对勾，其余一律叉号
+    val sealOk = hero.phase == HeroPhase.WORKING || hero.phase == HeroPhase.PENDING_REBOOT
+    val sealTint = when {
+        hero.phase == HeroPhase.WORKING -> t.violet
+        hero.phase == HeroPhase.PENDING_REBOOT || hero.phase == HeroPhase.FLASHING -> t.amber
+        else -> t.flame
+    }
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -540,12 +547,13 @@ fun GlassHeroCard(
                     modifier = Modifier.padding(top = 14.dp),
                 )
             }
-            // .seal：卡内右上角 40 圆玻璃徽章（对勾 18）+ 呼吸七彩外圈，内收不越界
+            // .seal：卡内右上角 40 圆玻璃徽章（✓ / × 18）+ 呼吸七彩外圈，内收不越界
             GlassSeal(
                 modifier = Modifier.align(Alignment.TopEnd),
-                checkColor = t.violet,
+                checkColor = sealTint,
                 sealBg = if (t.isDark) Color(0xFF14141E) else Color(0xF2FFFFFF),
                 border = if (t.isDark) Color(0x1FFFFFFF) else Color(0xFFFFFFFF),
+                ok = sealOk,
                 coreSize = 40,
                 iconSize = 18,
             )
@@ -952,7 +960,9 @@ fun GlassStylePickerDialog(
  * 英雄卡右侧 .seal：60 圆 + 双层呼吸霓虹外圈（随机七彩，色相缓慢流转）。
  * - 外圈 1：scale 1.0→1.22 + alpha 0.55→0 的扩散环（呼吸）
  * - 外圈 2：固定 1px 七彩描边，色相随时间旋转
- * - 内核 60 圆白/黑底 + 对勾，对勾自带轻微呼吸透明度
+ * - 内核 60 圆白/黑底 + 状态字形，字形自带轻微呼吸透明度
+ *
+ * [ok] 由真实 HeroPhase 推导：只有刷写成功（工作中 / 待重启）才是对勾，其余一律叉号。
  */
 @Composable
 fun GlassSeal(
@@ -960,6 +970,7 @@ fun GlassSeal(
     checkColor: Color,
     sealBg: Color,
     border: Color,
+    ok: Boolean = true,
     coreSize: Int = 44,
     iconSize: Int = 20,
 ) {
@@ -1027,7 +1038,7 @@ fun GlassSeal(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_d_check),
+                painter = painterResource(if (ok) R.drawable.ic_d_check else R.drawable.ic_d_cross),
                 contentDescription = null,
                 modifier = Modifier
                     .size(iconSize.dp)

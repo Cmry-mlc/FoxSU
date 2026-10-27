@@ -1,7 +1,11 @@
 package me.weishu.kernelsu.ui.screen.nocturne
 
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -22,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -37,6 +42,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.sp
+import me.weishu.kernelsu.ui.screen.home.HeroPhase
 
 /**
  * Nocturne 通用组件 —— 严格对照视觉稿 foxsu-nocturne-ui.html 的 CSS 数值实现。
@@ -517,13 +523,37 @@ fun NcHeroGlow(t: NcTokens, modifier: Modifier = Modifier) {
 }
 
 /**
- * 环形进度 .ringwrap —— 56×56，r24，stroke 3，
- * 轨道 rgba(255,255,255,.08)，进度 mint 实心一圈，中心 20px 对勾。
+ * 环形状态 .ringwrap —— 56×56，r24，stroke 3，轨道白 8%。
+ *
+ * 图标与颜色**完全由真实 HeroPhase 决定**，不再是一个永远画对勾的装饰：
+ * · WORKING         → ✓（mint，满环）
+ * · PENDING_REBOOT  → ✓（amber，满环，刷写已成功、等待重启）
+ * · FLASHING        → 刷新图标 + 不定量旋转弧（不伪造进度）
+ * · ATTENTION       → !（amber）
+ * · 其余（未安装 / 刷写失败 / 不支持）→ ×（red）
  */
 @Composable
-fun NcHeroRing(modifier: Modifier = Modifier, ok: Boolean, progress: Float = 1f) {
+fun NcHeroRing(modifier: Modifier = Modifier, phase: HeroPhase) {
     val t = ncTokens()
     val track = if (t.dark) Color(0x14FFFFFF) else Color(0x1F0F142D)
+    val tint = when (phase) {
+        HeroPhase.WORKING -> t.mint
+        HeroPhase.PENDING_REBOOT, HeroPhase.FLASHING, HeroPhase.ATTENTION -> t.amber
+        else -> t.red
+    }
+    val glyph = when (phase) {
+        HeroPhase.WORKING, HeroPhase.PENDING_REBOOT -> me.weishu.kernelsu.R.drawable.nc_check
+        HeroPhase.FLASHING -> me.weishu.kernelsu.R.drawable.nc_refresh
+        HeroPhase.ATTENTION -> me.weishu.kernelsu.R.drawable.nc_alert
+        else -> me.weishu.kernelsu.R.drawable.nc_cross
+    }
+    val spin = rememberInfiniteTransition(label = "ring")
+    val angle by spin.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(tween(1100, easing = LinearEasing)),
+        label = "ring-spin",
+    )
     Box(modifier.size(56.dp), contentAlignment = Alignment.Center) {
         Canvas(Modifier.fillMaxSize()) {
             val stroke = 3.dp.toPx()
@@ -536,21 +566,35 @@ fun NcHeroRing(modifier: Modifier = Modifier, ok: Boolean, progress: Float = 1f)
                 size = androidx.compose.ui.geometry.Size(d, d),
                 style = Stroke(stroke),
             )
-            drawArc(
-                color = if (ok) t.mint else t.red,
-                startAngle = -90f,
-                sweepAngle = 360f * progress.coerceIn(0f, 1f),
-                useCenter = false,
-                topLeft = Offset(inset, inset),
-                size = androidx.compose.ui.geometry.Size(d, d),
-                style = Stroke(stroke, cap = androidx.compose.ui.graphics.StrokeCap.Round),
-            )
+            if (phase == HeroPhase.FLASHING) {
+                drawArc(
+                    color = tint,
+                    startAngle = angle,
+                    sweepAngle = 96f,
+                    useCenter = false,
+                    topLeft = Offset(inset, inset),
+                    size = androidx.compose.ui.geometry.Size(d, d),
+                    style = Stroke(stroke, cap = androidx.compose.ui.graphics.StrokeCap.Round),
+                )
+            } else {
+                drawArc(
+                    color = tint,
+                    startAngle = -90f,
+                    sweepAngle = 360f,
+                    useCenter = false,
+                    topLeft = Offset(inset, inset),
+                    size = androidx.compose.ui.geometry.Size(d, d),
+                    style = Stroke(stroke, cap = androidx.compose.ui.graphics.StrokeCap.Round),
+                )
+            }
         }
         Icon(
-            painter = painterResource(me.weishu.kernelsu.R.drawable.nc_check),
+            painter = painterResource(glyph),
             contentDescription = null,
-            tint = if (ok) t.mint else t.red,
-            modifier = Modifier.size(20.dp),
+            tint = tint,
+            modifier = Modifier
+                .size(19.dp)
+                .rotate(if (phase == HeroPhase.FLASHING) angle else 0f),
         )
     }
 }

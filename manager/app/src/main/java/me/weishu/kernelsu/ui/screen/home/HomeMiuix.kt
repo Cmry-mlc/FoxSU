@@ -41,7 +41,9 @@ import androidx.compose.material.icons.filled.Smartphone
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material.icons.filled.VolunteerActivism
 import androidx.compose.material.icons.rounded.CheckCircleOutline
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.ErrorOutline
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
@@ -343,11 +345,20 @@ private fun StatusCard(
                             ) {
                                 Icon(
                                     modifier = Modifier.size(110.dp),
-                                    imageVector = Icons.Rounded.CheckCircleOutline,
-                                    tint = if (isDynamicColor) {
-                                        colorScheme.primary.copy(alpha = 0.8f)
-                                    } else {
-                                        Color(0xFF36D167)
+                                    // 状态字形由真实 HeroPhase 决定：工作中 / 待重启（刷写成功）才是对勾
+                                    imageVector = when (hero.phase) {
+                                        HeroPhase.WORKING, HeroPhase.PENDING_REBOOT -> Icons.Rounded.CheckCircleOutline
+                                        HeroPhase.FLASHING -> Icons.Rounded.Refresh
+                                        else -> Icons.Rounded.Close
+                                    },
+                                    tint = when (hero.phase) {
+                                        HeroPhase.WORKING -> if (isDynamicColor) {
+                                            colorScheme.primary.copy(alpha = 0.8f)
+                                        } else {
+                                            Color(0xFF36D167)
+                                        }
+                                        HeroPhase.PENDING_REBOOT, HeroPhase.FLASHING -> Color(0xFFE0A020)
+                                        else -> Color(0xFFE05A4F)
                                     },
                                     contentDescription = null
                                 )

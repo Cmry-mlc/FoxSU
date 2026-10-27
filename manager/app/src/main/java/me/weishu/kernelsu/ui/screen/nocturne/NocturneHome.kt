@@ -257,7 +257,6 @@ private fun NcHero(
 ) {
     val t = ncTokens()
     val hero = state.heroState()
-    val ok = hero.phase == HeroPhase.WORKING
 
     // 状态语义全部由真实运行态推导：安装 / 刷写中 / 待重启 / 工作中 / 需注意
     val (kicker, bigText) = when (hero.phase) {
@@ -415,11 +414,7 @@ private fun NcHero(
             }
             NcHeroRing(
                 modifier = Modifier.align(Alignment.TopEnd).padding(end = 17.dp, top = 15.dp),
-                ok = ok,
-                progress = when (hero.phase) {
-                    HeroPhase.FLASHING -> 0.65f
-                    else -> 1f
-                },
+                phase = hero.phase,
             )
         }
     }

@@ -1,10 +1,12 @@
 package me.weishu.kernelsu.ui.screen.home
 
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import me.weishu.kernelsu.BuildConfig
 import me.weishu.kernelsu.KernelVersion
+import me.weishu.kernelsu.ksuApp
 
 /**
  * 全局刷写状态追踪器。
@@ -21,30 +23,80 @@ enum class FlashPhase {
 }
 
 object FlashTracker {
-    var phase by mutableStateOf(FlashPhase.IDLE)
+    private const val PREFS = "flash_tracker"
+    private const val KEY_PHASE = "phase"
+    private const val KEY_DETAIL = "detail"
+    private const val KEY_TIME = "time"
+
+    /** 刷写成功后的「待重启」记忆有效期：一天内没重启才认为它还有效。 */
+    private const val SUCCESS_TTL_MS = 24 * 60 * 60 * 1000L
+
+    /**
+     * 不缓存 SharedPreferences 句柄：ksuApp 是 lateinit，若本对象在 Application 初始化完成前
+     * 被读到，这里会安全地返回 null，下次访问仍能正常拿到真实句柄。
+     */
+    private fun prefs(): android.content.SharedPreferences? =
+        runCatching { ksuApp.getSharedPreferences(PREFS, Context.MODE_PRIVATE) }.getOrNull()
+
+    /**
+     * 只恢复「刷写成功 / 待重启」这一种跨进程有意义的状态：
+     * · FLASHING 恢复成 IDLE，避免进程被杀后永远转圈；
+     * · FAILED 恢复成 IDLE，避免重启 App 后一直显示刷写失败；
+     * · SUCCESS 超过 [SUCCESS_TTL_MS] 也丢弃，避免陈旧的「待重启」。
+     */
+    private fun loadPhase(): FlashPhase {
+        val name = runCatching { prefs()?.getString(KEY_PHASE, null) }.getOrNull() ?: return FlashPhase.IDLE
+        if (name != FlashPhase.SUCCESS.name) return FlashPhase.IDLE
+        val savedAt = runCatching { prefs()?.getLong(KEY_TIME, 0L) }.getOrNull() ?: 0L
+        val fresh = System.currentTimeMillis() - savedAt in 1..SUCCESS_TTL_MS
+        return if (fresh) FlashPhase.SUCCESS else FlashPhase.IDLE
+    }
+
+    private fun loadDetail(): String =
+        if (loadPhase() == FlashPhase.SUCCESS) {
+            runCatching { prefs()?.getString(KEY_DETAIL, "") }.getOrNull().orEmpty()
+        } else {
+            ""
+        }
+
+    private fun persist() {
+        runCatching {
+            prefs()?.edit()
+                ?.putString(KEY_PHASE, phase.name)
+                ?.putString(KEY_DETAIL, detail)
+                ?.putLong(KEY_TIME, System.currentTimeMillis())
+                ?.apply()
+        }
+    }
+
+    var phase by mutableStateOf(loadPhase())
         private set
 
-    var detail by mutableStateOf("")
+    var detail by mutableStateOf(loadDetail())
         private set
 
     fun begin(detail: String = "") {
         phase = FlashPhase.FLASHING
         this.detail = detail
+        persist()
     }
 
     fun succeed(detail: String = "") {
         phase = FlashPhase.SUCCESS
         this.detail = detail
+        persist()
     }
 
     fun fail(detail: String = "") {
         phase = FlashPhase.FAILED
         this.detail = detail
+        persist()
     }
 
     fun reset() {
         phase = FlashPhase.IDLE
         detail = ""
+        persist()
     }
 }
 
