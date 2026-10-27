@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
+import me.weishu.kernelsu.ui.screen.glass.marquee
 import me.weishu.kernelsu.ui.component.isNightScheme
 
 /**
@@ -145,7 +146,9 @@ fun EdMasthead(
                     color = t.sub,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .marquee(),
                 )
                 Text(
                     text = right,
@@ -295,13 +298,16 @@ fun EdStatusBand(
                 )
             }
             Row(
-                modifier = Modifier.padding(top = 14.dp),
-                horizontalArrangement = Arrangement.spacedBy(18.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 14.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 kvs.forEach { (k, v, hot) ->
                     Column(
                         modifier = Modifier
-                            .padding(start = 10.dp)
+                            .weight(1f)
+                            .padding(start = 9.dp)
                             .drawBehind {
                                 drawLine(
                                     color = t.paper.copy(alpha = 0.25f),
@@ -316,14 +322,16 @@ fun EdStatusBand(
                             fontSize = 9.sp,
                             letterSpacing = 1.sp,
                             color = t.paper.copy(alpha = 0.55f),
+                            maxLines = 1,
                         )
                         Text(
                             text = v,
-                            fontSize = 13.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = if (hot) t.acc else t.paper,
                             modifier = Modifier.padding(top = 3.dp),
                             maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                 }
@@ -502,26 +510,28 @@ fun EdSwitch(checked: Boolean, onToggle: (() -> Unit)? = null) {
 
 /** 代码条（.code）：墨底 + 荧光绿等宽字 + KERNEL 角标 */
 @Composable
-fun EdCode(text: String, label: String = "KERNEL") {
+fun EdCode(text: String, label: String) {
     val t = edTokens()
+    // 外层留出 top 空间给标签，标签压在色块上边缘（等价 .code::before top:-8px）
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 22.dp, end = 22.dp, top = 14.dp, bottom = 4.dp),
+            .padding(start = 22.dp, end = 22.dp, top = 18.dp, bottom = 2.dp),
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(top = 8.dp)
                 .clip(RoundedCornerShape(10.dp))
                 .background(t.ink)
-                .padding(horizontal = 14.dp, vertical = 12.dp),
+                .padding(start = 14.dp, end = 14.dp, top = 16.dp, bottom = 12.dp),
         ) {
             Text(
                 text = text,
                 fontSize = 10.5.sp,
                 fontFamily = t.mono,
-                lineHeight = 17.sp,
-                color = if (t.dark) Color(0xFFC9F0A8) else Color(0xFFC9F0A8),
+                lineHeight = 16.sp,
+                color = Color(0xFFC9F0A8),
             )
         }
         Text(
@@ -531,7 +541,7 @@ fun EdCode(text: String, label: String = "KERNEL") {
             letterSpacing = 2.sp,
             color = Color.White,
             modifier = Modifier
-                .offset(x = 12.dp, y = (-8).dp)
+                .offset(x = 12.dp)
                 .clip(RoundedCornerShape(4.dp))
                 .background(t.acc)
                 .padding(horizontal = 8.dp, vertical = 2.dp),
@@ -615,10 +625,17 @@ fun EdTabBar(
                                 ) {
                                     Text(
                                         text = if (count > 99) "99+" else count.toString(),
-                                        fontSize = if (count < 10) 8.sp else 7.sp,
-                                        fontWeight = FontWeight.ExtraBold,
                                         color = Color.White,
                                         maxLines = 1,
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                        style = androidx.compose.ui.text.TextStyle(
+                                            fontSize = if (count < 10) 8.sp else 7.sp,
+                                            lineHeight = if (count < 10) 8.sp else 7.sp,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            platformStyle = androidx.compose.ui.text.PlatformTextStyle(
+                                                includeFontPadding = false
+                                            ),
+                                        ),
                                     )
                                 }
                             }

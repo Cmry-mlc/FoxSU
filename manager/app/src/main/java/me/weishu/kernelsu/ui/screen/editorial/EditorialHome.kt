@@ -18,8 +18,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -162,8 +164,8 @@ fun EditorialHome(
                 onClick = { actions.onOpenUrl("https://kernelsu.org") },
             )
 
-            EdCode(state.systemInfo.kernelVersion.ifBlank { "—" }, label = "KERNEL")
-            EdCode(state.systemInfo.fingerprint.ifBlank { "—" }, label = "FINGERPRINT")
+            EdCode(state.systemInfo.kernelVersion.ifBlank { "—" }, label = "内核版本")
+            EdCode(state.systemInfo.fingerprint.ifBlank { "—" }, label = "指纹信息")
             Spacer(Modifier.height(bottomInnerPadding + 20.dp))
         }
     }
@@ -191,12 +193,13 @@ private fun seccompLabelRes(status: Int): Int = when (status) {
     else -> R.string.seccomp_status_not_supported
 }
 
-/** 编辑风重启面板（弹层 + 上浮缩放进入） */
+/** 编辑风重启面板（.ovl + .sheet：墨色描边、编号选项、底部分隔按钮） */
 @Composable
 fun EdRebootSheet(onDismiss: () -> Unit) {
     val t = edTokens()
     val options = getRebootListOption()
     val doReboot = rememberRebootAction()
+
     Dialog(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
@@ -204,57 +207,116 @@ fun EdRebootSheet(onDismiss: () -> Unit) {
                 .clip(RoundedCornerShape(20.dp))
                 .background(t.paper)
                 .border(1.5.dp, t.ink, RoundedCornerShape(20.dp))
-                .padding(vertical = 14.dp),
+                .padding(top = 16.dp, bottom = 14.dp),
         ) {
+            // .sh-kick
             Text(
-                text = stringResource(R.string.reboot),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Black,
-                color = t.ink,
-                modifier = Modifier.padding(horizontal = 18.dp, vertical = 6.dp),
+                text = "REBOOT · 电源菜单",
+                fontSize = 8.5.sp,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = 2.5.sp,
+                color = t.acc,
+                modifier = Modifier.padding(horizontal = 18.dp),
             )
-            Text(
-                text = stringResource(R.string.glass_reboot_hint),
-                fontSize = 10.5.sp,
-                color = t.sub,
-                modifier = Modifier.padding(horizontal = 18.dp, vertical = 2.dp),
-            )
-            Spacer(Modifier.height(10.dp))
-            options.forEach { option ->
+            // .sh-t：标题 + 右侧说明
+            Row(
+                modifier = Modifier.padding(start = 18.dp, end = 18.dp, top = 3.dp, bottom = 8.dp),
+                verticalAlignment = Alignment.Bottom,
+            ) {
+                Text(
+                    text = stringResource(R.string.reboot),
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Black,
+                    color = t.ink,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = "选择一种重启方式",
+                    fontSize = 9.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = t.sub,
+                    maxLines = 1,
+                )
+            }
+            options.forEachIndexed { index, option ->
+                val desc = rebootDesc(option.reason)
+                val primary = index == 0
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .hairBottom(t.hair)
                         .clickable {
                             onDismiss()
                             doReboot(option.reason)
                         }
-                        .padding(horizontal = 18.dp, vertical = 12.dp),
+                        .padding(horizontal = 18.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = stringResource(option.labelRes),
-                        fontSize = 13.5.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = t.ink,
-                        modifier = Modifier.weight(1f),
+                        text = "%02d".format(index + 1),
+                        fontSize = 9.5.sp,
+                        fontWeight = FontWeight.Black,
+                        color = t.faint,
+                        fontFamily = FontFamily.Monospace,
+                        modifier = Modifier.width(22.dp),
                     )
-                    Text("›", fontSize = 13.sp, color = t.faint)
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(option.labelRes),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = if (primary) t.acc else t.ink,
+                            maxLines = 1,
+                        )
+                        Text(
+                            text = desc,
+                            fontSize = 8.5.sp,
+                            color = t.sub,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(top = 1.dp),
+                        )
+                    }
+                    Text(
+                        text = if (primary) "↻" else "›",
+                        fontSize = 13.sp,
+                        color = t.faint,
+                    )
                 }
             }
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = stringResource(android.R.string.cancel),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                color = t.sub,
-                textAlign = TextAlign.Center,
+            // .cancel：墨色描边圆角按钮
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(start = 18.dp, end = 18.dp, top = 10.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .border(1.5.dp, t.ink, RoundedCornerShape(10.dp))
                     .clickable(onClick = onDismiss)
-                    .padding(vertical = 10.dp),
-            )
+                    .padding(vertical = 8.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = stringResource(android.R.string.cancel),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 2.sp,
+                    color = t.ink,
+                )
+            }
         }
     }
+}
+
+/** 重启方式说明（对应设计稿 .rd 文案） */
+private fun rebootDesc(reason: String): String = when (reason) {
+    "" -> "完整重启系统 Reboot"
+    "userspace" -> "仅重启系统界面 Userspace"
+    "soft_reboot" -> "仅重启系统界面 Soft Reboot"
+    "recovery" -> "进入第三方 Recovery 模式"
+    "bootloader" -> "Fastboot 引导模式"
+    "download" -> "Odin 刷机下载模式"
+    "edl" -> "高通紧急下载模式（9008）"
+    else -> ""
 }
 
 /** 界面风格切换（编辑风） */

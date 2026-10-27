@@ -146,10 +146,15 @@ fun AppProfileScreen(uid: Int) {
             actions = actions,
         )
 
-        UiMode.Material, UiMode.Fresh -> AppProfileScreenMaterial(
+        UiMode.Fresh -> AppProfileScreenMaterial(
             state = state,
             actions = actions,
             snackBarHost = snackbarHost,
+        )
+
+        UiMode.Material -> me.weishu.kernelsu.ui.screen.editorial.EditorialAppProfile(
+            state = state,
+            actions = actions,
         )
 
         UiMode.Glass -> me.weishu.kernelsu.ui.screen.glass.GlassAppProfileScreen(
