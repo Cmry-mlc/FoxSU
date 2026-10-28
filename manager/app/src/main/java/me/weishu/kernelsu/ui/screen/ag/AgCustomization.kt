@@ -53,6 +53,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -382,20 +383,15 @@ internal fun AgCustomization(
                 Spacer(Modifier.height(6.dp))
             }
 
-            // ── 图标风格（.isel icards：几何 + 狐狸）──
+            // ── 图标风格（.isel icards：几何造型）──
             AgGHead("图标风格")
             AgCard {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-                    val foxItems = listOf(
-                        Triple("乖巧", LauncherIconManager.STYLE_FOXSU, R.drawable.fox_icon_cute),
-                        Triple("招手", LauncherIconManager.STYLE_FOX2, R.drawable.fox_icon_wave),
-                        Triple("回眸", LauncherIconManager.STYLE_FOX3, R.drawable.fox_icon_glance),
-                        Triple("开心", LauncherIconManager.STYLE_FOX4, R.drawable.fox_icon_joy),
-                    )
                     val geoItems = listOf(
                         "圆角方" to 9f, "正圆" to -1f, "超椭圆" to 12f, "七彩" to 9f,
                     )
-                    // 几何风格：作用于 Dock 图标形状（存 dockStyle 无关，用 iconStyle 持久化 100+）
+                    // 几何风格：作用于 Dock 图标形状（用 iconStyle 持久化 100+）
+                    val curShape = custom.iconStyle.takeIf { it in 100..103 } ?: 100
                     geoItems.forEachIndexed { i, (name, radius) ->
                         val code = 100 + i
                         item {
@@ -403,20 +399,34 @@ internal fun AgCustomization(
                                 name = name,
                                 shapeRadius = radius,
                                 rainbow = i == 3,
-                                selected = custom.iconStyle == code,
+                                selected = curShape == code,
                             ) {
                                 CustomizationStore.setIconStyle(code)
                             }
                         }
                     }
-                    foxItems.forEach { (name, style, res) ->
+                }
+                Spacer(Modifier.height(6.dp))
+            }
+
+            // ── 启动器图标（.isel：桌面图标形象，写入 activity-alias）──
+            AgGHead("启动器图标")
+            AgCard {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                    val launcherItems = listOf(
+                        Triple("彩虹狐狸", LauncherIconManager.STYLE_FOXSU, R.drawable.fox_hero),
+                        Triple("乖巧", LauncherIconManager.STYLE_FOX2, R.drawable.fox_icon_cute),
+                        Triple("招手", LauncherIconManager.STYLE_FOX3, R.drawable.fox_icon_wave),
+                        Triple("回眸", LauncherIconManager.STYLE_FOX4, R.drawable.fox_icon_glance),
+                    )
+                    launcherItems.forEach { (name, style, res) ->
                         item {
-                            AgFoxIconCard(
+                            AgLauncherIconCard(
                                 name = name,
                                 iconRes = res,
-                                selected = custom.iconStyle == style,
+                                selected = custom.launcherIcon == style,
                             ) {
-                                CustomizationStore.setIconStyle(style)
+                                CustomizationStore.setLauncherIcon(style)
                                 LauncherIconManager.apply(style)
                                 Toast.makeText(context, R.string.customization_icon_hint, Toast.LENGTH_SHORT).show()
                             }
@@ -531,43 +541,107 @@ private fun AgDockStyleCard(name: String, code: String, selected: Boolean, modif
             .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(9.dp),
     ) {
-        // 预览条：4 圆点，选中项高亮
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .height(34.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(Ag.TintInk),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            repeat(4) { i ->
-                val on = i == 0
-                Box(
-                    Modifier
-                        .padding(horizontal = 3.dp)
-                        .size(width = if (on) 26.dp else 11.dp, height = 11.dp)
-                        .clip(RoundedCornerShape(99.dp))
-                        .background(
-                            when {
-                                code == "v9" && on -> Brush.linearGradient(listOf(Color(0xFF6C5CE7), Color(0xFFEC4899)))
-                                on && code == "v7" -> androidx.compose.ui.graphics.SolidColor(Color.Transparent)
-                                else -> androidx.compose.ui.graphics.SolidColor(
-                                    if (on) Ag.Vio else Ag.Tx3.copy(alpha = 0.45f)
-                                )
-                            }
-                        )
-                        .then(
-                            if (on && code == "v7") Modifier.border(2.dp, Ag.Vio, RoundedCornerShape(99.dp)) else Modifier
-                        ),
-                )
-            }
-        }
+        // 预览条：按样式渲染差异化缩略图（设计稿 .dprev .dp 各变体）
+        DockStylePreview(code)
         Text(
             name,
             fontSize = 12.sp, fontWeight = FontWeight.ExtraBold,
             color = if (selected) Ag.Vio else Ag.Tx2,
         )
+    }
+}
+
+/** 底栏样式缩略预览：每种样式一个可辨识的小样 */
+@Composable
+private fun DockStylePreview(code: String) {
+    val dot = Ag.Tx3.copy(alpha = 0.45f)
+    val grad = Brush.linearGradient(listOf(Color(0xFF6C5CE7), Color(0xFFEC4899)))
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .height(34.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Ag.TintInk),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (code == "v5") {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(2.5.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                repeat(4) { i ->
+                    Box(
+                        Modifier
+                            .size(width = 10.dp, height = 6.dp)
+                            .clip(RoundedCornerShape(3.dp))
+                            .background(if (i == 0) grad else androidx.compose.ui.graphics.SolidColor(dot)),
+                    )
+                }
+            }
+            return@Row
+        }
+
+        // 第一个「选中项」小样
+        Box(
+            Modifier
+                .padding(end = 4.dp)
+                .then(
+                    when (code) {
+                        "v1" -> Modifier.size(width = 26.dp, height = 11.dp)
+                        "v6" -> Modifier.size(15.dp)
+                        "v7" -> Modifier.size(width = 18.dp, height = 11.dp)
+                        "v8" -> Modifier.size(width = 20.dp, height = 12.dp)
+                        "v9" -> Modifier.size(width = 20.dp, height = 12.dp)
+                        "v10" -> Modifier.size(width = 18.dp, height = 11.dp)
+                        "v11" -> Modifier.size(15.dp)
+                        else -> Modifier.size(width = 26.dp, height = 11.dp)
+                    }
+                )
+                .then(
+                    when (code) {
+                        "v6" -> Modifier
+                            .clip(CircleShape)
+                            .background(
+                                Brush.radialGradient(
+                                    listOf(Color(0xCC6C5CE7), Color(0x66EC4899), Color.Transparent),
+                                )
+                            )
+                        "v7" -> Modifier
+                            .clip(RoundedCornerShape(99.dp))
+                            .border(1.8.dp, Color(0x996C5CE7), RoundedCornerShape(99.dp))
+                        "v8" -> Modifier
+                            .clip(RoundedCornerShape(5.dp))
+                            .background(if (Ag.isDark) Color(0xFF2A2940) else Color.White)
+                            .border(1.dp, Ag.Line, RoundedCornerShape(5.dp))
+                        "v9" -> Modifier.clip(RoundedCornerShape(5.dp)).background(grad)
+                        "v10" -> Modifier
+                            .clip(RoundedCornerShape(99.dp))
+                            .background(Color(0x146C5CE7))
+                            .drawBehind {
+                                val w = 14.dp.toPx(); val h = 3.dp.toPx()
+                                drawRoundRect(
+                                    brush = Brush.horizontalGradient(listOf(Color(0xFF6C5CE7), Color(0xFFEC4899))),
+                                    topLeft = androidx.compose.ui.geometry.Offset((size.width - w) / 2f, -h * 1.2f),
+                                    size = androidx.compose.ui.geometry.Size(w, h),
+                                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(h / 2f),
+                                )
+                            }
+                        "v11" -> Modifier.clip(CircleShape).background(grad)
+                        else -> Modifier.clip(RoundedCornerShape(99.dp)).background(grad)
+                    }
+                ),
+        )
+        // 其余三个未选中项
+        repeat(3) {
+            Box(
+                Modifier
+                    .padding(horizontal = 3.dp)
+                    .size(width = if (code == "v1") 8.dp else 11.dp, height = 11.dp)
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(androidx.compose.ui.graphics.SolidColor(dot)),
+            )
+        }
     }
 }
 
@@ -635,9 +709,9 @@ private fun AgIconCard(name: String, shapeRadius: Float, rainbow: Boolean, selec
     }
 }
 
-/** .icard：狐狸图标卡（设计稿 .ishape.fox：透明底 PNG 直接展示，无底色无描边） */
+/** .icard：启动器图标卡（完整展示狐狸图，白底浅描边，选中紫框） */
 @Composable
-private fun AgFoxIconCard(name: String, iconRes: Int, selected: Boolean, onClick: () -> Unit) {
+private fun AgLauncherIconCard(name: String, iconRes: Int, selected: Boolean, onClick: () -> Unit) {
     Column(
         Modifier
             .agClick(onClick = onClick)
@@ -651,17 +725,17 @@ private fun AgFoxIconCard(name: String, iconRes: Int, selected: Boolean, onClick
     ) {
         Box(
             Modifier
-                .size(38.dp)
-                .shadow(4.dp, RoundedCornerShape(12.dp), spotColor = Color(0x476C5CE7), ambientColor = Color(0x476C5CE7))
-                .clip(RoundedCornerShape(12.dp))
-                .background(Brush.linearGradient(listOf(Color(0xFF8E5CF6), Color(0xFFEC4899)))),
+                .size(40.dp)
+                .shadow(3.dp, RoundedCornerShape(13.dp), spotColor = Color(0x336C5CE7), ambientColor = Color(0x1A6C5CE7))
+                .clip(RoundedCornerShape(13.dp))
+                .background(if (Ag.isDark) Color(0xFF2A2940) else Color.White),
             contentAlignment = Alignment.Center,
         ) {
             Image(
                 painter = painterResource(iconRes),
                 contentDescription = name,
-                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-                modifier = Modifier.size(38.dp),
+                contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                modifier = Modifier.size(34.dp),
             )
         }
         Text(name, fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = if (selected) Ag.Vio else Ag.Tx2)

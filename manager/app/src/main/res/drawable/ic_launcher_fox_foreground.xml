@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 启动器图标前景：项目内现成的彩虹尾巴白狐（fox_hero.png），
-     自适应图标 108dp 画布，图形占 84dp，留出各启动器的遮罩安全区。 -->
+<!-- 启动器图标前景：项目内现成的彩虹尾巴白狐（fox_hero.png）。
+     自适应图标 108dp 画布，可见安全区只有直径 72dp 左右，前景收到 78dp 内，
+     否则圆形/水滴形遮罩会把狐狸耳朵和彩虹尾巴切掉。 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:width="84dp"
-        android:height="84dp"
+        android:width="78dp"
+        android:height="78dp"
         android:gravity="center">
         <bitmap
             android:gravity="fill"

@@ -80,11 +80,10 @@ data class Customization(
     val fontStyle: Int = 0,
     /** 用户导入的系统字体文件（应用私有目录内的绝对路径）。 */
     val fontPath: String? = null,
-    /**
-     * Dock 图标风格：100 圆角方（默认）/ 101 正圆 / 102 超椭圆 / 103 七彩（渐变实底）；
-     * 0/2/3/4 = 狐狸形象（乖巧/招手/回眸/开心，选中项覆盖为狐狸图，同时兼作启动器图标样式）。
-     */
+    /** Dock 图标造型：100 圆角方（默认）/ 101 正圆 / 102 超椭圆 / 103 七彩（渐变实底）。 */
     val iconStyle: Int = 100,
+    /** 桌面启动器图标形象：0 彩虹狐狸 / 1 KernelSU / 2 招手 / 3 回眸 / 4 开心。 */
+    val launcherIcon: Int = 0,
 )
 
 /** Number of equal-sized KPI cards on the ColorUI home screen. */
@@ -164,6 +163,7 @@ private const val KEY_DOCK_STYLE = "dock_style"
     private const val KEY_RAINBOW = "rainbow_cards"
     private const val KEY_FONT_STYLE = "font_style"
     private const val KEY_ICON_STYLE = "icon_style"
+    private const val KEY_LAUNCHER_ICON = "launcher_icon"
 
     val cardColorOptions = listOf(
         0x00000000, // follow theme
@@ -224,6 +224,12 @@ private const val KEY_DOCK_STYLE = "dock_style"
             fontStyle = getInt(KEY_FONT_STYLE, 0),
             fontPath = getString(KEY_FONT_PATH, null),
             iconStyle = getInt(KEY_ICON_STYLE, 100),
+            // 老版本把启动器形象塞在 iconStyle(0/2/3/4) 里，首次升级时继承过来
+            launcherIcon = if (contains(KEY_LAUNCHER_ICON)) {
+                getInt(KEY_LAUNCHER_ICON, 0)
+            } else {
+                getInt(KEY_ICON_STYLE, 100).takeIf { it in 0..4 } ?: 0
+            },
         )
     }
 
@@ -287,6 +293,7 @@ private const val KEY_DOCK_STYLE = "dock_style"
     fun setFontStyle(style: Int) = update { it.copy(fontStyle = style) }
     fun setFontPath(path: String?) = update { it.copy(fontPath = path) }
     fun setIconStyle(style: Int) = update { it.copy(iconStyle = style) }
+    fun setLauncherIcon(style: Int) = update { it.copy(launcherIcon = style) }
 
     fun reset() = update { Customization() }
 
@@ -337,6 +344,7 @@ private const val KEY_DOCK_STYLE = "dock_style"
             putInt(KEY_FONT_STYLE, next.fontStyle)
             putString(KEY_FONT_PATH, next.fontPath)
             putInt(KEY_ICON_STYLE, next.iconStyle)
+            putInt(KEY_LAUNCHER_ICON, next.launcherIcon)
         }
         current = next
     }

@@ -206,10 +206,10 @@ private fun OnbTopBar(page: Int, t: OnbTokens) {
             contentAlignment = Alignment.Center,
         ) {
             Image(
-                painter = painterResource(R.drawable.ic_fox_global),
+                painter = painterResource(R.drawable.fox_hero),
                 contentDescription = null,
                 contentScale = ContentScale.Fit,
-                modifier = Modifier.size(19.dp),
+                modifier = Modifier.size(22.dp),
             )
         }
         Spacer(Modifier.width(9.dp))
@@ -438,7 +438,7 @@ private fun HeroPanel(t: OnbTokens) {
                 )
             }
             Image(
-                painter = painterResource(R.drawable.ic_fox_global),
+                painter = painterResource(R.drawable.fox_hero),
                 contentDescription = null,
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.size(96.dp),

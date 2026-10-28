@@ -97,15 +97,8 @@ fun ThemeDockBar(
 
     val dark = me.weishu.kernelsu.ui.screen.ag.Ag.isDark
 
-    // ── 图标风格（设计稿 data-ic / data-fox，作用于 Dock 项形状与选中态）──
+    // ── 图标造型（设计稿 data-ic：几何形状，作用于 Dock 项形状与选中态）──
     val iconStyle = custom.iconStyle
-    val foxRes: Int? = when (iconStyle) {
-        0 -> me.weishu.kernelsu.R.drawable.fox_icon_cute
-        2 -> me.weishu.kernelsu.R.drawable.fox_icon_wave
-        3 -> me.weishu.kernelsu.R.drawable.fox_icon_glance
-        4 -> me.weishu.kernelsu.R.drawable.fox_icon_joy
-        else -> null
-    }
     val gradFill = iconStyle == 103               // 七彩：选中项渐变实底 + 白图标
     val iconShapeOverride = when (iconStyle) {
         101 -> CircleShape                         // 正圆
@@ -149,7 +142,14 @@ fun ThemeDockBar(
         ) {
             items.forEachIndexed { index, item ->
                 val selected = mainState.selectedPage == index
-                val tint = if (rainbow && !selected) rainbowColors[index % 4] else theme.unselected
+                // 侧边胶囊：暗色模式下胶囊是深色玻璃，未选中图标用亮白才看得清；
+                // 选中项永远是渐变实底，图标固定纯白（设计稿 .phone.side .dit.on{color:#fff}）。
+                val tint = when {
+                    selected -> Color.White
+                    rainbow -> rainbowColors[index % 4]
+                    dark -> Color(0xFFF2F1FA)
+                    else -> theme.unselected
+                }
                 val shape = iconShapeOverride ?: RoundedCornerShape(22.dp)
                 Column(
                     modifier = Modifier
@@ -176,27 +176,16 @@ fun ThemeDockBar(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    if (foxRes != null && selected) {
-                        // 狐狸图标风格：作为 26dp 图标嵌入，保留文字（胶囊布局不被撑破）
-                        androidx.compose.foundation.Image(
-                            painter = androidx.compose.ui.res.painterResource(foxRes),
-                            contentDescription = stringResource(item.label),
-                            contentScale = androidx.compose.ui.layout.ContentScale.Fit,
-                            modifier = Modifier.size(26.dp),
-                        )
-                        Text(
-                            stringResource(item.label),
-                            fontSize = 9.5.sp, fontWeight = FontWeight.ExtraBold,
-                            color = Color.White, maxLines = 1,
-                        )
-                    } else {
-                        DockIcon(item, index, selected, navigationBadge, rainbow, tint, badgeTintOverride = Color.White)
-                        Text(
-                            stringResource(item.label),
-                            fontSize = 9.5.sp, fontWeight = FontWeight.ExtraBold,
-                            color = if (selected) Color.White else tint, maxLines = 1,
-                        )
-                    }
+                    DockIcon(
+                        item, index, selected, navigationBadge, rainbow,
+                        tint = tint,
+                        badgeTintOverride = if (selected) Color.White else null,
+                    )
+                    Text(
+                        stringResource(item.label),
+                        fontSize = 9.5.sp, fontWeight = FontWeight.ExtraBold,
+                        color = tint, maxLines = 1,
+                    )
                 }
             }
         }
@@ -209,9 +198,9 @@ fun ThemeDockBar(
                 .align(Alignment.BottomCenter)
                 .padding(bottom = bottomPad)
                 .shadow(if (immersive) 8.dp else 14.dp, RoundedCornerShape(dockRadius), spotColor = theme.shadow, ambientColor = theme.shadow)
-                .clip(RoundedCornerShape(dockRadius))
+                .clip(RoundedCornerShape(if (style == DockStyle.V8) 20.dp else dockRadius))
                 .background(effBg)
-                .border(1.dp, effBorder, RoundedCornerShape(dockRadius))
+                .border(1.dp, effBorder, RoundedCornerShape(if (style == DockStyle.V8) 20.dp else dockRadius))
                 .drawBehind {
                     if (theme.glass) {
                         drawRect(
@@ -223,7 +212,8 @@ fun ThemeDockBar(
                         )
                     }
                 }
-                .padding(8.dp),
+                // 设计稿 .dock.v8{padding:6px}，其余 8px
+                .padding(if (style == DockStyle.V8) 6.dp else 8.dp),
         ) {
             // 滑动选中指示底衬（d0 / v8）
             if (style == DockStyle.D0 || style == DockStyle.V8) {
@@ -247,15 +237,39 @@ fun ThemeDockBar(
                         ),
                 )
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(gap),
+            ) {
                 items.forEachIndexed { index, item ->
                     val selected = mainState.selectedPage == index
                     val baseTint = if (rainbow && !selected) rainbowColors[index % 4] else theme.unselected
 
+                    // V1 展开药丸：未选中只剩图标（46dp），选中扩成 76dp 并展开文字
+                    val expanded = style == DockStyle.V1 && selected
+                    val targetWidth = when {
+                        style == DockStyle.V1 -> if (expanded) 76.dp else 46.dp
+                        style == DockStyle.V11 -> 55.dp
+                        else -> itemW
+                    }
+                    val itemWidth by animateDpAsState(
+                        targetValue = targetWidth,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMediumLow,
+                        ),
+                        label = "dock-item-w-$index",
+                    )
+
                     val itemBg: androidx.compose.ui.graphics.Brush? = when {
+                        style == DockStyle.V7 && selected -> null            // 描边霓虹：透明底
+                        style == DockStyle.V10 && selected -> null           // 顶指示条：透明底
+                        style == DockStyle.V8 && selected -> null            // 方块卡片：交给滑动白卡
                         gradFill && selected -> Brush.linearGradient(
                             listOf(Color(0xFF6C5CE7), Color(0xFFA855F7), Color(0xFFEC4899))
                         )
+                        style == DockStyle.V1 && selected ->
+                            androidx.compose.ui.graphics.SolidColor(theme.selectedBg)
                         style == DockStyle.V6 && selected -> Brush.radialGradient(
                             listOf(Color(0x526C5CE7), Color(0x24EC4899), Color.Transparent),
                         )
@@ -291,69 +305,85 @@ fun ThemeDockBar(
                         else -> RoundedCornerShape(19.dp)
                     }
 
-                    Column(
-                        modifier = Modifier
-                            .width(itemW)
-                            .height(55.dp)
-                            .clip(itemShape)
-                            .then(
-                                when {
-                                    style == DockStyle.V7 && selected -> Modifier
-                                        .border(1.6.dp, Color(0x736C5CE7), itemShape)
-                                        .background(Color(0x146C5CE7))
-                                    style == DockStyle.V8 && selected -> Modifier
-                                        .background(if (dark) Color(0xFF2A2940) else Color.White)
-                                        .border(1.dp, Color(0x121E1946), itemShape)
-                                    itemBg != null -> Modifier.background(itemBg)
-                                    else -> Modifier
-                                }
-                            )
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                            ) { mainState.animateToPage(index) },
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
+                    // V11 浮起圆片：设计稿 .dock.v11 .dit{width:55px;margin:0 10px}
+                    Box(
+                        Modifier.padding(horizontal = if (style == DockStyle.V11) 8.dp else 0.dp),
                     ) {
-                        if (foxRes != null && selected) {
-                            // 狐狸图标风格：选中项整体覆盖为狐狸图（设计稿 data-fox ::after）
-                            androidx.compose.foundation.Image(
-                                painter = androidx.compose.ui.res.painterResource(foxRes),
-                                contentDescription = stringResource(item.label),
-                                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(55.dp),
-                            )
-                        } else {
-                            // V10 顶指示条
+                        Box(
+                            modifier = Modifier
+                                .width(itemWidth)
+                                .height(55.dp)
+                                // 不整体 clip：v10 顶部指示条需要溢出到项外
+                                .then(
+                                    if (itemBg != null) Modifier.background(itemBg, itemShape) else Modifier
+                                )
+                                .then(
+                                    when {
+                                        style == DockStyle.V7 && selected -> Modifier
+                                            .border(1.6.dp, Color(0x736C5CE7), itemShape)
+                                            .drawBehind {
+                                                // 外光环 box-shadow:0 0 0 4px rgba(108,92,231,.08)
+                                                val pad = 4.dp.toPx()
+                                                drawRoundRect(
+                                                    color = Color(0x146C5CE7),
+                                                    topLeft = androidx.compose.ui.geometry.Offset(-pad, -pad),
+                                                    size = androidx.compose.ui.geometry.Size(size.width + pad * 2, size.height + pad * 2),
+                                                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(19.dp.toPx() + pad),
+                                                )
+                                            }
+                                        style == DockStyle.V10 && selected -> Modifier
+                                            .border(1.2.dp, Color(0x336C5CE7), itemShape)
+                                        else -> Modifier
+                                    }
+                                )
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                ) { mainState.animateToPage(index) },
+                        ) {
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                            ) {
+                                DockIcon(
+                                    item, index, selected, navigationBadge, rainbow,
+                                    tint = fgTint,
+                                    badgeTintOverride = if (fgTint == Color.White) Color.White else null,
+                                    scale = iconScale,
+                                    glow = style == DockStyle.V6 && selected,
+                                    big = (gradFill || style == DockStyle.V9 || style == DockStyle.V11) && selected,
+                                )
+                                // d0 常显文字；v1 只在选中项展开文字
+                                if (style == DockStyle.D0 || expanded) {
+                                    Text(
+                                        text = stringResource(item.label),
+                                        fontSize = 10.5.sp,
+                                        lineHeight = 13.sp,
+                                        maxLines = 1,
+                                        fontWeight = FontWeight.Bold,
+                                        color = fgTint,
+                                    )
+                                }
+                            }
+                            // V10 顶指示条 + 中心小圆点（设计稿 .dock.v10 .dit.on::before/::after）
                             if (style == DockStyle.V10 && selected) {
                                 Box(
                                     Modifier
-                                        .padding(bottom = 3.dp)
+                                        .align(Alignment.TopCenter)
+                                        .offset(y = (-5).dp)
                                         .width(22.dp)
                                         .height(4.dp)
                                         .clip(RoundedCornerShape(99.dp))
                                         .background(Brush.linearGradient(listOf(Color(0xFF6C5CE7), Color(0xFFEC4899)))),
                                 )
-                            }
-                            DockIcon(
-                                item, index, selected, navigationBadge, rainbow,
-                                tint = fgTint,
-                                badgeTintOverride = if (fgTint == Color.White) Color.White else null,
-                                scale = iconScale,
-                                glow = style == DockStyle.V6 && selected,
-                                big = (gradFill || style == DockStyle.V9 || style == DockStyle.V11) && selected,
-                            )
-                            // d0 / v1 显示文字
-                            if (style == DockStyle.D0 || style == DockStyle.V1) {
-                                Text(
-                                    text = stringResource(item.label),
-                                    fontSize = 10.5.sp,
-                                    lineHeight = 13.sp,
-                                    maxLines = 1,
-                                    fontWeight = FontWeight.Bold,
-                                    color = fgTint,
+                                Box(
+                                    Modifier
+                                        .align(Alignment.TopCenter)
+                                        .offset(y = 8.dp)
+                                        .size(5.dp)
+                                        .clip(CircleShape)
+                                        .background(Brush.linearGradient(listOf(Color(0xFF6C5CE7), Color(0xFFEC4899)))),
                                 )
                             }
                         }
