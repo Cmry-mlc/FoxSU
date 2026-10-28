@@ -174,7 +174,6 @@ fun ModulePagerMaterial(
     moduleEvent: Flow<ModuleEffect>,
     actions: ModuleActions,
     bottomInnerPadding: Dp,
-    onOpenActions: (Module) -> Unit = {},
 ) {
     val snackBarHost = remember { SnackbarHostState() }
     val haptic = LocalHapticFeedback.current
@@ -515,7 +514,6 @@ fun ModulePagerMaterial(
                 updateInfoMap = uiState.updateInfo,
                 actions = actions,
                 onModuleAddShortcut = { module, type -> onModuleAddShortcut(module, type) },
-                onOpenActions = onOpenActions,
             )
         }
     }
@@ -545,7 +543,6 @@ private fun ModuleList(
     updateInfoMap: Map<String, ModuleUpdateInfo>,
     actions: ModuleActions,
     onModuleAddShortcut: (Module, ShortcutType) -> Unit,
-    onOpenActions: (Module) -> Unit = {},
     closeSearch: () -> Unit? = {},
 ) {
     val loadingDialog = rememberLoadingDialog()
@@ -590,7 +587,6 @@ private fun ModuleList(
                     }
                 },
                 onExecuteAction = { actions.onExecuteModuleAction(module) },
-                onOpenActions = { onOpenActions(module) },
                 closeSearch = { closeSearch() }
             )
         }
@@ -763,13 +759,14 @@ private fun ModuleItem(
     onAddShortcut: (ShortcutType) -> Unit,
     onOpenWebUi: () -> Unit,
     onExecuteAction: () -> Unit,
-    onOpenActions: () -> Unit = {},
     closeSearch: () -> Unit
 ) {
     val hasDescription = module.description.isNotBlank()
     val maxLinesLimit = LocalModuleDescriptionMaxLines.current
     var expanded by rememberSaveable(module.id) { mutableStateOf(false) }
     var descriptionCanExpand by rememberSaveable(module.id) { mutableStateOf(true) }
+    // 点卡片在卡片内部展开「执行 / 取消」，不走二级面板
+    var actionsOpen by rememberSaveable(module.id) { mutableStateOf(false) }
     val canOpenWebUi = module.hasWebUi && !module.remove && module.enabled
     val cardInteractionSource = remember { MutableInteractionSource() }
     val descriptionInteractionSource = remember { MutableInteractionSource() }
@@ -801,8 +798,8 @@ private fun ModuleItem(
         contentColor = surface.content,
         interactionSource = cardInteractionSource,
         onLongClick = { showAppearance = true },
-        // 点卡片打开操作面板（执行 / 取消），不再只是展开描述这种「看着像没反应」的行为
-        onClick = { onOpenActions() }
+        // 点卡片在卡片内部展开 / 收起「执行 / 取消」
+        onClick = { actionsOpen = !actionsOpen }
     ) {
         val haptic = LocalHapticFeedback.current
         val textDecoration = if (!module.remove) null else TextDecoration.LineThrough
@@ -1068,6 +1065,28 @@ private fun ModuleItem(
                         )
                     }
                 }
+            }
+
+            AnimatedVisibility(visible = actionsOpen) {
+                ModuleCardActions(
+                    runnable = module.hasActionScript && module.enabled && !module.remove && !module.update,
+                    reason = when {
+                        !module.hasActionScript -> stringResource(R.string.module_action_sheet_no_action)
+                        module.remove -> stringResource(R.string.module_action_sheet_removing)
+                        !module.enabled -> stringResource(R.string.module_action_sheet_disabled)
+                        module.update -> stringResource(R.string.module_action_sheet_pending)
+                        else -> null
+                    },
+                    accent = MaterialTheme.colorScheme.primary,
+                    neutralBg = LocalContentColor.current.copy(alpha = 0.08f),
+                    neutralFg = LocalContentColor.current.copy(alpha = 0.72f),
+                    onExecute = {
+                        actionsOpen = false
+                        onExecuteAction()
+                        closeSearch()
+                    },
+                    onCancel = { actionsOpen = false },
+                )
             }
         }
         }

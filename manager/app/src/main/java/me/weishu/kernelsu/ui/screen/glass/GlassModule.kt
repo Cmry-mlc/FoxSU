@@ -1,5 +1,6 @@
 package me.weishu.kernelsu.ui.screen.glass
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -10,6 +11,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,6 +30,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.ui.screen.module.ModuleCardActions
 import me.weishu.kernelsu.data.model.Module
 import me.weishu.kernelsu.ui.theme.glassTokens
 
@@ -50,7 +56,7 @@ fun GlassModuleList(
     onRefresh: () -> Unit,
     onOpenRepo: () -> Unit = {},
     onCleanModules: () -> Unit = onRefresh,
-    onOpenActions: (Module) -> Unit = {},
+    onExecute: (Module) -> Unit = {},
 ) {
     val t = glassTokens()
     val enabledCount = modules.count { it.enabled }
@@ -72,7 +78,8 @@ fun GlassModuleList(
         items(modules.size) { index ->
             val m = modules[index]
             val (a1, a2) = modAccents[Math.floorMod(index, modAccents.size)]
-            Row(
+            var actionsOpen by rememberSaveable(m.id) { mutableStateOf(false) }
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 11.dp)
@@ -80,8 +87,11 @@ fun GlassModuleList(
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                    ) { onOpenActions(m) }
+                    ) { actionsOpen = !actionsOpen }
                     .padding(15.dp),
+            ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 // .mico：46 圆角15 白玻璃块 + 白描边 + 渐变 tint 图标
@@ -148,6 +158,24 @@ fun GlassModuleList(
                 }
                 Spacer(Modifier.width(10.dp))
                 GlassToggle(checked = m.enabled, on1 = Color(a1), on2 = Color(a2), onClick = { onToggle(m) })
+            }
+            AnimatedVisibility(visible = actionsOpen) {
+                ModuleCardActions(
+                    runnable = m.hasActionScript && m.enabled && !m.remove && !m.update,
+                    reason = when {
+                        !m.hasActionScript -> stringResource(R.string.module_action_sheet_no_action)
+                        m.remove -> stringResource(R.string.module_action_sheet_removing)
+                        !m.enabled -> stringResource(R.string.module_action_sheet_disabled)
+                        m.update -> stringResource(R.string.module_action_sheet_pending)
+                        else -> null
+                    },
+                    accent = t.violet,
+                    neutralBg = if (t.isDark) Color(0x14FFFFFF) else Color(0x0D5A5578),
+                    neutralFg = t.sub,
+                    onExecute = { actionsOpen = false; onExecute(m) },
+                    onCancel = { actionsOpen = false },
+                )
+            }
             }
         }
         item { GlassSectionHead(stringResource(R.string.glass_quick_actions)) }

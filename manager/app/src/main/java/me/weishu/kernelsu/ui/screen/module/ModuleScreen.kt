@@ -24,7 +24,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import me.weishu.kernelsu.R
-import me.weishu.kernelsu.data.model.Module
 import me.weishu.kernelsu.data.script.ScriptRepository
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.UiMode
@@ -52,9 +51,6 @@ fun ModulePager(
     val viewModel = viewModel<ModuleViewModel>()
     val scope = rememberCoroutineScope()
     val rawUiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-    // 卡片点击后打开的操作面板：模块对象由当前点击决定
-    var actionModule by remember { mutableStateOf<Module?>(null) }
 
     val webUILauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -209,7 +205,6 @@ fun ModulePager(
             moduleEvent = viewModel.moduleEvent,
             actions = actions,
             bottomInnerPadding = bottomInnerPadding,
-            onOpenActions = { actionModule = it },
         )
 
         UiMode.Fresh -> ModulePagerMaterial(
@@ -218,7 +213,6 @@ fun ModulePager(
             moduleEvent = viewModel.moduleEvent,
             actions = actions,
             bottomInnerPadding = bottomInnerPadding,
-            onOpenActions = { actionModule = it },
         )
 
         UiMode.Material -> {
@@ -238,7 +232,7 @@ fun ModulePager(
                 modules = if (rawUiState.searchStatus.searchText.isBlank()) rawUiState.modules else rawUiState.searchResults,
                 bottomInnerPadding = bottomInnerPadding,
                 onToggle = actions.onToggleModule,
-                onOpenActions = { actionModule = it },
+                onExecute = { module -> actions.onExecuteModuleAction(module) },
                 onAddModule = {
                     modulePicker.launch(
                         Intent(Intent.ACTION_GET_CONTENT).apply {
@@ -270,7 +264,7 @@ fun ModulePager(
                 modules = if (rawUiState.searchStatus.searchText.isBlank()) rawUiState.modules else rawUiState.searchResults,
                 bottomInnerPadding = bottomInnerPadding,
                 onToggle = actions.onToggleModule,
-                onOpenActions = { actionModule = it },
+                onExecute = { module -> actions.onExecuteModuleAction(module) },
                 onAddModule = {
                     modulePicker.launch(
                         Intent(Intent.ACTION_GET_CONTENT).apply {
@@ -301,7 +295,7 @@ fun ModulePager(
                 modules = if (rawUiState.searchStatus.searchText.isBlank()) rawUiState.modules else rawUiState.searchResults,
                 bottomInnerPadding = bottomInnerPadding,
                 onToggle = actions.onToggleModule,
-                onOpenActions = { actionModule = it },
+                onExecute = { module -> actions.onExecuteModuleAction(module) },
                 onAddModule = {
                     modulePicker.launch(
                         Intent(Intent.ACTION_GET_CONTENT).apply {
@@ -315,10 +309,4 @@ fun ModulePager(
             )
         }
     }
-
-    ModuleActionSheet(
-        module = actionModule,
-        onDismiss = { actionModule = null },
-        onExecute = { module -> actions.onExecuteModuleAction(module) },
-    )
 }

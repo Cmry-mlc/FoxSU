@@ -1,5 +1,6 @@
 package me.weishu.kernelsu.ui.screen.editorial
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,7 +10,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,6 +28,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.ui.screen.module.ModuleCardActions
 import me.weishu.kernelsu.data.model.Module
 
 private val modPairs = listOf(
@@ -45,7 +51,7 @@ fun EditorialModule(
     onRefresh: () -> Unit,
     onOpenRepo: () -> Unit = {},
     onCleanModules: () -> Unit = onRefresh,
-    onOpenActions: (Module) -> Unit = {},
+    onExecute: (Module) -> Unit = {},
 ) {
     val t = edTokens()
     val enabled = modules.count { it.enabled }
@@ -82,14 +88,15 @@ fun EditorialModule(
             items(modules.size) { index ->
                 val m = modules[index]
                 val (c1, c2) = modPairs[Math.floorMod(index, modPairs.size)]
+                var actionsOpen by rememberSaveable(m.id) { mutableStateOf(false) }
+                Column(modifier = Modifier.fillMaxWidth().hairBottom(t.hair)) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .hairBottom(t.hair)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
-                        ) { onOpenActions(m) }
+                        ) { actionsOpen = !actionsOpen }
                         .padding(horizontal = 22.dp, vertical = 13.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -148,6 +155,25 @@ fun EditorialModule(
                         Spacer(Modifier.height(8.dp))
                         EdSwitch(checked = m.enabled, onToggle = { onToggle(m) })
                     }
+                }
+                AnimatedVisibility(visible = actionsOpen) {
+                    ModuleCardActions(
+                        runnable = m.hasActionScript && m.enabled && !m.remove && !m.update,
+                        reason = when {
+                            !m.hasActionScript -> stringResource(R.string.module_action_sheet_no_action)
+                            m.remove -> stringResource(R.string.module_action_sheet_removing)
+                            !m.enabled -> stringResource(R.string.module_action_sheet_disabled)
+                            m.update -> stringResource(R.string.module_action_sheet_pending)
+                            else -> null
+                        },
+                        accent = t.violet,
+                        neutralBg = t.ink.copy(alpha = 0.06f),
+                        neutralFg = t.sub,
+                        onExecute = { actionsOpen = false; onExecute(m) },
+                        onCancel = { actionsOpen = false },
+                        modifier = Modifier.padding(start = 22.dp, end = 22.dp, bottom = 13.dp),
+                    )
+                }
                 }
             }
         }

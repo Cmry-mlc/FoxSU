@@ -1,5 +1,6 @@
 package me.weishu.kernelsu.ui.screen.nocturne
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -13,17 +14,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.data.model.Module
+import me.weishu.kernelsu.ui.screen.module.ModuleCardActions
 
 /**
  * 模块 —— 严格对照视觉稿 ③ 模块：
@@ -37,7 +41,7 @@ fun NocturneModuleScreen(
     onAddModule: () -> Unit,
     onRefresh: () -> Unit,
     onOpenRepo: () -> Unit,
-    onOpenActions: (Module) -> Unit = {},
+    onExecute: (Module) -> Unit = {},
 ) {
     val t = ncTokens()
     var query by remember { mutableStateOf("") }
@@ -80,7 +84,7 @@ fun NocturneModuleScreen(
                 } else {
                     item { NcSectionLabel("INSTALLED · 已安装 ${list.size}") }
                     items(list, key = { it.id }) { m ->
-                        ModuleRow(m, onToggle, onOpenActions)
+                        ModuleRow(m, onToggle, onExecute)
                         Spacer(Modifier.height(7.dp))
                     }
                 }
@@ -100,9 +104,10 @@ fun NocturneModuleScreen(
 
 /** 模块行：图标盒 + 名称 + 描述 + 版本 + 开关。 */
 @Composable
-private fun ModuleRow(m: Module, onToggle: (Module) -> Unit, onOpenActions: (Module) -> Unit = {}) {
+private fun ModuleRow(m: Module, onToggle: (Module) -> Unit, onExecute: (Module) -> Unit = {}) {
     val t = ncTokens()
-    Row(
+    var actionsOpen by rememberSaveable(m.id) { mutableStateOf(false) }
+    Column(
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
@@ -111,8 +116,11 @@ private fun ModuleRow(m: Module, onToggle: (Module) -> Unit, onOpenActions: (Mod
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
-            ) { onOpenActions(m) }
+            ) { actionsOpen = !actionsOpen }
             .padding(horizontal = 15.dp, vertical = 11.dp),
+    ) {
+    Row(
+        Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         NcIconBox(
@@ -152,5 +160,23 @@ private fun ModuleRow(m: Module, onToggle: (Module) -> Unit, onOpenActions: (Mod
         }
         Spacer(Modifier.width(10.dp))
         NcSwitch(checked = m.enabled, onCheckedChange = { onToggle(m) })
+    }
+        AnimatedVisibility(visible = actionsOpen) {
+            ModuleCardActions(
+                runnable = m.hasActionScript && m.enabled && !m.remove && !m.update,
+                reason = when {
+                    !m.hasActionScript -> stringResource(R.string.module_action_sheet_no_action)
+                    m.remove -> stringResource(R.string.module_action_sheet_removing)
+                    !m.enabled -> stringResource(R.string.module_action_sheet_disabled)
+                    m.update -> stringResource(R.string.module_action_sheet_pending)
+                    else -> null
+                },
+                accent = t.vio,
+                neutralBg = t.fill,
+                neutralFg = t.tx2,
+                onExecute = { actionsOpen = false; onExecute(m) },
+                onCancel = { actionsOpen = false },
+            )
+        }
     }
 }
