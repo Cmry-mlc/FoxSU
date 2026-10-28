@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.sp
+import me.weishu.kernelsu.ui.component.FoxTitleBadge
 import me.weishu.kernelsu.ui.screen.home.HeroPhase
 
 /**
@@ -139,6 +140,12 @@ fun NcHeader(
             .padding(top = 13.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // 标题栏统一狐狸徽章（与其他皮肤同规格：46dp 圆底 + 40dp 彩狐）
+        FoxTitleBadge(
+            circleColor = t.s1,
+            border = t.line,
+        )
+        Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(
                 text = kicker,

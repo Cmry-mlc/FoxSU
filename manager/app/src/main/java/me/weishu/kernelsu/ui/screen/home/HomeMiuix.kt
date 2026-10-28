@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.KernelVersion
 import me.weishu.kernelsu.Natives
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.ui.component.FoxTitleBadge
 import me.weishu.kernelsu.ui.component.WarningLevel
 import me.weishu.kernelsu.ui.component.dialog.rememberConfirmDialog
 import me.weishu.kernelsu.ui.component.miuix.WarningCard
@@ -269,6 +270,11 @@ private fun TopBar(
         TopAppBar(
             color = barColor,
             title = stringResource(R.string.app_name),
+            navigationIcon = {
+                FoxTitleBadge(
+                    circleColor = colorScheme.secondaryContainer,
+                )
+            },
             actions = {
                 // 作者页入口（与其余主题对齐）
                 IconButton(onClick = onOpenAuthor) {
