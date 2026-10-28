@@ -29,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
@@ -61,7 +62,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
-import me.weishu.kernelsu.ui.component.RainbowFoxIcon
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -411,7 +411,11 @@ class MainActivity : ComponentActivity() {
                                         alpha = foxIn
                                     },
                                 ) {
-                                    RainbowFoxIcon(modifier = Modifier.size(104.dp))
+                                    Image(
+                                        painter = painterResource(R.drawable.ic_fox_global),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(104.dp),
+                                    )
                                     Spacer(Modifier.height(14.dp))
                                     Text(
                                         text = "FoxSu",

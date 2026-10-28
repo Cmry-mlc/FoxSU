@@ -785,7 +785,6 @@ fun ModuleItem(
     val maxLinesLimit = LocalModuleDescriptionMaxLines.current
     var expanded by rememberSaveable(module.id) { mutableStateOf(false) }
     // 点卡片在卡片内部展开「执行 / 取消」，不走二级面板
-    var actionsOpen by rememberSaveable(module.id) { mutableStateOf(false) }
 
     // 每张卡片按自己的 id 取一套七彩：同一模块重启前后颜色稳定，不同模块之间错开
     val rainbowSlot = rememberRainbowSlot(module.id)
@@ -804,8 +803,6 @@ fun ModuleItem(
             color = cardContainer,
             contentColor = cardContent,
         ),
-        // 点卡片在卡片内部展开 / 收起「执行 / 取消」
-        onClick = { actionsOpen = !actionsOpen },
     ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -1084,26 +1081,5 @@ fun ModuleItem(
             }
         }
 
-        AnimatedVisibility(visible = actionsOpen) {
-            ModuleCardActions(
-                runnable = module.hasActionScript && module.enabled && !module.remove && !module.update,
-                reason = when {
-                    !module.hasActionScript -> stringResource(R.string.module_action_sheet_no_action)
-                    module.remove -> stringResource(R.string.module_action_sheet_removing)
-                    !module.enabled -> stringResource(R.string.module_action_sheet_disabled)
-                    module.update -> stringResource(R.string.module_action_sheet_pending)
-                    else -> null
-                },
-                accent = colorScheme.primary,
-                neutralBg = cardContent.copy(alpha = 0.08f),
-                neutralFg = cardContent.copy(alpha = 0.72f),
-                pendingRemoval = module.remove,
-                onExecute = onExecuteAction,
-                onUninstall = {
-                    actionsOpen = false
-                    if (module.remove) onUndoUninstall() else onUninstall()
-                },
-            )
-        }
     }
 }

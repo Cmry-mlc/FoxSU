@@ -765,8 +765,6 @@ private fun ModuleItem(
     val maxLinesLimit = LocalModuleDescriptionMaxLines.current
     var expanded by rememberSaveable(module.id) { mutableStateOf(false) }
     var descriptionCanExpand by rememberSaveable(module.id) { mutableStateOf(true) }
-    // 点卡片在卡片内部展开「执行 / 取消」，不走二级面板
-    var actionsOpen by rememberSaveable(module.id) { mutableStateOf(false) }
     val canOpenWebUi = module.hasWebUi && !module.remove && module.enabled
     val cardInteractionSource = remember { MutableInteractionSource() }
     val descriptionInteractionSource = remember { MutableInteractionSource() }
@@ -798,8 +796,6 @@ private fun ModuleItem(
         contentColor = surface.content,
         interactionSource = cardInteractionSource,
         onLongClick = { showAppearance = true },
-        // 点卡片在卡片内部展开 / 收起「执行 / 取消」
-        onClick = { actionsOpen = !actionsOpen }
     ) {
         val haptic = LocalHapticFeedback.current
         val textDecoration = if (!module.remove) null else TextDecoration.LineThrough
@@ -1067,31 +1063,6 @@ private fun ModuleItem(
                 }
             }
 
-            AnimatedVisibility(visible = actionsOpen) {
-                ModuleCardActions(
-                    runnable = module.hasActionScript && module.enabled && !module.remove && !module.update,
-                    reason = when {
-                        !module.hasActionScript -> stringResource(R.string.module_action_sheet_no_action)
-                        module.remove -> stringResource(R.string.module_action_sheet_removing)
-                        !module.enabled -> stringResource(R.string.module_action_sheet_disabled)
-                        module.update -> stringResource(R.string.module_action_sheet_pending)
-                        else -> null
-                    },
-                    accent = MaterialTheme.colorScheme.primary,
-                    neutralBg = LocalContentColor.current.copy(alpha = 0.08f),
-                    neutralFg = LocalContentColor.current.copy(alpha = 0.72f),
-                    pendingRemoval = module.remove,
-                    onExecute = {
-                        actionsOpen = false
-                        onExecuteAction()
-                        closeSearch()
-                    },
-                    onUninstall = {
-                        actionsOpen = false
-                        onUninstallClicked()
-                    },
-                )
-            }
         }
         }
     }
