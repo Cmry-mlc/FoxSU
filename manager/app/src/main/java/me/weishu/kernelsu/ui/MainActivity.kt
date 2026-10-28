@@ -624,7 +624,10 @@ fun MainScreen(
                     pagerContent(innerPadding.calculateBottomPadding())
                 }
 
-                UiMode.Miuix -> Scaffold(bottomBar = bottomBar) { innerPadding ->
+                UiMode.Miuix -> Scaffold(
+                    bottomBar = bottomBar,
+                    containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                ) { innerPadding ->
                     pagerContent(innerPadding.calculateBottomPadding())
                 }
 
