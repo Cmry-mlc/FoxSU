@@ -107,22 +107,6 @@ fun AgSettings(
                         trailing = { AgToggle(checked = uiState.checkModuleUpdate, onCheckedChange = { actions.onSetCheckModuleUpdate(!uiState.checkModuleUpdate) }) },
                     )
                     AgRow(
-                        "深色模式", "跟随系统自动切换深浅外观",
-                        Ag.Amber, Icons.Rounded.Palette,
-                        trailing = { AgToggle(checked = uiState.themeMode != 1, onCheckedChange = { showStyle = true }) },
-                    )
-                    AgRow(
-                        "语言", "切换应用界面语言",
-                        Ag.Teal, Icons.Rounded.Language, showChev = true,
-                        onClick = {
-                            runCatching {
-                                context.startActivity(
-                                    android.content.Intent(android.provider.Settings.ACTION_SETTINGS)
-                                )
-                            }
-                        },
-                    )
-                    AgRow(
                         "界面风格", "选择应用的界面风格",
                         Ag.Vio, Icons.Rounded.Palette,
                         trailing = {

@@ -36,6 +36,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.drawable.toBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.ui.screen.appprofile.AppProfileActions
 import me.weishu.kernelsu.ui.screen.appprofile.AppProfileUiState
@@ -86,6 +88,13 @@ fun AgAppProfile(
                     .padding(16.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    val ctx = androidx.compose.ui.platform.LocalContext.current
+                    val iconBmp = remember(state.packageName) {
+                        runCatching {
+                            ctx.packageManager.getApplicationIcon(state.packageName)
+                                .toBitmap(96, 96).asImageBitmap()
+                        }.getOrNull()
+                    }
                     Box(
                         Modifier
                             .size(46.dp)
@@ -93,10 +102,14 @@ fun AgAppProfile(
                             .background(Brush.linearGradient(listOf(c1, c2))),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(
-                            (app?.label ?: state.packageName).take(1).uppercase(),
-                            fontSize = 19.sp, fontWeight = FontWeight.ExtraBold, color = Color.White,
-                        )
+                        if (iconBmp != null) {
+                            androidx.compose.foundation.Image(iconBmp, null, modifier = Modifier.size(30.dp))
+                        } else {
+                            Text(
+                                (app?.label ?: state.packageName).take(1).uppercase(),
+                                fontSize = 19.sp, fontWeight = FontWeight.ExtraBold, color = Color.White,
+                            )
+                        }
                     }
                     Spacer(Modifier.width(14.dp))
                     Column(Modifier.weight(1f)) {

@@ -237,8 +237,8 @@ private val PickSkins = listOf(
     ),
     PickSkin(
         mode = UiMode.Miuix,
-        name = "Miuix",
-        tag = "小米",
+        name = "FoxSu Redesign",
+        tag = "重设计",
         desc = R.string.style_picker_desc_miuix,
         bg = Color(0xFFEFEDF8),
         ink = Color(0xFF1C1A2E),
