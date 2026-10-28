@@ -129,7 +129,12 @@ private fun AgAppRow(g: GroupedApps, context: android.content.Context, onClick: 
     val (c1, c2) = remember(app.packageName) { gradientFor(app.packageName) }
     val bmp = remember(app.packageName) {
         runCatching {
-            context.packageManager.getApplicationIcon(app.packageName).toBitmap(96, 96).asImageBitmap()
+            val d = context.packageManager.getApplicationIcon(app.packageName)
+            val b = android.graphics.Bitmap.createBitmap(96, 96, android.graphics.Bitmap.Config.ARGB_8888)
+            val c = android.graphics.Canvas(b)
+            d.setBounds(0, 0, 96, 96)
+            d.draw(c)
+            b.asImageBitmap()
         }.getOrNull()
     }
     Box(
@@ -151,7 +156,13 @@ private fun AgAppRow(g: GroupedApps, context: android.content.Context, onClick: 
                 contentAlignment = Alignment.Center,
             ) {
                 if (bmp != null) {
-                    Image(bmp, null, modifier = Modifier.size(30.dp))
+                    Image(
+                        bmp, null,
+                        modifier = Modifier
+                            .size(46.dp)
+                            .clip(RoundedCornerShape(14.dp)),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                    )
                 } else {
                     Text(
                         app.label.take(1).uppercase(),

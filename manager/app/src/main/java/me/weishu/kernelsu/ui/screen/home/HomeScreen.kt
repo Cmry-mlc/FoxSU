@@ -139,6 +139,7 @@ fun HomePager(
             actions = actions,
             onOpenTab = { page -> mainPagerState.animateToPage(page) },
             onOpenAuthor = { navigator.push(Route.Author) },
+            bottomInnerPadding = bottomInnerPadding,
         )
 
         UiMode.Material -> me.weishu.kernelsu.ui.screen.editorial.EditorialHome(

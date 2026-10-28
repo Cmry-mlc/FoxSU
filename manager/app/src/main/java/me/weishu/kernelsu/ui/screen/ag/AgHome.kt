@@ -70,10 +70,16 @@ fun AgHome(
     actions: HomeActions,
     onOpenTab: (Int) -> Unit,
     onOpenAuthor: () -> Unit,
+    bottomInnerPadding: androidx.compose.ui.unit.Dp = androidx.compose.ui.unit.Dp.Unspecified,
 ) {
     val hero = state.heroState()
     var showReboot by remember { mutableStateOf(false) }
     var showStyle by remember { mutableStateOf(false) }
+    val listBottomPad = if (bottomInnerPadding == androidx.compose.ui.unit.Dp.Unspecified) {
+        24.dp
+    } else {
+        bottomInnerPadding + 24.dp
+    }
 
     // 固定顶栏 + 毛玻璃：不随内容滚动（dev-handoff .headwrap 要求）
     Column(

@@ -91,8 +91,12 @@ fun AgAppProfile(
                     val ctx = androidx.compose.ui.platform.LocalContext.current
                     val iconBmp = remember(state.packageName) {
                         runCatching {
-                            ctx.packageManager.getApplicationIcon(state.packageName)
-                                .toBitmap(96, 96).asImageBitmap()
+                            val d = ctx.packageManager.getApplicationIcon(state.packageName)
+                            val b = android.graphics.Bitmap.createBitmap(96, 96, android.graphics.Bitmap.Config.ARGB_8888)
+                            val c = android.graphics.Canvas(b)
+                            d.setBounds(0, 0, 96, 96)
+                            d.draw(c)
+                            b.asImageBitmap()
                         }.getOrNull()
                     }
                     Box(
@@ -103,7 +107,13 @@ fun AgAppProfile(
                         contentAlignment = Alignment.Center,
                     ) {
                         if (iconBmp != null) {
-                            androidx.compose.foundation.Image(iconBmp, null, modifier = Modifier.size(30.dp))
+                            androidx.compose.foundation.Image(
+                                iconBmp, null,
+                                modifier = Modifier
+                                    .size(46.dp)
+                                    .clip(RoundedCornerShape(14.dp)),
+                                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                            )
                         } else {
                             Text(
                                 (app?.label ?: state.packageName).take(1).uppercase(),
@@ -175,6 +185,6 @@ fun AgAppProfile(
                 Ag.Amber, Icons.Rounded.Delete, showChev = true, onClick = actions.onManageTemplate,
             )
         }
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(140.dp))
     }
 }
