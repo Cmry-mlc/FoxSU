@@ -92,7 +92,12 @@ fun ThemeDockBar(
                 .padding(bottom = bottomPad)
                 .shadow(14.dp, RoundedCornerShape(26.dp), spotColor = theme.shadow, ambientColor = theme.shadow)
                 .clip(RoundedCornerShape(26.dp))
-                .background(theme.bg)
+                // 玻璃底：顶部实 → 底部更透，避免平涂白条感（背景雾彩透出）
+                .background(
+                    Brush.verticalGradient(
+                        listOf(theme.bg, theme.bg.copy(alpha = theme.bg.alpha * 0.55f)),
+                    )
+                )
                 .border(1.dp, theme.border, RoundedCornerShape(26.dp))
                 .drawBehind {
                     // 顶部高光（沉浸光感）
@@ -191,7 +196,7 @@ object AgDockThemes {
 
     /** FoxSu Redesign：暖白胶囊 + 品牌紫/品红（晨曦玻璃） */
     val redesign = DockTheme(
-        bg = Color(0xC7FFFFFF), border = Color(0x99FFFFFF), shadow = Color(0x2E32286E),
+        bg = Color(0xA6FFFFFF), border = Color(0x99FFFFFF), shadow = Color(0x2E32286E),
         selected = Color(0xFF6C5CE7), unselected = Color(0xFF66647A),
         selectedBg = Color(0x1A6C5CE7), badge = Color(0xFFEC4899), glass = true,
     )
@@ -228,7 +233,7 @@ object AgDockThemes {
             selected = Color(0xFF9C90FF), unselected = Color(0xFF7C8294),
             selectedBg = Color(0x338B7BFF), badge = Color(0xFF4DE2C5), glass = true,
         ) else DockTheme(
-            bg = Color(0xCCFFFFFF), border = Color(0x33FFFFFF), shadow = Color(0x2E32286E),
+            bg = Color(0xB0FFFFFF), border = Color(0x33FFFFFF), shadow = Color(0x2E32286E),
             selected = Color(0xFF6A57F5), unselected = Color(0xFF9AA0B0),
             selectedBg = Color(0x1A6A57F5), badge = Color(0xFF0FA98B), glass = true,
         )
