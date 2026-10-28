@@ -590,7 +590,7 @@ private fun FreshHeader() {
                     painter = painterResource(R.drawable.ic_fox_global),
                     contentDescription = null,
                     contentScale = ContentScale.Fit,
-                    modifier = Modifier.size(30.dp),
+                    modifier = Modifier.size(36.dp),
                 )
             }
         }

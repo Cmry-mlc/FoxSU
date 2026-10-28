@@ -200,7 +200,7 @@ fun GlassModuleList(
             )
         }
         item {
-            // .addmod：1.5 虚线圆角22 —— 点左侧「安装模块」选 zip，点右侧「模块仓库」浏览在线
+            // .addmod：1.5 虚线圆角22 —— 安装模块（选 zip）
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -209,7 +209,8 @@ fun GlassModuleList(
                     .clip(RoundedCornerShape(22.dp))
                     .background(if (t.isDark) Color.Transparent else Color(0x66FFFFFF))
                     .clickable(onClick = onAddModule)
-                    .padding(vertical = 16.dp),
+                    .padding(vertical = 16.dp)
+                    .padding(bottom = 10.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -226,16 +227,33 @@ fun GlassModuleList(
                     fontWeight = FontWeight.Bold,
                     color = t.sub,
                 )
-                Spacer(Modifier.width(6.dp))
+            }
+        }
+        item {
+            // 模块仓库：独立胶囊，摆在安装胶囊正下方
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(22.dp))
+                    .background(if (t.isDark) Color(0x0DFFFFFF) else Color(0x99FFFFFF))
+                    .border(1.dp, t.violet.copy(alpha = 0.28f), RoundedCornerShape(22.dp))
+                    .clickable(onClick = onOpenRepo)
+                    .padding(vertical = 14.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_d_download),
+                    contentDescription = null,
+                    modifier = Modifier.size(15.dp),
+                    tint = t.violet,
+                )
+                Spacer(Modifier.width(8.dp))
                 Text(
                     text = stringResource(R.string.module_repos),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = t.violet,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable(onClick = onOpenRepo)
-                        .padding(horizontal = 6.dp, vertical = 2.dp),
                 )
             }
         }

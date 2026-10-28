@@ -302,7 +302,7 @@ fun GlassTopBar(
                 Icon(
                     painter = painterResource(R.drawable.ic_launcher_monochrome),
                     contentDescription = null,
-                    modifier = Modifier.size(28.dp),
+                    modifier = Modifier.size(34.dp),
                     tint = foxColor,
                 )
             }
@@ -424,6 +424,7 @@ fun GlassHeroCard(
             .border(1.dp, t.heroGrad, RoundedCornerShape(26.dp))
             .clickable(enabled = flashable) { onInstall() },
     ) {
+        Box {
         Box(modifier = Modifier.padding(20.dp)) {
             // 对勾已移到右上角，正文只需让出右上徽章宽度
             Column(modifier = Modifier.padding(end = 58.dp)) {
@@ -547,18 +548,20 @@ fun GlassHeroCard(
                     modifier = Modifier.padding(top = 14.dp),
                 )
             }
-            // .seal：卡内右上角玻璃徽章（✓ / × 18）+ 呼吸七彩外圈；留 12dp 内边距，扩散环不撞圆角
-            GlassSeal(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = 8.dp, end = 8.dp),
-                checkColor = sealTint,
-                sealBg = if (t.isDark) Color(0xFF14141E) else Color(0xF2FFFFFF),
-                border = if (t.isDark) Color(0x1FFFFFFF) else Color(0xFFFFFFFF),
-                ok = sealOk,
-                coreSize = 40,
-                iconSize = 18,
-            )
+        }
+
+        // .seal：贴卡片右上角（不再是内容区右上角），距边 10dp
+        GlassSeal(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 10.dp, end = 10.dp),
+            checkColor = sealTint,
+            sealBg = if (t.isDark) Color(0xFF14141E) else Color(0xF2FFFFFF),
+            border = if (t.isDark) Color(0x1FFFFFFF) else Color(0xFFFFFFFF),
+            ok = sealOk,
+            coreSize = 40,
+            iconSize = 18,
+        )
         }
     }
     Spacer(Modifier.height(13.dp))

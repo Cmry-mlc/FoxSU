@@ -671,7 +671,7 @@
     <string name="onboarding_start">Get started</string>
     <string name="style_picker_kicker">APPEARANCE · STYLE</string>
     <string name="style_picker_title">Interface style</string>
-    <string name="style_picker_caption">All styles on one screen\n5 styles · apply instantly</string>
+    <string name="style_picker_caption">Swipe for more\nThree large cards · apply instantly</string>
     <string name="style_picker_dark">Dark</string>
     <string name="style_picker_light">Light</string>
     <string name="style_picker_follow_system">System</string>

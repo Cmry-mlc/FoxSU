@@ -645,7 +645,7 @@
     <string name="onboarding_start">开始使用</string>
     <string name="style_picker_kicker">APPEARANCE · 外观</string>
     <string name="style_picker_title">界面风格</string>
-    <string name="style_picker_caption">一屏看全 5 种\n即时生效 · 无需重启</string>
+    <string name="style_picker_caption">左右滑动预览\n一屏三张大卡 · 即时生效</string>
     <string name="style_picker_dark">深色</string>
     <string name="style_picker_light">浅色</string>
     <string name="style_picker_follow_system">跟随系统</string>

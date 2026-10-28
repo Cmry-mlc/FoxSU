@@ -11,6 +11,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -409,32 +410,30 @@ fun StylePickerDialog(
                     }
                 }
 
-                // 皮肤卡：固定三列，不再横向滑动，一屏就能看全
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 15.dp, end = 15.dp, top = 2.dp, bottom = 6.dp),
-                    verticalArrangement = Arrangement.spacedBy(9.dp),
-                ) {
-                    PickSkins.chunked(3).forEach { rowSkins ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-                            rowSkins.forEach { skin ->
-                                SkinCard(
-                                    modifier = Modifier.weight(1f),
-                                    skin = skin,
-                                    selected = skin.mode == selected,
-                                    tokens = t,
-                                    onClick = {
-                                        selected = skin.mode
-                                        applyUiMode(skin.mode)
-                                        repo.uiMode = skin.mode.value
-                                    },
-                                )
-                            }
-                            // 末行不足三个时补占位，保持卡片宽度与上一行一致
-                            repeat(3 - rowSkins.size) {
-                                Spacer(Modifier.weight(1f))
-                            }
+                // 皮肤卡：横向滑动，一屏正好三张大卡（宽度按可用宽度三等分算）
+                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                    val gap = 10.dp
+                    val side = 15.dp
+                    val cardWidth = (maxWidth - side * 2 - gap * 2) / 3
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                            start = side, end = side, top = 2.dp, bottom = 6.dp,
+                        ),
+                        horizontalArrangement = Arrangement.spacedBy(gap),
+                    ) {
+                        items(PickSkins, key = { it.mode.value }) { skin ->
+                            SkinCard(
+                                modifier = Modifier.width(cardWidth),
+                                skin = skin,
+                                selected = skin.mode == selected,
+                                tokens = t,
+                                onClick = {
+                                    selected = skin.mode
+                                    applyUiMode(skin.mode)
+                                    repo.uiMode = skin.mode.value
+                                },
+                            )
                         }
                     }
                 }
@@ -493,7 +492,7 @@ private fun SkinCard(
 
     Box(
         modifier = modifier
-            .height(176.dp)
+            .height(206.dp)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
@@ -529,10 +528,10 @@ private fun SkinCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(108.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                    .height(132.dp)
+                    .clip(RoundedCornerShape(13.dp))
                     .background(skin.bg)
-                    .padding(horizontal = 9.dp, vertical = 11.dp),
+                    .padding(horizontal = 10.dp, vertical = 13.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Box(
@@ -545,8 +544,8 @@ private fun SkinCard(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(36.dp)
-                        .clip(RoundedCornerShape(8.dp))
+                        .height(44.dp)
+                        .clip(RoundedCornerShape(9.dp))
                         .background(skin.block)
                         .border(1.dp, skin.ring, RoundedCornerShape(8.dp)),
                 )
@@ -581,7 +580,7 @@ private fun SkinCard(
             ) {
                 Text(
                     text = skin.name,
-                    fontSize = 12.sp,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -590,7 +589,7 @@ private fun SkinCard(
                 )
                 Text(
                     text = skin.tag,
-                    fontSize = 9.sp,
+                    fontSize = 9.5.sp,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     color = tokens.sub,
