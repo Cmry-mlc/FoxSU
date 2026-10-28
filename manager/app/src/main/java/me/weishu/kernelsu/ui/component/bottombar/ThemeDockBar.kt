@@ -120,7 +120,8 @@ fun ThemeDockBar(
             modifier = modifier
                 .padding(start = 14.dp)
                 .clip(RoundedCornerShape(30.dp))
-                .background(effBg)
+                // 设计稿 .phone.side .dock：白 86%
+                .background(if (dark) theme.bg else theme.bg.copy(alpha = 0.86f * alphaK))
                 .border(1.dp, effBorder, RoundedCornerShape(30.dp))
                 .shadow(14.dp, RoundedCornerShape(30.dp), spotColor = theme.shadow, ambientColor = theme.shadow)
                 .padding(10.dp, 12.dp),

@@ -48,6 +48,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.data.model.Module
+import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.screen.module.ModuleActions
 import me.weishu.kernelsu.ui.screen.module.ModuleUiState
 
@@ -120,7 +121,9 @@ fun AgModules(
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 4.dp, bottom = bottomInnerPadding + 130.dp),
+            contentPadding = PaddingValues(
+                start = if (CustomizationStore.current.dockStyle == "v5") 106.dp else 18.dp,
+                end = 18.dp, top = 4.dp, bottom = bottomInnerPadding + 130.dp),
         ) {
             if (modules.isEmpty()) {
                 item {

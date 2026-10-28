@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Info
@@ -51,6 +52,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.component.rebootlistpopup.getRebootListOption
 import me.weishu.kernelsu.ui.component.rebootlistpopup.rememberRebootAction
 import me.weishu.kernelsu.ui.component.StylePickerDialog
@@ -74,7 +76,20 @@ fun AgHome(
 ) {
     val hero = state.heroState()
     var showReboot by remember { mutableStateOf(false) }
-    var showStyle by remember { mutableStateOf(false) }
+    val sideDock = CustomizationStore.current.dockStyle == "v5"
+    val settingsVm: me.weishu.kernelsu.ui.viewmodel.SettingsViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    val sysDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val onToggleDark = {
+        val repo = me.weishu.kernelsu.data.repository.SettingsRepositoryImpl()
+        val cur = repo.themeMode
+        val target = when (cur) {
+            2, 5, 6 -> 1          // 当前深 → 浅
+            1, 4 -> 2             // 当前浅 → 深
+            else -> if (sysDark) 1 else 2 // 跟随系统 → 取反
+        }
+        settingsVm.setThemeMode(target)
+        Unit
+    }
     val listBottomPad = if (bottomInnerPadding == androidx.compose.ui.unit.Dp.Unspecified) {
         24.dp
     } else {
@@ -95,36 +110,49 @@ fun AgHome(
                 .padding(horizontal = 18.dp),
         ) {
             Spacer(Modifier.height(8.dp))
-            // ── 顶栏：Logo + 渐变标题 + 作者/主题/电源 ──
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                androidx.compose.foundation.Image(
-                    painter = painterResource(R.drawable.ic_fox_global),
-                    contentDescription = null,
-                    modifier = Modifier.size(34.dp),
-                )
-                Spacer(Modifier.width(10.dp))
-                Text(
-                    "FoxSu",
-                    fontSize = 30.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    letterSpacing = (-0.6).sp,
-                    style = TextStyle(brush = Ag.TitleGrad),
-                )
-                Spacer(Modifier.weight(1f))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // ── 顶栏：居中渐变标题 + 右侧 作者/深色切换/电源（设计稿 .top）──
+            Box(Modifier.fillMaxWidth()) {
+                Row(
+                    Modifier.align(Alignment.Center),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (sideDock) {
+                        androidx.compose.foundation.Image(
+                            painter = painterResource(R.drawable.ic_fox_global),
+                            contentDescription = null,
+                            modifier = Modifier.size(30.dp),
+                        )
+                        Spacer(Modifier.width(8.dp))
+                    }
+                    Text(
+                        "FoxSu",
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = (-0.6).sp,
+                        style = TextStyle(brush = Ag.TitleGrad),
+                    )
+                }
+                Row(
+                    Modifier.align(Alignment.CenterEnd),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     AgIconBtn(Icons.Rounded.Person, onClick = onOpenAuthor)
-                    AgIconBtn(Icons.Rounded.Palette, onClick = { showStyle = true })
+                    // 深色模式切换（月亮）：浅↔深真实切换
+                    AgIconBtn(Icons.Rounded.DarkMode, onClick = onToggleDark)
                     AgIconBtn(Icons.Rounded.PowerSettingsNew, onClick = { showReboot = true })
                 }
             }
             Spacer(Modifier.height(10.dp))
         }
-        // ── 内容滚动区（从毛玻璃下透出）──
+        // ── 内容滚动区（从毛玻璃下透出）；侧边抽屉模式整体让距 106dp ──
         Column(
             Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 18.dp),
+                .padding(
+                    start = if (sideDock) 106.dp else 18.dp,
+                    end = 18.dp,
+                ),
         ) {
             Spacer(Modifier.height(12.dp))
 
@@ -245,9 +273,6 @@ fun AgHome(
         }
     }
 
-    if (showStyle) {
-        StylePickerDialog(current = LocalUiMode.current, onDismiss = { showStyle = false })
-    }
     if (showReboot) {
         AgRebootSheet(onDismiss = { showReboot = false })
     }

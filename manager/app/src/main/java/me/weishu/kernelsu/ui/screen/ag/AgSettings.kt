@@ -47,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.component.StylePickerDialog
 import me.weishu.kernelsu.ui.component.rebootlistpopup.getRebootListOption
@@ -88,7 +89,9 @@ fun AgSettings(
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 18.dp, end = 18.dp, bottom = bottomInnerPadding + 110.dp),
+            contentPadding = PaddingValues(
+                start = if (CustomizationStore.current.dockStyle == "v5") 106.dp else 18.dp,
+                end = 18.dp, bottom = bottomInnerPadding + 110.dp),
         ) {
             item { AgTitle("设", "置") }
 

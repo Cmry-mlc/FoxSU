@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import me.weishu.kernelsu.data.model.AppInfo
+import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.screen.superuser.GroupedApps
 import me.weishu.kernelsu.ui.screen.superuser.SuperUserActions
 import me.weishu.kernelsu.ui.screen.superuser.SuperUserUiState
@@ -97,7 +98,9 @@ fun AgSuperUser(
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 4.dp, bottom = bottomInnerPadding + 110.dp),
+            contentPadding = PaddingValues(
+                start = if (CustomizationStore.current.dockStyle == "v5") 106.dp else 18.dp,
+                end = 18.dp, top = 4.dp, bottom = bottomInnerPadding + 110.dp),
         ) {
             if (grantedList.isNotEmpty()) {
                 item { AgGHead("已授权 · ROOT") }
