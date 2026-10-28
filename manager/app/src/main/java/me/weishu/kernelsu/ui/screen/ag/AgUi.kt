@@ -77,8 +77,8 @@ object Ag {
     val Shadow = Color(0x143C2D78)        // rgba(60,45,120,.08)
     val TitleGrad = Grad
 
-    /** 页面背景：160° #F7F6FB → #F2F4FA + 三向径向雾彩（紫→品红→青） */
-    fun background(): Brush = Brush.linearGradient(listOf(Bg1, Bg2))
+    /** 页面背景：垂直 #F7F6FB → #F2F4FA（与 Dock 槽位兜底色精确衔接，无缝） */
+    fun background(): Brush = Brush.verticalGradient(listOf(Bg1, Bg2))
 }
 
 /** 雾彩背景层：三条径向渐变（右上紫 / 左中品红 / 底部青） */
