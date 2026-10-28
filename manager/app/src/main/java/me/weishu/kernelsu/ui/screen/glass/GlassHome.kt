@@ -359,7 +359,7 @@ fun GlassTopButton(iconRes: Int, onClick: () -> Unit) {
     val t = glassTokens()
     Box(
         modifier = Modifier
-            .size(36.dp)
+            .size(40.dp)
             .shadow(4.dp, CircleShape, spotColor = t.glassShadow, ambientColor = t.glassShadow)
             .clip(CircleShape)
             .background(t.tbtnBg)
@@ -370,7 +370,7 @@ fun GlassTopButton(iconRes: Int, onClick: () -> Unit) {
         Icon(
             painter = painterResource(iconRes),
             contentDescription = null,
-            modifier = Modifier.size(15.dp),
+            modifier = Modifier.size(18.dp),
             tint = t.tbtnIcon,
         )
     }

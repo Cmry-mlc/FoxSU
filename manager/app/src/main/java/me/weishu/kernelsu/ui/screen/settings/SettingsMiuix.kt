@@ -43,7 +43,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import me.weishu.kernelsu.R
-import me.weishu.kernelsu.ui.component.FoxTitleBadge
 import me.weishu.kernelsu.ui.UiMode
 import me.weishu.kernelsu.ui.navigation3.LocalNavigator
 import me.weishu.kernelsu.ui.navigation3.Route
@@ -94,11 +93,6 @@ fun SettingPagerMiuix(
                 TopAppBar(
                     color = barColor,
                     title = stringResource(R.string.settings),
-            navigationIcon = {
-                FoxTitleBadge(
-                    circleColor = colorScheme.secondaryContainer,
-                )
-            },
                     scrollBehavior = scrollBehavior
                 )
             }

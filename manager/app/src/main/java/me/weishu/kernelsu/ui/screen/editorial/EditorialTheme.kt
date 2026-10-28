@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
-import me.weishu.kernelsu.ui.component.FoxTitleBadge
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
 import me.weishu.kernelsu.ui.screen.glass.marquee
 import me.weishu.kernelsu.ui.component.isNightScheme
@@ -112,11 +111,7 @@ fun EdMasthead(
             .padding(start = 22.dp, end = 22.dp, top = 16.dp, bottom = 14.dp),
     ) {
         Column(modifier = Modifier.padding(end = 108.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                // 标题栏统一狐狸徽章（与其他皮肤同规格：46dp 圆底 + 40dp 彩狐）
-                FoxTitleBadge(circleColor = t.ink)
-                Spacer(Modifier.width(12.dp))
-                Column {
+            Row(verticalAlignment = Alignment.Bottom) {
                 if (showBack && onBack != null) {
                     EdCircleButton(iconRes = R.drawable.ic_d_back, onClick = onBack, size = 30)
                     Spacer(Modifier.width(10.dp))
@@ -143,7 +138,6 @@ fun EdMasthead(
                         .border(1.5.dp, t.acc, RoundedCornerShape(4.dp))
                         .padding(horizontal = 7.dp, vertical = 2.dp),
                 )
-                }
             }
             Spacer(Modifier.height(6.dp))
             Row(modifier = Modifier.fillMaxWidth()) {
@@ -181,7 +175,7 @@ data class EdMastAction(val iconRes: Int, val onClick: () -> Unit)
 
 /** 32 圆形描边按钮，点击时外圈 ping 扩散（对应 .mb.ping::after + @keyframes ring） */
 @Composable
-fun EdPingButton(iconRes: Int, onClick: () -> Unit, size: Int = 32) {
+fun EdPingButton(iconRes: Int, onClick: () -> Unit, size: Int = 40) {
     val t = edTokens()
     val ping = remember { Animatable(0f) }
     var pressed by remember { mutableStateOf(false) }
@@ -228,7 +222,7 @@ fun EdPingButton(iconRes: Int, onClick: () -> Unit, size: Int = 32) {
             Icon(
                 painter = painterResource(iconRes),
                 contentDescription = null,
-                modifier = Modifier.size((size * 0.53f).dp),
+                modifier = Modifier.size((size * 0.45f).dp),
                 tint = t.ink,
             )
         }
@@ -236,7 +230,7 @@ fun EdPingButton(iconRes: Int, onClick: () -> Unit, size: Int = 32) {
 }
 
 @Composable
-fun EdCircleButton(iconRes: Int, onClick: () -> Unit, size: Int = 32) {
+fun EdCircleButton(iconRes: Int, onClick: () -> Unit, size: Int = 40) {
     val t = edTokens()
     Box(
         modifier = Modifier
@@ -248,7 +242,7 @@ fun EdCircleButton(iconRes: Int, onClick: () -> Unit, size: Int = 32) {
         Icon(
             painter = painterResource(iconRes),
             contentDescription = null,
-            modifier = Modifier.size((size * 0.5f).dp),
+            modifier = Modifier.size((size * 0.45f).dp),
             tint = t.ink,
         )
     }

@@ -212,7 +212,7 @@ fun GlassModuleList(
                     .background(if (t.isDark) Color.Transparent else Color(0x66FFFFFF))
                     .clickable(onClick = onAddModule)
                     .padding(vertical = 16.dp)
-                    .padding(bottom = 10.dp),
+                    .padding(bottom = 12.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -232,15 +232,15 @@ fun GlassModuleList(
             }
         }
         item {
-            // 模块仓库：独立胶囊，摆在安装胶囊正下方
+            // 模块仓库：与安装胶囊同款（七彩描边虚线），上方留 12dp 间距
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .rainbowOutline(RoundedCornerShape(22.dp), 1.5.dp)
                     .clip(RoundedCornerShape(22.dp))
-                    .background(if (t.isDark) Color(0x0DFFFFFF) else Color(0x99FFFFFF))
-                    .border(1.dp, t.violet.copy(alpha = 0.28f), RoundedCornerShape(22.dp))
+                    .background(if (t.isDark) Color.Transparent else Color(0x66FFFFFF))
                     .clickable(onClick = onOpenRepo)
-                    .padding(vertical = 14.dp),
+                    .padding(vertical = 16.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -248,14 +248,14 @@ fun GlassModuleList(
                     painter = painterResource(R.drawable.ic_d_download),
                     contentDescription = null,
                     modifier = Modifier.size(15.dp),
-                    tint = t.violet,
+                    tint = t.sub,
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
                     text = stringResource(R.string.module_repos),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    color = t.violet,
+                    color = t.sub,
                 )
             }
         }
