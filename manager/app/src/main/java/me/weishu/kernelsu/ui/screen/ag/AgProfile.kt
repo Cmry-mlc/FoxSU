@@ -88,17 +88,7 @@ fun AgAppProfile(
                     .padding(16.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    val ctx = androidx.compose.ui.platform.LocalContext.current
-                    val iconBmp = remember(state.packageName) {
-                        runCatching {
-                            val d = ctx.packageManager.getApplicationIcon(state.packageName)
-                            val b = android.graphics.Bitmap.createBitmap(96, 96, android.graphics.Bitmap.Config.ARGB_8888)
-                            val c = android.graphics.Canvas(b)
-                            d.setBounds(0, 0, 96, 96)
-                            d.draw(c)
-                            b.asImageBitmap()
-                        }.getOrNull()
-                    }
+                    val appInfo = remember(state.packageName) { app?.packageInfo?.applicationInfo }
                     Box(
                         Modifier
                             .size(46.dp)
@@ -106,13 +96,11 @@ fun AgAppProfile(
                             .background(Brush.linearGradient(listOf(c1, c2))),
                         contentAlignment = Alignment.Center,
                     ) {
-                        if (iconBmp != null) {
-                            androidx.compose.foundation.Image(
-                                iconBmp, null,
-                                modifier = Modifier
-                                    .size(46.dp)
-                                    .clip(RoundedCornerShape(14.dp)),
-                                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                        if (appInfo != null) {
+                            me.weishu.kernelsu.ui.component.AppIconImage(
+                                applicationInfo = appInfo,
+                                label = app?.label ?: state.packageName,
+                                modifier = Modifier.size(46.dp),
                             )
                         } else {
                             Text(

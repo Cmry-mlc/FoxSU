@@ -127,16 +127,7 @@ fun AgSuperUser(
 private fun AgAppRow(g: GroupedApps, context: android.content.Context, onClick: () -> Unit) {
     val app = g.primary
     val (c1, c2) = remember(app.packageName) { gradientFor(app.packageName) }
-    val bmp = remember(app.packageName) {
-        runCatching {
-            val d = context.packageManager.getApplicationIcon(app.packageName)
-            val b = android.graphics.Bitmap.createBitmap(96, 96, android.graphics.Bitmap.Config.ARGB_8888)
-            val c = android.graphics.Canvas(b)
-            d.setBounds(0, 0, 96, 96)
-            d.draw(c)
-            b.asImageBitmap()
-        }.getOrNull()
-    }
+    val appInfo = remember(app.packageName) { app.packageInfo.applicationInfo }
     Box(
         Modifier
             .fillMaxWidth()
@@ -155,13 +146,12 @@ private fun AgAppRow(g: GroupedApps, context: android.content.Context, onClick: 
                     .background(Brush.linearGradient(listOf(c1, c2))),
                 contentAlignment = Alignment.Center,
             ) {
-                if (bmp != null) {
-                    Image(
-                        bmp, null,
-                        modifier = Modifier
-                            .size(46.dp)
-                            .clip(RoundedCornerShape(14.dp)),
-                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                if (appInfo != null) {
+                    // 真实应用图标（项目统一 AppIconImage，带磁盘缓存）
+                    me.weishu.kernelsu.ui.component.AppIconImage(
+                        applicationInfo = appInfo,
+                        label = app.label,
+                        modifier = Modifier.size(46.dp),
                     )
                 } else {
                     Text(
