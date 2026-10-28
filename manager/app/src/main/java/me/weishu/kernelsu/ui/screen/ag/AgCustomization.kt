@@ -178,7 +178,7 @@ internal fun AgCustomization(
                 modifier = Modifier.padding(start = 4.dp, top = 22.dp, bottom = 16.dp),
             )
 
-            // ── 狐狸 Logo 头卡（.foxhero：280dp 渐变卡，狐狸完整居中）──
+            // ── 狐狸 Logo 头卡（.foxhero：280dp 渐变卡，狐狸完整居中，fox-hero.png 透明底）──
             Box(
                 Modifier
                     .fillMaxWidth()
@@ -194,11 +194,11 @@ internal fun AgCustomization(
                 contentAlignment = Alignment.Center,
             ) {
                 Image(
-                    painter = painterResource(R.drawable.ic_fox_global),
+                    painter = painterResource(R.drawable.fox_hero),
                     contentDescription = "FoxSu",
                     modifier = Modifier
                         .height(240.dp)
-                        .shadow(12.dp, CircleShape, spotColor = Color(0x66B48CFF), ambientColor = Color(0x66B48CFF)),
+                        .shadow(12.dp, RoundedCornerShape(40.dp), spotColor = Color(0x66B48CFF), ambientColor = Color(0x66B48CFF)),
                 )
             }
 

@@ -110,31 +110,30 @@ fun AgHome(
                 .padding(horizontal = 18.dp),
         ) {
             Spacer(Modifier.height(8.dp))
-            // ── 顶栏：居中渐变标题 + 右侧 作者/深色切换/电源（设计稿 .top）──
-            Box(Modifier.fillMaxWidth()) {
-                Row(
-                    Modifier.align(Alignment.Center),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (sideDock) {
-                        androidx.compose.foundation.Image(
-                            painter = painterResource(R.drawable.ic_fox_global),
-                            contentDescription = null,
-                            modifier = Modifier.size(30.dp),
-                        )
-                        Spacer(Modifier.width(8.dp))
-                    }
-                    Text(
-                        "FoxSu",
-                        fontSize = 30.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = (-0.6).sp,
-                        style = TextStyle(brush = Ag.TitleGrad),
+            // ── 顶栏：左侧渐变标题 + 右侧 作者/深色切换/电源（设计稿 .top：标题左对齐）──
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (sideDock) {
+                    androidx.compose.foundation.Image(
+                        painter = painterResource(R.drawable.ic_fox_global),
+                        contentDescription = null,
+                        modifier = Modifier.size(30.dp),
                     )
+                    Spacer(Modifier.width(8.dp))
                 }
+                Text(
+                    "FoxSu",
+                    fontSize = if (sideDock) 26.sp else 30.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = (-0.6).sp,
+                    style = TextStyle(brush = Ag.TitleGrad),
+                )
+                Spacer(Modifier.weight(1f))
                 Row(
-                    Modifier.align(Alignment.CenterEnd),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     AgIconBtn(Icons.Rounded.Person, onClick = onOpenAuthor)
                     // 深色模式切换（月亮）：浅↔深真实切换

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
@@ -94,6 +95,23 @@ fun ThemeDockBar(
     val dockRadius = custom.bottomBarRadius.coerceIn(12f, 40f).dp
 
     val dark = me.weishu.kernelsu.ui.screen.ag.Ag.isDark
+
+    // ── 图标风格（设计稿 data-ic / data-fox，作用于 Dock 项形状与选中态）──
+    val iconStyle = custom.iconStyle
+    val foxRes: Int? = when (iconStyle) {
+        0 -> me.weishu.kernelsu.R.drawable.fox_icon_cute
+        2 -> me.weishu.kernelsu.R.drawable.fox_icon_wave
+        3 -> me.weishu.kernelsu.R.drawable.fox_icon_glance
+        4 -> me.weishu.kernelsu.R.drawable.fox_icon_joy
+        else -> null
+    }
+    val gradFill = iconStyle == 103               // 七彩：选中项渐变实底 + 白图标
+    val iconShapeOverride = when (iconStyle) {
+        101 -> CircleShape                         // 正圆
+        102 -> RoundedCornerShape(22.dp)           // 超椭圆
+        else -> null                               // 圆角方 = 默认 19dp
+    }
+
     val effBg = when {
         immersive -> theme.bg.copy(alpha = theme.bg.alpha * 0.58f * alphaK)
         else -> theme.bg.copy(alpha = theme.bg.alpha * alphaK)
@@ -135,7 +153,7 @@ fun ThemeDockBar(
                     modifier = Modifier
                         .width(62.dp)
                         .height(60.dp)
-                        .clip(RoundedCornerShape(22.dp))
+                        .clip(iconShapeOverride ?: RoundedCornerShape(22.dp))
                         .background(
                             if (selected) Brush.linearGradient(
                                 listOf(Color(0xFF6C5CE7), Color(0xFFEC4899))
@@ -149,12 +167,22 @@ fun ThemeDockBar(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    DockIcon(item, index, selected, navigationBadge, rainbow, tint, badgeTintOverride = Color.White)
-                    Text(
-                        stringResource(item.label),
-                        fontSize = 9.5.sp, fontWeight = FontWeight.ExtraBold,
-                        color = if (selected) Color.White else tint, maxLines = 1,
-                    )
+                    if (foxRes != null && selected) {
+                        // 狐狸图标风格：选中项覆盖为狐狸图
+                        androidx.compose.foundation.Image(
+                            painter = androidx.compose.ui.res.painterResource(foxRes),
+                            contentDescription = stringResource(item.label),
+                            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    } else {
+                        DockIcon(item, index, selected, navigationBadge, rainbow, tint, badgeTintOverride = Color.White)
+                        Text(
+                            stringResource(item.label),
+                            fontSize = 9.5.sp, fontWeight = FontWeight.ExtraBold,
+                            color = if (selected) Color.White else tint, maxLines = 1,
+                        )
+                    }
                 }
             }
         }
@@ -190,7 +218,10 @@ fun ThemeDockBar(
                         .offset(x = indicatorX)
                         .width(itemW)
                         .height(55.dp)
-                        .clip(if (style == DockStyle.V8) RoundedCornerShape(14.dp) else RoundedCornerShape(19.dp))
+                        .clip(
+                            iconShapeOverride
+                                ?: if (style == DockStyle.V8) RoundedCornerShape(14.dp) else RoundedCornerShape(19.dp)
+                        )
                         .background(
                             androidx.compose.ui.graphics.SolidColor(
                                 if (style == DockStyle.V8) {
@@ -208,6 +239,9 @@ fun ThemeDockBar(
                     val baseTint = if (rainbow && !selected) rainbowColors[index % 4] else theme.unselected
 
                     val itemBg: androidx.compose.ui.graphics.Brush? = when {
+                        gradFill && selected -> Brush.linearGradient(
+                            listOf(Color(0xFF6C5CE7), Color(0xFFA855F7), Color(0xFFEC4899))
+                        )
                         style == DockStyle.V6 && selected -> Brush.radialGradient(
                             listOf(Color(0x526C5CE7), Color(0x24EC4899), Color.Transparent),
                         )
@@ -221,7 +255,7 @@ fun ThemeDockBar(
                     }
 
                     val fgTint = when {
-                        (style == DockStyle.V9 || style == DockStyle.V11) && selected -> Color.White
+                        (gradFill || style == DockStyle.V9 || style == DockStyle.V11) && selected -> Color.White
                         selected -> theme.selected
                         else -> baseTint
                     }
@@ -236,6 +270,7 @@ fun ThemeDockBar(
                     )
 
                     val itemShape = when {
+                        iconShapeOverride != null -> iconShapeOverride
                         style == DockStyle.V9 -> RoundedCornerShape(18.dp)
                         style == DockStyle.V8 -> RoundedCornerShape(14.dp)
                         style == DockStyle.V11 -> CircleShape
@@ -266,35 +301,47 @@ fun ThemeDockBar(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center,
                     ) {
-                        // V10 顶指示条
-                        if (style == DockStyle.V10 && selected) {
-                            Box(
-                                Modifier
-                                    .padding(bottom = 3.dp)
-                                    .width(22.dp)
-                                    .height(4.dp)
-                                    .clip(RoundedCornerShape(99.dp))
-                                    .background(Brush.linearGradient(listOf(Color(0xFF6C5CE7), Color(0xFFEC4899)))),
+                        if (foxRes != null && selected) {
+                            // 狐狸图标风格：选中项整体覆盖为狐狸图（设计稿 data-fox ::after）
+                            androidx.compose.foundation.Image(
+                                painter = androidx.compose.ui.res.painterResource(foxRes),
+                                contentDescription = stringResource(item.label),
+                                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(55.dp),
                             )
-                        }
-                        DockIcon(
-                            item, index, selected, navigationBadge, rainbow,
-                            tint = fgTint,
-                            badgeTintOverride = if (fgTint == Color.White) Color.White else null,
-                            scale = iconScale,
-                            glow = style == DockStyle.V6 && selected,
-                            big = (style == DockStyle.V9 || style == DockStyle.V11) && selected,
-                        )
-                        // d0 / v1 显示文字
-                        if (style == DockStyle.D0 || style == DockStyle.V1) {
-                            Text(
-                                text = stringResource(item.label),
-                                fontSize = 10.5.sp,
-                                lineHeight = 13.sp,
-                                maxLines = 1,
-                                fontWeight = FontWeight.Bold,
-                                color = fgTint,
+                        } else {
+                            // V10 顶指示条
+                            if (style == DockStyle.V10 && selected) {
+                                Box(
+                                    Modifier
+                                        .padding(bottom = 3.dp)
+                                        .width(22.dp)
+                                        .height(4.dp)
+                                        .clip(RoundedCornerShape(99.dp))
+                                        .background(Brush.linearGradient(listOf(Color(0xFF6C5CE7), Color(0xFFEC4899)))),
+                                )
+                            }
+                            DockIcon(
+                                item, index, selected, navigationBadge, rainbow,
+                                tint = fgTint,
+                                badgeTintOverride = if (fgTint == Color.White) Color.White else null,
+                                scale = iconScale,
+                                glow = style == DockStyle.V6 && selected,
+                                big = (gradFill || style == DockStyle.V9 || style == DockStyle.V11) && selected,
                             )
+                            // d0 / v1 显示文字
+                            if (style == DockStyle.D0 || style == DockStyle.V1) {
+                                Text(
+                                    text = stringResource(item.label),
+                                    fontSize = 10.5.sp,
+                                    lineHeight = 13.sp,
+                                    maxLines = 1,
+                                    fontWeight = FontWeight.Bold,
+                                    color = fgTint,
+                                )
+                            }
                         }
                     }
                 }

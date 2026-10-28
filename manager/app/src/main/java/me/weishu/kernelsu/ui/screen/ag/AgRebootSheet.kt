@@ -71,6 +71,17 @@ fun AgRebootSheet(onDismiss: () -> Unit) {
         Icons.Rounded.Error,
     )
 
+    // 注意：必须在 Dialog 之外读取，暗色状态由宿主 composition 提供
+    // 设计稿 .mask/.sheet：mask rgba(25,20,60,.28)；sheet 亮 rgba(255,255,255,.85)/描边 rgba(255,255,255,.65)，
+    // 暗 rgba(28,27,46,.88)/描边 rgba(255,255,255,.1)；定位 top 118 / right 14 / 宽 230 / 圆角 22
+    val dark = Ag.isDark
+    val panel = if (dark) Color(0xE01C1B2E) else Color(0xD9FFFFFF)
+    val panelLine = if (dark) Color(0x1AFFFFFF) else Color(0xA6FFFFFF)
+    val iconBg = Color(0x1A6C5CE7)
+    val mask = Color(0x4719143C)
+    val tx = if (dark) Color(0xFFF2F1FA) else Color(0xFF191826)
+    val tx3 = if (dark) Color(0xFF7C7A98) else Color(0xFF9C9AAE)
+
     androidx.compose.ui.window.Dialog(
         onDismissRequest = onDismiss,
         properties = androidx.compose.ui.window.DialogProperties(
@@ -83,18 +94,18 @@ fun AgRebootSheet(onDismiss: () -> Unit) {
         Box(
             Modifier
                 .fillMaxSize()
-                .background(Color(0x4719143C))
+                .background(mask)
                 .agClick(onClick = onDismiss),
         )
         Column(
             // 设计稿 .sheet：锚定电源按钮的下拉菜单（右上角，宽 230，圆角 22）
             Modifier
                 .align(Alignment.TopEnd)
-                .padding(top = 96.dp, end = 14.dp)
+                .padding(top = 118.dp, end = 14.dp)
                 .width(230.dp)
                 .clip(RoundedCornerShape(22.dp))
-                .background(if (Ag.isDark) Color(0xE01C1B2E) else Color(0xD9FFFFFF))
-                .border(1.dp, if (Ag.isDark) Color(0x1AFFFFFF) else Color(0xA6FFFFFF), RoundedCornerShape(22.dp))
+                .background(panel)
+                .border(1.dp, panelLine, RoundedCornerShape(22.dp))
                 .shadow(18.dp, RoundedCornerShape(22.dp), spotColor = Color(0x40281E64))
                 .padding(8.dp),
         ) {
@@ -117,15 +128,15 @@ fun AgRebootSheet(onDismiss: () -> Unit) {
                         Modifier
                             .size(30.dp)
                             .clip(RoundedCornerShape(10.dp))
-                            .background(if (warn) Color(0x17DC2626) else Color(0x1A6C5CE7)),
+                            .background(if (warn) Color(0x17DC2626) else iconBg),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(icons.getOrElse(i) { Icons.Rounded.Refresh }, null, tint = tint, modifier = Modifier.size(16.dp))
                     }
                     Column {
-                        Text(stringResource(opt.labelRes), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = if (warn) Ag.Danger else Ag.Tx)
+                        Text(stringResource(opt.labelRes), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = if (warn) Ag.Danger else tx)
                         Spacer(Modifier.height(1.dp))
-                        Text(subtitleFor(opt.reason), fontSize = 10.5.sp, color = Ag.Tx3)
+                        Text(subtitleFor(opt.reason), fontSize = 10.5.sp, color = tx3)
                     }
                 }
             }

@@ -80,8 +80,11 @@ data class Customization(
     val fontStyle: Int = 0,
     /** 用户导入的系统字体文件（应用私有目录内的绝对路径）。 */
     val fontPath: String? = null,
-    /** 0 = FoxSu icon, 1 = original KernelSU icon, 2..4 = alternative FoxSu icons. */
-    val iconStyle: Int = 0,
+    /**
+     * Dock 图标风格：100 圆角方（默认）/ 101 正圆 / 102 超椭圆 / 103 七彩（渐变实底）；
+     * 0/2/3/4 = 狐狸形象（乖巧/招手/回眸/开心，选中项覆盖为狐狸图，同时兼作启动器图标样式）。
+     */
+    val iconStyle: Int = 100,
 )
 
 /** Number of equal-sized KPI cards on the ColorUI home screen. */
@@ -220,7 +223,7 @@ private const val KEY_DOCK_STYLE = "dock_style"
             rainbowCards = getBoolean(KEY_RAINBOW, true),
             fontStyle = getInt(KEY_FONT_STYLE, 0),
             fontPath = getString(KEY_FONT_PATH, null),
-            iconStyle = getInt(KEY_ICON_STYLE, 0),
+            iconStyle = getInt(KEY_ICON_STYLE, 100),
         )
     }
 
