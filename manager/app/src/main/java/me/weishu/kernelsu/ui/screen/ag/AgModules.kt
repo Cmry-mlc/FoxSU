@@ -40,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
@@ -87,7 +88,7 @@ fun AgModules(
         )
     }
 
-    Box(Modifier.fillMaxSize().background(Ag.background())) {
+    Box(Modifier.fillMaxSize().agPageBg()) {
     Column(
         Modifier
             .fillMaxSize()
@@ -99,24 +100,19 @@ fun AgModules(
                 .background(Ag.headSurface())
                 .padding(horizontal = 18.dp),
         ) {
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(10.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // 标题栏狐狸 logo
-                androidx.compose.foundation.Image(
-                    painter = androidx.compose.ui.res.painterResource(me.weishu.kernelsu.R.drawable.ic_fox_global),
-                    contentDescription = null,
-                    modifier = Modifier.size(36.dp),
-                )
+                AgIconBtn(AgTopIcons.Import, onClick = actions.onRefresh)
                 Spacer(Modifier.weight(1f))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    AgIconBtn(Icons.Rounded.Refresh, onClick = actions.onRefresh)
-                    AgIconBtn(Icons.Rounded.Web, onClick = actions.onOpenRepo)
+                    AgIconBtn(AgTopIcons.Chart, onClick = actions.onOpenRepo)
                 }
             }
-            // 标题 + 计数（与开关实时联动）
-            AgTitle("模", "块", count = "已启用 $enabledCount / ${uiState.modules.size}")
+            Spacer(Modifier.height(10.dp))
+            // 标题 + 计数（与开关实时联动）；设计稿 margin-top:12px
+            AgTitle("模", "块", count = "已启用 $enabledCount / ${uiState.modules.size}", topMargin = 12.dp)
             AgSearch(value = query, onValueChange = { query = it }, hint = "搜索模块…")
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(14.dp))
         }
 
         LazyColumn(
@@ -179,6 +175,12 @@ private fun AgModuleCard(
             .fillMaxWidth()
             .padding(bottom = 14.dp)
             .agClick(pressScale = 0.985f) {}
+            .shadow(
+                3.dp,
+                RoundedCornerShape(24.dp),
+                spotColor = if (Ag.isDark) Color(0x33000000) else Color(0x0D3C2D78),
+                ambientColor = if (Ag.isDark) Color(0x1F000000) else Color(0x0A3C2D78),
+            )
             .clip(RoundedCornerShape(24.dp))
             .background(
                 if (m.enabled) {
@@ -206,11 +208,11 @@ private fun AgModuleCard(
                 },
         )
         if (!m.enabled) {
-            // off 淡化
+            // 设计稿 .mod.off { opacity:.62 }
             Box(
                 Modifier
                     .matchParentSize()
-                    .background(Color(0xFF000000).copy(alpha = if (Ag.isDark) 0.25f else 0.04f))
+                    .background(Color(0xFF000000).copy(alpha = if (Ag.isDark) 0.25f else 0.06f))
             )
         }
         Column(Modifier.padding(16.dp)) {

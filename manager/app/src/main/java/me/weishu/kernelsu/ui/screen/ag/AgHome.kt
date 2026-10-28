@@ -10,29 +10,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.DarkMode
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material.icons.rounded.Memory
-import androidx.compose.material.icons.rounded.Numbers
-import androidx.compose.material.icons.rounded.PhoneAndroid
-import androidx.compose.material.icons.rounded.Shield
-import androidx.compose.material.icons.rounded.Tune
-import androidx.compose.material.icons.rounded.Fingerprint
-import androidx.compose.material.icons.rounded.Palette
-import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.PowerSettingsNew
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -44,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -53,10 +39,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.data.settings.CustomizationStore
-import me.weishu.kernelsu.ui.component.rebootlistpopup.getRebootListOption
-import me.weishu.kernelsu.ui.component.rebootlistpopup.rememberRebootAction
-import me.weishu.kernelsu.ui.component.StylePickerDialog
-import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.screen.home.HomeActions
 import me.weishu.kernelsu.ui.screen.home.HomeUiState
 import me.weishu.kernelsu.ui.screen.home.HeroPhase
@@ -64,7 +46,7 @@ import me.weishu.kernelsu.ui.screen.home.heroState
 
 /**
  * 晨曦玻璃 · 主页（设计稿 p-home 完整实现）。
- * 状态卡（渐变描边 + 白芯 + 右上 64dp 环形勾）→ 统计卡 ×2 → 信息卡 → 安全状态卡 → 支持卡。
+ * 状态卡（渐变描边 2px + 白芯 + 右上 64dp 环形勾 + 青色光斑）→ 统计卡 ×2 → 信息卡 → 安全状态卡 → 支持卡。
  */
 @Composable
 fun AgHome(
@@ -100,19 +82,20 @@ fun AgHome(
     Column(
         Modifier
             .fillMaxSize()
-            .background(Ag.background())
+            .agPageBg()
             .statusBarsPadding(),
     ) {
         Column(
             Modifier
                 .fillMaxWidth()
-                .background(Ag.headSurface())
-                .padding(horizontal = 18.dp),
+                .background(Ag.headSurface()),
         ) {
-            Spacer(Modifier.height(8.dp))
-            // ── 顶栏：左侧渐变标题 + 右侧 作者/深色切换/电源（设计稿 .top：标题左对齐）──
+            Spacer(Modifier.height(10.dp))
+            // ── 顶栏：左侧渐变标题 + 右侧 作者/深色切换/电源（设计稿 .top：padding 10px 4px 14px）──
             Row(
-                Modifier.fillMaxWidth(),
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 22.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (sideDock) {
@@ -125,7 +108,7 @@ fun AgHome(
                 }
                 Text(
                     "FoxSu",
-                    fontSize = if (sideDock) 26.sp else 30.sp,
+                    fontSize = if (sideDock) 26.sp else 32.sp,
                     fontWeight = FontWeight.ExtraBold,
                     letterSpacing = (-0.6).sp,
                     style = TextStyle(brush = Ag.TitleGrad),
@@ -135,13 +118,13 @@ fun AgHome(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    AgIconBtn(Icons.Rounded.Person, onClick = onOpenAuthor)
-                    // 深色模式切换（月亮）：浅↔深真实切换
-                    AgIconBtn(Icons.Rounded.DarkMode, onClick = onToggleDark)
-                    AgIconBtn(Icons.Rounded.PowerSettingsNew, onClick = { showReboot = true })
+                    AgIconBtn(AgTopIcons.User, onClick = onOpenAuthor)
+                    // 深色模式切换（半月）：浅↔深真实切换
+                    AgIconBtn(AgTopIcons.DarkMode, onClick = onToggleDark)
+                    AgIconBtn(AgTopIcons.Power, onClick = { showReboot = true })
                 }
             }
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(14.dp))
         }
         // ── 内容滚动区（从毛玻璃下透出）；侧边抽屉模式整体让距 106dp ──
         Column(
@@ -153,7 +136,7 @@ fun AgHome(
                     end = 18.dp,
                 ),
         ) {
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(2.dp))
 
         // ── 状态卡：外层渐变底 2px + 内层 22dp 白芯 ──
         Box(
@@ -161,18 +144,32 @@ fun AgHome(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(24.dp))
                 .background(Ag.Grad)
-                                .padding(2.dp)
+                .padding(2.dp)
                 .shadow(10.dp, RoundedCornerShape(24.dp), spotColor = Color(0x406C5CE7)),
         ) {
             Box(
                 Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(22.dp))
-                    .background(Ag.CardSolid)
-                    .padding(18.dp, 18.dp, 16.dp, 16.dp),
+                    .background(Ag.CardSolid),
             ) {
-                AgStatusRing(ok = hero.phase == HeroPhase.WORKING || hero.phase == HeroPhase.PENDING_REBOOT)
-                Column {
+                // .status .in::after —— 右上 130dp 青色径向光斑
+                Box(
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .offset(x = 30.dp, y = (-30).dp)
+                        .size(130.dp)
+                        .background(
+                            Brush.radialGradient(
+                                0f to Color(0x2414B8A6),
+                                0.7f to Color(0x0014B8A6),
+                                1f to Color(0x0014B8A6),
+                                center = androidx.compose.ui.geometry.Offset(65f, 65f),
+                                radius = 65f,
+                            )
+                        )
+                )
+                Column(Modifier.padding(start = 18.dp, end = 18.dp, top = 18.dp, bottom = 16.dp)) {
                     AgBadge(
                         when (hero.phase) {
                             HeroPhase.WORKING -> if (hero.jailbreakMode) "工作中 · 越狱模式" else "工作中"
@@ -191,14 +188,23 @@ fun AgHome(
                         AgChip("${hero.versionName}${if (state.showCustomLkmBadge) " · 自定义" else ""}")
                     }
                     Spacer(Modifier.height(14.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(end = 2.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         AgButton(primary = true, text = stringResource(R.string.home_check_update), onClick = actions.onCheckUpdate, modifier = Modifier.weight(1f))
                         AgButton(primary = false, text = stringResource(R.string.home_refresh_image), onClick = actions.onRefreshImage, modifier = Modifier.weight(1f), enabled = hero.canFlash)
                     }
                 }
+                // .okring：绝对定位 right 14 / top 14，64dp
+                Box(
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .offset(x = (-14).dp, y = 14.dp)
+                        .size(64.dp)
+                ) {
+                    AgStatusRing(ok = hero.phase == HeroPhase.WORKING || hero.phase == HeroPhase.PENDING_REBOOT)
+                }
             }
         }
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(22.dp))
 
         // ── 统计卡 ×2（数字来自真实 ViewModel 数据）──
         val suVm: me.weishu.kernelsu.ui.viewmodel.SuperUserViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
@@ -225,10 +231,10 @@ fun AgHome(
 
         // ── 信息卡 ──
         AgCard(Modifier.fillMaxWidth(), contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 6.dp)) {
-            AgRow(stringResource(R.string.home_manager_version), "${state.ksuVersion ?: "—"}（${hero.versionName}）", Ag.Vio, Icons.Rounded.Numbers)
-            AgRow(stringResource(R.string.home_kernel_version), state.systemInfo.kernelVersion, Ag.Vio, Icons.Rounded.Memory)
-            AgRow(stringResource(R.string.home_device_model), state.systemInfo.deviceModel, Ag.Mag, Icons.Rounded.PhoneAndroid)
-            AgRow(stringResource(R.string.home_system_fingerprint), state.systemInfo.fingerprint, Ag.Teal, Icons.Rounded.Fingerprint)
+            AgRow(stringResource(R.string.home_manager_version), "${state.ksuVersion ?: "—"}（${hero.versionName}）", Ag.Vio, AgHomeIcons.Version)
+            AgRow(stringResource(R.string.home_kernel_version), state.systemInfo.kernelVersion, Ag.Vio, AgHomeIcons.Cpu)
+            AgRow(stringResource(R.string.home_device_model), state.systemInfo.deviceModel, Ag.Mag, AgHomeIcons.Phone)
+            AgRow(stringResource(R.string.home_system_fingerprint), state.systemInfo.fingerprint, Ag.Teal, AgHomeIcons.Fingerprint, divider = false)
         }
         Spacer(Modifier.height(14.dp))
 
@@ -239,7 +245,7 @@ fun AgHome(
                     "Permissive" -> "宽松模式"
                     "Disabled" -> "已禁用"
                     else -> "未知"
-                }, Ag.Teal, Icons.Rounded.Shield)
+                }, Ag.Teal, AgHomeIcons.ShieldCheck)
             AgRow(
                 stringResource(R.string.home_seccomp_status),
                 when (state.systemInfo.seccompStatus) {
@@ -249,7 +255,7 @@ fun AgHome(
                     2 -> "过滤模式"
                     else -> "未知"
                 },
-                Ag.Teal, Icons.Rounded.Tune,
+                Ag.Teal, AgHomeIcons.Layers, divider = false,
             )
         }
         Spacer(Modifier.height(14.dp))
@@ -259,12 +265,12 @@ fun AgHome(
             AgRow(
                 stringResource(R.string.home_support_title),
                 stringResource(R.string.home_support_desc),
-                Ag.Amber, Icons.Rounded.Favorite, showChev = true,
+                Ag.Amber, AgHomeIcons.Heart, showChev = true,
             )
             AgRow(
                 stringResource(R.string.home_learn_kernelsu),
                 stringResource(R.string.home_learn_kernelsu_desc),
-                Ag.Vio, Icons.Rounded.Info, showChev = true,
+                Ag.Vio, AgHomeIcons.Book, showChev = true, divider = false,
                 onClick = { actions.onOpenUrl("https://kernelsu.org/") },
             )
         }
@@ -312,7 +318,7 @@ private fun androidx.compose.foundation.layout.BoxScope.AgStatusRing(ok: Boolean
     }
 }
 
-/** 统计卡 .stat */
+/** 统计卡 .stat（radius 18 / padding 16 / blur 玻璃） */
 @Composable
 private fun androidx.compose.foundation.layout.RowScope.AgStatCard(
     label: String,

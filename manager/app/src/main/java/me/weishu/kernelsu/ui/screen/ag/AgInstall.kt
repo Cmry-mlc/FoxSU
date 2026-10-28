@@ -62,7 +62,7 @@ internal fun AgInstall(
     Column(
         Modifier
             .fillMaxSize()
-            .background(Ag.background())
+            .agPageBg()
             .statusBarsPadding(),
     ) {
         // ── 固定顶栏：返回 + 渐变标题 ──
@@ -74,7 +74,7 @@ internal fun AgInstall(
         ) {
             Spacer(Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                AgIconBtn(Icons.AutoMirrored.Rounded.ArrowBack, onClick = actions.onBack)
+                AgIconBtn(AgTopIcons.Back, onClick = actions.onBack)
             }
             AgTitle("安", "装")
         }
@@ -168,7 +168,7 @@ internal fun AgInstall(
                         stringResource(R.string.install_upload_lkm_file),
                         (uiState.lkmSelection as? LkmSelection.LkmUri)?.let { it.uri.toString() }
                             ?: "当前 KMI：${uiState.currentKmi.ifBlank { "自动" }}",
-                        Ag.Mag, Icons.Rounded.Upload, showChev = true,
+                        Ag.Mag, AgSettingsIcons.Export, showChev = true,
                         onClick = actions.onUploadLkm,
                     )
                     if (uiState.canForceBackup) {
@@ -191,7 +191,7 @@ internal fun AgInstall(
                     AgRow(
                         "高级选项",
                         "允许 Shell / 启用 ADB Root",
-                        Ag.Vio, Icons.Rounded.Tune, showChev = true,
+                        Ag.Vio, AgSettingsIcons.PagerGesture, showChev = true,
                         onClick = { advanced = !advanced; actions.onAdvancedOptionsClicked() },
                     )
                     if (advanced) {

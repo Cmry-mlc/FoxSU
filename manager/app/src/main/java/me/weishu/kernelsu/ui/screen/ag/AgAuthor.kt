@@ -53,16 +53,16 @@ fun AgAuthor(
     Column(
         Modifier
             .fillMaxSize()
-            .background(Ag.background())
+            .agPageBg()
             .statusBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 18.dp),
     ) {
         Spacer(Modifier.height(8.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            AgIconBtn(Icons.AutoMirrored.Rounded.ArrowBack, onClick = onBack)
+            AgIconBtn(AgTopIcons.Back, onClick = onBack)
         }
-        AgTitle("关于", "作者")
+        AgTitle("关于", "作者", topMargin = 12.dp)
 
         // 头像卡
         Column(

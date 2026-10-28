@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
@@ -380,7 +381,31 @@ private fun ColumnScope.DockIcon(
         )
         val badge = navigationBadgeFor(index, navigationBadge, floating = true)
         if (badge != null) {
-            Box(Modifier.align(Alignment.TopEnd).offset(x = 6.dp, y = (-4).dp)) { badge() }
+            // 设计稿 .dit .bdg：17px 品红圆角徽标 + 2px 白边，位于项右上
+            Box(
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = (-8).dp, y = (-2).dp)
+            ) {
+                Box(
+                    Modifier
+                        .height(17.dp)
+                        .defaultMinSize(minWidth = 17.dp)
+                        .clip(RoundedCornerShape(9.dp))
+                        .background(Color(0xFFEC4899))
+                        .border(2.dp, if (me.weishu.kernelsu.ui.screen.ag.Ag.isDark) Color(0xFF1C1B2E) else Color.White, RoundedCornerShape(9.dp))
+                        .padding(horizontal = 4.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        badgeTextFor(index, navigationBadge) ?: "",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color.White,
+                        maxLines = 1,
+                    )
+                }
+            }
         }
     }
 }
@@ -454,4 +479,10 @@ object AgDockThemes {
         selectedBg = Color(0x2E8B7BFF), badge = Color(0xFF4DE2C5), glass = true,
         backdrop = Color(0xFF0B0A14),
     )
+}
+
+/** 取导航角标数值（设计稿 .bdg 显示纯数字） */
+private fun badgeTextFor(index: Int, state: NavigationBadgeState): String? {
+    val badge = badgeFor(index, state) ?: return null
+    return badge.count.toString()
 }

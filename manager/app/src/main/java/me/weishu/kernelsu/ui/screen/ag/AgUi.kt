@@ -37,7 +37,9 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -71,7 +73,6 @@ object Ag {
 
     // ---- 描边 ----
     val Line: Color @Composable get() = if (isDark) Color(0x17FFFFFF) else Color(0x121E1946)   // .09 / .07
-    val LineHead: Color @Composable get() = if (isDark) Color.Transparent else Color.Transparent
     val TintInk: Color @Composable get() = if (isDark) Color(0x12FFFFFF) else Color(0x0D1E1946)
 
     // ---- 文字 ----
@@ -94,22 +95,82 @@ object Ag {
 
     val TitleGrad = Grad
 
-    /** 页面背景：垂直 #F7F6FB → #F2F4FA（暗色 #131221 → #1A192E） */
+    /** 页面底色线性渐变（设计稿 linear-gradient(160deg, --bg1, --bg2)） */
     @Composable
-    fun background(): Brush = Brush.verticalGradient(listOf(Bg1, Bg2))
+    fun background(): Brush = Brush.linearGradient(
+        listOf(Bg1, Bg2),
+        start = androidx.compose.ui.geometry.Offset(0f, 0f),
+        end = androidx.compose.ui.geometry.Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY),
+    )
 
-    /** 固定顶栏底（设计稿透明 + 模糊；无模糊实现时用同色系半透明代替），无分隔线 */
+    /** 固定顶栏底：设计稿 .headwrap 完全透明 + blur(14px)，无分隔线 */
     @Composable
-    fun headSurface(): Color = if (isDark) Color(0xC4131221) else Color(0xC4F7F6FB)
+    fun headSurface(): Color = Color.Transparent
 
-    /** 搜索框底 */
+    /** 搜索框底（.search rgba(30,25,70,.05) / 暗色 rgba(255,255,255,.06)） */
     @Composable
     fun searchBg(): Color = if (isDark) Color(0x0FFFFFFF) else Color(0x0D1E1946)
 
     /** 开关 OFF 轨道（明暗一致）*/
     val ToggleOff = Color(0xFFD9D8E6)
+
+    /** .ric 图标底透明度：v/m 10%，t/a 12% */
+    fun ricAlpha(tint: Color): Float =
+        if (tint == Teal || tint == Amber) 0.12f else 0.10f
 }
 
+/**
+ * 页面背景：设计稿 .phone 的 linear-gradient(160deg,--bg1,--bg2)
+ * + .phone::before 三向径向雾彩（紫 .14 / 品红 .09 / 青 .10）。
+ * 玻璃卡之所以"透"，靠的就是这三团雾彩在背后发光。
+ */
+@Composable
+fun Modifier.agPageBg(): Modifier {
+    val b1 = Ag.Bg1
+    val b2 = Ag.Bg2
+    return this.drawBehind {
+        // 底色：160deg 斜向渐变
+        drawRect(
+            brush = Brush.linearGradient(
+                listOf(b1, b2),
+                start = Offset(0f, 0f),
+                end = Offset(size.width * 0.34f, size.height * 0.94f),
+            )
+        )
+        // 紫色雾彩：at 110% -5%，rgba(168,85,247,.14)
+        drawRect(
+            brush = Brush.radialGradient(
+                0f to Color(0x24A855F7),
+                0.65f to Color(0x00A855F7),
+                1f to Color(0x00A855F7),
+                center = Offset(size.width * 1.10f, -size.height * 0.05f),
+                radius = size.width * 1.08f,
+            )
+        )
+        // 品红雾彩：at -15% 25%，rgba(236,72,153,.09)
+        drawRect(
+            brush = Brush.radialGradient(
+                0f to Color(0x17EC4899),
+                0.65f to Color(0x00EC4899),
+                1f to Color(0x00EC4899),
+                center = Offset(size.width * -0.15f, size.height * 0.25f),
+                radius = size.width * 0.92f,
+            )
+        )
+        // 青色雾彩：at 50% 110%，rgba(20,184,166,.10)
+        drawRect(
+            brush = Brush.radialGradient(
+                0f to Color(0x1A14B8A6),
+                0.65f to Color(0x0014B8A6),
+                1f to Color(0x0014B8A6),
+                center = Offset(size.width * 0.50f, size.height * 1.10f),
+                radius = size.width * 1.03f,
+            )
+        )
+    }
+}
+
+/** 旧的纯色背景（保留兼容） */
 @Composable
 fun AgAuroraBackdrop(modifier: Modifier = Modifier) {
     Box(
@@ -124,7 +185,7 @@ fun AgAuroraBackdrop(modifier: Modifier = Modifier) {
                 .background(
                     Brush.radialGradient(
                         listOf(Color(0x24A855F7), Color.Transparent),
-                        center = androidx.compose.ui.geometry.Offset(700f, -40f),
+                        center = Offset(700f, -40f),
                         radius = 640f,
                     )
                 )
@@ -136,7 +197,7 @@ fun AgAuroraBackdrop(modifier: Modifier = Modifier) {
                 .background(
                     Brush.radialGradient(
                         listOf(Color(0x17EC4899), Color.Transparent),
-                        center = androidx.compose.ui.geometry.Offset(30f, 260f),
+                        center = Offset(30f, 260f),
                         radius = 560f,
                     )
                 )
@@ -159,7 +220,7 @@ fun Modifier.agClick(pressScale: Float = 0.965f, enabled: Boolean = true, onClic
         .clickable(interactionSource = src, indication = null, enabled = enabled, onClick = onClick)
 }
 
-/** 毛玻璃感卡片（高斯模糊由背景雾彩透出，82–90% 白面） */
+/** 毛玻璃感卡片（高斯模糊由背景雾彩透出，82–90% 白面）+ 轻影 0 2px 10px rgba(60,45,120,.04) */
 @Composable
 fun AgCard(
     modifier: Modifier = Modifier,
@@ -173,10 +234,14 @@ fun AgCard(
     val glass = me.weishu.kernelsu.data.settings.CustomizationStore.current.cardGlass
     val glassCard = Ag.Card.copy(alpha = if (glass) 0.55f else Ag.Card.alpha)
     val glassLine = if (glass) Color(0x33FFFFFF) else Ag.Line
+    val dark = Ag.isDark
+    val shadowColor = if (dark) Color(0x40000000) else Color(0x0A3C2D78)
+    val ambient = if (dark) Color(0x26000000) else Color(0x073C2D78)
     if (onClick != null) {
         Column(
             modifier
                 .agClick(onClick = onClick)
+                .shadow(2.dp, shape, spotColor = shadowColor, ambientColor = ambient)
                 .clip(shape)
                 .background(glassCard)
                 .border(1.dp, glassLine, shape)
@@ -187,6 +252,7 @@ fun AgCard(
     } else {
         Column(
             modifier
+                .shadow(2.dp, shape, spotColor = shadowColor, ambientColor = ambient)
                 .clip(shape)
                 .background(glassCard)
                 .border(1.dp, glassLine, shape)
@@ -196,7 +262,7 @@ fun AgCard(
     }
 }
 
-/** 信息行：.ric 色衬图标 + 标题/描述 + chev */
+/** 信息行：.ric 色衬图标 + 标题/描述 + chev（行底 1px 分隔线，最后一行无线） */
 @Composable
 fun AgRow(
     title: String,
@@ -204,47 +270,104 @@ fun AgRow(
     tint: Color,
     icon: ImageVector,
     showChev: Boolean = false,
+    divider: Boolean = true,
     trailing: (@Composable androidx.compose.foundation.layout.RowScope.() -> Unit)? = null,
     onClick: (() -> Unit)? = null,
 ) {
     val base: Modifier = Modifier.fillMaxWidth()
-    Row(
+    Column(
         (if (onClick != null) base.agClick(onClick = onClick) else base)
-            .padding(vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
     ) {
-        AgRic(tint, icon)
-        Spacer(Modifier.width(14.dp))
-        Column(Modifier.weight(1f)) {
-            Text(title, fontSize = 14.5.sp, fontWeight = FontWeight.Bold, color = Ag.Tx)
-            if (desc.isNotEmpty()) {
-                Spacer(Modifier.height(3.dp))
-                Text(desc, fontSize = 12.5.sp, lineHeight = 19.sp, color = Ag.Tx2)
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            AgRic(tint, icon)
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text(title, fontSize = 14.5.sp, fontWeight = FontWeight.Bold, color = Ag.Tx)
+                if (desc.isNotEmpty()) {
+                    Spacer(Modifier.height(3.dp))
+                    Text(desc, fontSize = 12.5.sp, lineHeight = 19.sp, color = Ag.Tx2)
+                }
+            }
+            trailing?.invoke(this)
+            if (showChev) {
+                Spacer(Modifier.width(6.dp))
+                Text("›", fontSize = 20.sp, color = Ag.Chev, fontWeight = FontWeight.Bold)
             }
         }
-        trailing?.invoke(this)
-        if (showChev) {
-            Spacer(Modifier.width(6.dp))
-            Text("›", fontSize = 20.sp, color = Ag.Chev, fontWeight = FontWeight.Bold)
+        if (divider) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(Ag.Line)
+            )
         }
     }
 }
 
-/** 色衬图标容器 .ric：38dp 圆角 12 + 10% tint 底 */
+/**
+ * 开关行 .trow：设计稿 padding 15px 0 + 1px 分隔线（末行无线），
+ * 与 .row（padding 14px 0 + 14px gap）区分。
+ */
+@Composable
+fun AgToggleRow(
+    title: String,
+    desc: String,
+    tint: Color,
+    icon: ImageVector,
+    divider: Boolean = true,
+    trailing: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit,
+) {
+    val base: Modifier = Modifier.fillMaxWidth()
+    Column(base) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 15.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            AgRic(tint, icon)
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text(title, fontSize = 14.5.sp, fontWeight = FontWeight.Bold, color = Ag.Tx)
+                if (desc.isNotEmpty()) {
+                    Spacer(Modifier.height(2.dp))
+                    Text(desc, fontSize = 12.5.sp, lineHeight = 18.sp, color = Ag.Tx2)
+                }
+            }
+            trailing()
+        }
+        if (divider) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(Ag.Line)
+            )
+        }
+    }
+}
+
+/** 色衬图标容器 .ric：38dp 圆角 12 + 10%/12% tint 底 + 19px 描边图标 */
 @Composable
 fun AgRic(tint: Color, icon: ImageVector, size: Dp = 38.dp) {
     Box(
         Modifier
             .size(size)
             .clip(RoundedCornerShape(12.dp))
-            .background(tint.copy(alpha = 0.10f)),
+            .background(tint.copy(alpha = Ag.ricAlpha(tint))),
         contentAlignment = Alignment.Center,
     ) {
         Icon(icon, null, tint = tint, modifier = Modifier.size(19.dp))
     }
 }
 
-/** 顶栏 40dp 圆角玻璃图标按钮 .icbtn */
+/** 顶栏 40dp 圆角玻璃图标按钮 .icbtn（18px 描边图标） */
 @Composable
 fun AgIconBtn(icon: ImageVector, onClick: () -> Unit, tint: Color = Ag.Tx2) {
     Box(
@@ -256,17 +379,23 @@ fun AgIconBtn(icon: ImageVector, onClick: () -> Unit, tint: Color = Ag.Tx2) {
             .border(1.dp, Ag.Line, RoundedCornerShape(14.dp)),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, null, tint = tint, modifier = Modifier.size(19.dp))
+        Icon(icon, null, tint = tint, modifier = Modifier.size(18.dp))
     }
 }
 
 /** 品牌渐变主标题：32sp/800，em 部分渐变 */
 @Composable
-fun AgTitle(plain: String, em: String, modifier: Modifier = Modifier, count: String? = null) {
+fun AgTitle(
+    plain: String,
+    em: String,
+    modifier: Modifier = Modifier,
+    count: String? = null,
+    topMargin: Dp = 24.dp,
+) {
     Row(
         modifier
             .fillMaxWidth()
-            .padding(start = 4.dp, end = 4.dp, top = 24.dp, bottom = 16.dp),
+            .padding(start = 4.dp, end = 4.dp, top = topMargin, bottom = 16.dp),
         verticalAlignment = Alignment.Bottom,
     ) {
         Text(
@@ -277,7 +406,7 @@ fun AgTitle(plain: String, em: String, modifier: Modifier = Modifier, count: Str
             style = TextStyle(brush = Ag.TitleGrad),
         )
         if (count != null) {
-            Spacer(Modifier.width(10.dp))
+            Spacer(Modifier.width(8.dp))
             Text(count, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Ag.Tx3, modifier = Modifier.padding(bottom = 6.dp))
         }
     }
@@ -363,8 +492,8 @@ fun AgButton(primary: Boolean, text: String, onClick: () -> Unit, modifier: Modi
                                 Color.White.copy(alpha = 0.35f),
                                 Color.Transparent,
                             ),
-                            start = androidx.compose.ui.geometry.Offset(0f, 0f),
-                            end = androidx.compose.ui.geometry.Offset(0f, 10000f),
+                            start = Offset(0f, 0f),
+                            end = Offset(0f, 10000f),
                         ),
                     ),
             )

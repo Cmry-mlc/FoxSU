@@ -71,7 +71,7 @@ fun AgSuperUser(
     Column(
         Modifier
             .fillMaxSize()
-            .background(Ag.background())
+            .agPageBg()
             .statusBarsPadding(),
     ) {
         // ── 固定头部：返回/过滤 + 标题 + 搜索（滚动内容从毛玻璃下透出）──
@@ -82,18 +82,19 @@ fun AgSuperUser(
                 .background(Ag.headSurface())
                 .padding(horizontal = 18.dp),
         ) {
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(10.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                AgIconBtn(Icons.AutoMirrored.Rounded.ArrowBack, onClick = actions.onClearSearch)
+                AgIconBtn(AgTopIcons.AppGrid, onClick = actions.onClearSearch)
                 Spacer(Modifier.weight(1f))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    AgIconBtn(Icons.Rounded.DeleteSweep, onClick = actions.onOpenSulog)
-                    AgIconBtn(Icons.Rounded.FilterList, onClick = actions.onToggleShowSystemApps)
+                    AgIconBtn(AgTopIcons.Chart, onClick = actions.onOpenSulog)
+                    AgIconBtn(AgTopIcons.More, onClick = actions.onToggleShowSystemApps)
                 }
             }
+            Spacer(Modifier.height(10.dp))
             AgTitle("超级", "用户")
             AgSearch(value = query, onValueChange = { query = it }, hint = "搜索应用或包名…")
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(14.dp))
         }
 
         LazyColumn(
@@ -139,7 +140,7 @@ private fun AgAppRow(g: GroupedApps, context: android.content.Context, onClick: 
             .clip(RoundedCornerShape(18.dp))
             .background(Ag.Card)
             .border(1.dp, Ag.Line, RoundedCornerShape(18.dp))
-            .padding(12.dp, 12.dp, 14.dp, 12.dp),
+            .padding(12.dp, 14.dp, 12.dp, 14.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(

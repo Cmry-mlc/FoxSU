@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -38,8 +39,6 @@ import androidx.compose.material.icons.rounded.TextFields
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.Wallpaper
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -49,6 +48,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
@@ -145,7 +148,7 @@ internal fun AgCustomization(
     Column(
         Modifier
             .fillMaxSize()
-            .background(Ag.background())
+            .agPageBg()
             .statusBarsPadding(),
     ) {
         Column(
@@ -154,11 +157,14 @@ internal fun AgCustomization(
                 .background(Ag.headSurface())
                 .padding(horizontal = 18.dp),
         ) {
-            Spacer(Modifier.height(8.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                AgIconBtn(Icons.AutoMirrored.Rounded.ArrowBack, onClick = onBack, tint = Ag.Tx)
+            Spacer(Modifier.height(10.dp))
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                AgIconBtn(AgTopIcons.Back, onClick = onBack, tint = Ag.Tx)
             }
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(14.dp))
         }
 
         // ── 内容滚动区 ──
@@ -182,6 +188,7 @@ internal fun AgCustomization(
             Box(
                 Modifier
                     .fillMaxWidth()
+                    .padding(top = 6.dp)
                     .height(280.dp)
                     .clip(RoundedCornerShape(24.dp))
                     .background(
@@ -205,9 +212,9 @@ internal fun AgCustomization(
             // ── 主题外观 ──
             AgGHead("主题外观")
             AgCard(contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 4.dp)) {
-                AgRow(
+                AgToggleRow(
                     "启用 Monet 颜色", "跟随系统壁纸提取动态配色",
-                    Ag.Mag, Icons.Rounded.Palette,
+                    Ag.Mag, AgSettingsIcons.Monet,
                     trailing = {
                         var on by remember { mutableStateOf(repo.miuixMonet) }
                         AgToggle(checked = on, onCheckedChange = {
@@ -216,9 +223,9 @@ internal fun AgCustomization(
                         }, small = true)
                     },
                 )
-                AgRow(
+                AgToggleRow(
                     "模糊", "启用顶栏和底栏的模糊效果",
-                    Ag.Vio, Icons.Rounded.Layers,
+                    Ag.Vio, AgSettingsIcons.Blur,
                     trailing = {
                         var on by remember { mutableStateOf(repo.enableBlur) }
                         AgToggle(checked = on, onCheckedChange = {
@@ -226,9 +233,9 @@ internal fun AgCustomization(
                         }, small = true)
                     },
                 )
-                AgRow(
+                AgToggleRow(
                     "悬浮底栏", "使用 Apple 风格的悬浮底栏",
-                    Ag.Teal, Icons.Rounded.SmartButton,
+                    Ag.Teal, AgSettingsIcons.FloatingBar,
                     trailing = {
                         var on by remember { mutableStateOf(repo.enableFloatingBottomBar) }
                         AgToggle(checked = on, onCheckedChange = {
@@ -236,9 +243,9 @@ internal fun AgCustomization(
                         }, small = true)
                     },
                 )
-                AgRow(
+                AgToggleRow(
                     "导航栏角标", "在导航栏显示已授权应用和已启用模块数量",
-                    Ag.Amber, Icons.Rounded.Construction,
+                    Ag.Amber, AgSettingsIcons.Badge,
                     trailing = {
                         var on by remember { mutableStateOf(repo.enableNavigationBadge) }
                         AgToggle(checked = on, onCheckedChange = {
@@ -251,9 +258,9 @@ internal fun AgCustomization(
             // ── 手势与显示 ──
             AgGHead("手势与显示")
             AgCard(contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 4.dp)) {
-                AgRow(
+                AgToggleRow(
                     "预测性返回手势", "启用对预测性返回手势的支持",
-                    Ag.Vio, Icons.Rounded.Gesture,
+                    Ag.Vio, AgSettingsIcons.PredictiveBack,
                     trailing = {
                         var on by remember { mutableStateOf(repo.enablePredictiveBack) }
                         AgToggle(checked = on, onCheckedChange = {
@@ -261,9 +268,9 @@ internal fun AgCustomization(
                         }, small = true)
                     },
                 )
-                AgRow(
+                AgToggleRow(
                     "横移返回手势", "从屏幕边缘横移返回上一页",
-                    Ag.Mag, Icons.Rounded.Gesture,
+                    Ag.Mag, AgSettingsIcons.SwipeBack,
                     trailing = {
                         var on by remember { mutableStateOf(repo.enableSwipeDismiss) }
                         AgToggle(checked = on, onCheckedChange = {
@@ -271,9 +278,9 @@ internal fun AgCustomization(
                         }, small = true)
                     },
                 )
-                AgRow(
+                AgToggleRow(
                     "页面切换手势", "切换页面时的手势拦截方式",
-                    Ag.Teal, Icons.Rounded.Gesture,
+                    Ag.Teal, AgSettingsIcons.PagerGesture,
                     trailing = {
                         var mode by remember { mutableStateOf(repo.pagerInterceptionMode) }
                         AgPick(
@@ -304,7 +311,7 @@ internal fun AgCustomization(
                 AgRow(
                     stringResource(R.string.customization_wallpaper_enable),
                     stringResource(R.string.customization_wallpaper_enable_sum),
-                    Ag.Teal, Icons.Rounded.Wallpaper,
+                    Ag.Teal, AgSettingsIcons.Wallpaper,
                     trailing = {
                         AgToggle(checked = wallpaperOn, onCheckedChange = {
                             wallpaperOn = !wallpaperOn
@@ -315,7 +322,7 @@ internal fun AgCustomization(
                 Row(modifier = Modifier.padding(bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     AgPillAction(
                         text = stringResource(R.string.customization_pick_image),
-                        icon = Icons.Rounded.Palette,
+                        icon = AgSettingsIcons.Monet,
                         primary = true,
                         modifier = Modifier.weight(1f),
                     ) {
@@ -437,25 +444,25 @@ internal fun AgCustomization(
                     }
                     Spacer(Modifier.height(10.dp))
                 }
-                AgRow(
+                AgToggleRow(
                     "沉浸浅感", "通透半透明底：更透彻并带玻璃质感高光",
-                    Ag.Teal, Icons.Rounded.Layers,
+                    Ag.Teal, AgSettingsIcons.FloatingBar,
                     trailing = {
                         AgToggle(checked = custom.bottomBarImmersive, onCheckedChange = {
                             CustomizationStore.setBottomBarImmersive(!custom.bottomBarImmersive)
                         }, small = true)
                     },
                 )
-                AgRow(
+                AgToggleRow(
                     "底栏液态玻璃", "实时折射的玻璃质感高光",
-                    Ag.Vio, Icons.Rounded.Layers,
+                    Ag.Vio, AgSettingsIcons.Blur,
                     trailing = {
                         AgToggle(checked = custom.bottomBarLiquidGlass, onCheckedChange = {
                             CustomizationStore.setBottomBarLiquidGlass(!custom.bottomBarLiquidGlass)
                         }, small = true)
                     },
                 )
-                AgRow(
+                AgToggleRow(
                     "七彩底栏图标", "给底栏每个图标一套随机彩色",
                     Ag.Mag, Icons.Rounded.Palette,
                     trailing = {
@@ -515,7 +522,7 @@ private fun AgDockStyleCard(name: String, code: String, selected: Boolean, modif
         modifier
             .agClick(onClick = onClick)
             .clip(RoundedCornerShape(16.dp))
-            .background(if (selected) Color(0x0F6C5CE7) else Ag.Card.copy(alpha = 0.5f))
+            .background(if (selected) Color(0x0F6C5CE7) else Color(0x8CFFFFFF))
             .border(
                 1.4.dp,
                 if (selected) Color(0x806C5CE7) else Ag.Line,
@@ -571,7 +578,7 @@ private fun AgFontChip(name: String, glyph: String, family: FontFamily?, selecte
         Modifier
             .agClick(onClick = onClick)
             .clip(RoundedCornerShape(16.dp))
-            .background(if (selected) Color(0x0F6C5CE7) else Ag.Card.copy(alpha = 0.5f))
+            .background(if (selected) Color(0x0F6C5CE7) else Color(0x8CFFFFFF))
             .border(1.4.dp, if (selected) Color(0x806C5CE7) else Ag.Line, RoundedCornerShape(16.dp))
             .padding(14.dp, 14.dp, 14.dp, 11.dp)
             .width(96.dp),
@@ -595,30 +602,34 @@ private fun AgIconCard(name: String, shapeRadius: Float, rainbow: Boolean, selec
         Modifier
             .agClick(onClick = onClick)
             .clip(RoundedCornerShape(16.dp))
-            .background(if (selected) Color(0x0F6C5CE7) else Ag.Card.copy(alpha = 0.5f))
+            .background(if (selected) Color(0x0F6C5CE7) else Color(0x8CFFFFFF))
             .border(1.4.dp, if (selected) Color(0x806C5CE7) else Ag.Line, RoundedCornerShape(16.dp))
             .padding(13.dp, 13.dp, 13.dp, 10.dp)
             .width(74.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
+        val shape = if (shapeRadius < 0) CircleShape else RoundedCornerShape(shapeRadius.toInt())
         Box(
             Modifier
                 .size(38.dp)
-                .shadow(4.dp, RoundedCornerShape(if (shapeRadius < 0) 50 else shapeRadius.toInt()).let { it })
-                .clip(
-                    if (shapeRadius < 0) CircleShape else RoundedCornerShape(shapeRadius.toInt())
-                )
+                .shadow(4.dp, shape, spotColor = Color(0x476C5CE7), ambientColor = Color(0x476C5CE7))
+                .clip(shape)
                 .background(
                     if (rainbow) {
-                        Brush.sweepGradient(listOf(Color(0xFF6C5CE7), Color(0xFFEC4899), Color(0xFF14B8A6), Color(0xFFF59E0B), Color(0xFF6C5CE7)))
+                        Brush.sweepGradient(
+                            listOf(
+                                Color(0xFF6C5CE7), Color(0xFFEC4899), Color(0xFF14B8A6),
+                                Color(0xFFF59E0B), Color(0xFF6C5CE7),
+                            ),
+                        )
                     } else {
                         Brush.linearGradient(listOf(Color(0xFF8E5CF6), Color(0xFFEC4899)))
                     }
                 ),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(Icons.Rounded.Tune, null, tint = Color.White, modifier = Modifier.size(19.dp))
+            Icon(AgSettingsIcons.Gear, null, tint = Color.White, modifier = Modifier.size(19.dp))
         }
         Text(name, fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = if (selected) Ag.Vio else Ag.Tx2)
     }
@@ -631,23 +642,36 @@ private fun AgFoxIconCard(name: String, iconRes: Int, selected: Boolean, onClick
         Modifier
             .agClick(onClick = onClick)
             .clip(RoundedCornerShape(16.dp))
-            .background(if (selected) Color(0x0F6C5CE7) else Ag.Card.copy(alpha = 0.5f))
+            .background(if (selected) Color(0x0F6C5CE7) else Color(0x8CFFFFFF))
             .border(1.4.dp, if (selected) Color(0x806C5CE7) else Ag.Line, RoundedCornerShape(16.dp))
             .padding(13.dp, 13.dp, 13.dp, 10.dp)
             .width(74.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
-        Image(
-            painter = painterResource(iconRes),
-            contentDescription = name,
-            modifier = Modifier.size(38.dp),
-        )
+        Box(
+            Modifier
+                .size(38.dp)
+                .shadow(4.dp, RoundedCornerShape(12.dp), spotColor = Color(0x476C5CE7), ambientColor = Color(0x476C5CE7))
+                .clip(RoundedCornerShape(12.dp))
+                .background(Brush.linearGradient(listOf(Color(0xFF8E5CF6), Color(0xFFEC4899)))),
+            contentAlignment = Alignment.Center,
+        ) {
+            Image(
+                painter = painterResource(iconRes),
+                contentDescription = name,
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                modifier = Modifier.size(38.dp),
+            )
+        }
         Text(name, fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = if (selected) Ag.Vio else Ag.Tx2)
     }
 }
 
-/** 滑杆行（.sliderrow：t 14.5/700 + v 13/800 紫 + 渐变 thumb） */
+/**
+ * 滑杆行 .sliderrow：t 14.5/700 + v 13/800 紫
+ * 轨道自绘：8px 圆角矩形 rgba(30,25,70,.08)；thumb 20dp 渐变圆 + 3px 白边 + 紫色投影。
+ */
 @Composable
 private fun AgSliderRow(
     label: String,
@@ -658,32 +682,84 @@ private fun AgSliderRow(
     sub: String? = null,
     steps: Int = 0,
 ) {
-    Column(Modifier.padding(vertical = 14.dp)) {
+    val clamped = value.coerceIn(range.start, range.endInclusive)
+    val span = range.endInclusive - range.start
+    val frac = if (span <= 0f) 0f else ((clamped - range.start) / span).coerceIn(0f, 1f)
+    val trackColor = if (Ag.isDark) Color(0x1FFFFFFF) else Color(0x141E1946)
+    var trackWidth by remember { mutableStateOf(0.dp) }
+    val density = androidx.compose.ui.platform.LocalDensity.current
+
+    fun snap(raw: Float): Float {
+        if (steps <= 0) return raw.coerceIn(range.start, range.endInclusive)
+        val step = span / (steps + 1)
+        return (range.start + Math.round((raw - range.start) / step) * step)
+            .coerceIn(range.start, range.endInclusive)
+    }
+
+    Column(Modifier.padding(top = 14.dp, bottom = 14.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(label, fontSize = 14.5.sp, fontWeight = FontWeight.Bold, color = Ag.Tx)
                 if (sub != null) {
+                    Spacer(Modifier.height(1.dp))
                     Text(sub, fontSize = 11.5.sp, color = Ag.Tx2)
                 }
             }
-            Text(display, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = Ag.Vio)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(3.dp),
+            ) {
+                Text(display, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = Ag.Vio)
+                Text("›", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Ag.Tx3)
+            }
         }
-        Slider(
-            value = value.coerceIn(range.start, range.endInclusive),
-            onValueChange = onChange,
-            valueRange = range,
-            steps = steps,
-            modifier = Modifier
+        Spacer(Modifier.height(8.dp))
+        // 自绘滑杆：8px 轨道 + 20dp 渐变圆钮（3px 白边）
+        Box(
+            Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp),
-            colors = SliderDefaults.colors(
-                thumbColor = Color.White,
-                activeTrackColor = Ag.Vio,
-                inactiveTrackColor = Ag.TintInk,
-                activeTickColor = Color.Transparent,
-                inactiveTickColor = Color.Transparent,
-            ),
-        )
+                .height(20.dp)
+                .onSizeChanged { trackWidth = with(density) { it.width.toDp() } }
+                .pointerInput(range, steps) {
+                    awaitEachGesture {
+                        val down = awaitFirstDown()
+                        val w = size.width.toFloat().coerceAtLeast(1f)
+                        onChange(snap(range.start + (down.position.x / w).coerceIn(0f, 1f) * span))
+                        do {
+                            val event = awaitPointerEvent()
+                            event.changes.forEach { ch ->
+                                onChange(snap(range.start + (ch.position.x / w).coerceIn(0f, 1f) * span))
+                                ch.consume()
+                            }
+                        } while (event.changes.any { it.pressed })
+                    }
+                },
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(8.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(trackColor)
+            )
+            Box(
+                Modifier
+                    .fillMaxWidth(frac)
+                    .height(8.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(Ag.Grad)
+            )
+            Box(
+                Modifier
+                    .offset(x = ((trackWidth - 20.dp) * frac).coerceAtLeast(0.dp))
+                    .size(20.dp)
+                    .shadow(4.dp, CircleShape, spotColor = Color(0x666C5CE7), ambientColor = Color(0x4D6C5CE7))
+                    .clip(CircleShape)
+                    .background(Ag.Grad)
+                    .border(3.dp, Color.White, CircleShape),
+            )
+        }
     }
 }
 

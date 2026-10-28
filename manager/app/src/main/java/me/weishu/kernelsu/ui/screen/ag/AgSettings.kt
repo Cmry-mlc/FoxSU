@@ -93,25 +93,25 @@ fun AgSettings(
                 start = if (CustomizationStore.current.dockStyle == "v5") 106.dp else 18.dp,
                 end = 18.dp, bottom = bottomInnerPadding + 110.dp),
         ) {
-            item { AgTitle("设", "置") }
+            item { AgTitle("设", "置", topMargin = 12.dp) }
 
             // ── 通用 ──
             item { AgGHead("通用") }
             item {
                 AgCard(Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)) {
-                    AgRow(
+                    AgToggleRow(
                         stringResource(R.string.settings_check_update), stringResource(R.string.settings_check_update_summary),
-                        Ag.Vio, Icons.Rounded.Refresh,
+                        Ag.Vio, AgSettingsIcons.CheckUpdate,
                         trailing = { AgToggle(checked = uiState.checkUpdate, onCheckedChange = { actions.onSetCheckUpdate(!uiState.checkUpdate) }) },
                     )
-                    AgRow(
+                    AgToggleRow(
                         stringResource(R.string.settings_module_check_update), stringResource(R.string.settings_check_update_summary),
-                        Ag.Mag, Icons.Rounded.ViewModule,
+                        Ag.Mag, AgSettingsIcons.Modules,
                         trailing = { AgToggle(checked = uiState.checkModuleUpdate, onCheckedChange = { actions.onSetCheckModuleUpdate(!uiState.checkModuleUpdate) }) },
                     )
                     AgRow(
                         "界面风格", "选择应用的界面风格",
-                        Ag.Vio, Icons.Rounded.Palette,
+                        Ag.Vio, AgSettingsIcons.Style,
                         trailing = {
                             Text("$styleName ⇅", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Ag.Vio)
                         },
@@ -119,7 +119,7 @@ fun AgSettings(
                     )
                     AgRow(
                         "定制功能", "背景壁纸、卡片样式与启动器图标",
-                        Ag.Amber, Icons.Rounded.Construction, showChev = true, onClick = onOpenCustomization,
+                        Ag.Amber, AgSettingsIcons.Customize, showChev = true, onClick = onOpenCustomization,
                     )
                 }
             }
@@ -130,22 +130,22 @@ fun AgSettings(
                 AgCard(Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)) {
                     AgRow(
                         stringResource(R.string.settings_profile_template), stringResource(R.string.settings_profile_template_summary),
-                        Ag.Teal, Icons.Rounded.Dashboard, showChev = true, onClick = actions.onOpenProfileTemplate,
-                    )
-                    AgRow(
+                        Ag.Teal, AgSettingsIcons.Modules, showChev = true, onClick = actions.onOpenProfileTemplate)
+                    AgToggleRow(
                         "卸载模块（内核级）", "在内核给需要的应用卸载模块",
-                        Ag.Vio, Icons.Rounded.Delete,
+                        Ag.Vio, AgSettingsIcons.Moon,
                         trailing = { AgToggle(checked = uiState.isKernelUmountEnabled, onCheckedChange = { actions.onSetKernelUmountEnabled(!uiState.isKernelUmountEnabled) }) },
                     )
-                    AgRow(
+                    AgToggleRow(
                         "默认卸载模块", "启用模块默认卸载行为",
-                        Ag.Mag, Icons.Rounded.ViewModule,
+                        Ag.Mag, AgSettingsIcons.Modules,
                         trailing = { AgToggle(checked = uiState.isDefaultUmountModules, onCheckedChange = { actions.onSetDefaultUmountModules(!uiState.isDefaultUmountModules) }) },
                     )
-                    AgRow(
+                    AgToggleRow(
                         "启用 Web 调试", "允许模块 WebUI 的调试模式",
-                        Ag.Amber, Icons.Rounded.Description,
+                        Ag.Amber, AgSettingsIcons.LocalTemplate,
                         trailing = { AgToggle(checked = uiState.enableWebDebugging, onCheckedChange = { actions.onSetEnableWebDebugging(!uiState.enableWebDebugging) }) },
+                        divider = false,
                     )
                 }
             }
@@ -154,25 +154,24 @@ fun AgSettings(
             item { AgGHead("Root 与安全") }
             item {
                 AgCard(Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)) {
-                    AgRow(
+                    AgToggleRow(
                         "默认 SU 授权", uiState.suCompatStatus.ifBlank { if (uiState.isSuEnabled) "已启用" else "已停用" },
-                        Ag.Vio, Icons.Rounded.Shield,
+                        Ag.Vio, AgSettingsIcons.Shield,
                         trailing = { AgToggle(checked = uiState.isSuEnabled, onCheckedChange = { actions.onSetSuCompatMode(if (uiState.isSuEnabled) 1 else 0) }) },
                     )
-                    AgRow(
+                    AgToggleRow(
                         "隐藏 SELinux 修改", "阻止应用检测 SELinux 修改",
-                        Ag.Teal, Icons.Rounded.Security,
+                        Ag.Teal, AgSettingsIcons.EyeOff,
                         trailing = { AgToggle(checked = uiState.isSelinuxHideEnabled, onCheckedChange = { actions.onSetSelinuxHideEnabled(!uiState.isSelinuxHideEnabled) }) },
                     )
-                    AgRow(
+                    AgToggleRow(
                         "SU 日志", "将 Root 相关事件记录到 KernelSU 的 SU 日志",
-                        Ag.Mag, Icons.Rounded.Description,
+                        Ag.Mag, AgSettingsIcons.Log,
                         trailing = { AgToggle(checked = uiState.isSulogEnabled, onCheckedChange = { actions.onSetSulogEnabled(!uiState.isSulogEnabled) }) },
                     )
                     AgRow(
                         "重启管理", "重启 / 软重启 / Recovery / Bootloader / EDL",
-                        Ag.Amber, Icons.Rounded.PowerSettingsNew, showChev = true, onClick = { showReboot = true },
-                    )
+                        Ag.Amber, AgSettingsIcons.SoftReboot, showChev = true, onClick = { showReboot = true }, divider = false)
                 }
             }
 
@@ -183,16 +182,16 @@ fun AgSettings(
                     AgRow(
                         "FoxSu Manager",
                         "版本 ${me.weishu.kernelsu.BuildConfig.VERSION_NAME} · 基于 KernelSU 开源项目",
-                        Ag.Vio, Icons.Rounded.Person, showChev = true, onClick = onOpenAuthor,
+                        Ag.Vio, AgSettingsIcons.Manager, showChev = true, onClick = onOpenAuthor,
                     )
                     AgRow(
                         stringResource(R.string.home_support_title), stringResource(R.string.home_support_desc),
-                        Ag.Mag, Icons.Rounded.Favorite, showChev = true,
+                        Ag.Mag, AgHomeIcons.Heart, showChev = true,
                         onClick = { actions.onOpenAbout() },
                     )
                     AgRow(
                         "GitHub 仓库", "查看源码与提交 Issue",
-                        Ag.Amber, Icons.Rounded.Code, showChev = true,
+                        Ag.Amber, AgSettingsIcons.Github, showChev = true,
                         onClick = {
                             runCatching {
                                 context.startActivity(
@@ -203,15 +202,14 @@ fun AgSettings(
                     )
                     AgRow(
                         "加入频道", "QQ 频道【FoxSu】交流与反馈",
-                        Ag.Teal, Icons.Rounded.Info, showChev = true,
+                        Ag.Teal, AgSettingsIcons.Chat, showChev = true,
                         onClick = {
                             runCatching {
                                 context.startActivity(
                                     android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://pd.qq.com/s/8glxclfk6?b=9"))
                                 )
                             }
-                        },
-                    )
+                        }, divider = false)
                 }
                 Spacer(Modifier.height(24.dp))
             }

@@ -56,16 +56,16 @@ fun AgAppProfile(
     Column(
         Modifier
             .fillMaxSize()
-            .background(Ag.background())
+            .agPageBg()
             .statusBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 18.dp),
     ) {
         Spacer(Modifier.height(8.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            AgIconBtn(Icons.AutoMirrored.Rounded.ArrowBack, onClick = actions.onBack)
+            AgIconBtn(AgTopIcons.Back, onClick = actions.onBack)
             Spacer(Modifier.weight(1f))
-            AgIconBtn(Icons.Rounded.Info, onClick = actions.onManageTemplate)
+            AgIconBtn(AgTopIcons.More, onClick = actions.onManageTemplate)
         }
         AgTitle("App ", "Profile")
 
@@ -134,7 +134,7 @@ fun AgAppProfile(
             AgRow(
                 "超级用户",
                 "允许该应用获取 Root 权限",
-                Ag.Vio, Icons.Rounded.Shield,
+                Ag.Vio, AgSettingsIcons.Shield,
                 trailing = {
                     AgToggle(
                         checked = profile?.allowSu == true,
@@ -148,7 +148,7 @@ fun AgAppProfile(
             AgRow(
                 "App Profile",
                 "控制该应用的自定义 Profile 策略",
-                Ag.Mag, Icons.Rounded.Dashboard,
+                Ag.Mag, AgSettingsIcons.Modules,
                 trailing = {
                     Text(
                         if (profile?.rootUseDefault == false) "自定义 ⇅" else "默认 ⇅",
@@ -166,11 +166,11 @@ fun AgAppProfile(
         AgCard(Modifier.fillMaxWidth(), contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 6.dp)) {
             AgRow(
                 "使用本地模板", "从已保存的模板快速套用",
-                Ag.Teal, Icons.Rounded.Save, showChev = true, onClick = actions.onManageTemplate,
+                Ag.Teal, AgSettingsIcons.Export, showChev = true, onClick = actions.onManageTemplate,
             )
             AgRow(
                 "导出当前配置", "保存为可分享的 Profile 模板",
-                Ag.Amber, Icons.Rounded.Delete, showChev = true, onClick = actions.onManageTemplate,
+                Ag.Amber, AgSettingsIcons.Moon, showChev = true, onClick = actions.onManageTemplate,
             )
         }
         Spacer(Modifier.height(140.dp))
