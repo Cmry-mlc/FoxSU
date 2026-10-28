@@ -118,10 +118,6 @@ fun AgSettings(
                         onClick = { showStyle = true },
                     )
                     AgRow(
-                        "主题设置", "自定义主题色板",
-                        Ag.Mag, Icons.Rounded.Tune, showChev = true, onClick = actions.onOpenTheme,
-                    )
-                    AgRow(
                         "定制功能", "背景壁纸、卡片样式与启动器图标",
                         Ag.Amber, Icons.Rounded.Construction, showChev = true, onClick = onOpenCustomization,
                     )

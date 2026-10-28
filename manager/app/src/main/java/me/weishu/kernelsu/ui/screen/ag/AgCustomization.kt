@@ -380,10 +380,10 @@ internal fun AgCustomization(
             AgCard {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
                     val foxItems = listOf(
-                        Triple("乖巧", LauncherIconManager.STYLE_FOXSU, R.drawable.ic_launcher_foreground),
-                        Triple("招手", LauncherIconManager.STYLE_FOX2, R.drawable.ic_launcher_fox2_foreground),
-                        Triple("回眸", LauncherIconManager.STYLE_FOX3, R.drawable.ic_launcher_fox3_foreground),
-                        Triple("开心", LauncherIconManager.STYLE_FOX4, R.drawable.ic_launcher_fox4_foreground),
+                        Triple("乖巧", LauncherIconManager.STYLE_FOXSU, R.drawable.fox_icon_cute),
+                        Triple("招手", LauncherIconManager.STYLE_FOX2, R.drawable.fox_icon_wave),
+                        Triple("回眸", LauncherIconManager.STYLE_FOX3, R.drawable.fox_icon_glance),
+                        Triple("开心", LauncherIconManager.STYLE_FOX4, R.drawable.fox_icon_joy),
                     )
                     val geoItems = listOf(
                         "圆角方" to 9f, "正圆" to -1f, "超椭圆" to 12f, "七彩" to 9f,
@@ -624,7 +624,7 @@ private fun AgIconCard(name: String, shapeRadius: Float, rainbow: Boolean, selec
     }
 }
 
-/** .icard：狐狸图标卡 */
+/** .icard：狐狸图标卡（设计稿 .ishape.fox：透明底 PNG 直接展示，无底色无描边） */
 @Composable
 private fun AgFoxIconCard(name: String, iconRes: Int, selected: Boolean, onClick: () -> Unit) {
     Column(
@@ -641,9 +641,7 @@ private fun AgFoxIconCard(name: String, iconRes: Int, selected: Boolean, onClick
         Image(
             painter = painterResource(iconRes),
             contentDescription = name,
-            modifier = Modifier
-                .size(38.dp)
-                .clip(RoundedCornerShape(9.dp)),
+            modifier = Modifier.size(38.dp),
         )
         Text(name, fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = if (selected) Ag.Vio else Ag.Tx2)
     }

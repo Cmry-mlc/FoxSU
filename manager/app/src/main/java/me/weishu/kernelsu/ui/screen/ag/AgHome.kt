@@ -277,40 +277,38 @@ fun AgHome(
     }
 }
 
-/** 右上 64dp 环形勾 .okring */
+/** 右上 64dp 环形勾 .okring（设计稿 SVG 精确复刻：r=27 开口环 132/38 + 折线对勾，5px 圆头描边） */
 @Composable
 private fun androidx.compose.foundation.layout.BoxScope.AgStatusRing(ok: Boolean) {
-    Box(
-        Modifier
-            .align(Alignment.TopEnd)
-            .padding(top = 14.dp, end = 14.dp)
-            .size(64.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Box(
-            Modifier
-                .size(64.dp)
-                .clip(CircleShape)
-                .background(
-                    if (ok) androidx.compose.ui.graphics.Brush.radialGradient(
-                        listOf(Color(0x2414B8A6), Color.Transparent)
-                    ) else androidx.compose.ui.graphics.Brush.radialGradient(
-                        listOf(Color(0x24F59E0B), Color.Transparent)
-                    )
-                ),
+    val color = if (ok) Ag.Success else Ag.Amber
+    androidx.compose.foundation.Canvas(Modifier.size(64.dp)) {
+        val stroke = 5.dp.toPx()
+        // circle r=27, dasharray 132 38 → 实弧占 132/170
+        drawArc(
+            color = color,
+            startAngle = -90f,
+            sweepAngle = 360f * 132f / 170f,
+            useCenter = false,
+            style = androidx.compose.ui.graphics.drawscope.Stroke(
+                width = stroke,
+                cap = androidx.compose.ui.graphics.StrokeCap.Round,
+            ),
         )
-        Box(
-            Modifier
-                .size(46.dp)
-                .border(4.dp, if (ok) Ag.Success else Ag.Amber, CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                Icons.Rounded.Check, null,
-                tint = if (ok) Ag.Success else Ag.Amber,
-                modifier = Modifier.size(26.dp),
-            )
+        // path M22 32 L29 39 L43 25（64 视箱坐标）
+        val path = androidx.compose.ui.graphics.Path().apply {
+            moveTo(22.dp.toPx(), 32.dp.toPx())
+            lineTo(29.dp.toPx(), 39.dp.toPx())
+            lineTo(43.dp.toPx(), 25.dp.toPx())
         }
+        drawPath(
+            path,
+            color = color,
+            style = androidx.compose.ui.graphics.drawscope.Stroke(
+                width = stroke,
+                cap = androidx.compose.ui.graphics.StrokeCap.Round,
+                join = androidx.compose.ui.graphics.StrokeJoin.Round,
+            ),
+        )
     }
 }
 
