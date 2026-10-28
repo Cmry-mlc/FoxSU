@@ -198,6 +198,20 @@ object AgTopIcons {
         ),
     )
 
+    /** 主题：调色板（打开界面风格选择） */
+    val Theme = svgIcon(
+        "AgTheme",
+        listOf(
+            SvgBlock(
+                "M12 3.5a8.5 8.5 0 1 0 0 17c1.2 0 2-1 2-2.1 0-.6-.2-1.1-.6-1.5" +
+                    "-.3-.3-.4-.7-.4-1.1 0-.9.7-1.6 1.6-1.6h2.4c2.3 0 4-1.9 4-4.2 0-3.6-4.1-6.5-9-6.5z"
+            ),
+            SvgBlock("M8 8.6a1.1 1.1 0 1 0 0 2.2 1.1 1.1 0 0 0 0-2.2z", fill = true),
+            SvgBlock("M12 6.6a1.1 1.1 0 1 0 0 2.2 1.1 1.1 0 0 0 0-2.2z", fill = true),
+            SvgBlock("M16 8.4a1.1 1.1 0 1 0 0 2.2 1.1 1.1 0 0 0 0-2.2z", fill = true),
+        ),
+    )
+
     /** 深浅模式：半月 */
     val DarkMode = svgIcon(
         "AgDarkMode",

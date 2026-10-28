@@ -133,48 +133,61 @@ fun ThemeDockBar(
         label = "dock-indicator",
     )
 
-    // ── V5：侧边抽屉（左侧垂直居中）──
+    // ── V5：侧边抽屉（左侧垂直居中，设计稿 .phone.side .dock）──
     if (style == DockStyle.V5) {
         Column(
             modifier = modifier
                 .padding(start = 14.dp)
+                .shadow(14.dp, RoundedCornerShape(30.dp), spotColor = theme.shadow, ambientColor = theme.shadow)
                 .clip(RoundedCornerShape(30.dp))
                 // 设计稿 .phone.side .dock：白 86%
                 .background(if (dark) theme.bg else theme.bg.copy(alpha = 0.86f * alphaK))
                 .border(1.dp, effBorder, RoundedCornerShape(30.dp))
-                .shadow(14.dp, RoundedCornerShape(30.dp), spotColor = theme.shadow, ambientColor = theme.shadow)
-                .padding(10.dp, 12.dp),
+                .padding(horizontal = 9.dp, vertical = 10.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             items.forEachIndexed { index, item ->
                 val selected = mainState.selectedPage == index
                 val tint = if (rainbow && !selected) rainbowColors[index % 4] else theme.unselected
+                val shape = iconShapeOverride ?: RoundedCornerShape(22.dp)
                 Column(
                     modifier = Modifier
                         .width(62.dp)
                         .height(60.dp)
-                        .clip(iconShapeOverride ?: RoundedCornerShape(22.dp))
+                        .then(
+                            if (selected) Modifier.shadow(
+                                8.dp, shape,
+                                spotColor = Color(0x666C5CE7),
+                                ambientColor = Color(0x1A6C5CE7),
+                            ) else Modifier
+                        )
+                        .clip(shape)
                         .background(
                             if (selected) Brush.linearGradient(
-                                listOf(Color(0xFF6C5CE7), Color(0xFFEC4899))
+                                listOf(Color(0xFF6C5CE7), Color(0xFFA855F7), Color(0xFFEC4899))
                             ) else androidx.compose.ui.graphics.SolidColor(Color.Transparent)
                         )
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
                         ) { mainState.animateToPage(index) }
-                        .padding(9.dp, 8.dp),
+                        .padding(vertical = 9.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     if (foxRes != null && selected) {
-                        // 狐狸图标风格：选中项覆盖为狐狸图
+                        // 狐狸图标风格：作为 26dp 图标嵌入，保留文字（胶囊布局不被撑破）
                         androidx.compose.foundation.Image(
                             painter = androidx.compose.ui.res.painterResource(foxRes),
                             contentDescription = stringResource(item.label),
-                            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize(),
+                            contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                            modifier = Modifier.size(26.dp),
+                        )
+                        Text(
+                            stringResource(item.label),
+                            fontSize = 9.5.sp, fontWeight = FontWeight.ExtraBold,
+                            color = Color.White, maxLines = 1,
                         )
                     } else {
                         DockIcon(item, index, selected, navigationBadge, rainbow, tint, badgeTintOverride = Color.White)

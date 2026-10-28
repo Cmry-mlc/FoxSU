@@ -39,6 +39,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.data.settings.CustomizationStore
+import me.weishu.kernelsu.ui.LocalUiMode
+import me.weishu.kernelsu.ui.component.StylePickerDialog
 import me.weishu.kernelsu.ui.screen.home.HomeActions
 import me.weishu.kernelsu.ui.screen.home.HomeUiState
 import me.weishu.kernelsu.ui.screen.home.HeroPhase
@@ -58,20 +60,8 @@ fun AgHome(
 ) {
     val hero = state.heroState()
     var showReboot by remember { mutableStateOf(false) }
+    var showStyle by remember { mutableStateOf(false) }
     val sideDock = CustomizationStore.current.dockStyle == "v5"
-    val settingsVm: me.weishu.kernelsu.ui.viewmodel.SettingsViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
-    val sysDark = androidx.compose.foundation.isSystemInDarkTheme()
-    val onToggleDark = {
-        val repo = me.weishu.kernelsu.data.repository.SettingsRepositoryImpl()
-        val cur = repo.themeMode
-        val target = when (cur) {
-            2, 5, 6 -> 1          // 当前深 → 浅
-            1, 4 -> 2             // 当前浅 → 深
-            else -> if (sysDark) 1 else 2 // 跟随系统 → 取反
-        }
-        settingsVm.setThemeMode(target)
-        Unit
-    }
     val listBottomPad = if (bottomInnerPadding == androidx.compose.ui.unit.Dp.Unspecified) {
         24.dp
     } else {
@@ -91,21 +81,14 @@ fun AgHome(
                 .background(Ag.headSurface()),
         ) {
             Spacer(Modifier.height(10.dp))
-            // ── 顶栏：左侧渐变标题 + 右侧 作者/深色切换/电源（设计稿 .top：padding 10px 4px 14px）──
+            // ── 顶栏：左侧渐变标题 + 右侧 作者/主题/电源（设计稿 .top：padding 10px 4px 14px）──
+            // 侧边抽屉模式下标题右移，避免被左侧胶囊压住（设计稿 .phone.side .headwrap padding-left 124）
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 22.dp),
+                    .padding(start = if (sideDock) 118.dp else 22.dp, end = 22.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (sideDock) {
-                    androidx.compose.foundation.Image(
-                        painter = painterResource(R.drawable.ic_fox_global),
-                        contentDescription = null,
-                        modifier = Modifier.size(30.dp),
-                    )
-                    Spacer(Modifier.width(8.dp))
-                }
                 Text(
                     "FoxSu",
                     fontSize = if (sideDock) 26.sp else 32.sp,
@@ -119,8 +102,8 @@ fun AgHome(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     AgIconBtn(AgTopIcons.User, onClick = onOpenAuthor)
-                    // 深色模式切换（半月）：浅↔深真实切换
-                    AgIconBtn(AgTopIcons.DarkMode, onClick = onToggleDark)
+                    // 主题：打开界面风格选择（原深色切换位）
+                    AgIconBtn(AgTopIcons.Theme, onClick = { showStyle = true })
                     AgIconBtn(AgTopIcons.Power, onClick = { showReboot = true })
                 }
             }
@@ -139,13 +122,18 @@ fun AgHome(
             Spacer(Modifier.height(2.dp))
 
         // ── 状态卡：外层渐变底 2px + 内层 22dp 白芯 ──
+        // 阴影必须在 clip/background 之前，否则 elevation 光晕会盖在卡片上（视觉上卡片变宽）
         Box(
             Modifier
                 .fillMaxWidth()
+                .shadow(
+                    12.dp, RoundedCornerShape(24.dp),
+                    spotColor = Color(0x406C5CE7),
+                    ambientColor = Color(0x146C5CE7),
+                )
                 .clip(RoundedCornerShape(24.dp))
                 .background(Ag.Grad)
-                .padding(2.dp)
-                .shadow(10.dp, RoundedCornerShape(24.dp), spotColor = Color(0x406C5CE7)),
+                .padding(2.dp),
         ) {
             Box(
                 Modifier
@@ -280,6 +268,9 @@ fun AgHome(
 
     if (showReboot) {
         AgRebootSheet(onDismiss = { showReboot = false })
+    }
+    if (showStyle) {
+        StylePickerDialog(current = LocalUiMode.current, onDismiss = { showStyle = false })
     }
 }
 

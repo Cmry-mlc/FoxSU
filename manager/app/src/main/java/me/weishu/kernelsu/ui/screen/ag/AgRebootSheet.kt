@@ -49,6 +49,7 @@ import me.weishu.kernelsu.ui.component.rebootlistpopup.rememberRebootAction
  * 六项：重启 / 软重启 / Recovery / Bootloader / Download / EDL（红色警示）。
  */
 @Composable
+@OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
 fun AgRebootSheet(onDismiss: () -> Unit) {
     val options = getRebootListOption()
     val reboot = rememberRebootAction()
@@ -75,8 +76,9 @@ fun AgRebootSheet(onDismiss: () -> Unit) {
     // 设计稿 .mask/.sheet：mask rgba(25,20,60,.28)；sheet 亮 rgba(255,255,255,.85)/描边 rgba(255,255,255,.65)，
     // 暗 rgba(28,27,46,.88)/描边 rgba(255,255,255,.1)；定位 top 118 / right 14 / 宽 230 / 圆角 22
     val dark = Ag.isDark
-    val panel = if (dark) Color(0xE01C1B2E) else Color(0xD9FFFFFF)
-    val panelLine = if (dark) Color(0x1AFFFFFF) else Color(0xA6FFFFFF)
+    // 面板必须近乎不透明：原 0.85 会让下方状态卡/按钮透出，形成一条"白色横条"的错觉
+    val panel = if (dark) Color(0xFA1C1B2E) else Color(0xFAFFFFFF)
+    val panelLine = if (dark) Color(0x1FFFFFFF) else Color(0xB3FFFFFF)
     val iconBg = Color(0x1A6C5CE7)
     val mask = Color(0x4719143C)
     val tx = if (dark) Color(0xFFF2F1FA) else Color(0xFF191826)
@@ -89,6 +91,14 @@ fun AgRebootSheet(onDismiss: () -> Unit) {
             decorFitsSystemWindows = false,
         ),
     ) {
+    // Dialog 自带的白底 + 默认 dim 会露出白色硬边，这里强制透明窗口
+    val dialogWindow = (androidx.compose.ui.platform.LocalView.current.parent as? androidx.compose.ui.window.DialogWindowProvider)?.window
+    androidx.compose.runtime.SideEffect {
+        dialogWindow?.setBackgroundDrawable(
+            android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT)
+        )
+        dialogWindow?.setDimAmount(0f)
+    }
     Box(Modifier.fillMaxSize()) {
         // 遮罩
         Box(
@@ -99,14 +109,19 @@ fun AgRebootSheet(onDismiss: () -> Unit) {
         )
         Column(
             // 设计稿 .sheet：锚定电源按钮的下拉菜单（右上角，宽 230，圆角 22）
+            // 顺序：shadow → clip → background → border；阴影放后面会把光晕盖到面板上
             Modifier
                 .align(Alignment.TopEnd)
                 .padding(top = 118.dp, end = 14.dp)
                 .width(230.dp)
+                .shadow(
+                    18.dp, RoundedCornerShape(22.dp),
+                    spotColor = Color(0x40281E64),
+                    ambientColor = Color(0x1A281E64),
+                )
                 .clip(RoundedCornerShape(22.dp))
                 .background(panel)
                 .border(1.dp, panelLine, RoundedCornerShape(22.dp))
-                .shadow(18.dp, RoundedCornerShape(22.dp), spotColor = Color(0x40281E64))
                 .padding(8.dp),
         ) {
             options.forEachIndexed { i, opt ->

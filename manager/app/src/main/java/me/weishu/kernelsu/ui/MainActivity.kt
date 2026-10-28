@@ -651,11 +651,31 @@ fun MainScreen(
                     pagerContent(innerPadding.calculateBottomPadding())
                 }
 
-                UiMode.Miuix -> Scaffold(
-                    bottomBar = bottomBar,
-                    containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                ) { innerPadding ->
-                    pagerContent(innerPadding.calculateBottomPadding())
+                UiMode.Miuix -> {
+                    // 侧边抽屉（v5）：胶囊是左侧垂直居中的浮层，不能塞进 bottomBar 槽位，
+                    // 否则会被压扁成一条、图标互相重叠。
+                    val sideDock = CustomizationStore.current.dockStyle == "v5"
+                    val noBar: @Composable () -> Unit = {}
+                    Scaffold(
+                        bottomBar = if (sideDock) noBar else bottomBar,
+                        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                    ) { innerPadding ->
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            pagerContent(if (sideDock) 0.dp else innerPadding.calculateBottomPadding())
+                            if (sideDock) {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.CenterStart,
+                                ) {
+                                    BottomBar(
+                                        blurBackdrop = blurBackdrop,
+                                        backdrop = backdrop,
+                                        navigationBadge = navigationBadge,
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
 
                 UiMode.Fresh -> androidx.compose.material3.Scaffold(

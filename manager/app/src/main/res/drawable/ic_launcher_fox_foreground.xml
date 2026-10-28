@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 启动器图标前景：项目内现成的彩虹尾巴白狐（fox_hero.png），
+     自适应图标 108dp 画布，图形占 84dp，留出各启动器的遮罩安全区。 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:width="84dp"
+        android:height="84dp"
+        android:gravity="center">
+        <bitmap
+            android:gravity="fill"
+            android:src="@drawable/fox_hero" />
+    </item>
+</layer-list>
