@@ -605,7 +605,21 @@ fun MainScreen(
         } else {
             val bottomBar = @Composable {
                 Box(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        // Redesign 槽位兜底：铺页面雾彩底色，杜绝窗口白底透出
+                        .then(
+                            if (uiMode == UiMode.Miuix) {
+                                Modifier.background(
+                                    Brush.verticalGradient(
+                                        listOf(
+                                            me.weishu.kernelsu.ui.screen.ag.Ag.Bg2,
+                                            me.weishu.kernelsu.ui.screen.ag.Ag.Bg2,
+                                        )
+                                    )
+                                )
+                            } else Modifier
+                        ),
                 ) {
                     BottomBar(
                         blurBackdrop = blurBackdrop,
