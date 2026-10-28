@@ -42,6 +42,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.ui.LocalMainPagerState
+import me.weishu.kernelsu.data.repository.SettingsRepositoryImpl
+import me.weishu.kernelsu.ui.theme.glassTokens
 
 /** 各主题的抽屉胶囊配色（设计语言驱动） */
 data class DockTheme(
@@ -181,4 +183,61 @@ fun ThemeDockBar(
             }
         }
     }
+}
+
+
+/** 每套皮肤各自的专属抽屉风格（跟随皮肤自身的明暗与设计语言） */
+object AgDockThemes {
+
+    /** FoxSu Redesign：暖白胶囊 + 品牌紫/品红（晨曦玻璃） */
+    val redesign = DockTheme(
+        bg = Color(0xC7FFFFFF), border = Color(0x99FFFFFF), shadow = Color(0x2E32286E),
+        selected = Color(0xFF6C5CE7), unselected = Color(0xFF66647A),
+        selectedBg = Color(0x1A6C5CE7), badge = Color(0xFFEC4899), glass = true,
+    )
+
+    /** Pages：极简留白（亮）→ 墨面（暗），单一蓝点 */
+    @Composable
+    fun fresh(): DockTheme {
+        val night = me.weishu.kernelsu.ui.theme.ColorMode
+            .fromValue(me.weishu.kernelsu.data.repository.SettingsRepositoryImpl().themeMode).isDark
+        return if (night) DockTheme(
+            bg = Color(0xF219191F), border = Color(0x29FFFFFF), shadow = Color(0x66000000),
+            selected = Color(0xFF7DA9FF), unselected = Color(0xFF8A8F9C),
+            selectedBg = Color(0x1F2D6BFF), badge = Color(0xFF2D6BFF),
+        ) else DockTheme(
+            bg = Color(0xF6FFFFFF), border = Color(0x14111111), shadow = Color(0x1A111111),
+            selected = Color(0xFF2D6BFF), unselected = Color(0xFF9AA0B0),
+            selectedBg = Color(0x142D6BFF), badge = Color(0xFF2D6BFF),
+        )
+    }
+
+    /** Editorial：纸面质感 + 墨描边 + 信号橙（恒纸色） */
+    val editorial = DockTheme(
+        bg = Color(0xFFFFFCF6), border = Color(0x471D1C22), shadow = Color(0x33282418),
+        selected = Color(0xFFE8502E), unselected = Color(0xFF9C968B),
+        selectedBg = Color(0x1AE8502E), badge = Color(0xFFE8502E),
+    )
+
+    /** Daylight：白玻璃（亮）→ 炭玻璃（暗），紫罗兰 + 薄荷点缀 */
+    @Composable
+    fun glass(): DockTheme {
+        val dark = me.weishu.kernelsu.ui.theme.glassTokens().isDark
+        return if (dark) DockTheme(
+            bg = Color(0xE614141E), border = Color(0x2EFFFFFF), shadow = Color(0x66000000),
+            selected = Color(0xFF9C90FF), unselected = Color(0xFF7C8294),
+            selectedBg = Color(0x338B7BFF), badge = Color(0xFF4DE2C5), glass = true,
+        ) else DockTheme(
+            bg = Color(0xCCFFFFFF), border = Color(0x33FFFFFF), shadow = Color(0x2E32286E),
+            selected = Color(0xFF6A57F5), unselected = Color(0xFF9AA0B0),
+            selectedBg = Color(0x1A6A57F5), badge = Color(0xFF0FA98B), glass = true,
+        )
+    }
+
+    /** Nocturne：OLED 纯黑胶囊 + 紫罗兰极光（恒暗） */
+    val nocturne = DockTheme(
+        bg = Color(0xF2101218), border = Color(0x26FFFFFF), shadow = Color(0x66000000),
+        selected = Color(0xFF8B7BFF), unselected = Color(0xFF5D6376),
+        selectedBg = Color(0x2E8B7BFF), badge = Color(0xFF4DE2C5), glass = true,
+    )
 }

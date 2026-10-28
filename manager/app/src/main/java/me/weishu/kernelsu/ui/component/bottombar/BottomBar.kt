@@ -10,11 +10,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import me.weishu.kernelsu.ui.theme.LocalEnableFloatingBottomBar
 import me.weishu.kernelsu.ui.LocalMainPagerState
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.UiMode
@@ -118,57 +118,49 @@ fun BottomBar(
     navigationBadge: NavigationBadgeState,
     modifier: Modifier = Modifier,
 ) {
+    val mainPagerState = LocalMainPagerState.current
+    val dockOn = LocalEnableFloatingBottomBar.current
     when (LocalUiMode.current) {
-        // 晨曦玻璃 Redesign：紫→品红品牌渐变选中
-        UiMode.Miuix -> ThemeDockBar(
-            theme = DockTheme(
-                bg = Color(0xC7FFFFFF), border = Color(0x99FFFFFF), shadow = Color(0x2E32286E),
-                selected = Color(0xFF6C5CE7), unselected = Color(0xFF66647A),
-                selectedBg = Color(0x1A6C5CE7), badge = Color(0xFFEC4899), glass = true,
-            ),
-            navigationBadge = navigationBadge,
+        // 「抽屉底栏」开关开启时：每套皮肤使用自己的专属抽屉风格
+        UiMode.Miuix -> if (dockOn) {
+            ThemeDockBar(AgDockThemes.redesign, navigationBadge, modifier)
+        } else {
+            BottomBarMiuix(blurBackdrop, backdrop, navigationBadge, modifier)
+        }
+        UiMode.Material -> if (dockOn) {
+            ThemeDockBar(AgDockThemes.editorial, navigationBadge, modifier)
+        } else {
+            me.weishu.kernelsu.ui.screen.editorial.EdTabBar(
+            currentTab = mainPagerState.selectedPage,
+            badge = navigationBadge,
+            onOpenTab = { page -> mainPagerState.animateToPage(page) },
+            )
+        }
+        UiMode.Fresh -> if (dockOn) {
+            ThemeDockBar(AgDockThemes.fresh(), navigationBadge, modifier)
+        } else {
+            BottomBarFresh(navigationBadge)
+        }
+        UiMode.Glass -> if (dockOn) {
+            ThemeDockBar(AgDockThemes.glass(), navigationBadge, modifier)
+        } else {
+            me.weishu.kernelsu.ui.screen.glass.GlassBottomBar(
+            currentTab = mainPagerState.selectedPage,
+            badge = navigationBadge,
+            onOpenTab = { page -> mainPagerState.animateToPage(page) },
             modifier = modifier,
-        )
-        // Pages 极简：纯白胶囊 + 蓝色强调
-        UiMode.Fresh -> ThemeDockBar(
-            theme = DockTheme(
-                bg = Color(0xF2FFFFFF), border = Color(0x14111111), shadow = Color(0x1A111111),
-                selected = Color(0xFF2D6BFF), unselected = Color(0xFF9AA0B0),
-                selectedBg = Color(0x142D6BFF), badge = Color(0xFF2D6BFF),
-            ),
-            navigationBadge = navigationBadge,
+            )
+        }
+        UiMode.Nocturne -> if (dockOn) {
+            ThemeDockBar(AgDockThemes.nocturne, navigationBadge, modifier)
+        } else {
+            me.weishu.kernelsu.ui.screen.nocturne.NocturneTabBar(
+            currentTab = mainPagerState.selectedPage,
+            badge = navigationBadge,
+            onOpenTab = { page -> mainPagerState.animateToPage(page) },
             modifier = modifier,
-        )
-        // Editorial 纸面：纸色胶囊 + 墨描边 + 信号橙
-        UiMode.Material -> ThemeDockBar(
-            theme = DockTheme(
-                bg = Color(0xFFFFFCF6), border = Color(0x331D1C22), shadow = Color(0x33282418),
-                selected = Color(0xFFE8502E), unselected = Color(0xFF9C968B),
-                selectedBg = Color(0x1AE8502E), badge = Color(0xFFE8502E),
-            ),
-            navigationBadge = navigationBadge,
-            modifier = modifier,
-        )
-        // Daylight 玻璃：白玻璃 + 紫/薄荷
-        UiMode.Glass -> ThemeDockBar(
-            theme = DockTheme(
-                bg = Color(0xCCFFFFFF), border = Color(0x33FFFFFF), shadow = Color(0x2E32286E),
-                selected = Color(0xFF6A57F5), unselected = Color(0xFF9AA0B0),
-                selectedBg = Color(0x1A6A57F5), badge = Color(0xFF0FA98B), glass = true,
-            ),
-            navigationBadge = navigationBadge,
-            modifier = modifier,
-        )
-        // Nocturne 暗夜：暗玻璃 + 紫罗兰
-        UiMode.Nocturne -> ThemeDockBar(
-            theme = DockTheme(
-                bg = Color(0xE6101218), border = Color(0x26FFFFFF), shadow = Color(0x66000000),
-                selected = Color(0xFF8B7BFF), unselected = Color(0xFF5D6376),
-                selectedBg = Color(0x2E8B7BFF), badge = Color(0xFF4DE2C5), glass = true,
-            ),
-            navigationBadge = navigationBadge,
-            modifier = modifier,
-        )
+            )
+        }
     }
 }
 
