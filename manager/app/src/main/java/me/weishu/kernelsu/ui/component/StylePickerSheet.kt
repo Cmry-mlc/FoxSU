@@ -3,6 +3,8 @@ package me.weishu.kernelsu.ui.component
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -295,13 +297,12 @@ fun StylePickerDialog(
                     indication = null,
                     onClick = onDismiss,
                 ),
-            contentAlignment = Alignment.BottomCenter,
+            contentAlignment = Alignment.Center,
         ) {
             Column(
                 modifier = Modifier
-                    .navigationBarsPadding()
-                    .padding(horizontal = 4.dp, vertical = 6.dp)
-                    .widthIn(max = 352.dp)
+                    .padding(horizontal = 22.dp)
+                    .widthIn(max = 420.dp)
                     .fillMaxWidth()
                     .graphicsLayer {
                         translationY = (1f - enter) * 24.dp.toPx()
@@ -326,19 +327,9 @@ fun StylePickerDialog(
                         indication = null,
                         onClick = {},
                     )
-                    .padding(top = 8.dp, bottom = 18.dp),
+                    .verticalScroll(rememberScrollState())
+                    .padding(vertical = 18.dp),
             ) {
-                // grab
-                Box(
-                    modifier = Modifier
-                        .padding(top = 2.dp)
-                        .width(30.dp)
-                        .height(3.5.dp)
-                        .clip(CircleShape)
-                        .background(t.grab)
-                        .align(Alignment.CenterHorizontally),
-                )
-
                 // 头部
                 Row(
                     modifier = Modifier
@@ -418,25 +409,33 @@ fun StylePickerDialog(
                     }
                 }
 
-                // 皮肤卡
-                LazyRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                        start = 15.dp, end = 15.dp, top = 2.dp, bottom = 12.dp,
-                    ),
-                    horizontalArrangement = Arrangement.spacedBy(7.dp),
+                // 皮肤卡：固定三列，不再横向滑动，一屏就能看全
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 15.dp, end = 15.dp, top = 2.dp, bottom = 6.dp),
+                    verticalArrangement = Arrangement.spacedBy(9.dp),
                 ) {
-                    items(PickSkins, key = { it.mode.value }) { skin ->
-                        SkinCard(
-                            skin = skin,
-                            selected = skin.mode == selected,
-                            tokens = t,
-                            onClick = {
-                                selected = skin.mode
-                                applyUiMode(skin.mode)
-                                repo.uiMode = skin.mode.value
-                            },
-                        )
+                    PickSkins.chunked(3).forEach { rowSkins ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                            rowSkins.forEach { skin ->
+                                SkinCard(
+                                    modifier = Modifier.weight(1f),
+                                    skin = skin,
+                                    selected = skin.mode == selected,
+                                    tokens = t,
+                                    onClick = {
+                                        selected = skin.mode
+                                        applyUiMode(skin.mode)
+                                        repo.uiMode = skin.mode.value
+                                    },
+                                )
+                            }
+                            // 末行不足三个时补占位，保持卡片宽度与上一行一致
+                            repeat(3 - rowSkins.size) {
+                                Spacer(Modifier.weight(1f))
+                            }
+                        }
                     }
                 }
 
@@ -478,6 +477,7 @@ fun StylePickerDialog(
 
 @Composable
 private fun SkinCard(
+    modifier: Modifier = Modifier,
     skin: PickSkin,
     selected: Boolean,
     tokens: PickTokens,
@@ -492,9 +492,8 @@ private fun SkinCard(
     )
 
     Box(
-        modifier = Modifier
-            .width(90.dp)
-            .height(132.dp)
+        modifier = modifier
+            .height(176.dp)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
@@ -523,53 +522,53 @@ private fun SkinCard(
                 } else Modifier
             )
             .clickable(interactionSource = source, indication = null, onClick = onClick)
-            .padding(7.dp),
+            .padding(8.dp),
     ) {
         Column {
             // 缩略图
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(82.dp)
-                    .clip(RoundedCornerShape(10.dp))
+                    .height(108.dp)
+                    .clip(RoundedCornerShape(12.dp))
                     .background(skin.bg)
-                    .padding(horizontal = 7.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                    .padding(horizontal = 9.dp, vertical = 11.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth(0.64f)
-                        .height(5.dp)
-                        .clip(RoundedCornerShape(3.dp))
+                        .height(8.dp)
+                        .clip(RoundedCornerShape(4.dp))
                         .background(skin.accent),
                 )
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(22.dp)
-                        .clip(RoundedCornerShape(6.dp))
+                        .height(36.dp)
+                        .clip(RoundedCornerShape(8.dp))
                         .background(skin.block)
-                        .border(1.dp, skin.ring, RoundedCornerShape(6.dp)),
+                        .border(1.dp, skin.ring, RoundedCornerShape(8.dp)),
                 )
                 Box(
                     modifier = Modifier
                         .fillMaxWidth(0.88f)
-                        .height(5.dp)
-                        .clip(RoundedCornerShape(3.dp))
+                        .height(7.dp)
+                        .clip(RoundedCornerShape(4.dp))
                         .background(skin.ink.copy(alpha = 0.14f)),
                 )
                 Box(
                     modifier = Modifier
                         .fillMaxWidth(0.70f)
-                        .height(5.dp)
-                        .clip(RoundedCornerShape(3.dp))
+                        .height(7.dp)
+                        .clip(RoundedCornerShape(4.dp))
                         .background(skin.ink.copy(alpha = 0.09f)),
                 )
                 Box(
                     modifier = Modifier
                         .fillMaxWidth(0.40f)
-                        .height(5.dp)
-                        .clip(RoundedCornerShape(3.dp))
+                        .height(7.dp)
+                        .clip(RoundedCornerShape(4.dp))
                         .background(skin.mint),
                 )
             }
@@ -582,7 +581,7 @@ private fun SkinCard(
             ) {
                 Text(
                     text = skin.name,
-                    fontSize = 10.5.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -591,7 +590,7 @@ private fun SkinCard(
                 )
                 Text(
                     text = skin.tag,
-                    fontSize = 8.sp,
+                    fontSize = 9.sp,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     color = tokens.sub,
@@ -602,7 +601,7 @@ private fun SkinCard(
                 text = stringResource(
                     if (selected) R.string.style_picker_in_use else R.string.style_picker_switch
                 ),
-                fontSize = 8.sp,
+                fontSize = 9.sp,
                 fontWeight = FontWeight.ExtraBold,
                 letterSpacing = 0.6.sp,
                 maxLines = 1,
@@ -614,7 +613,7 @@ private fun SkinCard(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .size(17.dp)
+                    .size(21.dp)
                     .clip(CircleShape)
                     .background(tokens.checkBg)
                     .alpha(1f),
@@ -622,7 +621,7 @@ private fun SkinCard(
             ) {
                 Text(
                     text = "✓",
-                    fontSize = 10.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Black,
                     color = tokens.checkText,
                 )
