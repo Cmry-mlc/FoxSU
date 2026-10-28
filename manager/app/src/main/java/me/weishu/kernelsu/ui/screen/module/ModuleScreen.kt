@@ -243,6 +243,13 @@ fun ModulePager(
                 },
                 onRefresh = actions.onRefresh,
                 onOpenRepo = actions.onOpenRepo,
+                onUninstall = { module ->
+                    if (module.remove) {
+                        viewModel.undoUninstallModule(module)
+                    } else {
+                        viewModel.uninstallModule(module)
+                    }
+                },
             )
         }
 
@@ -275,6 +282,13 @@ fun ModulePager(
                 },
                 onRefresh = actions.onRefresh,
                 onOpenRepo = actions.onOpenRepo,
+                onUninstall = { module ->
+                    if (module.remove) {
+                        viewModel.undoUninstallModule(module)
+                    } else {
+                        viewModel.uninstallModule(module)
+                    }
+                },
             )
         }
 
@@ -306,6 +320,13 @@ fun ModulePager(
                 },
                 onRefresh = actions.onRefresh,
                 onOpenRepo = actions.onOpenRepo,
+                onUninstall = { module ->
+                    if (module.remove) {
+                        viewModel.undoUninstallModule(module)
+                    } else {
+                        viewModel.uninstallModule(module)
+                    }
+                },
             )
         }
     }

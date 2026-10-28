@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 启动页背景：品牌深空紫 → 靛蓝渐变，不再是纯黑 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="linear"
+                android:angle="270"
+                android:startColor="#FF1B1033"
+                android:centerColor="#FF120E24"
+                android:endColor="#FF07080B"
+                />
+        </shape>
+    </item>
+</layer-list>

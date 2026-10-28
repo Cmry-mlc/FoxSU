@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -302,8 +303,8 @@ fun StylePickerDialog(
         ) {
             Column(
                 modifier = Modifier
-                    .padding(horizontal = 22.dp)
-                    .widthIn(max = 420.dp)
+                    .padding(horizontal = 12.dp)
+                    .widthIn(max = 560.dp)
                     .fillMaxWidth()
                     .graphicsLayer {
                         translationY = (1f - enter) * 24.dp.toPx()
@@ -412,10 +413,21 @@ fun StylePickerDialog(
 
                 // 皮肤卡：横向滑动，一屏正好三张大卡（宽度按可用宽度三等分算）
                 BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                    val gap = 10.dp
-                    val side = 15.dp
+                    val gap = 8.dp
+                    val side = 12.dp
                     val cardWidth = (maxWidth - side * 2 - gap * 2) / 3
+                    val listState = rememberLazyListState()
+                    // 选中项滚动到可见位置
+                    LaunchedEffect(selected) {
+                        val index = PickSkins.indexOfFirst { it.mode == selected }
+                        if (index >= 0) {
+                            val maxIndex = PickSkins.size - 3
+                            val target = index.coerceIn(0, maxIndex.coerceAtLeast(0))
+                            listState.animateScrollToItem(target)
+                        }
+                    }
                     LazyRow(
+                        state = listState,
                         modifier = Modifier.fillMaxWidth(),
                         contentPadding = androidx.compose.foundation.layout.PaddingValues(
                             start = side, end = side, top = 2.dp, bottom = 6.dp,
@@ -492,7 +504,7 @@ private fun SkinCard(
 
     Box(
         modifier = modifier
-            .height(206.dp)
+            .height(232.dp)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
@@ -528,7 +540,7 @@ private fun SkinCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(132.dp)
+                    .height(150.dp)
                     .clip(RoundedCornerShape(13.dp))
                     .background(skin.bg)
                     .padding(horizontal = 10.dp, vertical = 13.dp),

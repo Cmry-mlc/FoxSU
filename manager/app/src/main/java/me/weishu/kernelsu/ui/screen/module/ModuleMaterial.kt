@@ -1080,12 +1080,16 @@ private fun ModuleItem(
                     accent = MaterialTheme.colorScheme.primary,
                     neutralBg = LocalContentColor.current.copy(alpha = 0.08f),
                     neutralFg = LocalContentColor.current.copy(alpha = 0.72f),
+                    pendingRemoval = module.remove,
                     onExecute = {
                         actionsOpen = false
                         onExecuteAction()
                         closeSearch()
                     },
-                    onCancel = { actionsOpen = false },
+                    onUninstall = {
+                        actionsOpen = false
+                        onUninstallClicked()
+                    },
                 )
             }
         }

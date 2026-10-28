@@ -45,8 +45,9 @@ fun NocturneModuleList(
     onRefresh: () -> Unit,
     onOpenRepo: () -> Unit,
     onExecute: (Module) -> Unit = {},
+    onUninstall: (Module) -> Unit = {},
 ) = NocturneModuleScreen(
-    modules, bottomInnerPadding, onToggle, onAddModule, onRefresh, onOpenRepo, onExecute,
+    modules, bottomInnerPadding, onToggle, onAddModule, onRefresh, onOpenRepo, onExecute, onUninstall,
 )
 
 @Composable

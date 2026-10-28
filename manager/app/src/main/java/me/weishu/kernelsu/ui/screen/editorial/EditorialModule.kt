@@ -52,6 +52,7 @@ fun EditorialModule(
     onOpenRepo: () -> Unit = {},
     onCleanModules: () -> Unit = onRefresh,
     onExecute: (Module) -> Unit = {},
+    onUninstall: (Module) -> Unit = {},
 ) {
     val t = edTokens()
     val enabled = modules.count { it.enabled }
@@ -169,8 +170,9 @@ fun EditorialModule(
                         accent = t.violet,
                         neutralBg = t.ink.copy(alpha = 0.06f),
                         neutralFg = t.sub,
+                        pendingRemoval = m.remove,
                         onExecute = { actionsOpen = false; onExecute(m) },
-                        onCancel = { actionsOpen = false },
+                        onUninstall = { actionsOpen = false; onUninstall(m) },
                         modifier = Modifier.padding(start = 22.dp, end = 22.dp, bottom = 13.dp),
                     )
                 }

@@ -51,6 +51,17 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.sp
+import me.weishu.kernelsu.ui.component.RainbowFoxIcon
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -330,39 +341,93 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        // 启动动画：小狐从略小位置放大到居中后淡出
+                        // 启动动画：品牌渐变底 + 呼吸光环 + 动态七彩狐狸，最后整体淡出
                         var showIntro by remember { mutableStateOf(true) }
                         LaunchedEffect(Unit) {
-                            kotlinx.coroutines.delay(780)
+                            kotlinx.coroutines.delay(1150)
                             showIntro = false
                         }
                         androidx.compose.animation.AnimatedVisibility(
                             visible = showIntro,
                             enter = androidx.compose.animation.fadeIn(
                                 androidx.compose.animation.core.tween(240)
-                            ) + androidx.compose.animation.scaleIn(
-                                initialScale = 0.55f,
-                                animationSpec = androidx.compose.animation.core.tween(420),
                             ),
                             exit = androidx.compose.animation.fadeOut(
-                                androidx.compose.animation.core.tween(260)
-                            ) + androidx.compose.animation.scaleOut(
-                                targetScale = 1.35f,
-                                animationSpec = androidx.compose.animation.core.tween(260),
+                                androidx.compose.animation.core.tween(420)
                             ),
                         ) {
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .background(MaterialTheme.colorScheme.surface),
+                                    .background(
+                                        Brush.verticalGradient(
+                                            listOf(Color(0xFF1B1033), Color(0xFF120E24), Color(0xFF07080B))
+                                        )
+                                    ),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_launcher_monochrome),
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.size(72.dp),
+                                // 呼吸光环（两圈不同节奏的扩散）
+                                val glowT = androidx.compose.animation.core.rememberInfiniteTransition(
+                                    label = "intro-glow"
                                 )
+                                listOf(0f, 0.5f).forEachIndexed { idx, offset ->
+                                    val p by glowT.animateFloat(
+                                        initialValue = 0f,
+                                        targetValue = 1f,
+                                        animationSpec = androidx.compose.animation.core.infiniteRepeatable(
+                                            animation = androidx.compose.animation.core.tween(1600),
+                                            repeatMode = androidx.compose.animation.core.RepeatMode.Restart,
+                                            initialStartOffset = androidx.compose.animation.core.StartOffset(offset.toInt() * 800),
+                                        ),
+                                        label = "intro-glow-$idx",
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .size(150.dp)
+                                            .graphicsLayer {
+                                                scaleX = 0.7f + p * 0.9f
+                                                scaleY = 0.7f + p * 0.9f
+                                                alpha = (1f - p) * 0.55f
+                                            }
+                                            .background(
+                                                Brush.radialGradient(
+                                                    listOf(Color(0x668B7BFF), Color.Transparent),
+                                                ),
+                                                CircleShape,
+                                            )
+                                    )
+                                }
+
+                                val foxIn by androidx.compose.animation.core.animateFloatAsState(
+                                    targetValue = 1f,
+                                    animationSpec = androidx.compose.animation.core.tween(520),
+                                    label = "intro-fox",
+                                )
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.graphicsLayer {
+                                        scaleX = foxIn
+                                        scaleY = foxIn
+                                        alpha = foxIn
+                                    },
+                                ) {
+                                    RainbowFoxIcon(modifier = Modifier.size(104.dp))
+                                    Spacer(Modifier.height(14.dp))
+                                    Text(
+                                        text = "FoxSu",
+                                        color = Color(0xFFF3F0FF),
+                                        fontSize = 22.sp,
+                                        fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold,
+                                        letterSpacing = 3.sp,
+                                    )
+                                    Spacer(Modifier.height(6.dp))
+                                    Text(
+                                        text = stringResource(R.string.app_name),
+                                        color = Color(0x8CFFFFFF),
+                                        fontSize = 11.sp,
+                                        letterSpacing = 1.6.sp,
+                                    )
+                                }
                             }
                         }
                     }

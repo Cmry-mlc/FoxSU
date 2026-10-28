@@ -131,6 +131,7 @@ import me.weishu.kernelsu.data.repository.SettingsRepositoryImpl
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.ui.component.RainbowFoxIcon
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.UiMode
 import me.weishu.kernelsu.ui.component.CardAppearanceDialog
@@ -578,7 +579,7 @@ private fun FreshHeader() {
             .padding(top = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // 深色圆底 + 彩色全局狐狸
+        // 深色圆底（统一 46dp）+ 动态七彩狐狸
         Surface(
             shape = CircleShape,
             color = logoBg,
@@ -586,11 +587,8 @@ private fun FreshHeader() {
             modifier = Modifier.size(46.dp),
         ) {
             Box(contentAlignment = Alignment.Center) {
-                Image(
-                    painter = painterResource(R.drawable.ic_fox_global),
-                    contentDescription = null,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.size(36.dp),
+                RainbowFoxIcon(
+                    modifier = Modifier.size(40.dp),
                 )
             }
         }

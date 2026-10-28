@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.BuildConfig
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.ui.component.RainbowFoxIcon
 import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
@@ -299,12 +300,8 @@ fun GlassTopBar(
                     .background(t.avaBg),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_launcher_monochrome),
-                    contentDescription = null,
-                    modifier = Modifier.size(34.dp),
-                    tint = foxColor,
-                )
+                // 动态七彩狐狸（圆形背景与其他皮肤统一 46dp）
+                RainbowFoxIcon(modifier = Modifier.size(40.dp))
             }
             if (showDot) {
                 Box(

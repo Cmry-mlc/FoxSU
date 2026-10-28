@@ -42,6 +42,7 @@ fun NocturneModuleScreen(
     onRefresh: () -> Unit,
     onOpenRepo: () -> Unit,
     onExecute: (Module) -> Unit = {},
+    onUninstall: (Module) -> Unit = {},
 ) {
     val t = ncTokens()
     var query by remember { mutableStateOf("") }
@@ -84,7 +85,7 @@ fun NocturneModuleScreen(
                 } else {
                     item { NcSectionLabel("INSTALLED · 已安装 ${list.size}") }
                     items(list, key = { it.id }) { m ->
-                        ModuleRow(m, onToggle, onExecute)
+                        ModuleRow(m, onToggle, onExecute, onUninstall)
                         Spacer(Modifier.height(7.dp))
                     }
                 }
@@ -104,7 +105,12 @@ fun NocturneModuleScreen(
 
 /** 模块行：图标盒 + 名称 + 描述 + 版本 + 开关。 */
 @Composable
-private fun ModuleRow(m: Module, onToggle: (Module) -> Unit, onExecute: (Module) -> Unit = {}) {
+private fun ModuleRow(
+    m: Module,
+    onToggle: (Module) -> Unit,
+    onExecute: (Module) -> Unit = {},
+    onUninstall: (Module) -> Unit = {},
+) {
     val t = ncTokens()
     var actionsOpen by rememberSaveable(m.id) { mutableStateOf(false) }
     Column(
@@ -174,8 +180,9 @@ private fun ModuleRow(m: Module, onToggle: (Module) -> Unit, onExecute: (Module)
                 accent = t.vio,
                 neutralBg = t.fill,
                 neutralFg = t.tx2,
+                pendingRemoval = m.remove,
                 onExecute = { actionsOpen = false; onExecute(m) },
-                onCancel = { actionsOpen = false },
+                onUninstall = { actionsOpen = false; onUninstall(m) },
             )
         }
     }

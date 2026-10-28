@@ -1097,8 +1097,12 @@ fun ModuleItem(
                 accent = colorScheme.primary,
                 neutralBg = cardContent.copy(alpha = 0.08f),
                 neutralFg = cardContent.copy(alpha = 0.72f),
+                pendingRemoval = module.remove,
                 onExecute = onExecuteAction,
-                onCancel = { actionsOpen = false },
+                onUninstall = {
+                    actionsOpen = false
+                    if (module.remove) onUndoUninstall() else onUninstall()
+                },
             )
         }
     }

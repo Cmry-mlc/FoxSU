@@ -31,8 +31,8 @@ import me.weishu.kernelsu.R
 /**
  * 模块卡片内联操作条 —— 点卡片后在卡片自身内部展开，不是二级面板。
  *
- * 左侧「执行」跑模块自带的 action.sh，右侧「取消」把这一行收回去。
- * 配色跟视频一致：淡色胶囊底 + 同色文字，不是实心按钮。
+ * 左侧「执行」跑模块自带的 action.sh，右侧「卸载」直接走内核模块卸载流程
+ * （真实生效：调用 ksu module uninstall，已标记卸载的模块则变成「撤销」）。
  */
 @Composable
 fun ModuleCardActions(
@@ -41,8 +41,9 @@ fun ModuleCardActions(
     accent: Color,
     neutralBg: Color,
     neutralFg: Color,
+    pendingRemoval: Boolean = false,
     onExecute: () -> Unit,
-    onCancel: () -> Unit,
+    onUninstall: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val tintBg = if (runnable) accent.copy(alpha = 0.14f) else neutralBg
@@ -97,7 +98,7 @@ fun ModuleCardActions(
                 )
             }
 
-            // 取消
+            // 卸载（已标记卸载时变为撤销）
             Row(
                 modifier = Modifier
                     .height(34.dp)
@@ -106,13 +107,24 @@ fun ModuleCardActions(
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                        onClick = onCancel,
+                        onClick = onUninstall,
                     )
                     .padding(horizontal = 13.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                Icon(
+                    painter = painterResource(
+                        if (pendingRemoval) R.drawable.ic_d_refresh else R.drawable.ic_d_trash
+                    ),
+                    contentDescription = null,
+                    modifier = Modifier.size(13.dp),
+                    tint = neutralFg,
+                )
+                Spacer(Modifier.width(6.dp))
                 Text(
-                    text = stringResource(R.string.module_action_cancel),
+                    text = stringResource(
+                        if (pendingRemoval) R.string.undo else R.string.uninstall
+                    ),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = neutralFg,

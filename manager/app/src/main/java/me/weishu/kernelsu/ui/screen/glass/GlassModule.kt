@@ -57,6 +57,7 @@ fun GlassModuleList(
     onOpenRepo: () -> Unit = {},
     onCleanModules: () -> Unit = onRefresh,
     onExecute: (Module) -> Unit = {},
+    onUninstall: (Module) -> Unit = {},
 ) {
     val t = glassTokens()
     val enabledCount = modules.count { it.enabled }
@@ -172,8 +173,9 @@ fun GlassModuleList(
                     accent = t.violet,
                     neutralBg = if (t.isDark) Color(0x14FFFFFF) else Color(0x0D5A5578),
                     neutralFg = t.sub,
+                    pendingRemoval = m.remove,
                     onExecute = { actionsOpen = false; onExecute(m) },
-                    onCancel = { actionsOpen = false },
+                    onUninstall = { actionsOpen = false; onUninstall(m) },
                 )
             }
             }
