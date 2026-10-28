@@ -70,6 +70,13 @@ fun AgRebootSheet(onDismiss: () -> Unit) {
         Icons.Rounded.Error,
     )
 
+    androidx.compose.ui.window.Dialog(
+        onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
+        ),
+    ) {
     Box(Modifier.fillMaxSize()) {
         // 遮罩
         Box(
@@ -135,4 +142,5 @@ fun AgRebootSheet(onDismiss: () -> Unit) {
             }
         }
     }
+}
 }

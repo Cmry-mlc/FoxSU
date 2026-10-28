@@ -75,38 +75,53 @@ fun AgHome(
     var showReboot by remember { mutableStateOf(false) }
     var showStyle by remember { mutableStateOf(false) }
 
+    // 固定顶栏 + 毛玻璃：不随内容滚动（dev-handoff .headwrap 要求）
     Column(
         Modifier
             .fillMaxSize()
             .background(Ag.background())
-            .statusBarsPadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 18.dp),
+            .statusBarsPadding(),
     ) {
-        Spacer(Modifier.height(8.dp))
-        // ── 顶栏：Logo + 渐变标题 + 作者/主题/电源 ──
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            androidx.compose.foundation.Image(
-                painter = painterResource(R.drawable.ic_fox_global),
-                contentDescription = null,
-                modifier = Modifier.size(34.dp),
-            )
-            Spacer(Modifier.width(10.dp))
-            Text(
-                "FoxSu",
-                fontSize = 30.sp,
-                fontWeight = FontWeight.ExtraBold,
-                letterSpacing = (-0.6).sp,
-                style = TextStyle(brush = Ag.TitleGrad),
-            )
-            Spacer(Modifier.weight(1f))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                AgIconBtn(Icons.Rounded.Person, onClick = onOpenAuthor)
-                AgIconBtn(Icons.Rounded.Palette, onClick = { showStyle = true })
-                AgIconBtn(Icons.Rounded.PowerSettingsNew, onClick = { showReboot = true })
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .background(Color(0xC4F7F6FB))
+                .padding(horizontal = 18.dp),
+        ) {
+            Spacer(Modifier.height(8.dp))
+            // ── 顶栏：Logo + 渐变标题 + 作者/主题/电源 ──
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                androidx.compose.foundation.Image(
+                    painter = painterResource(R.drawable.ic_fox_global),
+                    contentDescription = null,
+                    modifier = Modifier.size(34.dp),
+                )
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    "FoxSu",
+                    fontSize = 30.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = (-0.6).sp,
+                    style = TextStyle(brush = Ag.TitleGrad),
+                )
+                Spacer(Modifier.weight(1f))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    AgIconBtn(Icons.Rounded.Person, onClick = onOpenAuthor)
+                    AgIconBtn(Icons.Rounded.Palette, onClick = { showStyle = true })
+                    AgIconBtn(Icons.Rounded.PowerSettingsNew, onClick = { showReboot = true })
+                }
             }
+            Spacer(Modifier.height(10.dp))
+            Box(Modifier.fillMaxWidth().height(1.dp).background(Ag.Line))
         }
-        Spacer(Modifier.height(22.dp))
+        // ── 内容滚动区（从毛玻璃下透出）──
+        Column(
+            Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 18.dp),
+        ) {
+            Spacer(Modifier.height(12.dp))
 
         // ── 状态卡：外层渐变底 2px + 内层 22dp 白芯 ──
         Box(
@@ -187,13 +202,20 @@ fun AgHome(
 
         // ── 安全状态卡 ──
         AgCard(Modifier.fillMaxWidth(), contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 6.dp)) {
-            AgRow(stringResource(R.string.home_selinux_status), state.systemInfo.selinuxStatus.ifBlank { "Unknown" }, Ag.Teal, Icons.Rounded.Shield)
+            AgRow(stringResource(R.string.home_selinux_status), when (state.systemInfo.selinuxStatus) {
+                    "Enforcing" -> "强制执行"
+                    "Permissive" -> "宽松模式"
+                    "Disabled" -> "已禁用"
+                    else -> "未知"
+                }, Ag.Teal, Icons.Rounded.Shield)
             AgRow(
                 stringResource(R.string.home_seccomp_status),
                 when (state.systemInfo.seccompStatus) {
-                    1 -> stringResource(R.string.home_seccomp_enforcing)
-                    0 -> stringResource(R.string.home_seccomp_permissive)
-                    else -> stringResource(R.string.home_seccomp_unknown)
+                    -1 -> "内核未开启"
+                    0 -> "未启用"
+                    1 -> "严格模式"
+                    2 -> "过滤模式"
+                    else -> "未知"
                 },
                 Ag.Teal, Icons.Rounded.Tune,
             )
@@ -214,7 +236,8 @@ fun AgHome(
                 onClick = { actions.onOpenUrl("https://kernelsu.org/") },
             )
         }
-        Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(24.dp))
+        }
     }
 
     if (showStyle) {

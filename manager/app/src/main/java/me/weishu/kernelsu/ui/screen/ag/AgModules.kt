@@ -82,10 +82,10 @@ fun AgModules(
         )
     }
 
+    Box(Modifier.fillMaxSize().background(Ag.background())) {
     Column(
         Modifier
             .fillMaxSize()
-            .background(Ag.background())
             .statusBarsPadding(),
     ) {
         Column(
@@ -108,7 +108,7 @@ fun AgModules(
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 4.dp, bottom = bottomInnerPadding + 110.dp),
+            contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 4.dp, bottom = bottomInnerPadding + 130.dp),
         ) {
             if (modules.isEmpty()) {
                 item {
@@ -138,15 +138,14 @@ fun AgModules(
         }
     }
 
-    // FAB：右下角导入 zip
-    Box(Modifier.fillMaxSize()) {
-        Box(
-            Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = 22.dp, bottom = bottomInnerPadding + 84.dp)
-        ) {
-            AgFab { picker.launch(Intent(Intent.ACTION_GET_CONTENT).apply { type = "application/zip" }) }
-        }
+    // FAB：右下角导入 zip（设计稿 .fab，同容器内不受滚动裁切）
+    Box(
+        Modifier
+            .align(Alignment.BottomEnd)
+            .padding(end = 22.dp, bottom = bottomInnerPadding + 64.dp)
+    ) {
+        AgFab { picker.launch(Intent(Intent.ACTION_GET_CONTENT).apply { type = "application/zip" }) }
+    }
     }
 }
 

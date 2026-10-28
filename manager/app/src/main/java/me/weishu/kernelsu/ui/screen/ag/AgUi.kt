@@ -148,6 +148,7 @@ fun AgCard(
                 .clip(shape)
                 .background(Ag.Card)
                 .border(1.dp, Ag.Line, shape)
+                .padding(contentPadding)
                 .animateContentSize(),
             content = content,
         )

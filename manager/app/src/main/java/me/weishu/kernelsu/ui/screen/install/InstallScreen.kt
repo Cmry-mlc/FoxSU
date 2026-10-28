@@ -289,7 +289,7 @@ fun InstallScreen() {
     )
 
     when (LocalUiMode.current) {
-        UiMode.Miuix -> InstallScreenMiuix(state, actions, miuixSnackbarHost)
+        UiMode.Miuix -> me.weishu.kernelsu.ui.screen.ag.AgInstall(state, actions)
         UiMode.Material, UiMode.Fresh, UiMode.Glass, UiMode.Nocturne -> InstallScreenMaterial(state, actions, snackbarHost)
     }
 }
