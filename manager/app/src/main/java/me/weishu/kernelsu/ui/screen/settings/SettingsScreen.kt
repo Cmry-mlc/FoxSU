@@ -77,8 +77,6 @@ fun SettingPager(
             bottomInnerPadding = bottomInnerPadding,
             onOpenCustomization = { navigator.push(Route.Customization) },
             onOpenAuthor = { navigator.push(Route.Author) },
-            dockEnabled = uiState.enableFloatingBottomBar,
-            onSetDock = viewModel::setEnableFloatingBottomBar,
         )
         UiMode.Fresh -> SettingPagerMaterial(uiState, actions, bottomInnerPadding)
 

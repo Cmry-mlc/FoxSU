@@ -64,6 +64,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
@@ -251,7 +252,15 @@ class MainActivity : ComponentActivity() {
                             entry<Route.Author>(swipeDismiss = swipeDismiss) { AuthorScreen() }
                             entry<Route.Sulog>(swipeDismiss = swipeDismiss) { SulogScreen() }
                             entry<Route.ColorPalette>(swipeDismiss = swipeDismiss) { ColorPaletteScreen() }
-                            entry<Route.Customization>(swipeDismiss = swipeDismiss) { CustomizationScreen() }
+                            entry<Route.Customization>(swipeDismiss = swipeDismiss) {
+                                if (LocalUiMode.current == UiMode.Miuix) {
+                                    me.weishu.kernelsu.ui.screen.ag.AgCustomization(
+                                        onBack = dropUnlessResumed { navigator.pop() },
+                                    )
+                                } else {
+                                    CustomizationScreen()
+                                }
+                            }
                             entry<Route.AppProfileTemplate>(swipeDismiss = swipeDismiss) { AppProfileTemplateScreen() }
                             entry<Route.TemplateEditor>(swipeDismiss = swipeDismiss) { key -> TemplateEditorScreen(key.template, key.readOnly) }
                             entry<Route.AppProfile>(swipeDismiss = swipeDismiss) { key -> AppProfileScreen(key.uid) }
