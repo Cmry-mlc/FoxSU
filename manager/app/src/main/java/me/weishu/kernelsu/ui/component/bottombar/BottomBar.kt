@@ -121,12 +121,8 @@ fun BottomBar(
     val mainPagerState = LocalMainPagerState.current
     val dockOn = LocalEnableFloatingBottomBar.current
     when (LocalUiMode.current) {
-        // 「抽屉底栏」开关开启时：每套皮肤使用自己的专属抽屉风格
-        UiMode.Miuix -> if (dockOn) {
-            ThemeDockBar(AgDockThemes.redesign, navigationBadge, modifier)
-        } else {
-            BottomBarMiuix(blurBackdrop, backdrop, navigationBadge, modifier)
-        }
+        // Redesign（晨曦玻璃）：悬浮 Dock 就是该皮肤的设计底栏，始终启用
+        UiMode.Miuix -> ThemeDockBar(AgDockThemes.redesign, navigationBadge, modifier)
         UiMode.Material -> if (dockOn) {
             ThemeDockBar(AgDockThemes.editorial, navigationBadge, modifier)
         } else {
