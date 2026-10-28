@@ -4,6 +4,9 @@ import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -96,9 +100,17 @@ fun AgModules(
         ) {
             Spacer(Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                AgIconBtn(Icons.Rounded.PlayArrow, onClick = actions.onRefresh)
+                // 标题栏狐狸 logo
+                androidx.compose.foundation.Image(
+                    painter = androidx.compose.ui.res.painterResource(me.weishu.kernelsu.R.drawable.ic_fox_global),
+                    contentDescription = null,
+                    modifier = Modifier.size(36.dp),
+                )
                 Spacer(Modifier.weight(1f))
-                AgIconBtn(Icons.Rounded.Web, onClick = actions.onOpenRepo)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    AgIconBtn(Icons.Rounded.Refresh, onClick = actions.onRefresh)
+                    AgIconBtn(Icons.Rounded.Web, onClick = actions.onOpenRepo)
+                }
             }
             // 标题 + 计数（与开关实时联动）
             AgTitle("模", "块", count = "已启用 $enabledCount / ${uiState.modules.size}")
@@ -219,7 +231,7 @@ private fun AgModuleCard(
                 }
                 Spacer(Modifier.weight(1f))
                 AgPill(
-                    icon = if (m.remove) androidx.compose.material.icons.Icons.Rounded.Refresh else Icons.Rounded.Delete,
+                    icon = if (m.remove) Icons.Rounded.Refresh else Icons.Rounded.Delete,
                     text = if (m.remove) "撤销" else "卸载",
                     warn = true, onClick = onUninstall,
                 )
@@ -232,10 +244,25 @@ private fun AgModuleCard(
 @Composable
 private fun AgPill(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String, warn: Boolean = false, onClick: () -> Unit) {
     val color = if (warn) Ag.Danger else Ag.Vio
+    val pillSrc = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    val pillPressed by pillSrc.collectIsPressedAsState()
+    val pillScale by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (pillPressed) 0.88f else 1f,
+        animationSpec = androidx.compose.animation.core.spring(
+            dampingRatio = androidx.compose.animation.core.Spring.DampingRatioHighBouncy,
+            stiffness = androidx.compose.animation.core.Spring.StiffnessMedium,
+        ),
+        label = "ag-pill",
+    )
     Row(
         Modifier
             .height(34.dp)
-            .agClick(onClick = onClick)
+            .graphicsLayer { scaleX = pillScale; scaleY = pillScale }
+            .clickable(
+                interactionSource = pillSrc,
+                indication = null,
+                onClick = onClick,
+            )
             .clip(RoundedCornerShape(11.dp))
             .background(if (warn) Color(0x0DDC2626) else Color(0x0F6C5CE7))
             .border(1.dp, if (warn) Color(0x33DC2626) else Color(0x386C5CE7), RoundedCornerShape(11.dp))

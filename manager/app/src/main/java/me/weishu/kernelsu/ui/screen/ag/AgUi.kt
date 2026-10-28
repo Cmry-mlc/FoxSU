@@ -141,13 +141,17 @@ fun AgCard(
     content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
 ) {
     val shape = RoundedCornerShape(radius)
+    // 液态玻璃全局生效：开启后所有玻璃卡改为半透明白 + 亮描边（雾彩背景透出）
+    val glass = me.weishu.kernelsu.data.settings.CustomizationStore.current.cardGlass
+    val glassCard = Ag.Card.copy(alpha = if (glass) 0.55f else Ag.Card.alpha)
+    val glassLine = if (glass) Color(0x33FFFFFF) else Ag.Line
     if (onClick != null) {
         Column(
             modifier
                 .agClick(onClick = onClick)
                 .clip(shape)
-                .background(Ag.Card)
-                .border(1.dp, Ag.Line, shape)
+                .background(glassCard)
+                .border(1.dp, glassLine, shape)
                 .padding(contentPadding)
                 .animateContentSize(),
             content = content,
@@ -156,8 +160,8 @@ fun AgCard(
         Column(
             modifier
                 .clip(shape)
-                .background(Ag.Card)
-                .border(1.dp, Ag.Line, shape)
+                .background(glassCard)
+                .border(1.dp, glassLine, shape)
                 .padding(contentPadding),
             content = content,
         )
@@ -299,6 +303,7 @@ fun AgButton(primary: Boolean, text: String, onClick: () -> Unit, modifier: Modi
             .agClick(enabled = enabled, onClick = onClick)
             .then(
                 if (primary) Modifier
+                    .clip(shape)
                     .background(Ag.Grad, shape)
                     .shadow(6.dp, shape, spotColor = Color(0x4D6C5CE7), ambientColor = Color(0x4D6C5CE7))
                 else Modifier
@@ -307,6 +312,35 @@ fun AgButton(primary: Boolean, text: String, onClick: () -> Unit, modifier: Modi
             ),
         contentAlignment = Alignment.Center,
     ) {
+        if (primary && enabled) {
+            // 渐变动态色彩：高光带循环流动
+            val t = androidx.compose.animation.core.rememberInfiniteTransition(label = "ag-btn-flow")
+            val shift by t.animateFloat(
+                initialValue = -1f,
+                targetValue = 2f,
+                animationSpec = androidx.compose.animation.core.infiniteRepeatable(
+                    animation = androidx.compose.animation.core.tween(2600, easing = androidx.compose.animation.core.LinearEasing),
+                ),
+                label = "ag-btn-flow-v",
+            )
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(38.dp)
+                    .graphicsLayer { translationX = 300.dp.toPx() * shift }
+                    .background(
+                        Brush.linearGradient(
+                            listOf(
+                                Color.Transparent,
+                                Color.White.copy(alpha = 0.35f),
+                                Color.Transparent,
+                            ),
+                            start = androidx.compose.ui.geometry.Offset(0f, 0f),
+                            end = androidx.compose.ui.geometry.Offset(0f, 10000f),
+                        ),
+                    ),
+            )
+        }
         Text(text, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = if (primary) Color.White else Ag.Vio)
     }
 }

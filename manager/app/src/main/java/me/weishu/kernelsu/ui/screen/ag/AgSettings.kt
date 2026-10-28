@@ -65,6 +65,8 @@ fun AgSettings(
     bottomInnerPadding: androidx.compose.ui.unit.Dp,
     onOpenCustomization: () -> Unit,
     onOpenAuthor: () -> Unit,
+    dockEnabled: Boolean,
+    onSetDock: (Boolean) -> Unit,
 ) {
     val context = LocalContext.current
     var showStyle by remember { mutableStateOf(false) }
@@ -121,6 +123,27 @@ fun AgSettings(
                     AgRow(
                         "定制功能", "背景壁纸、卡片样式与启动器图标",
                         Ag.Amber, Icons.Rounded.Construction, showChev = true, onClick = onOpenCustomization,
+                    )
+                    AgRow(
+                        "抽屉底栏", "切换悬浮抽屉胶囊底栏",
+                        Ag.Teal, Icons.Rounded.Tune,
+                        trailing = { AgToggle(checked = dockEnabled, onCheckedChange = { onSetDock(!dockEnabled) }, small = true) },
+                    )
+                    AgRow(
+                        "液态玻璃", "全局玻璃卡片材质（雾彩透出）",
+                        Ag.Vio, Icons.Rounded.Tune,
+                        trailing = {
+                            val store = remember { me.weishu.kernelsu.data.settings.CustomizationStore }
+                            var glassOn by remember { mutableStateOf(store.current.cardGlass) }
+                            AgToggle(
+                                checked = glassOn,
+                                onCheckedChange = {
+                                    glassOn = !glassOn
+                                    store.setCardGlass(glassOn)
+                                },
+                                small = true,
+                            )
+                        },
                     )
                 }
             }

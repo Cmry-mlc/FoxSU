@@ -313,7 +313,7 @@ class MainActivity : ComponentActivity() {
                                 containerColor = me.weishu.kernelsu.ui.screen.editorial.edTokens().paper
                             ) { navDisplay() }
 
-                            UiMode.Miuix -> Scaffold { navDisplay() }
+                            UiMode.Miuix -> Scaffold(containerColor = androidx.compose.ui.graphics.Color.Transparent) { navDisplay() }
 
                             UiMode.Fresh -> androidx.compose.material3.Scaffold(
                                 containerColor = scaffoldBackgroundColor(MaterialTheme.colorScheme.surface)
