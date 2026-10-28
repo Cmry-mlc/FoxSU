@@ -84,7 +84,7 @@ fun SuperUserPager(
     )
 
     when (LocalUiMode.current) {
-        UiMode.Miuix -> SuperUserPagerMiuix(
+        UiMode.Miuix -> me.weishu.kernelsu.ui.screen.ag.AgSuperUser(
             uiState = uiState,
             actions = actions,
             bottomInnerPadding = bottomInnerPadding,

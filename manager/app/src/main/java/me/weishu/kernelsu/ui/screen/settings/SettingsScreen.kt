@@ -71,7 +71,13 @@ fun SettingPager(
     )
 
     when (LocalUiMode.current) {
-        UiMode.Miuix -> SettingPagerMiuix(uiState, actions, bottomInnerPadding)
+        UiMode.Miuix -> me.weishu.kernelsu.ui.screen.ag.AgSettings(
+            uiState = uiState,
+            actions = actions,
+            bottomInnerPadding = bottomInnerPadding,
+            onOpenCustomization = { navigator.push(Route.Customization) },
+            onOpenAuthor = { navigator.push(Route.Author) },
+        )
         UiMode.Fresh -> SettingPagerMaterial(uiState, actions, bottomInnerPadding)
 
         UiMode.Material -> me.weishu.kernelsu.ui.screen.editorial.EditorialSettings(

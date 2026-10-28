@@ -124,6 +124,13 @@
     <string name="reboot_to_apply">Reboot to take effect</string>
     <string name="module_magisk_conflict">Modules are unavailable due to a conflict with Magisk!</string>
     <string name="home_learn_kernelsu">Learn KernelSU</string>
+    <string name="home_kernel_version">Kernel version</string>
+    <string name="home_system_fingerprint">System fingerprint</string>
+    <string name="home_seccomp_enforcing">Enforcing</string>
+    <string name="home_seccomp_permissive">Permissive</string>
+    <string name="home_seccomp_unknown">Unknown</string>
+    <string name="home_support_desc">KernelSU stays free and open-source; donate to support development</string>
+    <string name="home_learn_kernelsu_desc">Learn how to install KernelSU and develop modules</string>
     <string name="home_learn_kernelsu_url">https://kernelsu.org/guide/what-is-kernelsu.html</string>
     <string name="home_click_to_learn_kernelsu">Learn how to install KernelSU and use modules.</string>
     <string name="home_support_title">Support Us</string>

@@ -134,11 +134,9 @@ fun HomePager(
     val mainPagerState = LocalMainPagerState.current
 
     when (LocalUiMode.current) {
-        UiMode.Miuix -> HomePagerMiuix(
+        UiMode.Miuix -> me.weishu.kernelsu.ui.screen.ag.AgHome(
             state = uiState,
             actions = actions,
-            bottomInnerPadding = bottomInnerPadding,
-            navigationBadge = navigationBadge,
             onOpenTab = { page -> mainPagerState.animateToPage(page) },
             onOpenAuthor = { navigator.push(Route.Author) },
         )

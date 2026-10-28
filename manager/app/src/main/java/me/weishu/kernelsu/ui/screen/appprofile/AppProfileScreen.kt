@@ -141,7 +141,7 @@ fun AppProfileScreen(uid: Int) {
     )
 
     when (uiMode) {
-        UiMode.Miuix -> AppProfileScreenMiuix(
+        UiMode.Miuix -> me.weishu.kernelsu.ui.screen.ag.AgAppProfile(
             state = state,
             actions = actions,
         )

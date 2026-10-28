@@ -1,5 +1,10 @@
 package me.weishu.kernelsu.ui.screen.home
 
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -45,9 +50,11 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -81,7 +88,6 @@ import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
-import me.weishu.kernelsu.ui.component.heroSlideOut
 import me.weishu.kernelsu.ui.screen.home.HeroPhase
 import me.weishu.kernelsu.ui.screen.home.heroState
 import me.weishu.kernelsu.ui.theme.NocturneGlowBackdrop
@@ -344,10 +350,24 @@ private fun StatusCard(
                                     .offset(27.dp, 31.dp),
                                 contentAlignment = Alignment.BottomEnd
                             ) {
+                                val miuixSealT = androidx.compose.animation.core.rememberInfiniteTransition(label = "miuix-seal")
+                                val miuixBreath by miuixSealT.animateFloat(
+                                    initialValue = 0f,
+                                    targetValue = 1f,
+                                    animationSpec = androidx.compose.animation.core.infiniteRepeatable(
+                                        animation = androidx.compose.animation.core.tween(2000),
+                                        repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
+                                    ),
+                                    label = "miuix-breath",
+                                )
                                 Icon(
                                     modifier = Modifier
                                         .size(110.dp)
-                                        .heroSlideOut(46.dp),
+                                        .graphicsLayer {
+                                            val k = 1f + 0.04f * miuixBreath
+                                            scaleX = k
+                                            scaleY = k
+                                        },
                                     // 状态字形由真实 HeroPhase 决定：工作中 / 待重启（刷写成功）才是对勾
                                     imageVector = when (hero.phase) {
                                         HeroPhase.WORKING, HeroPhase.PENDING_REBOOT -> Icons.Rounded.CheckCircleOutline

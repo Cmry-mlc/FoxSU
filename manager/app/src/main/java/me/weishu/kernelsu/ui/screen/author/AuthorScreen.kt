@@ -94,6 +94,13 @@ fun AuthorScreen() {
             )
             return
         }
+        UiMode.Miuix -> {
+            me.weishu.kernelsu.ui.screen.ag.AgAuthor(
+                onBack = dropUnlessResumed { navigator.pop() },
+                onOpenUrl = uriHandler::openUri,
+            )
+            return
+        }
         else -> Unit
     }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())

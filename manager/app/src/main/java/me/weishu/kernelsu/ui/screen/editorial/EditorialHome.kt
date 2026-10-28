@@ -93,7 +93,6 @@ fun EditorialHome(
             )
             Spacer(Modifier.height(12.dp))
             EdStatusBand(
-                sealOk = hero.phase == HeroPhase.WORKING || hero.phase == HeroPhase.PENDING_REBOOT,
                 kicker = "CURRENT STATUS · 当前状态",
                 big = when (hero.phase) {
                     HeroPhase.NOT_INSTALLED -> "未安装"

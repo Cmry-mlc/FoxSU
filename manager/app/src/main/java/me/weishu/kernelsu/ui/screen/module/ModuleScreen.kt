@@ -199,10 +199,8 @@ fun ModulePager(
     )
 
     when (uiMode) {
-        UiMode.Miuix -> ModulePagerMiuix(
+        UiMode.Miuix -> me.weishu.kernelsu.ui.screen.ag.AgModules(
             uiState = rawUiState,
-            confirmDialogState = rawUiState.confirmDialogState,
-            moduleEvent = viewModel.moduleEvent,
             actions = actions,
             bottomInnerPadding = bottomInnerPadding,
         )
