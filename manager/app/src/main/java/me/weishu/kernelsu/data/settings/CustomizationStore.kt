@@ -53,6 +53,7 @@ data class Customization(
     val homeTitle: String = "",
     /** 0 = pill bar, 1 = drawer bar that expands the selected tab. */
     val bottomBarStyle: Int = 0,
+    val dockStyle: String = "d0",
     /** Tint the four home KPI cards with the built-in palette (light mode only). */
     val homePalette: Boolean = true,
     /** Corner radius of the floating bottom bar, in dp. */
@@ -145,6 +146,7 @@ object CustomizationStore {
     private const val KEY_CARD_ALPHA = "card_alpha"
     private const val KEY_HOME_TITLE = "home_title"
     private const val KEY_BOTTOM_STYLE = "bottom_bar_style"
+private const val KEY_DOCK_STYLE = "dock_style"
     private const val KEY_HOME_PALETTE = "home_palette"
     private const val KEY_BOTTOM_RADIUS = "bottom_bar_radius"
     private const val KEY_BOTTOM_IMMERSIVE = "bottom_bar_immersive"
@@ -204,6 +206,7 @@ object CustomizationStore {
             cardAlpha = getFloat(KEY_CARD_ALPHA, 1f),
             homeTitle = getString(KEY_HOME_TITLE, "").orEmpty(),
             bottomBarStyle = getInt(KEY_BOTTOM_STYLE, 0),
+            dockStyle = getString(KEY_DOCK_STYLE, "d0").orEmpty(),
             homePalette = getBoolean(KEY_HOME_PALETTE, true),
             bottomBarRadius = getFloat(KEY_BOTTOM_RADIUS, 30f),
             bottomBarImmersive = getBoolean(KEY_BOTTOM_IMMERSIVE, false),
@@ -265,6 +268,7 @@ object CustomizationStore {
     fun setCardAlpha(alpha: Float) = update { it.copy(cardAlpha = alpha) }
     fun setHomeTitle(title: String) = update { it.copy(homeTitle = title) }
     fun setBottomBarStyle(style: Int) = update { it.copy(bottomBarStyle = style) }
+    fun setDockStyle(style: String) = update { it.copy(dockStyle = style) }
 
     fun setHomePalette(enabled: Boolean) = update { it.copy(homePalette = enabled) }
     fun setBottomBarRadius(radius: Float) = update { it.copy(bottomBarRadius = radius) }
@@ -315,6 +319,7 @@ object CustomizationStore {
             putFloat(KEY_MODULE_IMAGE_ALPHA, next.moduleImageAlpha)
             putString(KEY_HOME_TITLE, next.homeTitle)
             putInt(KEY_BOTTOM_STYLE, next.bottomBarStyle)
+            putString(KEY_DOCK_STYLE, next.dockStyle)
             putBoolean(KEY_HOME_PALETTE, next.homePalette)
             putFloat(KEY_BOTTOM_RADIUS, next.bottomBarRadius)
             putBoolean(KEY_BOTTOM_IMMERSIVE, next.bottomBarImmersive)

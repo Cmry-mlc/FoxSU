@@ -78,7 +78,7 @@ fun AgSuperUser(
             Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(0.dp))
-                .background(Color(0xC4F7F6FB))
+                .background(Ag.headSurface())
                 .padding(horizontal = 18.dp),
         ) {
             Spacer(Modifier.height(8.dp))

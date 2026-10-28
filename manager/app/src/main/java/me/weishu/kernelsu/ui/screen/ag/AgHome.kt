@@ -91,7 +91,7 @@ fun AgHome(
         Column(
             Modifier
                 .fillMaxWidth()
-                .background(Color(0xC4F7F6FB))
+                .background(Ag.headSurface())
                 .padding(horizontal = 18.dp),
         ) {
             Spacer(Modifier.height(8.dp))
@@ -118,7 +118,6 @@ fun AgHome(
                 }
             }
             Spacer(Modifier.height(10.dp))
-            Box(Modifier.fillMaxWidth().height(1.dp).background(Ag.Line))
         }
         // ── 内容滚动区（从毛玻璃下透出）──
         Column(

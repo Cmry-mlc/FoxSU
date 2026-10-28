@@ -69,7 +69,7 @@ internal fun AgInstall(
         Column(
             Modifier
                 .fillMaxWidth()
-                .background(Color(0xC4F7F6FB))
+                .background(Ag.headSurface())
                 .padding(horizontal = 18.dp),
         ) {
             Spacer(Modifier.height(8.dp))
@@ -139,7 +139,7 @@ internal fun AgInstall(
                                     .agClick(enabled = uiState.canSelectPartition, onClick = { actions.onSelectPartition(i) })
                                     .clip(RoundedCornerShape(12.dp))
                                     .background(
-                                        if (on) Ag.Grad else androidx.compose.ui.graphics.SolidColor(Color(0x0D1E1946))
+                                        if (on) Ag.Grad else androidx.compose.ui.graphics.SolidColor(Ag.TintInk)
                                     )
                                     .border(
                                         1.dp,

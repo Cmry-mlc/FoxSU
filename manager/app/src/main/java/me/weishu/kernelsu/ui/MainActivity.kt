@@ -254,8 +254,35 @@ class MainActivity : ComponentActivity() {
                             entry<Route.ColorPalette>(swipeDismiss = swipeDismiss) { ColorPaletteScreen() }
                             entry<Route.Customization>(swipeDismiss = swipeDismiss) {
                                 if (LocalUiMode.current == UiMode.Miuix) {
+                                    val settingsVm: me.weishu.kernelsu.ui.viewmodel.SettingsViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
                                     me.weishu.kernelsu.ui.screen.ag.AgCustomization(
                                         onBack = dropUnlessResumed { navigator.pop() },
+                                        settingsActions = me.weishu.kernelsu.ui.screen.settings.SettingsScreenActions(
+                                            onSetCheckUpdate = settingsVm::setCheckUpdate,
+                                            onSetCheckModuleUpdate = settingsVm::setCheckModuleUpdate,
+                                            onOpenTheme = {},
+                                            onSetUiModeIndex = {},
+                                            onOpenProfileTemplate = {},
+                                            onSetSuCompatMode = settingsVm::setSuCompatMode,
+                                            onSetKernelUmountEnabled = settingsVm::setKernelUmountEnabled,
+                                            onSetSelinuxHideEnabled = settingsVm::setSelinuxHideEnabled,
+                                            onSetSulogEnabled = settingsVm::setSulogEnabled,
+                                            onSetAdbRootEnabled = settingsVm::setAdbRootEnabled,
+                                            onSetShellSuAdbOnlyEnabled = settingsVm::setShellSuAdbOnlyEnabled,
+                                            onSetDefaultUmountModules = settingsVm::setDefaultUmountModules,
+                                            onSetEnableWebDebugging = settingsVm::setEnableWebDebugging,
+                                            onSetAutoJailbreak = settingsVm::setAutoJailbreak,
+                                            onSetUseSoftReboot = settingsVm::setUseSoftReboot,
+                                            onOpenAbout = {},
+                                            onSetEnableBlur = settingsVm::setEnableBlur,
+                                            onSetEnableFloatingBottomBar = settingsVm::setEnableFloatingBottomBar,
+                                            onSetEnableNavigationBadge = settingsVm::setEnableNavigationBadge,
+                                            onSetEnablePredictiveBack = settingsVm::setEnablePredictiveBack,
+                                            onSetEnableSwipeDismiss = settingsVm::setEnableSwipeDismiss,
+                                            onSetPagerInterceptionMode = settingsVm::setPagerInterceptionMode,
+                                            onSetPageScale = settingsVm::setPageScale,
+                                            onSetModuleDescriptionMaxLines = settingsVm::setModuleDescriptionMaxLines,
+                                        ),
                                     )
                                 } else {
                                     CustomizationScreen()

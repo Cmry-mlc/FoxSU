@@ -54,14 +54,33 @@ import androidx.compose.animation.animateContentSize
  * 135° 品牌渐变 #6C5CE7 → #A855F7(55%) → #EC4899；暖白雾彩底 + 毛玻璃卡。
  */
 object Ag {
-    val Bg1 = Color(0xFFF7F6FB)
-    val Bg2 = Color(0xFFF2F4FA)
-    val Card = Color(0xB8FFFFFF)          // rgba(255,255,255,.72)
-    val CardSolid = Color(0xFFFFFFFF)
-    val Line = Color(0x121E1946)          // rgba(30,25,70,.07)
-    val Tx = Color(0xFF191826)
-    val Tx2 = Color(0xFF66647A)
-    val Tx3 = Color(0xFF9C9AAE)
+    // ---- 暗色模式判定（tokens.css L3 [data-mode="dark"]）----
+    val isDark: Boolean @Composable get() = when (me.weishu.kernelsu.ui.theme.LocalColorMode.current) {
+        2, 5, 6 -> true   // DARK / MONET_DARK / DARK_AMOLED
+        1, 4 -> false     // LIGHT / MONET_LIGHT
+        else -> androidx.compose.foundation.isSystemInDarkTheme() // 跟随系统
+    }
+
+    // ---- 背景与画布 ----
+    val Bg1: Color @Composable get() = if (isDark) Color(0xFF131221) else Color(0xFFF7F6FB)
+    val Bg2: Color @Composable get() = if (isDark) Color(0xFF1A192E) else Color(0xFFF2F4FA)
+
+    // ---- 表面（与背景同色系，靠透明度分层；tokens v1.2.0）----
+    val Card: Color @Composable get() = if (isDark) Color(0x8C1A192E) else Color(0x8CF7F6FB)   // rgba(...,.55)
+    val CardSolid: Color @Composable get() = if (isDark) Color(0xFF1E1D30) else Color(0xFFF7F6FB) // 暗色实底提亮一档
+
+    // ---- 描边 ----
+    val Line: Color @Composable get() = if (isDark) Color(0x17FFFFFF) else Color(0x121E1946)   // .09 / .07
+    val LineHead: Color @Composable get() = if (isDark) Color.Transparent else Color.Transparent
+    val TintInk: Color @Composable get() = if (isDark) Color(0x12FFFFFF) else Color(0x0D1E1946)
+
+    // ---- 文字 ----
+    val Tx: Color @Composable get() = if (isDark) Color(0xFFF2F1FA) else Color(0xFF191826)
+    val Tx2: Color @Composable get() = if (isDark) Color(0xFFB2B0CC) else Color(0xFF66647A)
+    val Tx3: Color @Composable get() = if (isDark) Color(0xFF7C7A98) else Color(0xFF9C9AAE)
+    val Chev: Color @Composable get() = if (isDark) Color(0xFF5E5C7A) else Color(0xFFC6C4D6)
+
+    // ---- 品牌（明暗一致）----
     val Vio = Color(0xFF6C5CE7)
     val Vio2 = Color(0xFF8E5CF6)
     val Mag = Color(0xFFEC4899)
@@ -69,19 +88,28 @@ object Ag {
     val Amber = Color(0xFFF59E0B)
     val Danger = Color(0xFFDC2626)
     val Success = Color(0xFF10B981)
-    val Chev = Color(0xFFC6C4D6)
 
     val Grad: Brush
         get() = Brush.linearGradient(listOf(Color(0xFF6C5CE7), Color(0xFFA855F7), Color(0xFFEC4899)))
 
-    val Shadow = Color(0x143C2D78)        // rgba(60,45,120,.08)
     val TitleGrad = Grad
 
-    /** 页面背景：垂直 #F7F6FB → #F2F4FA（与 Dock 槽位兜底色精确衔接，无缝） */
+    /** 页面背景：垂直 #F7F6FB → #F2F4FA（暗色 #131221 → #1A192E） */
+    @Composable
     fun background(): Brush = Brush.verticalGradient(listOf(Bg1, Bg2))
+
+    /** 固定顶栏底（设计稿透明 + 模糊；无模糊实现时用同色系半透明代替），无分隔线 */
+    @Composable
+    fun headSurface(): Color = if (isDark) Color(0xC4131221) else Color(0xC4F7F6FB)
+
+    /** 搜索框底 */
+    @Composable
+    fun searchBg(): Color = if (isDark) Color(0x0FFFFFFF) else Color(0x0D1E1946)
+
+    /** 开关 OFF 轨道（明暗一致）*/
+    val ToggleOff = Color(0xFFD9D8E6)
 }
 
-/** 雾彩背景层：三条径向渐变（右上紫 / 左中品红 / 底部青） */
 @Composable
 fun AgAuroraBackdrop(modifier: Modifier = Modifier) {
     Box(
@@ -238,7 +266,7 @@ fun AgTitle(plain: String, em: String, modifier: Modifier = Modifier, count: Str
     Row(
         modifier
             .fillMaxWidth()
-            .padding(start = 4.dp, end = 4.dp, top = 22.dp, bottom = 14.dp),
+            .padding(start = 4.dp, end = 4.dp, top = 24.dp, bottom = 16.dp),
         verticalAlignment = Alignment.Bottom,
     ) {
         Text(
@@ -285,7 +313,7 @@ fun AgChip(text: String) {
     Box(
         Modifier
             .clip(RoundedCornerShape(99.dp))
-            .background(Color(0x0D1E1946))
+            .background(Ag.TintInk)
             .border(1.dp, Ag.Line, RoundedCornerShape(99.dp))
             .padding(horizontal = 11.dp, vertical = 5.dp),
     ) {
@@ -375,7 +403,7 @@ fun AgToggle(checked: Boolean, onCheckedChange: () -> Unit, small: Boolean = fal
             .graphicsLayer { scaleX = press; scaleY = press }
             .clickable(interactionSource = src, indication = null, onClick = onCheckedChange)
             .clip(RoundedCornerShape(99.dp))
-            .background(if (checked) Ag.Grad else androidx.compose.ui.graphics.SolidColor(Color(0xFFD9D8E6))),
+            .background(if (checked) Ag.Grad else androidx.compose.ui.graphics.SolidColor(Ag.ToggleOff)),
         contentAlignment = Alignment.CenterStart,
     ) {
         Box(
@@ -397,7 +425,7 @@ fun AgSearch(value: String, onValueChange: (String) -> Unit, hint: String) {
             .fillMaxWidth()
             .height(46.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(Color(0x0D1E1946))
+            .background(Ag.searchBg())
             .border(1.dp, Ag.Line, RoundedCornerShape(16.dp))
             .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,

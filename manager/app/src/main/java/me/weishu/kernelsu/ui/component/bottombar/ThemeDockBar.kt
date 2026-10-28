@@ -11,6 +11,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -21,8 +22,8 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Badge
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,12 +39,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.ui.LocalMainPagerState
-import me.weishu.kernelsu.data.repository.SettingsRepositoryImpl
-import me.weishu.kernelsu.ui.theme.glassTokens
+import me.weishu.kernelsu.data.settings.CustomizationStore
 
 /** 各主题的抽屉胶囊配色（设计语言驱动） */
 data class DockTheme(
@@ -58,10 +57,26 @@ data class DockTheme(
     val backdrop: Color? = null, // 槽位底色（与页面底部背景同色，杜绝窗口白底透出）
 )
 
+/** 底栏样式（设计稿 9 种） */
+enum class DockStyle { D0, V1, V5, V6, V7, V8, V9, V10, V11;
+
+    companion object {
+        fun fromRaw(raw: String): DockStyle = when (raw) {
+            "v1" -> V1; "v5" -> V5; "v6" -> V6; "v7" -> V7; "v8" -> V8
+            "v9" -> V9; "v10" -> V10; "v11" -> V11; else -> D0
+        }
+    }
+}
+
+private val rainbowColors = listOf(
+    Color(0xFF6C5CE7), Color(0xFFEC4899), Color(0xFF14B8A6), Color(0xFFF59E0B),
+)
+
 /**
- * 主题化悬浮抽屉胶囊底栏（设计稿 .dock 的全皮肤实现）。
- * - 选中指示底衬在项之间平滑滑动（animateDp 位移）
- * - 沉浸光感：顶部高光 + 选中光晕 + 弹性缩放
+ * 主题化悬浮抽屉胶囊底栏（设计稿 .dock 全样式实现）：
+ * d0 原有胶囊 / v1 展开药丸 / v5 侧边抽屉 / v6 流光光标 / v7 描边霓虹 /
+ * v8 方块卡片 / v9 渐变实底 / v10 顶指示条 / v11 浮起圆片。
+ * 支持沉浸浅感 / 七彩图标 / 不透明度 / 圆角（CustomizationStore）。
  */
 @Composable
 fun ThemeDockBar(
@@ -71,12 +86,25 @@ fun ThemeDockBar(
 ) {
     val mainState = LocalMainPagerState.current
     val items = BottomBarDestination.entries.toList()
+    val custom = CustomizationStore.current
+    val style = DockStyle.fromRaw(custom.dockStyle)
+    val immersive = custom.bottomBarImmersive
+    val rainbow = custom.navRainbow
+    val alphaK = custom.bottomBarAlpha.coerceIn(0.2f, 1f)
+    val dockRadius = custom.bottomBarRadius.coerceIn(12f, 40f).dp
+
+    val dark = me.weishu.kernelsu.ui.screen.ag.Ag.isDark
+    val effBg = when {
+        immersive -> theme.bg.copy(alpha = theme.bg.alpha * 0.58f * alphaK)
+        else -> theme.bg.copy(alpha = theme.bg.alpha * alphaK)
+    }
+    val effBorder = if (immersive) Color.Transparent else theme.border
+
     val navInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    val bottomPad = if (navInset != 0.dp) 10.dp + navInset else 30.dp
+    val bottomPad = if (navInset != 0.dp) 10.dp + navInset else 22.dp
 
     val itemW = 76.dp
     val gap = 4.dp
-    // 滑动指示器位移（相对 Row 内容起点）
     val indicatorX by animateDpAsState(
         targetValue = itemW * mainState.selectedPage + gap * mainState.selectedPage,
         animationSpec = spring(
@@ -86,31 +114,62 @@ fun ThemeDockBar(
         label = "dock-indicator",
     )
 
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            // 槽位区域兜底：铺与页面底部一致的底色（Scaffold 不为底栏槽位绘制任何背景，
-            // 窗口白底会从胶囊后透出形成白条）
-            .then(
-                if (theme.backdrop != null) {
-                    Modifier.background(theme.backdrop)
-                } else {
-                    Modifier
+    // ── V5：侧边抽屉（左侧垂直居中）──
+    if (style == DockStyle.V5) {
+        Column(
+            modifier = modifier
+                .padding(start = 14.dp)
+                .clip(RoundedCornerShape(30.dp))
+                .background(effBg)
+                .border(1.dp, effBorder, RoundedCornerShape(30.dp))
+                .shadow(14.dp, RoundedCornerShape(30.dp), spotColor = theme.shadow, ambientColor = theme.shadow)
+                .padding(10.dp, 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            items.forEachIndexed { index, item ->
+                val selected = mainState.selectedPage == index
+                val tint = if (rainbow && !selected) rainbowColors[index % 4] else theme.unselected
+                Column(
+                    modifier = Modifier
+                        .width(62.dp)
+                        .height(60.dp)
+                        .clip(RoundedCornerShape(22.dp))
+                        .background(
+                            if (selected) Brush.linearGradient(
+                                listOf(Color(0xFF6C5CE7), Color(0xFFEC4899))
+                            ) else androidx.compose.ui.graphics.SolidColor(Color.Transparent)
+                        )
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                        ) { mainState.animateToPage(index) }
+                        .padding(9.dp, 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    DockIcon(item, index, selected, navigationBadge, rainbow, tint, badgeTintOverride = Color.White)
+                    Text(
+                        stringResource(item.label),
+                        fontSize = 9.5.sp, fontWeight = FontWeight.ExtraBold,
+                        color = if (selected) Color.White else tint, maxLines = 1,
+                    )
                 }
-            ),
-        contentAlignment = Alignment.BottomCenter,
-    ) {
+            }
+        }
+        return
+    }
+
+    Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.BottomCenter) {
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = bottomPad)
-                .shadow(14.dp, RoundedCornerShape(26.dp), spotColor = theme.shadow, ambientColor = theme.shadow)
-                .clip(RoundedCornerShape(26.dp))
-                // 均匀玻璃底（设计稿 .dock rgba(255,255,255,.78)），无明暗带
-                .background(theme.bg)
-                .border(1.dp, theme.border, RoundedCornerShape(26.dp))
+                .shadow(if (immersive) 8.dp else 14.dp, RoundedCornerShape(dockRadius), spotColor = theme.shadow, ambientColor = theme.shadow)
+                .clip(RoundedCornerShape(dockRadius))
+                .background(effBg)
+                .border(1.dp, effBorder, RoundedCornerShape(dockRadius))
                 .drawBehind {
-                    // 顶部高光（沉浸光感）
                     if (theme.glass) {
                         drawRect(
                             brush = Brush.verticalGradient(
@@ -123,19 +182,50 @@ fun ThemeDockBar(
                 }
                 .padding(8.dp),
         ) {
-            // 滑动选中指示底衬
-            Box(
-                Modifier
-                    .offset(x = indicatorX)
-                    .width(itemW)
-                    .height(58.dp)
-                    .clip(RoundedCornerShape(19.dp))
-                    .background(theme.selectedBg),
-            )
+            // 滑动选中指示底衬（d0 / v8）
+            if (style == DockStyle.D0 || style == DockStyle.V8) {
+                Box(
+                    Modifier
+                        .offset(x = indicatorX)
+                        .width(itemW)
+                        .height(55.dp)
+                        .clip(if (style == DockStyle.V8) RoundedCornerShape(14.dp) else RoundedCornerShape(19.dp))
+                        .background(
+                            androidx.compose.ui.graphics.SolidColor(
+                                if (style == DockStyle.V8) {
+                                    if (dark) Color(0xFF2A2940) else Color.White
+                                } else {
+                                    theme.selectedBg
+                                }
+                            )
+                        ),
+                )
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
                 items.forEachIndexed { index, item ->
                     val selected = mainState.selectedPage == index
-                    val scale by animateFloatAsState(
+                    val baseTint = if (rainbow && !selected) rainbowColors[index % 4] else theme.unselected
+
+                    val itemBg: androidx.compose.ui.graphics.Brush? = when {
+                        style == DockStyle.V6 && selected -> Brush.radialGradient(
+                            listOf(Color(0x526C5CE7), Color(0x24EC4899), Color.Transparent),
+                        )
+                        style == DockStyle.V9 && selected -> Brush.linearGradient(
+                            listOf(Color(0xFF6C5CE7), Color(0xFFA855F7), Color(0xFFEC4899))
+                        )
+                        style == DockStyle.V11 && selected -> Brush.linearGradient(
+                            listOf(Color(0xFF6C5CE7), Color(0xFFEC4899))
+                        )
+                        else -> null
+                    }
+
+                    val fgTint = when {
+                        (style == DockStyle.V9 || style == DockStyle.V11) && selected -> Color.White
+                        selected -> theme.selected
+                        else -> baseTint
+                    }
+
+                    val iconScale by animateFloatAsState(
                         targetValue = if (selected) 1.08f else 1f,
                         animationSpec = spring(
                             dampingRatio = Spring.DampingRatioMediumBouncy,
@@ -143,56 +233,68 @@ fun ThemeDockBar(
                         ),
                         label = "dock-icon-$index",
                     )
+
+                    val itemShape = when {
+                        style == DockStyle.V9 -> RoundedCornerShape(18.dp)
+                        style == DockStyle.V8 -> RoundedCornerShape(14.dp)
+                        style == DockStyle.V11 -> CircleShape
+                        else -> RoundedCornerShape(19.dp)
+                    }
+
                     Column(
                         modifier = Modifier
                             .width(itemW)
+                            .height(55.dp)
+                            .clip(itemShape)
+                            .then(
+                                when {
+                                    style == DockStyle.V7 && selected -> Modifier
+                                        .border(1.6.dp, Color(0x736C5CE7), itemShape)
+                                        .background(Color(0x146C5CE7))
+                                    style == DockStyle.V8 && selected -> Modifier
+                                        .background(if (dark) Color(0xFF2A2940) else Color.White)
+                                        .border(1.dp, Color(0x121E1946), itemShape)
+                                    itemBg != null -> Modifier.background(itemBg)
+                                    else -> Modifier
+                                }
+                            )
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null,
-                            ) { mainState.animateToPage(index) }
-                            .padding(top = 8.dp, bottom = 7.dp),
+                            ) { mainState.animateToPage(index) },
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(3.dp),
+                        verticalArrangement = Arrangement.Center,
                     ) {
-                        Box(contentAlignment = Alignment.TopCenter) {
-                            if (selected) {
-                                Box(
-                                    Modifier
-                                        .size(34.dp)
-                                        .drawBehind {
-                                            drawRect(
-                                                brush = Brush.radialGradient(
-                                                    listOf(theme.selected.copy(alpha = 0.25f), Color.Transparent),
-                                                ),
-                                            )
-                                        },
-                                )
-                            }
-                            Icon(
-                                imageVector = item.icon,
-                                contentDescription = stringResource(item.label),
-                                tint = if (selected) theme.selected else theme.unselected,
-                                modifier = Modifier
-                                    .size(22.dp)
-                                    .graphicsLayer {
-                                        scaleX = scale
-                                        scaleY = scale
-                                        if (selected) translationY = -1.dp.toPx()
-                                    },
+                        // V10 顶指示条
+                        if (style == DockStyle.V10 && selected) {
+                            Box(
+                                Modifier
+                                    .padding(bottom = 3.dp)
+                                    .width(22.dp)
+                                    .height(4.dp)
+                                    .clip(RoundedCornerShape(99.dp))
+                                    .background(Brush.linearGradient(listOf(Color(0xFF6C5CE7), Color(0xFFEC4899)))),
                             )
-                            val badge = navigationBadgeFor(index, navigationBadge, floating = true)
-                            if (badge != null) {
-                                Box(Modifier.align(Alignment.TopEnd).offset(x = 6.dp, y = (-4).dp)) { badge() }
-                            }
                         }
-                        Text(
-                            text = stringResource(item.label),
-                            fontSize = 10.5.sp,
-                            lineHeight = 13.sp,
-                            maxLines = 1,
-                            fontWeight = FontWeight.Bold,
-                            color = if (selected) theme.selected else theme.unselected,
+                        DockIcon(
+                            item, index, selected, navigationBadge, rainbow,
+                            tint = fgTint,
+                            badgeTintOverride = if (fgTint == Color.White) Color.White else null,
+                            scale = iconScale,
+                            glow = style == DockStyle.V6 && selected,
+                            big = (style == DockStyle.V9 || style == DockStyle.V11) && selected,
                         )
+                        // d0 / v1 显示文字
+                        if (style == DockStyle.D0 || style == DockStyle.V1) {
+                            Text(
+                                text = stringResource(item.label),
+                                fontSize = 10.5.sp,
+                                lineHeight = 13.sp,
+                                maxLines = 1,
+                                fontWeight = FontWeight.Bold,
+                                color = fgTint,
+                            )
+                        }
                     }
                 }
             }
@@ -200,24 +302,66 @@ fun ThemeDockBar(
     }
 }
 
+/** Dock 单项图标 + 徽标 */
+@Composable
+private fun ColumnScope.DockIcon(
+    item: BottomBarDestination,
+    index: Int,
+    selected: Boolean,
+    navigationBadge: NavigationBadgeState,
+    rainbow: Boolean,
+    tint: Color,
+    badgeTintOverride: Color?,
+    scale: Float = 1f,
+    glow: Boolean = false,
+    big: Boolean = false,
+) {
+    Box(contentAlignment = Alignment.TopCenter) {
+        val iconSize = if (big) 26.dp else 22.dp
+        Icon(
+            imageVector = item.icon,
+            contentDescription = stringResource(item.label),
+            tint = tint,
+            modifier = Modifier
+                .size(iconSize)
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                    if (selected && !big) translationY = -1.dp.toPx()
+                },
+        )
+        val badge = navigationBadgeFor(index, navigationBadge, floating = true)
+        if (badge != null) {
+            Box(Modifier.align(Alignment.TopEnd).offset(x = 6.dp, y = (-4).dp)) { badge() }
+        }
+    }
+}
 
-/** 每套皮肤各自的专属抽屉风格（跟随皮肤自身的明暗与设计语言） */
+/** 各皮肤各自的专属抽屉风格（跟随皮肤自身的明暗与设计语言） */
 object AgDockThemes {
 
-    /** FoxSu Redesign：暖白胶囊 + 品牌紫/品红（晨曦玻璃） */
-    val redesign = DockTheme(
-        bg = Color(0xC7FFFFFF), border = Color(0x99FFFFFF), shadow = Color(0x2E32286E),
-        selected = Color(0xFF6C5CE7), unselected = Color(0xFF66647A),
-        selectedBg = Color(0x1A6C5CE7), badge = Color(0xFFEC4899), glass = true,
-        backdrop = Color(0xFFF2F4FA), // 晨曦玻璃页面底色尾部
-    )
+    /** FoxSu Redesign：晨曦玻璃，明暗双态 */
+    @Composable
+    fun redesign(): DockTheme {
+        val dark = me.weishu.kernelsu.ui.screen.ag.Ag.isDark
+        return if (dark) DockTheme(
+            bg = Color(0xCC1C1B2E), border = Color(0x14FFFFFF), shadow = Color(0x66000000),
+            selected = Color(0xFF9C90FF), unselected = Color(0xFF7C7A98),
+            selectedBg = Color(0x2E6C5CE7), badge = Color(0xFFEC4899), glass = false,
+            backdrop = Color(0xFF1A192E),
+        ) else DockTheme(
+            bg = Color(0xC7FFFFFF), border = Color(0x99FFFFFF), shadow = Color(0x2E32286E),
+            selected = Color(0xFF6C5CE7), unselected = Color(0xFF66647A),
+            selectedBg = Color(0x1A6C5CE7), badge = Color(0xFFEC4899), glass = false,
+            backdrop = Color(0xFFF2F4FA),
+        )
+    }
 
     /** Pages：极简留白（亮）→ 墨面（暗），单一蓝点 */
     @Composable
     fun fresh(): DockTheme {
-        val night = me.weishu.kernelsu.ui.theme.ColorMode
-            .fromValue(me.weishu.kernelsu.data.repository.SettingsRepositoryImpl().themeMode).isDark
-        return if (night) DockTheme(
+        val dark = me.weishu.kernelsu.ui.screen.ag.Ag.isDark
+        return if (dark) DockTheme(
             bg = Color(0xF219191F), border = Color(0x29FFFFFF), shadow = Color(0x66000000),
             selected = Color(0xFF7DA9FF), unselected = Color(0xFF8A8F9C),
             selectedBg = Color(0x1F2D6BFF), badge = Color(0xFF2D6BFF),

@@ -122,7 +122,7 @@ fun BottomBar(
     val dockOn = LocalEnableFloatingBottomBar.current
     when (LocalUiMode.current) {
         // Redesign（晨曦玻璃）：悬浮 Dock 就是该皮肤的设计底栏，始终启用
-        UiMode.Miuix -> ThemeDockBar(AgDockThemes.redesign, navigationBadge, modifier)
+        UiMode.Miuix -> ThemeDockBar(AgDockThemes.redesign(), navigationBadge, modifier)
         UiMode.Material -> if (dockOn) {
             ThemeDockBar(AgDockThemes.editorial, navigationBadge, modifier)
         } else {

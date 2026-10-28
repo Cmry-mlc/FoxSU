@@ -34,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -82,33 +83,21 @@ fun AgRebootSheet(onDismiss: () -> Unit) {
         Box(
             Modifier
                 .fillMaxSize()
-                .background(Color(0x5219143C))
+                .background(Color(0x4719143C))
                 .agClick(onClick = onDismiss),
         )
         Column(
+            // 设计稿 .sheet：锚定电源按钮的下拉菜单（右上角，宽 230，圆角 22）
             Modifier
-                .align(Alignment.BottomCenter)
-                .padding(start = 12.dp, end = 12.dp, bottom = 14.dp)
-                .clip(RoundedCornerShape(28.dp))
-                .background(Color(0xD1FFFFFF))
-                .border(1.dp, Color(0xA6FFFFFF), RoundedCornerShape(28.dp))
-                .padding(10.dp, 10.dp, 10.dp, 12.dp),
+                .align(Alignment.TopEnd)
+                .padding(top = 96.dp, end = 14.dp)
+                .width(230.dp)
+                .clip(RoundedCornerShape(22.dp))
+                .background(if (Ag.isDark) Color(0xE01C1B2E) else Color(0xD9FFFFFF))
+                .border(1.dp, if (Ag.isDark) Color(0x1AFFFFFF) else Color(0xA6FFFFFF), RoundedCornerShape(22.dp))
+                .shadow(18.dp, RoundedCornerShape(22.dp), spotColor = Color(0x40281E64))
+                .padding(8.dp),
         ) {
-            // 抓手指示条
-            Box(
-                Modifier
-                    .width(38.dp)
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(Color(0x261E1946))
-                    .align(Alignment.CenterHorizontally),
-            )
-            Spacer(Modifier.height(6.dp))
-            Text(
-                "重启",
-                fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp,
-                color = Ag.Tx3, modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
-            )
             options.forEachIndexed { i, opt ->
                 val warn = opt.reason == "edl"
                 val tint = if (warn) Ag.Danger else Ag.Vio
@@ -119,24 +108,24 @@ fun AgRebootSheet(onDismiss: () -> Unit) {
                             onDismiss()
                             reboot(opt.reason)
                         }
-                        .clip(RoundedCornerShape(16.dp))
-                        .padding(12.dp),
+                        .clip(RoundedCornerShape(14.dp))
+                        .padding(10.dp, 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(13.dp),
+                    horizontalArrangement = Arrangement.spacedBy(11.dp),
                 ) {
                     Box(
                         Modifier
-                            .size(34.dp)
-                            .clip(RoundedCornerShape(11.dp))
+                            .size(30.dp)
+                            .clip(RoundedCornerShape(10.dp))
                             .background(if (warn) Color(0x17DC2626) else Color(0x1A6C5CE7)),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Icon(icons.getOrElse(i) { Icons.Rounded.Refresh }, null, tint = tint, modifier = Modifier.size(17.dp))
+                        Icon(icons.getOrElse(i) { Icons.Rounded.Refresh }, null, tint = tint, modifier = Modifier.size(16.dp))
                     }
                     Column {
-                        Text(stringResource(opt.labelRes), fontSize = 14.5.sp, fontWeight = FontWeight.Bold, color = if (warn) Ag.Danger else Ag.Tx)
+                        Text(stringResource(opt.labelRes), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = if (warn) Ag.Danger else Ag.Tx)
                         Spacer(Modifier.height(1.dp))
-                        Text(subtitleFor(opt.reason), fontSize = 11.5.sp, color = Ag.Tx3)
+                        Text(subtitleFor(opt.reason), fontSize = 10.5.sp, color = Ag.Tx3)
                     }
                 }
             }

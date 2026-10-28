@@ -68,6 +68,14 @@ fun SettingPager(
         onSetAutoJailbreak = viewModel::setAutoJailbreak,
         onSetUseSoftReboot = viewModel::setUseSoftReboot,
         onOpenAbout = { navigator.push(Route.About) },
+        onSetEnableBlur = viewModel::setEnableBlur,
+        onSetEnableFloatingBottomBar = viewModel::setEnableFloatingBottomBar,
+        onSetEnableNavigationBadge = viewModel::setEnableNavigationBadge,
+        onSetEnablePredictiveBack = viewModel::setEnablePredictiveBack,
+        onSetEnableSwipeDismiss = viewModel::setEnableSwipeDismiss,
+        onSetPagerInterceptionMode = viewModel::setPagerInterceptionMode,
+        onSetPageScale = viewModel::setPageScale,
+        onSetModuleDescriptionMaxLines = viewModel::setModuleDescriptionMaxLines,
     )
 
     when (LocalUiMode.current) {

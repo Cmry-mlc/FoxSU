@@ -95,7 +95,7 @@ fun AgModules(
         Column(
             Modifier
                 .fillMaxWidth()
-                .background(Color(0xC4F7F6FB))
+                .background(Ag.headSurface())
                 .padding(horizontal = 18.dp),
         ) {
             Spacer(Modifier.height(8.dp))
@@ -178,8 +178,15 @@ private fun AgModuleCard(
             .agClick(pressScale = 0.985f) {}
             .clip(RoundedCornerShape(24.dp))
             .background(
-                if (m.enabled) Brush.linearGradient(listOf(Color(0x1210B981), Color(0xE6FFFFFF)))
-                else androidx.compose.ui.graphics.SolidColor(Color(0xFFFFFFFF))
+                if (m.enabled) {
+                    if (Ag.isDark) {
+                        Brush.linearGradient(listOf(Color(0x2110B981), Color(0xF21E1D30)))
+                    } else {
+                        Brush.linearGradient(listOf(Color(0x1210B981), Color(0xE6FFFFFF)))
+                    }
+                } else {
+                    androidx.compose.ui.graphics.SolidColor(Ag.CardSolid)
+                }
             )
             .border(1.dp, Ag.Line, RoundedCornerShape(24.dp)),
     ) {
@@ -200,7 +207,7 @@ private fun AgModuleCard(
             Box(
                 Modifier
                     .matchParentSize()
-                    .background(Color(0xFFF5F5FA).copy(alpha = 0.55f))
+                    .background(Color(0xFF000000).copy(alpha = if (Ag.isDark) 0.25f else 0.04f))
             )
         }
         Column(Modifier.padding(16.dp)) {

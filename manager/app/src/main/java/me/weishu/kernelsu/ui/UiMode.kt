@@ -20,11 +20,11 @@ enum class UiMode(val value: String) {
             else -> Fresh
         }
 
-        val DEFAULT_VALUE = Fresh.value
+        val DEFAULT_VALUE = Miuix.value
     }
 }
 
-val LocalUiMode = staticCompositionLocalOf { UiMode.Fresh }
+val LocalUiMode = staticCompositionLocalOf { UiMode.Miuix }
 
 @StringRes
 fun uiModeLabelRes(mode: UiMode): Int = when (mode) {
