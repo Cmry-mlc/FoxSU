@@ -27,6 +27,7 @@ import me.weishu.kernelsu.ui.screen.home.HomeActions
 import me.weishu.kernelsu.ui.screen.home.HomeIssueStrip
 import me.weishu.kernelsu.ui.screen.home.HomeUiState
 import me.weishu.kernelsu.ui.screen.home.displayKernelVersion
+import me.weishu.kernelsu.ui.component.HeroPulseSeal
 import me.weishu.kernelsu.ui.screen.home.heroState
 
 /**
@@ -301,6 +302,13 @@ private fun NcHero(
             ) {
                 NcHeroGlow(t, Modifier.fillMaxSize())
             }
+            // 右缘「滑出 / 滑回」动态大对勾（与其他皮肤大卡一致）
+            HeroPulseSeal(
+                ok = hero.phase == HeroPhase.WORKING || hero.phase == HeroPhase.PENDING_REBOOT,
+                tint = accent,
+                sealSize = 72.dp,
+                ringWidth = 6.dp,
+            )
             Column(Modifier.padding(start = 17.dp, end = 17.dp, top = 15.dp, bottom = 14.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     NcPulseDot(color = accent)

@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.data.model.Module
+import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.screen.module.ModuleCardActions
 
 /**
@@ -46,6 +47,7 @@ fun NocturneModuleScreen(
 ) {
     val t = ncTokens()
     var query by remember { mutableStateOf("") }
+    var showStylePicker by remember { mutableStateOf(false) }
     val list = remember(modules, query) {
         if (query.isBlank()) modules
         else modules.filter {
@@ -53,12 +55,19 @@ fun NocturneModuleScreen(
         }
     }
 
+    if (showStylePicker) {
+        me.weishu.kernelsu.ui.screen.glass.GlassStylePickerDialog(
+            current = LocalUiMode.current,
+            onDismiss = { showStylePicker = false },
+        )
+    }
     Box(Modifier.fillMaxSize()) {
         NcGlowBackground(t)
         Column(Modifier.fillMaxSize().padding(top = ncStatusTop() + 2.dp)) {
             Box(Modifier.padding(horizontal = 18.dp)) {
                 NcHeader(kicker = "MODULES", title = "模块") {
                     NcIconButton(iconRes = R.drawable.nc_user, onClick = {})
+                    NcIconButton(iconRes = R.drawable.nc_palette, onClick = { showStylePicker = true })
                     NcIconButton(iconRes = R.drawable.nc_download, onClick = onOpenRepo)
                 }
             }

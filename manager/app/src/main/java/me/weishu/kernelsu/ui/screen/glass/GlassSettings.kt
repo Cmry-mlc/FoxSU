@@ -144,7 +144,10 @@ fun GlassSettingsList(
                 titleSize = 19,
                 accent = t.violet,
                 trailing = {
-                    GlassTopButton(iconRes = R.drawable.ic_d_search, onClick = {})
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        GlassTopButton(iconRes = R.drawable.ic_d_palette, onClick = { showStylePicker = true })
+                        GlassTopButton(iconRes = R.drawable.ic_d_search, onClick = {})
+                    }
                 },
             )
         }

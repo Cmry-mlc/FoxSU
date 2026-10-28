@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.BuildConfig
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.ui.component.bouncyClick
 import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
@@ -78,12 +79,16 @@ fun GlassHome(
                 title = CustomizationStore.current.homeTitle.ifBlank { "FoxSu" },
                 subtitle = stringResource(R.string.glass_home_subtitle),
                 showDot = state.isRootAvailable,
-                // 作者信息（原界面风格按钮位置）
-                onStyleClick = onOpenAuthor,
-                styleIconRes = R.drawable.ic_d_user,
-                // 重启（真正的重启面板，不是刷写页）
-                onActionClick = { showRebootDialog = true },
-                actionIconRes = R.drawable.ic_d_power2,
+                trailing = {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        // 主题（界面风格选择器）
+                        GlassTopButton(iconRes = R.drawable.ic_d_palette, onClick = { showStylePicker = true })
+                        // 作者
+                        GlassTopButton(iconRes = R.drawable.ic_d_user, onClick = onOpenAuthor)
+                        // 重启（真正的重启面板，不是刷写页）
+                        GlassTopButton(iconRes = R.drawable.ic_d_power2, onClick = { showRebootDialog = true })
+                    }
+                },
             )
         }
         item {
@@ -364,7 +369,7 @@ fun GlassTopButton(iconRes: Int, onClick: () -> Unit) {
             .clip(CircleShape)
             .background(t.tbtnBg)
             .border(1.dp, t.tbtnBorder, CircleShape)
-            .clickable(onClick = onClick),
+            .bouncyClick(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(

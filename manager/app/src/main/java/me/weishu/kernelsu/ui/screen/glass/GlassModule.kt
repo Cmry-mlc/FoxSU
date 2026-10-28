@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.screen.module.ModuleCardActions
 import me.weishu.kernelsu.data.model.Module
+import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.theme.glassTokens
 
 /** 设计稿 .mod 图标 mico 的霓虹渐变轮换（lime/blue/pink/flame/cyan） */
@@ -61,6 +62,10 @@ fun GlassModuleList(
 ) {
     val t = glassTokens()
     val enabledCount = modules.count { it.enabled }
+    var showStylePicker by remember { mutableStateOf(false) }
+    if (showStylePicker) {
+        GlassStylePickerDialog(current = LocalUiMode.current, onDismiss = { showStylePicker = false })
+    }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 13.dp, end = 13.dp, top = glassStatusBarTop() + 4.dp, bottom = bottomInnerPadding + 96.dp),
@@ -72,7 +77,10 @@ fun GlassModuleList(
                 titleSize = 19,
                 accent = t.cyan,
                 trailing = {
-                    GlassTopButton(iconRes = R.drawable.ic_d_search, onClick = onRefresh)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        GlassTopButton(iconRes = R.drawable.ic_d_palette, onClick = { showStylePicker = true })
+                        GlassTopButton(iconRes = R.drawable.ic_d_search, onClick = onRefresh)
+                    }
                 },
             )
         }

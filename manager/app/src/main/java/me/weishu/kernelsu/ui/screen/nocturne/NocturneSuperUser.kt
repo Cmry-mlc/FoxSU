@@ -8,6 +8,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import me.weishu.kernelsu.ui.LocalUiMode
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,6 +43,13 @@ fun NocturneSuperUserScreen(
     onOpenApp: (GroupedApps) -> Unit,
 ) {
     val t = ncTokens()
+    var showStylePicker by remember { mutableStateOf(false) }
+    if (showStylePicker) {
+        me.weishu.kernelsu.ui.screen.glass.GlassStylePickerDialog(
+            current = LocalUiMode.current,
+            onDismiss = { showStylePicker = false },
+        )
+    }
 
     Box(Modifier.fillMaxSize()) {
         NcGlowBackground(t)
@@ -45,6 +57,7 @@ fun NocturneSuperUserScreen(
             Box(Modifier.padding(horizontal = 18.dp)) {
                 NcHeader(kicker = "ROOT ACCESS", title = "超级用户") {
                     NcIconButton(iconRes = R.drawable.nc_user, onClick = {})
+                    NcIconButton(iconRes = R.drawable.nc_palette, onClick = { showStylePicker = true })
                     NcIconButton(iconRes = R.drawable.nc_doc, onClick = {})
                 }
             }

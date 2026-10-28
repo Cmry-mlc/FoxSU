@@ -81,6 +81,7 @@ import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
+import me.weishu.kernelsu.ui.component.heroSlideOut
 import me.weishu.kernelsu.ui.screen.home.HeroPhase
 import me.weishu.kernelsu.ui.screen.home.heroState
 import me.weishu.kernelsu.ui.theme.NocturneGlowBackdrop
@@ -344,7 +345,9 @@ private fun StatusCard(
                                 contentAlignment = Alignment.BottomEnd
                             ) {
                                 Icon(
-                                    modifier = Modifier.size(110.dp),
+                                    modifier = Modifier
+                                        .size(110.dp)
+                                        .heroSlideOut(46.dp),
                                     // 状态字形由真实 HeroPhase 决定：工作中 / 待重启（刷写成功）才是对勾
                                     imageVector = when (hero.phase) {
                                         HeroPhase.WORKING, HeroPhase.PENDING_REBOOT -> Icons.Rounded.CheckCircleOutline

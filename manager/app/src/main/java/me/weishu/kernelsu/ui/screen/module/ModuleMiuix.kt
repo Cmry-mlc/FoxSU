@@ -102,6 +102,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.ui.component.UiModeSwitchButton
 import me.weishu.kernelsu.data.model.Module
 import me.weishu.kernelsu.data.model.ModuleUpdateInfo
 import me.weishu.kernelsu.data.repository.isSoftRebootPreferred
@@ -273,6 +274,7 @@ fun ModulePagerMiuix(
                         color = barColor,
                         title = stringResource(R.string.module),
                         actions = {
+                            UiModeSwitchButton()
                             Box {
                                 val showTopPopup = remember { mutableStateOf(false) }
                                 IconButton(

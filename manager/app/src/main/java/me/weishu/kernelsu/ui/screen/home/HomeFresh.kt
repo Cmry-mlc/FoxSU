@@ -131,6 +131,8 @@ import me.weishu.kernelsu.data.repository.SettingsRepositoryImpl
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.ui.component.HeroPulseSeal
+import me.weishu.kernelsu.ui.component.bouncyClick
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.UiMode
 import me.weishu.kernelsu.ui.component.CardAppearanceDialog
@@ -635,11 +637,12 @@ private fun FreshHeader() {
                 modifier = Modifier.padding(horizontal = 2.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                IconButton(
-                    onClick = { navigator.push(Route.Author) },
+                Box(
                     modifier = Modifier
                         .size(40.dp)
-                        .clip(CircleShape),
+                        .clip(CircleShape)
+                        .bouncyClick { navigator.push(Route.Author) },
+                    contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_author),
@@ -649,11 +652,12 @@ private fun FreshHeader() {
                     )
                 }
                 KsuIsValid {
-                    IconButton(
-                        onClick = { showRebootDialog = true },
+                    Box(
                         modifier = Modifier
                             .size(40.dp)
-                            .clip(CircleShape),
+                            .clip(CircleShape)
+                            .bouncyClick { showRebootDialog = true },
+                        contentAlignment = Alignment.Center,
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_power),
@@ -1229,27 +1233,14 @@ private fun FreshStatusCard(
                 }
             }
 
-            // 状态徽章：贴紧卡片右上角内侧（end 8dp），不与标题/版本行抢位置
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = 10.dp, end = 8.dp)
-                    .size(52.dp)
-                    .shadow(elevation = 8.dp, shape = CircleShape, clip = false)
-                    .clip(CircleShape)
-                    .background(
-                        if (hasHero) Color.White.copy(alpha = 0.22f)
-                        else if (isNightScheme()) Color(0xFF2E2A38) else Color.White
-                    ),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    painter = statusIcon,
-                    contentDescription = null,
-                    tint = badgeTint,
-                    modifier = Modifier.size(26.dp),
-                )
+            // 大卡右缘「滑出 / 滑回」动态大对勾（对齐视频演示特效）
+            val sealOk = heroSt.phase == HeroPhase.WORKING || heroSt.phase == HeroPhase.PENDING_REBOOT
+            val sealTint = when {
+                sealOk -> Color(0xFF3BA55D)
+                heroSt.phase == HeroPhase.FLASHING || heroSt.phase == HeroPhase.ATTENTION -> Color(0xFFB07C10)
+                else -> MaterialTheme.colorScheme.error
             }
+            HeroPulseSeal(ok = sealOk, tint = sealTint)
         }
     }
 }

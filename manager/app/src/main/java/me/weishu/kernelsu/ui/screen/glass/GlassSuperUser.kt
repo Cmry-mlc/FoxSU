@@ -11,6 +11,10 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.component.AppIconImage
 import me.weishu.kernelsu.ui.screen.superuser.GroupedApps
+import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.theme.glassTokens
 
 /** 设计稿 .uico 的霓虹渐变对（135°） */
@@ -197,6 +202,10 @@ fun GlassSuperUserList(
     onOpenApp: (GroupedApps) -> Unit,
 ) {
     val t = glassTokens()
+    var showStylePicker by remember { mutableStateOf(false) }
+    if (showStylePicker) {
+        GlassStylePickerDialog(current = LocalUiMode.current, onDismiss = { showStylePicker = false })
+    }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 13.dp, end = 13.dp, top = glassStatusBarTop() + 4.dp, bottom = bottomInnerPadding + 88.dp),
@@ -208,6 +217,8 @@ fun GlassSuperUserList(
                 titleSize = 19,
                 accent = t.amber,
                 trailing = {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    GlassTopButton(iconRes = R.drawable.ic_d_palette, onClick = { showStylePicker = true })
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(99.dp))
@@ -222,6 +233,7 @@ fun GlassSuperUserList(
                             color = t.lime,
                             maxLines = 1,
                         )
+                    }
                     }
                 },
             )

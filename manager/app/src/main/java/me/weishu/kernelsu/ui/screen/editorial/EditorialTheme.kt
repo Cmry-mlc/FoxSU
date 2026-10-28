@@ -37,6 +37,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.ui.component.HeroPulseSeal
+import me.weishu.kernelsu.ui.component.bouncyClick
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
 import me.weishu.kernelsu.ui.screen.glass.marquee
 import me.weishu.kernelsu.ui.component.isNightScheme
@@ -236,7 +238,7 @@ fun EdCircleButton(iconRes: Int, onClick: () -> Unit, size: Int = 40) {
         modifier = Modifier
             .size(size.dp)
             .border(1.5.dp, t.ink, CircleShape)
-            .clickable(onClick = onClick),
+            .bouncyClick(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
@@ -260,6 +262,7 @@ fun EdStatusBand(
     onClick: (() -> Unit)? = null,
     onCheckUpdate: (() -> Unit)? = null,
     onRefreshImage: (() -> Unit)? = null,
+    sealOk: Boolean = true,
 ) {
     val t = edTokens()
     Box(
@@ -269,6 +272,8 @@ fun EdStatusBand(
             .background(t.ink)
             .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier),
     ) {
+        // 右缘「滑出 / 滑回」动态大对勾（与其他皮肤大卡一致）
+        HeroPulseSeal(ok = sealOk, tint = t.paper, sealSize = 72.dp, ringWidth = 6.dp)
         // 右上角狐尾水印（设计稿 .tail）：放在顶部角落，尺寸收小，不侵入 KV 区
         Icon(
             painter = painterResource(R.drawable.ic_launcher_monochrome),
