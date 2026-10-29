@@ -62,8 +62,8 @@ data class Customization(
     val dockOnEditorial: Boolean = false,
     /** Tint the four home KPI cards with the built-in palette (light mode only). */
     val homePalette: Boolean = true,
-    /** Corner radius of the floating bottom bar, in dp. */
-    val bottomBarRadius: Float = 30f,
+    /** Corner radius of the floating bottom bar, in dp. 38 已是完整药丸（76dp 高的一半）。 */
+    val bottomBarRadius: Float = 38f,
     /** 鸿蒙式沉浸光感：底栏加一层柔光渐变，更通透。 */
     val bottomBarImmersive: Boolean = false,
     /** 底栏液态玻璃：玻璃条 + 可拖动高光，完全覆盖沉浸光感。 */
@@ -219,7 +219,7 @@ private const val KEY_DOCK_STYLE = "dock_style"
             dockStyle = getString(KEY_DOCK_STYLE, "d0").orEmpty(),
             dockOnEditorial = getBoolean(KEY_DOCK_EDITORIAL, false),
             homePalette = getBoolean(KEY_HOME_PALETTE, true),
-            bottomBarRadius = getFloat(KEY_BOTTOM_RADIUS, 30f),
+            bottomBarRadius = getFloat(KEY_BOTTOM_RADIUS, 38f),
             bottomBarImmersive = getBoolean(KEY_BOTTOM_IMMERSIVE, false),
             bottomBarLiquidGlass = getBoolean(KEY_BOTTOM_LIQUID_GLASS, false),
             navRainbow = getBoolean(KEY_NAV_RAINBOW, false),

@@ -130,7 +130,7 @@ fun ThemeDockBar(
     val navInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val bottomPad = if (navInset != 0.dp) 10.dp + navInset else 22.dp
 
-    val itemW = 76.dp
+    val itemW = 78.dp
     val gap = 4.dp
     val indicatorX by animateDpAsState(
         targetValue = itemW * mainState.selectedPage + gap * mainState.selectedPage,
@@ -484,10 +484,10 @@ fun ThemeDockBar(
                     Modifier
                         .offset(x = indicatorX)
                         .width(itemW)
-                        .height(55.dp)
+                        .height(60.dp)
                         .clip(
                             iconShapeOverride
-                                ?: if (style == DockStyle.V8) RoundedCornerShape(14.dp) else RoundedCornerShape(19.dp)
+                                ?: if (style == DockStyle.V8) RoundedCornerShape(14.dp) else RoundedCornerShape(22.dp)
                         )
                         .background(
                             androidx.compose.ui.graphics.SolidColor(
@@ -512,7 +512,7 @@ fun ThemeDockBar(
                     val expanded = style == DockStyle.V1 && selected
                     val targetWidth = when {
                         style == DockStyle.V1 -> if (expanded) 76.dp else 46.dp
-                        style == DockStyle.V11 -> 55.dp
+                        style == DockStyle.V11 -> 60.dp
                         else -> itemW
                     }
                     val itemWidth by animateDpAsState(
@@ -575,7 +575,7 @@ fun ThemeDockBar(
                         Box(
                             modifier = Modifier
                                 .width(itemWidth)
-                                .height(55.dp)
+                                .height(60.dp)
                                 // 不整体 clip：v10 顶部指示条需要溢出到项外
                                 .then(
                                     if (itemBg != null) Modifier.background(itemBg, itemShape) else Modifier
@@ -621,11 +621,12 @@ fun ThemeDockBar(
                                 if (style == DockStyle.D0 || expanded) {
                                     Text(
                                         text = stringResource(item.label),
-                                        fontSize = 10.5.sp,
-                                        lineHeight = 13.sp,
+                                        fontSize = 11.5.sp,
+                                        lineHeight = 14.sp,
                                         maxLines = 1,
-                                        fontWeight = FontWeight.Bold,
+                                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                                         color = fgTint,
+                                        modifier = Modifier.padding(top = 2.dp),
                                     )
                                 }
                             }
@@ -725,9 +726,9 @@ private fun DockIcon(
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier, contentAlignment = Alignment.TopCenter) {
-        val iconSize = if (big) 26.dp else 22.dp
+        val iconSize = if (big) 28.dp else 26.dp
         Icon(
-            imageVector = item.icon,
+            imageVector = item.filledIcon,
             contentDescription = stringResource(item.label),
             tint = tint,
             modifier = Modifier
@@ -782,9 +783,11 @@ object AgDockThemes {
             selectedBg = Color(0x2E6C5CE7), badge = Color(0xFFEC4899), glass = false,
             backdrop = Color(0xFF1A192E),
         ) else DockTheme(
-            bg = Color(0xC7FFFFFF), border = Color(0xB3FFFFFF), shadow = Color(0x2E32286E),
-            selected = Color(0xFF6C5CE7), unselected = Color(0xFF66647A),
-            selectedBg = Color(0x1A6C5CE7), badge = Color(0xFFEC4899), glass = false,
+            // 品牌稿（foxsu-brand-ui）：胶囊是接近实心的白，不再靠通透感取巧；
+            // 选中块是白底上约 12% 的品牌紫，未选中图标/文字压到深灰，保证与选中态拉得开。
+            bg = Color(0xF2FFFFFF), border = Color(0x66FFFFFF), shadow = Color(0x2432286E),
+            selected = Color(0xFF6C5CE7), unselected = Color(0xFF4F4D5E),
+            selectedBg = Color(0x1F6C5CE7), badge = Color(0xFFEC4899), glass = false,
             backdrop = Color(0xFFF2F4FA),
         )
     }

@@ -36,6 +36,10 @@ import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.vector.ImageVector
 import me.weishu.kernelsu.R
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Extension
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.rounded.Cottage
 import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material.icons.rounded.Security
@@ -143,12 +147,15 @@ private object AgDock {
 
 enum class BottomBarDestination(
     @get:StringRes val label: Int,
+    /** 线性图标：Miuix / Material 等仍走描边语言的皮肤使用 */
     val icon: ImageVector,
+    /** 实心图标：Redesign 胶囊（品牌稿）使用，视觉重量更足 */
+    val filledIcon: ImageVector = icon,
 ) {
-    Home(R.string.home, Icons.Rounded.Cottage),
-    SuperUser(R.string.superuser, Icons.Rounded.Security),
-    Module(R.string.module, Icons.Rounded.Extension),
-    Setting(R.string.settings, Icons.Rounded.Settings)
+    Home(R.string.home, Icons.Rounded.Cottage, Icons.Filled.Home),
+    SuperUser(R.string.superuser, Icons.Rounded.Security, Icons.Filled.Security),
+    Module(R.string.module, Icons.Rounded.Extension, Icons.Filled.Extension),
+    Setting(R.string.settings, Icons.Rounded.Settings, Icons.Filled.Settings)
 }
 
 internal fun navigationBadgeFor(
