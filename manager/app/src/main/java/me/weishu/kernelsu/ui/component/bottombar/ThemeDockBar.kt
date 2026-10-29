@@ -148,21 +148,20 @@ fun ThemeDockBar(
     val accent = me.weishu.kernelsu.ui.screen.ag.Ag.accent
 
     // ── 自动收起：无操作 N 秒后沉到屏幕外，点一下屏幕再回来 ──
+    // hideSec 来自定制页（0 = 关闭）。每次触摸 / 切页都会把 reveal.pulse 加一，
+    // 于是这个 effect 被取消重来：读秒归零、胶囊立刻滑回来。
     val reveal = LocalDockReveal.current
     val hideSec = custom.dockAutoHide
     // 读秒：1 → 0 线性走完就收起；底缘那道细线就是它，所见即所得
     val countdown = remember { Animatable(1f) }
     LaunchedEffect(hideSec, reveal.pulse, mainState.selectedPage) {
-        if (hideSec <= 0) {
-            reveal.hidden = false
-            countdown.snapTo(1f)
-            return@LaunchedEffect
-        }
-        reveal.hidden = false
         countdown.snapTo(1f)
+        reveal.hidden = false
+        if (hideSec <= 0) return@LaunchedEffect
         countdown.animateTo(0f, tween(hideSec * 1000, easing = LinearEasing))
         reveal.hidden = true
     }
+    // 收起时整体下移：76dp 胶囊 + 22dp 内衬，150dp 一定完全移出视口
     val sinkY by animateDpAsState(
         targetValue = if (reveal.hidden) 150.dp else 0.dp,
         animationSpec = if (reveal.hidden) {
@@ -216,6 +215,14 @@ fun ThemeDockBar(
                 .then(sinkModifier)
                 .padding(start = if (onRight) 0.dp else 14.dp, end = if (onRight) 14.dp else 0.dp)
                 .shadow(1.dp, sideShape, spotColor = theme.shadow, ambientColor = theme.shadow)
+                .drawBehind {
+                    drawDockHalo(
+                        radiusPx = dockRadius.toPx(),
+                        primary = accent.primary,
+                        secondary = accent.secondary,
+                        dark = dark,
+                    )
+                }
                 .clip(sideShape)
                 .border(1.dp, effBorder, sideShape),
         ) {
@@ -272,6 +279,15 @@ fun ThemeDockBar(
                     spotColor = theme.shadow,
                     ambientColor = theme.shadow,
                 )
+                // 外圈强调色光晕：跟着圆角一起变，画在裁切之前所以不会被剪掉
+                .drawBehind {
+                    drawDockHalo(
+                        radiusPx = dockRadius.toPx(),
+                        primary = accent.primary,
+                        secondary = accent.secondary,
+                        dark = dark,
+                    )
+                }
                 .clip(shape)
                 .border(1.dp, effBorder, shape)
                 // 底缘读秒条：走完即收起（贴着胶囊底部，不占布局）
@@ -280,11 +296,12 @@ fun ThemeDockBar(
                     val left = countdown.value
                     if (hideSec > 0 && left > 0.001f && left < 0.999f) {
                         val h = 2.dp.toPx()
+                        // 左端固定、向右逐秒缩回：读秒走完正好从右往左收干净
                         drawRect(
                             brush = Brush.horizontalGradient(
                                 listOf(accent.primary, accent.mid, accent.secondary)
                             ),
-                            topLeft = Offset(size.width * (1f - left), size.height - h),
+                            topLeft = Offset(0f, size.height - h),
                             size = Size(size.width * left, h),
                         )
                     }
@@ -337,6 +354,45 @@ fun ThemeDockBar(
                     }
                 }
         }
+    }
+}
+
+/**
+ * 胶囊外圈的光晕。
+ *
+ * 不是真的高斯模糊：用 9 层同心圆角矩形叠出一条平滑的衰减带（每层外扩 1.5dp，
+ * 透明度按 (1-d)² 逐层递减）。好处是：
+ * - 圆角参数一变，整圈的半径跟着变，永远贴着胶囊轮廓；
+ * - 只依赖 drawRoundRect，任何 GPU / 软件渲染都能画，不像 BlurMaskFilter 在硬件
+ *   加速下会被直接忽略；而且只在底栏自身重绘时执行，静止时零开销。
+ */
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawDockHalo(
+    radiusPx: Float,
+    primary: Color,
+    secondary: Color,
+    dark: Boolean,
+) {
+    val layers = 9
+    val step = 1.5.dp.toPx()
+    val peak = if (dark) 0.42f else 0.30f
+    val brush = Brush.linearGradient(
+        colors = listOf(primary.copy(alpha = 1f), secondary.copy(alpha = 1f)),
+        start = Offset(0f, 0f),
+        end = Offset(size.width, size.height),
+    )
+    for (k in 0 until layers) {
+        val inner = k.toFloat() / layers
+        val outer = (k + 1).toFloat() / layers
+        // 相邻两层累计透明度之差：叠加后正好是一条 (1-d)² 的衰减曲线
+        val a = peak * ((1f - inner) * (1f - inner) - (1f - outer) * (1f - outer))
+        val grow = step * (k + 1)
+        drawRoundRect(
+            brush = brush,
+            alpha = a,
+            topLeft = Offset(-grow, -grow),
+            size = Size(size.width + grow * 2, size.height + grow * 2),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(radiusPx + grow, radiusPx + grow),
+        )
     }
 }
 

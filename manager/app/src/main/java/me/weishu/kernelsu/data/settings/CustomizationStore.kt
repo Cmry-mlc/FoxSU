@@ -107,8 +107,6 @@ data class Customization(
     val dockAutoHide: Int = 0,
     /** 传统底栏：false = 胶囊（默认），true = 通栏传统底栏。 */
     val classicDock: Boolean = false,
-    /** 自定义启动器图标（应用私有目录内的图片绝对路径，null = 未设置）。 */
-    val launcherCustom: String? = null,
 )
 
 /** Number of equal-sized KPI cards on the ColorUI home screen. */
@@ -197,7 +195,6 @@ private const val KEY_DOCK_STYLE = "dock_style"
     private const val KEY_DOCK_BUTTON = "dock_button_style"
     private const val KEY_DOCK_AUTOHIDE = "dock_auto_hide"
     private const val KEY_CLASSIC_DOCK = "classic_dock"
-    private const val KEY_LAUNCHER_CUSTOM = "launcher_custom"
 
     val cardColorOptions = listOf(
         0x00000000, // follow theme
@@ -275,7 +272,6 @@ private const val KEY_DOCK_STYLE = "dock_style"
             dockButton = getInt(KEY_DOCK_BUTTON, 0).coerceIn(0, 9),
             dockAutoHide = getInt(KEY_DOCK_AUTOHIDE, 0).coerceIn(0, 60),
             classicDock = getBoolean(KEY_CLASSIC_DOCK, false),
-            launcherCustom = getString(KEY_LAUNCHER_CUSTOM, null),
         )
     }
 
@@ -358,8 +354,6 @@ private const val KEY_DOCK_STYLE = "dock_style"
 
     fun setClassicDock(enabled: Boolean) = update { it.copy(classicDock = enabled) }
 
-    fun setLauncherCustom(path: String?) = update { it.copy(launcherCustom = path) }
-
     /**
      * 恢复默认：直接把整份 SharedPreferences 清空再读回默认值。
      *
@@ -428,7 +422,6 @@ private const val KEY_DOCK_STYLE = "dock_style"
             putInt(KEY_DOCK_BUTTON, next.dockButton)
             putInt(KEY_DOCK_AUTOHIDE, next.dockAutoHide)
             putBoolean(KEY_CLASSIC_DOCK, next.classicDock)
-            putString(KEY_LAUNCHER_CUSTOM, next.launcherCustom)
         }
         current = next
     }

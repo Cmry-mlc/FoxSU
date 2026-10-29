@@ -551,7 +551,9 @@ fun MainScreen(
                         )
                         .then(if (needsPageBackdrop) Modifier.layerBackdrop(backdrop) else Modifier),
                     state = mainPagerState.pagerState,
-                    beyondViewportPageCount = if (contentReady) 3 else 0,
+                    // 只多挂 1 页：3 页时左右两侧页面会被同时组合并持续跑各自的开场动画，
+                    // 与「省电」的方向相反；1 页足够保证左右滑动不白屏。
+                    beyondViewportPageCount = if (contentReady) 1 else 0,
                     overscrollEffect = null,
                     userScrollEnabled = userScrollEnabled && !interceptPagerGestures,
                     pageNestedScrollConnection = if (interceptPagerGestures) {

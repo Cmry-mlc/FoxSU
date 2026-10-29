@@ -495,30 +495,17 @@ fun AgButton(primary: Boolean, text: String, onClick: () -> Unit, modifier: Modi
         contentAlignment = Alignment.Center,
     ) {
         if (primary && enabled) {
-            // 渐变动态色彩：高光带循环流动
-            val t = androidx.compose.animation.core.rememberInfiniteTransition(label = "ag-btn-flow")
-            val shift by t.animateFloat(
-                initialValue = -1f,
-                targetValue = 2f,
-                animationSpec = androidx.compose.animation.core.infiniteRepeatable(
-                    animation = androidx.compose.animation.core.tween(2600, easing = androidx.compose.animation.core.LinearEasing),
-                ),
-                label = "ag-btn-flow-v",
-            )
+            // 静态斜向高光（原来是一条 2.6s 循环流动的高光带：每一次循环都要重绘整颗按钮，
+            //  在列表页里几十个按钮同时跑就是纯粹的耗电，肉眼观感几乎没有区别）
             Box(
                 Modifier
                     .fillMaxWidth()
                     .height(38.dp)
-                    .graphicsLayer { translationX = 300.dp.toPx() * shift }
                     .background(
                         Brush.linearGradient(
-                            listOf(
-                                Color.Transparent,
-                                Color.White.copy(alpha = 0.35f),
-                                Color.Transparent,
-                            ),
-                            start = Offset(0f, 0f),
-                            end = Offset(0f, 10000f),
+                            0f to Color.White.copy(alpha = 0.18f),
+                            0.45f to Color.Transparent,
+                            1f to Color.White.copy(alpha = 0.07f),
                         ),
                     ),
             )

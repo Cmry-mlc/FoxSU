@@ -1,6 +1,5 @@
 package me.weishu.kernelsu.ui.screen.about
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,13 +26,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.FixedScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import me.weishu.kernelsu.R
-import me.weishu.kernelsu.data.settings.CustomizationStore
-import me.weishu.kernelsu.ui.util.appIconVisual
 import me.weishu.kernelsu.ui.component.material.ExpressiveScaffold
 import me.weishu.kernelsu.ui.component.material.SegmentedColumn
 import me.weishu.kernelsu.ui.component.material.SegmentedListItem
@@ -73,20 +69,11 @@ fun AboutScreenMaterial(
                         .padding(vertical = 48.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    val iconVisual = appIconVisual(CustomizationStore.current.iconStyle)
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .size(84.dp)
-                            .clip(RoundedCornerShape(24.dp))
-                            .background(iconVisual.background)
-                    ) {
-                        Image(
-                            painter = painterResource(id = iconVisual.foreground),
-                            contentDescription = null,
-                            contentScale = FixedScale(1f)
-                        )
-                    }
+                    // 与桌面 / 其它页面一致：直接画当前选中的启动器图标
+                    me.weishu.kernelsu.ui.component.LauncherMark(
+                        modifier = Modifier.size(84.dp),
+                        cornerPercent = 26,
+                    )
                     Text(
                         modifier = Modifier.padding(top = 12.dp),
                         text = state.appName,

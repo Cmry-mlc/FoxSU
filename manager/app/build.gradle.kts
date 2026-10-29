@@ -160,7 +160,9 @@ android {
         }
 
         ndk {
-            abiFilters += listOf("arm64-v8a", "x86_64", "riscv64")
+            // 只留 arm64：libksud.so 的 x86_64 变体在商店包里占了约 4MB（压缩后也有 1.5MB+），
+            // 而真机（含所有主流 ARM 设备）只认 arm64，模拟器用户不是这个包的目标人群。
+            abiFilters += listOf("arm64-v8a")
         }
     }
 

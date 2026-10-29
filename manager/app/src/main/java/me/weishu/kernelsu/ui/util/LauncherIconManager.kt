@@ -1,15 +1,7 @@
 package me.weishu.kernelsu.ui.util
 
 import android.content.ComponentName
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import androidx.core.content.pm.ShortcutInfoCompat
-import androidx.core.content.pm.ShortcutManagerCompat
-import androidx.core.graphics.drawable.IconCompat
-import java.io.File
-import java.io.FileOutputStream
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ksuApp
@@ -33,18 +25,6 @@ object LauncherIconManager {
 
     const val STYLE_FOXSU = 0
     const val STYLE_KERNELSU = 5
-
-    /**
-     * 自定义图标：系统不允许在运行时替换 `android:icon`（图标是编译期资源），
-     * 所以自定义图走「桌面快捷方式」——用 [pinCustomShortcut] 把带自定义图的快捷方式钉到桌面，
-     * 应用本身继续用内置狐狸图标。设置里会明确写出这一点，不做「看着切了其实没切」的假功能。
-     */
-    const val STYLE_CUSTOM = 6
-
-    // 旧定制页引用的编号，保持可读性（0..4 就是上面 styles 的前五套）
-    const val STYLE_FOX2 = 1
-    const val STYLE_FOX3 = 2
-    const val STYLE_FOX4 = 3
 
     /** 一套启动器图标：id 存进设置，alias 是清单组件，preview 是应用内预览图。 */
     data class Style(
@@ -76,15 +56,7 @@ object LauncherIconManager {
      * 失败不再被 try/catch 悄悄吞掉：以前失败时界面显示已切换、桌面纹丝不动，
      * 用户看到的就是「不跟随」。
      */
-    fun apply(style: Int): Boolean {
-        if (style == STYLE_CUSTOM) {
-            // 应用图标本身仍是第一只狐狸（保证任何时刻桌面都有入口），
-            // 自定义图以快捷方式的形式落到桌面。
-            applyAlias(STYLE_FOXSU)
-            return pinCustomShortcut()
-        }
-        return applyAlias(style)
-    }
+    fun apply(style: Int): Boolean = applyAlias(style)
 
     private fun applyAlias(style: Int): Boolean {
         val pm = ksuApp.packageManager
@@ -103,11 +75,6 @@ object LauncherIconManager {
     /** 把设置里保存的选择同步到系统；返回当前实际生效的 id。 */
     fun sync(): Int {
         val wanted = CustomizationStore.current.launcherIcon
-        if (wanted == STYLE_CUSTOM) {
-            // 自定义图不进别名体系，只要保证应用图标本身有个入口即可
-            if (currentAliasId() == null) applyAlias(STYLE_FOXSU)
-            return wanted
-        }
         val pm = ksuApp.packageManager
         val target = styleOf(wanted)
         val exactlyOne = styles.count { isEnabled(pm, it.alias) } == 1
@@ -122,58 +89,6 @@ object LauncherIconManager {
         val pm = ksuApp.packageManager
         return styles.firstOrNull { isEnabled(pm, it.alias) }?.id
     }
-
-    // ───────────────────────── 自定义图标 ─────────────────────────
-
-    /** 自定义图标文件（512×512 PNG，存在应用私有目录）。 */
-    fun customFile(): File = File(ksuApp.filesDir, "launcher_custom.png")
-
-    fun hasCustomIcon(): Boolean = customFile().let { it.exists() && it.length() > 0 }
-
-    /** 保存用户选好的方图：压到 512×512，桌面快捷方式与界面预览共用这一份。 */
-    fun saveCustomIcon(bitmap: Bitmap): String? = runCatching {
-        val size = 512
-        val scaled = Bitmap.createScaledBitmap(bitmap, size, size, true)
-        val file = customFile()
-        FileOutputStream(file).use { out ->
-            scaled.compress(Bitmap.CompressFormat.PNG, 100, out)
-        }
-        if (scaled !== bitmap) scaled.recycle()
-        file.absolutePath
-    }.getOrNull()
-
-    fun loadCustomBitmap(): Bitmap? = runCatching {
-        val file = customFile()
-        if (!file.exists()) null else BitmapFactory.decodeFile(file.absolutePath)
-    }.getOrNull()
-
-    fun clearCustomIcon() {
-        runCatching { customFile().delete() }
-        runCatching { ShortcutManagerCompat.removeAllDynamicShortcuts(ksuApp) }
-    }
-
-    /**
-     * 用自定义图钉一个桌面快捷方式（Android 8.0+，需要桌面支持 requestPinShortcut）。
-     * 返回是否成功发起/已存在。
-     */
-    fun pinCustomShortcut(): Boolean = runCatching {
-        val bitmap = loadCustomBitmap() ?: return false
-        val ctx = ksuApp
-        val intent = Intent(ctx, me.weishu.kernelsu.ui.MainActivity::class.java).apply {
-            action = Intent.ACTION_MAIN
-            addCategory(Intent.CATEGORY_LAUNCHER)
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
-        }
-        val shortcut = ShortcutInfoCompat.Builder(ctx, "foxsu_custom")
-            .setShortLabel(ctx.getString(R.string.app_name))
-            .setLongLabel(ctx.getString(R.string.app_name))
-            .setIcon(IconCompat.createWithAdaptiveBitmap(bitmap))
-            .setIntent(intent)
-            .build()
-        if (!ShortcutManagerCompat.isRequestPinShortcutSupported(ctx)) return false
-        ShortcutManagerCompat.requestPinShortcut(ctx, shortcut, null)
-        true
-    }.getOrDefault(false)
 
     private fun setEnabled(pm: PackageManager, alias: String, enabled: Boolean): Boolean =
         runCatching {

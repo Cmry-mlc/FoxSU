@@ -4,10 +4,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,33 +29,16 @@ fun LauncherMark(
     style: Int = CustomizationStore.current.launcherIcon,
     cornerPercent: Int = 26,
 ) {
-    // 自定义图：直接把用户那张图当图标；没设过就回落到第一只狐狸
-    val customBitmap = remember(style, CustomizationStore.current.launcherCustom) {
-        if (style == LauncherIconManager.STYLE_CUSTOM) {
-            runCatching { LauncherIconManager.loadCustomBitmap()?.asImageBitmap() }.getOrNull()
-        } else {
-            null
-        }
-    }
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(percent = cornerPercent))
             .fillMaxSize(),
     ) {
-        if (customBitmap != null) {
-            Image(
-                bitmap = customBitmap,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
-            )
-        } else {
-            Image(
-                painter = painterResource(LauncherIconManager.previewOf(style)),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
+        Image(
+            painter = painterResource(LauncherIconManager.previewOf(style)),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
+        )
     }
 }
