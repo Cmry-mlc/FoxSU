@@ -89,7 +89,6 @@ data class Customization(
     /** 用户导入的系统字体文件（应用私有目录内的绝对路径）。 */
     val fontPath: String? = null,
     /** Dock 图标造型：100 圆角方（默认）/ 101 正圆 / 102 超椭圆 / 103 七彩（渐变实底）。 */
-    val iconStyle: Int = 100,
     /** 桌面启动器图标形象：0 彩虹狐狸 / 1 KernelSU / 2 招手 / 3 回眸 / 4 开心。 */
     val launcherIcon: Int = 0,
     /** 全局强调色：0..6 对应 AccentPalettes（7 套取自 logo 的配色）。 */
@@ -256,7 +255,6 @@ private const val KEY_DOCK_STYLE = "dock_style"
             rainbowCards = getBoolean(KEY_RAINBOW, true),
             fontStyle = getInt(KEY_FONT_STYLE, 0),
             fontPath = getString(KEY_FONT_PATH, null),
-            iconStyle = getInt(KEY_ICON_STYLE, 100),
             // 老版本把启动器形象塞在 iconStyle(0/2/3/4) 里，首次升级时继承过来
             // 旧版本把图标形象也存在 icon_style 里（0..4），新版本改用 launcher_icon：
             // 没写过 launcher_icon 就迁移一次，写过就直接用——以前的实现读的是 icon_style，
@@ -338,7 +336,6 @@ private const val KEY_DOCK_STYLE = "dock_style"
     fun setRainbowCards(enabled: Boolean) = update { it.copy(rainbowCards = enabled) }
     fun setFontStyle(style: Int) = update { it.copy(fontStyle = style) }
     fun setFontPath(path: String?) = update { it.copy(fontPath = path) }
-    fun setIconStyle(style: Int) = update { it.copy(iconStyle = style) }
     fun setLauncherIcon(style: Int) = update { it.copy(launcherIcon = style) }
     fun setAccentPalette(index: Int) =
         update { it.copy(accentPalette = index.coerceIn(0, 6), accentCustom = 0) }
@@ -414,7 +411,6 @@ private const val KEY_DOCK_STYLE = "dock_style"
             putBoolean(KEY_RAINBOW, next.rainbowCards)
             putInt(KEY_FONT_STYLE, next.fontStyle)
             putString(KEY_FONT_PATH, next.fontPath)
-            putInt(KEY_ICON_STYLE, next.iconStyle)
             putInt(KEY_LAUNCHER_ICON, next.launcherIcon)
             putInt(KEY_ACCENT_PALETTE, next.accentPalette)
             putInt(KEY_ACCENT_CUSTOM, next.accentCustom)

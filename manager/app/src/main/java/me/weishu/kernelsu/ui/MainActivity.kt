@@ -704,7 +704,8 @@ fun MainScreen(
                 bottomBar = if (sideDock) noBar else bottomBar,
                 containerColor = scaffoldColor,
             ) { innerPadding ->
-                Box(modifier = Modifier.fillMaxSize()) {
+                // 整块内容区都监听一次触摸：胶囊收起后，点任何地方（含侧边抽屉浮层区域）都能召回
+                Box(modifier = Modifier.fillMaxSize().dockRevealOnTouch(dockReveal)) {
                     pagerContent(if (sideDock) 0.dp else innerPadding.calculateBottomPadding())
                     if (sideDock) {
                         Box(
