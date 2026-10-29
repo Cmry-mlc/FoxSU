@@ -49,8 +49,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import top.yukonga.miuix.kmp.blur.blur
-import top.yukonga.miuix.kmp.blur.drawBackdrop
 import androidx.compose.animation.animateContentSize
 
 /**
@@ -122,17 +120,28 @@ object Ag {
 }
 
 /**
- * 设计稿 `.headwrap{background:transparent;backdrop-filter:blur(14px)}`：
- * 固定顶栏必须做真实背景模糊，否则滚动内容会清晰穿过标题栏，看起来像糊了一层灰。
+ * 设计稿 `.headwrap{background:transparent;backdrop-filter:blur(14px)}`。
+ *
+ * 这里用「半透明雾面 + 底部渐隐」复刻视觉，而不再走 `drawBackdrop` 的实时背景采样：
+ * 顶栏是每一页的首帧就要绘制的节点，实时模糊会强制整页内容先录进 RenderNode 再采样，
+ * 在部分真机 GPU 上首帧直接崩溃（表现为启动页卡住后闪退）。
+ * 14px 模糊在浅色底上的观感与 72%~86% 白雾几乎一致，静态实现更稳。
  */
 @Composable
 fun Modifier.agHeadBlur(): Modifier {
-    val bd = me.weishu.kernelsu.ui.component.LocalAppBackdrop.current ?: return this
-    return this.drawBackdrop(
-        backdrop = bd,
-        shape = { androidx.compose.ui.graphics.RectangleShape },
-        effects = { blur(14.dp.toPx(), 14.dp.toPx()) },
-    )
+    val top = if (Ag.isDark) Color(0xF21A1826) else Color(0xF7FFFFFF)
+    val mid = if (Ag.isDark) Color(0xD91A1826) else Color(0xE6FFFFFF)
+    return this.drawBehind {
+        drawRect(
+            brush = Brush.verticalGradient(
+                0f to top,
+                0.62f to mid,
+                1f to Color.Transparent,
+                startY = 0f,
+                endY = size.height,
+            ),
+        )
+    }
 }
 
 /**

@@ -49,10 +49,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.ui.LocalMainPagerState
 import me.weishu.kernelsu.data.settings.CustomizationStore
-import me.weishu.kernelsu.ui.component.LocalAppBackdrop
-import top.yukonga.miuix.kmp.blur.blur
-import top.yukonga.miuix.kmp.blur.colorControls
-import top.yukonga.miuix.kmp.blur.drawBackdrop
 
 /** 各主题的抽屉胶囊配色（设计语言驱动） */
 data class DockTheme(
@@ -125,7 +121,8 @@ fun ThemeDockBar(
     }
 
     val effBg = when {
-        immersive -> theme.bg.copy(alpha = theme.bg.alpha * 0.58f * alphaK)
+        // 静态磨砂：没有实时采样，太透会直接看见底下滚动的内容，所以沉浸态也保持 86%
+        immersive -> theme.bg.copy(alpha = theme.bg.alpha * 0.86f * alphaK)
         else -> theme.bg.copy(alpha = theme.bg.alpha * alphaK)
     }
     val effBorder = if (immersive) Color.Transparent else theme.border
@@ -659,9 +656,12 @@ fun ThemeDockBar(
 }
 
 /**
- * 设计稿 .dock 的毛玻璃：`backdrop-filter: blur(20px) saturate(1.4)`。
- * 能采样到页面内容时画真实模糊 + vibrancy（饱和度提升）+ 色调蒙层；
- * 无壁纸/禁用模糊时退回纯半透明色，保证不出现"糊成一片灰"。
+ * 设计稿 .dock 的毛玻璃：`backdrop-filter: blur(20px) saturate(1.4)` + `rgba(255,255,255,.78)`。
+ *
+ * 实现上用「静态磨砂」而不是实时背景采样：底栏在每一页的首帧就要绘制，实时模糊需要先把
+ * 整页内容录进 RenderNode 再回读采样，部分真机 GPU 在首帧直接崩溃（启动页卡住→闪退）。
+ * 设计稿底色本来就是 78% 白，静态版叠上半透明底 + 顶部高光 + 底部内阴影后观感几乎一致，
+ * 而且滚动时不会有采样延迟导致的"糊穿"。
  */
 @Composable
 private fun BoxScope.DockFrost(
@@ -669,31 +669,34 @@ private fun BoxScope.DockFrost(
     tint: Color,
     gloss: Boolean = false,
 ) {
-    val bd = LocalAppBackdrop.current
-    if (bd != null) {
-        Box(
-            Modifier
-                .matchParentSize()
-                .drawBackdrop(
-                    backdrop = bd,
-                    shape = { shape },
-                    effects = {
-                        // 设计稿 backdrop-filter: blur(20px) saturate(1.4)
-                        colorControls(brightness = 0f, contrast = 1f, saturation = 1.4f)
-                        blur(20.dp.toPx(), 20.dp.toPx())
-                    },
-                ),
-        )
-    }
-    Box(Modifier.matchParentSize().background(tint, shape))
+    // 玻璃本体：半透明底 + 上亮下暗的厚度感
+    Box(
+        Modifier
+            .matchParentSize()
+            .clip(shape)
+            .background(tint)
+            .drawBehind {
+                // 顶部高光 → 中部透明 → 底部极淡内阴影，模拟玻璃厚度
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        0f to Color(0x4DFFFFFF),
+                        0.42f to Color(0x0DFFFFFF),
+                        1f to Color(0x14000000),
+                        startY = 0f,
+                        endY = size.height,
+                    ),
+                )
+            },
+    )
     if (gloss) {
         Box(
             Modifier
                 .matchParentSize()
+                .clip(shape)
                 .drawBehind {
                     drawRect(
                         brush = Brush.verticalGradient(
-                            listOf(Color(0x59FFFFFF), Color.Transparent),
+                            listOf(Color(0x73FFFFFF), Color.Transparent),
                             startY = 0f,
                             endY = size.height * 0.32f,
                         ),

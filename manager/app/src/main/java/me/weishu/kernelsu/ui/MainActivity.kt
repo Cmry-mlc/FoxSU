@@ -483,9 +483,11 @@ fun MainScreen(
     }
     val blurBackdrop = rememberBlurBackdrop(enableBlur)
 
-    // 所有皮肤的底栏现在都统一为 Redesign 的磨砂 Dock（backdrop-filter blur 20 + saturate 1.4），
-    // 必须始终记录页面内容层，否则磨砂采样不到东西只能退回纯色底。
-    val needsPageBackdrop = true
+    // 底栏已统一为静态磨砂，旧的 FloatingBottomBar / BottomBarFresh 不再被调用，
+    // 页面层因此完全不需要被录进 RenderNode：首帧不记录 backdrop，最稳。
+    // （历史上这里恒为 true，导致所有皮肤首帧都要做一次全页录制 + 实时模糊采样，
+    //  部分真机 GPU 直接崩溃，表现为启动页卡住后闪退。）
+    val needsPageBackdrop = false
 
     val backdrop = rememberLayerBackdrop {
         // ContentDrawScope 里的 drawRect 是成员函数，不需要 import
