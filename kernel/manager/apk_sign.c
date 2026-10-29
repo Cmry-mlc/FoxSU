@@ -115,7 +115,19 @@ static bool check_block(struct file *fp, loff_t *pos, loff_t block_end, unsigned
     if (certificate_size > INT_MAX || certificate_size > (u64)(certificates_end - *pos))
         return false;
 
-#define CERT_MAX_LENGTH 1024
+/*
+ * 管理器 APK 的签名证书 DER 长度上限。RSA-2048 约 0.9 KiB、RSA-4096 约 1.3 KiB、
+ * RSA-8192 约 2.5 KiB，这里给到 4 KiB。
+ * 注意：这个值必须 >= KSU_EXPECTED_SIZE，否则 certificate_size 一定先命中
+ * "cert length overlimit" 而返回 false，编译器还会把后面的 sha256/strcmp 判为
+ * 不可达直接优化掉——表现就是管理器永远显示"未安装"，且根本没有签名比对代码。
+ */
+#define CERT_MAX_LENGTH 4096
+
+#if defined(EXPECTED_SIZE) && (EXPECTED_SIZE > CERT_MAX_LENGTH)
+#error "KSU_EXPECTED_SIZE is larger than CERT_MAX_LENGTH, raise CERT_MAX_LENGTH"
+#endif
+
     if (certificate_size != expected_size)
         return false;
 
