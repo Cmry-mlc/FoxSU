@@ -192,6 +192,7 @@ fun AgMetaModule(onBack: () -> Unit) {
             item {
                 StatusCard(
                     status = status,
+                    loading = loading,
                     busy = busy || installing,
                     onInstall = { startInstall() },
                     onUninstall = { confirmUninstall = true },
@@ -329,6 +330,7 @@ private fun MetaHero(status: MetaStatus, loading: Boolean, installing: Boolean) 
 @Composable
 private fun StatusCard(
     status: MetaStatus,
+    loading: Boolean,
     busy: Boolean,
     onInstall: () -> Unit,
     onUninstall: () -> Unit,
@@ -361,7 +363,7 @@ private fun StatusCard(
                 Ag.Amber,
             )
         }
-        if (!status.probeOk) {
+        if (!loading && !status.probeOk) {
             Spacer(Modifier.height(10.dp))
             Note(
                 "读取不到设备状态",
@@ -377,7 +379,7 @@ private fun StatusCard(
                     primary = true,
                     text = if (busy) "请稍候…" else "安装到设备",
                     modifier = Modifier.weight(1f),
-                    enabled = !busy && status.state != MetaState.BLOCKED,
+                    enabled = !busy && !loading && status.state != MetaState.BLOCKED,
                     onClick = onInstall,
                 )
             } else {
