@@ -70,13 +70,43 @@ val AccentPalettes: List<AccentPalette> = listOf(
 fun accentAt(index: Int): AccentPalette = AccentPalettes[index.coerceIn(0, AccentPalettes.lastIndex)]
 
 /**
+ * 用一个自定义主色造一整套配色。
+ *
+ * 只让用户挑一个颜色，其余三个色阶由它推导：
+ * - mid：同色相、饱和度略降、明度抬高一档（渐变的中间站）
+ * - secondary：色相 +42°，避免渐变两端撞色（紫→粉、蓝→紫的观感）
+ * - soft / softDark：同一色相的极淡底衬，用于选中态背景
+ */
+fun accentFromColor(argb: Int): AccentPalette {
+    val hsv = FloatArray(3)
+    android.graphics.Color.colorToHSV(argb, hsv)
+    val (h, s, v) = Triple(hsv[0], hsv[1].coerceIn(0.25f, 1f), hsv[2].coerceIn(0.25f, 1f))
+    fun of(hh: Float, ss: Float, vv: Float): Color =
+        Color(android.graphics.Color.HSVToColor(floatArrayOf(((hh % 360f) + 360f) % 360f, ss, vv)))
+    val primary = Color(argb)
+    return AccentPalette(
+        id = "custom",
+        label = "自定义",
+        primary = primary,
+        mid = of(h + 18f, (s * 0.78f), (v * 1.06f).coerceAtMost(1f)),
+        secondary = of(h + 46f, (s * 1.02f).coerceAtMost(1f), (v * 0.98f)),
+        soft = of(h, 0.14f, 0.97f),
+        softDark = Color(android.graphics.Color.HSVToColor(floatArrayOf(h, 0.55f, v))).copy(alpha = 0.22f),
+    )
+}
+
+/**
  * 当前生效的强调色。
  *
  * 读的是 [CustomizationStore.current]（Compose 的 MutableState），
  * 所以在任何 Composable 里读到它都会自动订阅，换色即时全量重绘。
  */
 val currentAccent: AccentPalette
-    get() = accentAt(CustomizationStore.current.accentPalette)
+    get() {
+        val c = CustomizationStore.current
+        return if (c.accentCustom != 0) accentFromColor(c.accentCustom)
+        else accentAt(c.accentPalette)
+    }
 
 /** 品牌三色渐变（135°），供按钮、滑块、选中指示条统一取用。 */
 fun accentBrush(p: AccentPalette = currentAccent): Brush =

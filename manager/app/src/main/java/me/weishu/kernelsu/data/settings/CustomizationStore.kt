@@ -94,8 +94,21 @@ data class Customization(
     val launcherIcon: Int = 0,
     /** 全局强调色：0..6 对应 AccentPalettes（7 套取自 logo 的配色）。 */
     val accentPalette: Int = 0,
+    /** 自定义强调色（ARGB）；非 0 时覆盖 [accentPalette]。 */
+    val accentCustom: Int = 0,
     /** 侧边胶囊停靠：0 = 左侧（默认），1 = 右侧。 */
     val dockSide: Int = 0,
+    /**
+     * 胶囊按钮造型：0..9 对应 DockButton 的 10 套按钮样式。
+     * （旧版这里是「图标风格」圆角/正圆/超椭圆/七彩，已整体升级为按钮形状。）
+     */
+    val dockButton: Int = 0,
+    /** 胶囊自动收起：0 = 关闭；3..60 = 无操作多少秒后沉到屏幕下方。 */
+    val dockAutoHide: Int = 0,
+    /** 传统底栏：false = 胶囊（默认），true = 通栏传统底栏。 */
+    val classicDock: Boolean = false,
+    /** 自定义启动器图标（应用私有目录内的图片绝对路径，null = 未设置）。 */
+    val launcherCustom: String? = null,
 )
 
 /** Number of equal-sized KPI cards on the ColorUI home screen. */
@@ -179,7 +192,12 @@ private const val KEY_DOCK_STYLE = "dock_style"
     private const val KEY_ICON_STYLE = "icon_style"
     private const val KEY_LAUNCHER_ICON = "launcher_icon"
     private const val KEY_ACCENT_PALETTE = "accent_palette"
+    private const val KEY_ACCENT_CUSTOM = "accent_custom"
     private const val KEY_DOCK_SIDE = "dock_side"
+    private const val KEY_DOCK_BUTTON = "dock_button_style"
+    private const val KEY_DOCK_AUTOHIDE = "dock_auto_hide"
+    private const val KEY_CLASSIC_DOCK = "classic_dock"
+    private const val KEY_LAUNCHER_CUSTOM = "launcher_custom"
 
     val cardColorOptions = listOf(
         0x00000000, // follow theme
@@ -243,13 +261,21 @@ private const val KEY_DOCK_STYLE = "dock_style"
             fontPath = getString(KEY_FONT_PATH, null),
             iconStyle = getInt(KEY_ICON_STYLE, 100),
             // 老版本把启动器形象塞在 iconStyle(0/2/3/4) 里，首次升级时继承过来
+            // 旧版本把图标形象也存在 icon_style 里（0..4），新版本改用 launcher_icon：
+            // 没写过 launcher_icon 就迁移一次，写过就直接用——以前的实现读的是 icon_style，
+            // 而它存的是 100..103 的图标形状，takeIf 永远不成立，于是每次启动都回落 0。
             launcherIcon = if (contains(KEY_LAUNCHER_ICON)) {
-                getInt(KEY_LAUNCHER_ICON, 0)
+                getInt(KEY_LAUNCHER_ICON, 0).coerceIn(0, 5)
             } else {
-                getInt(KEY_ICON_STYLE, 100).takeIf { it in 0..4 } ?: 0
+                getInt(KEY_ICON_STYLE, 100).takeIf { it in 0..5 } ?: 0
             },
             accentPalette = getInt(KEY_ACCENT_PALETTE, 0),
+            accentCustom = getInt(KEY_ACCENT_CUSTOM, 0),
             dockSide = getInt(KEY_DOCK_SIDE, 0),
+            dockButton = getInt(KEY_DOCK_BUTTON, 0).coerceIn(0, 9),
+            dockAutoHide = getInt(KEY_DOCK_AUTOHIDE, 0).coerceIn(0, 60),
+            classicDock = getBoolean(KEY_CLASSIC_DOCK, false),
+            launcherCustom = getString(KEY_LAUNCHER_CUSTOM, null),
         )
     }
 
@@ -318,10 +344,33 @@ private const val KEY_DOCK_STYLE = "dock_style"
     fun setFontPath(path: String?) = update { it.copy(fontPath = path) }
     fun setIconStyle(style: Int) = update { it.copy(iconStyle = style) }
     fun setLauncherIcon(style: Int) = update { it.copy(launcherIcon = style) }
-    fun setAccentPalette(index: Int) = update { it.copy(accentPalette = index.coerceIn(0, 6)) }
+    fun setAccentPalette(index: Int) =
+        update { it.copy(accentPalette = index.coerceIn(0, 6), accentCustom = 0) }
+
+    /** 自定义强调色；传 0 表示回到当前预设配色。 */
+    fun setAccentCustom(argb: Int) = update { it.copy(accentCustom = argb) }
     fun setDockSide(side: Int) = update { it.copy(dockSide = side.coerceIn(0, 1)) }
 
-    fun reset() = update { Customization() }
+    fun setDockButton(style: Int) = update { it.copy(dockButton = style.coerceIn(0, 9)) }
+
+    /** 0 = 关闭自动收起；其余为秒数（3..60）。 */
+    fun setDockAutoHide(seconds: Int) = update { it.copy(dockAutoHide = seconds.coerceIn(0, 60)) }
+
+    fun setClassicDock(enabled: Boolean) = update { it.copy(classicDock = enabled) }
+
+    fun setLauncherCustom(path: String?) = update { it.copy(launcherCustom = path) }
+
+    /**
+     * 恢复默认：直接把整份 SharedPreferences 清空再读回默认值。
+     *
+     * 旧实现只把默认值「写一遍」，凡是没被写到的键（历史遗留 / 后续新增）都会留在里面，
+     * 于是「恢复默认」之后仍有若干项保持原样；而且 `update` 遇到与当前值相同就直接返回，
+     * 从默认态点重置时连一次写入都不会发生。清表是唯一能真正回到初始状态的写法。
+     */
+    fun reset() {
+        prefs.edit { clear() }
+        current = Customization()
+    }
 
     private fun update(transform: (Customization) -> Customization) {
         val next = transform(current)
@@ -374,7 +423,12 @@ private const val KEY_DOCK_STYLE = "dock_style"
             putInt(KEY_ICON_STYLE, next.iconStyle)
             putInt(KEY_LAUNCHER_ICON, next.launcherIcon)
             putInt(KEY_ACCENT_PALETTE, next.accentPalette)
+            putInt(KEY_ACCENT_CUSTOM, next.accentCustom)
             putInt(KEY_DOCK_SIDE, next.dockSide)
+            putInt(KEY_DOCK_BUTTON, next.dockButton)
+            putInt(KEY_DOCK_AUTOHIDE, next.dockAutoHide)
+            putBoolean(KEY_CLASSIC_DOCK, next.classicDock)
+            putString(KEY_LAUNCHER_CUSTOM, next.launcherCustom)
         }
         current = next
     }

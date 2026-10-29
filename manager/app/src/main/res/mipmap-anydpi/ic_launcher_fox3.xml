@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 新狐狸图标 3：整幅插画铺满画布，系统遮罩负责裁形（无白边、无方框） -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background android:drawable="@drawable/ic_launcher_bg_ink" />
-    <foreground android:drawable="@drawable/ic_launcher_fox3_foreground" />
-    <monochrome android:drawable="@drawable/ic_launcher_fox3_monochrome" />
+    <background android:drawable="@drawable/ic_launcher_fox3_bg" />
+    <foreground android:drawable="@drawable/ic_launcher_empty" />
 </adaptive-icon>

@@ -1,5 +1,7 @@
 package me.weishu.kernelsu.ui.component.bottombar
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -9,6 +11,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -31,23 +34,37 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.LocalMainPagerState
+import me.weishu.kernelsu.ui.component.LocalAppBackdrop
+import me.weishu.kernelsu.ui.component.liquid.lens
+import me.weishu.kernelsu.ui.component.liquid.vibrancy
+import top.yukonga.miuix.kmp.blur.BlendColorEntry
+import top.yukonga.miuix.kmp.blur.BlurColors
+import top.yukonga.miuix.kmp.blur.blur
+import top.yukonga.miuix.kmp.blur.drawBackdrop
+import top.yukonga.miuix.kmp.blur.textureBlur
 
 /** 各主题的抽屉胶囊配色（设计语言驱动） */
 data class DockTheme(
@@ -94,9 +111,7 @@ private val rainbowColors = listOf(
  * 底栏统一尺寸（设计稿 .dock 的默认规格）。
  *
  * 13 种样式共用同一组尺寸：项宽 78dp、项高 60dp、间距 4dp、内衬 8dp。
- * 之前每种样式各自决定宽度（pages 撑满 440dp、nocturne 撑满全宽、editorial 通栏、
- * v11 60dp 项宽…），切换样式时底栏的长宽会跟着变，看起来像"换了一套组件"。
- * 现在样式只决定「长什么样」，不决定「有多大」。
+ * 样式只决定「长什么样」，不决定「有多大」——切换样式时底栏的长宽不再跳变。
  */
 private object DockMetrics {
     val itemW = 78.dp
@@ -106,10 +121,12 @@ private object DockMetrics {
 }
 
 /**
- * 主题化悬浮抽屉胶囊底栏（设计稿 .dock 全样式实现）：
- * d0 原有胶囊 / v1 展开药丸 / v5 侧边抽屉 / v6 流光光标 / v7 描边霓虹 /
- * v8 方块卡片 / v9 渐变实底 / v10 顶指示条 / v11 浮起圆片。
- * 支持沉浸浅感 / 七彩图标 / 不透明度 / 圆角（CustomizationStore）。
+ * 主题化悬浮抽屉胶囊底栏。
+ *
+ * 三层能力叠在一起：
+ * 1. 容器造型（[DockStyle] 13 种）+ 按钮造型（[DockButton] 10 种）；
+ * 2. 材质（沉浸光感 / 实时模糊 / 液态玻璃折射）；
+ * 3. 行为（按下回弹、无操作 N 秒自动沉底、点屏幕召回）。
  */
 @Composable
 fun ThemeDockBar(
@@ -121,6 +138,7 @@ fun ThemeDockBar(
     val items = BottomBarDestination.entries.toList()
     val custom = CustomizationStore.current
     val style = DockStyle.fromRaw(custom.dockStyle)
+    val button = DockButton.of(custom.dockButton)
     val immersive = custom.bottomBarImmersive
     val rainbow = custom.navRainbow
     val alphaK = custom.bottomBarAlpha.coerceIn(0.2f, 1f)
@@ -129,21 +147,49 @@ fun ThemeDockBar(
     val dark = me.weishu.kernelsu.ui.screen.ag.Ag.isDark
     val accent = me.weishu.kernelsu.ui.screen.ag.Ag.accent
 
-    // ── 图标造型（设计稿 data-ic：几何形状，作用于 Dock 项形状与选中态）──
-    val iconStyle = custom.iconStyle
-    val gradFill = iconStyle == 103               // 七彩：选中项渐变实底 + 白图标
-    val iconShapeOverride = when (iconStyle) {
-        101 -> CircleShape                         // 正圆
-        102 -> RoundedCornerShape(22.dp)           // 超椭圆
-        else -> null                               // 圆角方 = 默认 19dp
+    // ── 自动收起：无操作 N 秒后沉到屏幕外，点一下屏幕再回来 ──
+    val reveal = LocalDockReveal.current
+    val hideSec = custom.dockAutoHide
+    // 读秒：1 → 0 线性走完就收起；底缘那道细线就是它，所见即所得
+    val countdown = remember { Animatable(1f) }
+    LaunchedEffect(hideSec, reveal.pulse, mainState.selectedPage) {
+        if (hideSec <= 0) {
+            reveal.hidden = false
+            countdown.snapTo(1f)
+            return@LaunchedEffect
+        }
+        reveal.hidden = false
+        countdown.snapTo(1f)
+        countdown.animateTo(0f, tween(hideSec * 1000, easing = LinearEasing))
+        reveal.hidden = true
     }
+    val sinkY by animateDpAsState(
+        targetValue = if (reveal.hidden) 150.dp else 0.dp,
+        animationSpec = if (reveal.hidden) {
+            spring(dampingRatio = 0.9f, stiffness = 320f)
+        } else {
+            spring(dampingRatio = 0.55f, stiffness = 460f)
+        },
+        label = "dock-sink",
+    )
+    val sinkAlpha by animateFloatAsState(
+        targetValue = if (reveal.hidden) 0f else 1f,
+        animationSpec = tween(if (reveal.hidden) 260 else 200),
+        label = "dock-sink-alpha",
+    )
+
+    // ── 材质：液态玻璃（真折射） > 实时模糊 > 静态磨砂 ──
+    val appBackdrop = LocalAppBackdrop.current
+    val liquid = custom.bottomBarLiquidGlass && appBackdrop != null
+    val blurOn = !liquid && me.weishu.kernelsu.ui.theme.LocalEnableBlur.current && appBackdrop != null
 
     val effBg = when {
-        // 静态磨砂：没有实时采样，太透会直接看见底下滚动的内容，所以沉浸态也保持 86%
+        liquid -> theme.bg.copy(alpha = theme.bg.alpha * 0.18f * alphaK)
+        blurOn -> theme.bg.copy(alpha = theme.bg.alpha * 0.55f * alphaK)
         immersive -> theme.bg.copy(alpha = theme.bg.alpha * 0.86f * alphaK)
         else -> theme.bg.copy(alpha = theme.bg.alpha * alphaK)
     }
-    val effBorder = if (immersive) Color.Transparent else theme.border
+    val effBorder = if (immersive || liquid || blurOn) Color.Transparent else theme.border
 
     val navInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val bottomPad = if (navInset != 0.dp) 10.dp + navInset else 22.dp
@@ -154,32 +200,33 @@ fun ThemeDockBar(
     val pad = DockMetrics.pad
     val shape = RoundedCornerShape(dockRadius)
 
-    val indicatorX by animateDpAsState(
-        targetValue = (itemW + gap) * mainState.selectedPage,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMediumLow,
-        ),
-        label = "dock-indicator",
-    )
+    val sinkModifier = Modifier.graphicsLayer {
+        translationY = sinkY.toPx()
+        alpha = sinkAlpha
+    }
 
     // ── V5：侧边抽屉（左右停靠由「胶囊停靠」决定）──
     if (style == DockStyle.V5) {
         val onRight = sideDockOnRight
         val sideShape = RoundedCornerShape(dockRadius)
-        // 设计稿 `.phone.side .dock{background:rgba(255,255,255,.86)}`：
-        // 侧边胶囊比横向底栏更实一档，避免竖排叠在彩色卡片上时文字发糊。
         val sideBase = if (dark) 0.86f else 0.86f * alphaK
         val sideBg = theme.bg.copy(alpha = sideBase.coerceIn(0.2f, 1f))
         Box(
             modifier = modifier
+                .then(sinkModifier)
                 .padding(start = if (onRight) 0.dp else 14.dp, end = if (onRight) 14.dp else 0.dp)
                 .shadow(1.dp, sideShape, spotColor = theme.shadow, ambientColor = theme.shadow)
                 .clip(sideShape)
                 .border(1.dp, effBorder, sideShape),
         ) {
-            // 设计稿 .phone.side .dock 同样是 backdrop-filter blur(20px)
-            DockFrost(sideShape, sideBg)
+            DockMaterial(
+                shape = sideShape,
+                tint = sideBg,
+                liquid = liquid,
+                blur = blurOn,
+                theme = theme,
+                modifier = Modifier.matchParentSize(),
+            )
             Column(
                 modifier = Modifier.padding(horizontal = pad, vertical = pad),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -187,107 +234,96 @@ fun ThemeDockBar(
             ) {
                 items.forEachIndexed { index, item ->
                     val selected = mainState.selectedPage == index
-                    // 侧边胶囊：暗色模式下胶囊是深色玻璃，未选中图标用亮白才看得清；
-                    // 选中项永远是渐变实底，图标固定纯白（设计稿 .phone.side .dit.on{color:#fff}）。
                     val tint = when {
                         selected -> Color.White
                         rainbow -> rainbowColors[index % 4]
                         dark -> Color(0xFFF2F1FA)
                         else -> theme.unselected
                     }
-                    val itemShape = iconShapeOverride ?: RoundedCornerShape(22.dp)
-                    Column(
-                        modifier = Modifier
-                            .width(itemW)
-                            .height(itemH)
-                            .then(
-                                if (selected) Modifier.shadow(
-                                    8.dp, itemShape,
-                                    spotColor = accent.primary.copy(alpha = 0.4f),
-                                    ambientColor = accent.primary.copy(alpha = 0.10f),
-                                ) else Modifier
-                            )
-                            .clip(itemShape)
-                            .background(
-                                if (selected) Brush.linearGradient(
-                                    listOf(accent.primary, accent.mid, accent.secondary)
-                                ) else SolidColor(Color.Transparent)
-                            )
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                            ) { mainState.animateToPage(index) }
-                            .padding(vertical = 9.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        DockIcon(
-                            item, index, selected, navigationBadge, rainbow,
-                            tint = tint,
-                            badgeTintOverride = if (selected) Color.White else null,
-                        )
-                        Text(
-                            stringResource(item.label),
-                            fontSize = 9.5.sp, fontWeight = FontWeight.ExtraBold,
-                            color = tint, maxLines = 1,
-                        )
-                    }
+                    DockItem(
+                        style = style,
+                        button = button,
+                        item = item,
+                        index = index,
+                        selected = selected,
+                        navigationBadge = navigationBadge,
+                        rainbow = rainbow,
+                        theme = theme,
+                        dark = dark,
+                        tint = tint,
+                        onClick = { mainState.animateToPage(index) },
+                    )
                 }
             }
         }
         return
     }
 
-    // ── 横向胶囊：所有样式共用一个外壳（同宽同高），样式只决定内部装饰 ──
+    // ── 横向胶囊：所有样式共用一个外壳（同宽同高）──
     Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.BottomCenter) {
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
+                .then(sinkModifier)
                 .padding(bottom = bottomPad)
                 .shadow(
-                    // 对齐 Miuix FloatingNavigationBarDefaults.ShadowElevation = 1dp。
-                    // 之前这里用 14dp，在 Android 的 spot shadow 下会在胶囊下方投出一大片中性灰，
-                    // 浅色页面上看着像"底栏底下压了一块黑"——设计稿的胶囊几乎是平的。
-                    if (immersive) 0.dp else 1.dp,
+                    if (immersive || liquid || blurOn) 0.dp else 1.dp,
                     shape,
                     spotColor = theme.shadow,
                     ambientColor = theme.shadow,
                 )
                 .clip(shape)
-                .border(1.dp, effBorder, shape),
+                .border(1.dp, effBorder, shape)
+                // 底缘读秒条：走完即收起（贴着胶囊底部，不占布局）
+                .drawWithContent {
+                    drawContent()
+                    val left = countdown.value
+                    if (hideSec > 0 && left > 0.001f && left < 0.999f) {
+                        val h = 2.dp.toPx()
+                        drawRect(
+                            brush = Brush.horizontalGradient(
+                                listOf(accent.primary, accent.mid, accent.secondary)
+                            ),
+                            topLeft = Offset(size.width * (1f - left), size.height - h),
+                            size = Size(size.width * left, h),
+                        )
+                    }
+                },
         ) {
-            DockFrost(shape, effBg, gloss = theme.glass || style == DockStyle.GLASS)
-            Box(Modifier.padding(pad)) {
-                // 滑动选中指示底衬（d0 / v8）：位置与项宽严格对齐
-                if (style == DockStyle.D0 || style == DockStyle.V8) {
+            DockMaterial(
+                    shape = shape,
+                    tint = effBg,
+                    liquid = liquid,
+                    blur = blurOn,
+                    theme = theme,
+                    modifier = Modifier.matchParentSize(),
+                )
+                // 玻璃顶部高光（液态玻璃自带边缘折射，不再叠静态高光）
+                if (!liquid && (theme.glass || style == DockStyle.GLASS || blurOn)) {
                     Box(
                         Modifier
-                            .offset(x = indicatorX)
-                            .width(itemW)
-                            .height(itemH)
-                            .clip(
-                                iconShapeOverride
-                                    ?: if (style == DockStyle.V8) RoundedCornerShape(14.dp)
-                                    else RoundedCornerShape(22.dp)
-                            )
-                            .background(
-                                SolidColor(
-                                    when {
-                                        style != DockStyle.V8 -> theme.selectedBg
-                                        dark -> Color(0xFF2A2940)
-                                        else -> Color.White
-                                    }
+                            .matchParentSize()
+                            .clip(shape)
+                            .drawBehind {
+                                drawRect(
+                                    Brush.verticalGradient(
+                                        listOf(if (dark) Color(0x1AFFFFFF) else Color(0x73FFFFFF), Color.Transparent),
+                                        startY = 0f,
+                                        endY = size.height * 0.32f,
+                                    )
                                 )
-                            ),
+                            },
                     )
                 }
                 Row(
+                    modifier = Modifier.padding(pad),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(gap),
                 ) {
                     items.forEachIndexed { index, item ->
                         DockItem(
                             style = style,
+                            button = button,
                             item = item,
                             index = index,
                             selected = mainState.selectedPage == index,
@@ -295,23 +331,109 @@ fun ThemeDockBar(
                             rainbow = rainbow,
                             theme = theme,
                             dark = dark,
-                            gradFill = gradFill,
-                            iconShapeOverride = iconShapeOverride,
+                            tint = null,
                             onClick = { mainState.animateToPage(index) },
                         )
                     }
                 }
-            }
         }
     }
 }
 
 /**
- * 单个 Dock 项：尺寸固定 78×60（与默认 d0 一致），样式只改变底衬/描边/指示器与文字。
+ * 底栏材质层：液态玻璃 / 实时模糊 / 静态磨砂，只画底，不画内容。
+ *
+ * - 液态玻璃：直接采样身后页面（Miuix backdrop），做 vibrancy + 模糊 + 圆角矩形折射（lens），
+ *   所以底栏里的图标下面是「真的」在透过一块厚玻璃看内容，滚动的卡片会在边缘被折弯；
+ * - 实时模糊：同样的采样，只做高斯模糊 + 混色；
+ * - 两者都不可用（GPU 不支持 / 没有 backdrop）时退回静态磨砂，保证不会变成全透明。
+ */
+@Composable
+private fun DockMaterial(
+    shape: Shape,
+    tint: Color,
+    liquid: Boolean,
+    blur: Boolean,
+    theme: DockTheme,
+    modifier: Modifier = Modifier,
+) {
+    val backdrop = LocalAppBackdrop.current
+    val dark = me.weishu.kernelsu.ui.screen.ag.Ag.isDark
+    if (liquid && backdrop != null) {
+        Box(
+            modifier
+                .clip(shape)
+                .drawBackdrop(
+                    backdrop = backdrop,
+                    shape = { shape },
+                    effects = {
+                        vibrancy()
+                        blur(8.dp.toPx(), 8.dp.toPx())
+                        lens(
+                            refractionHeight = 22.dp.toPx(),
+                            refractionAmount = 26.dp.toPx(),
+                            chromaticAberration = 0.35f,
+                        )
+                    },
+                )
+                // 薄薄一层同色玻璃，让内容不是「生糊」，而是隔着玻璃
+                .background(tint)
+                .border(
+                    1.dp,
+                    Brush.verticalGradient(
+                        listOf(
+                            if (dark) Color(0x40FFFFFF) else Color(0x66FFFFFF),
+                            if (dark) Color(0x0DFFFFFF) else Color(0x1AFFFFFF),
+                        )
+                    ),
+                    shape,
+                ),
+        )
+        return
+    }
+    if (blur && backdrop != null) {
+        Box(
+            modifier
+                .clip(shape)
+                .textureBlur(
+                    backdrop = backdrop,
+                    shape = shape,
+                    blurRadius = 26f,
+                    colors = BlurColors(blendColors = listOf(BlendColorEntry(color = tint))),
+                )
+                .background(tint.copy(alpha = tint.alpha * 0.5f))
+                .border(1.dp, if (dark) Color(0x14FFFFFF) else Color(0x1F1E1946), shape),
+        )
+        return
+    }
+    Box(
+        modifier
+            .clip(shape)
+            .background(tint)
+            .drawBehind {
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        0f to if (dark) Color(0x08FFFFFF) else Color(0x30FFFFFF),
+                        0.55f to Color(0x00FFFFFF),
+                        1f to Color(0x00FFFFFF),
+                        startY = 0f,
+                        endY = size.height,
+                    ),
+                )
+            },
+    )
+}
+
+/**
+ * 单个 Dock 项。
+ *
+ * 按钮造型由 [button] 决定，尺寸固定 78×60（与默认胶囊一致）：
+ * 按下 → 整体缩到 0.9 并轻微下沉（立体键多沉 2dp），松手带过冲弹回。
  */
 @Composable
 private fun DockItem(
     style: DockStyle,
+    button: DockButton,
     item: BottomBarDestination,
     index: Int,
     selected: Boolean,
@@ -319,57 +441,47 @@ private fun DockItem(
     rainbow: Boolean,
     theme: DockTheme,
     dark: Boolean,
-    gradFill: Boolean,
-    iconShapeOverride: androidx.compose.ui.graphics.Shape?,
+    tint: Color?,
+    forceShape: Shape? = null,
     onClick: () -> Unit,
 ) {
     val accent = me.weishu.kernelsu.ui.screen.ag.Ag.accent
     val itemW = DockMetrics.itemW
     val itemH = DockMetrics.itemH
 
-    val baseTint = if (rainbow && !selected) rainbowColors[index % 4] else theme.unselected
+    val baseTint = tint ?: if (rainbow && !selected) rainbowColors[index % 4] else theme.unselected
+    // 正圆 / 超椭圆必须落在正方形里，否则会被 78×60 的项拉成椭圆
+    val square = button.isSquare
+    val fillW = if (square) 54.dp else itemW
+    val fillH = if (square) 54.dp else itemH
+    val shape = forceShape ?: button.shape(fillW, fillH)
 
-    val itemShape = when {
-        iconShapeOverride != null -> iconShapeOverride
-        style == DockStyle.V9 -> RoundedCornerShape(18.dp)
-        style == DockStyle.V8 -> RoundedCornerShape(14.dp)
-        style == DockStyle.V11 -> CircleShape
-        else -> RoundedCornerShape(19.dp)
-    }
-
-    val gradient = Brush.linearGradient(listOf(accent.primary, accent.mid, accent.secondary))
-
-    val itemBg: Brush? = when {
-        style == DockStyle.V7 && selected -> null            // 描边霓虹：透明底
-        style == DockStyle.V10 && selected -> null           // 顶指示条：透明底
-        style == DockStyle.V8 && selected -> null            // 方块卡片：交给滑动白卡
-        style == DockStyle.V11 && selected -> null           // 浮起圆片：单独画圆
-        style == DockStyle.D0 && selected -> null            // 原有胶囊：交给滑动底衬
-        (gradFill || style == DockStyle.V9) && selected -> gradient
-        style == DockStyle.V1 && selected -> SolidColor(theme.selectedBg)
-        style == DockStyle.V6 && selected -> Brush.radialGradient(
-            listOf(accent.primary.copy(alpha = 0.32f), accent.secondary.copy(alpha = 0.14f), Color.Transparent),
-        )
-        style == DockStyle.PAGES && selected -> SolidColor(theme.selectedBg)
-        style == DockStyle.GLASS && selected -> SolidColor(theme.selectedBg)
-        style == DockStyle.NOCTURNE && selected -> SolidColor(theme.selectedBg)
-        else -> null
-    }
-
+    val gradFill = selected && button in setOf(
+        DockButton.PILL, DockButton.CIRCLE, DockButton.SQUIRCLE, DockButton.CUT, DockButton.GLOW, DockButton.DOUBLE,
+    )
     val fgTint = when {
-        (gradFill || style == DockStyle.V9) && selected -> Color.White
-        style == DockStyle.EDITORIAL -> if (selected) theme.selected else baseTint
-        PAGES_GLASS_NOCTURNE.contains(style) && selected -> theme.selected
+        gradFill -> Color.White
+        style == DockStyle.EDITORIAL && selected -> theme.selected
         selected -> theme.selected
         else -> baseTint
     }
 
+    // 按下反馈
+    val src = remember { MutableInteractionSource() }
+    val pressed by src.collectIsPressedAsState()
+    val pressScale by animateFloatAsState(
+        targetValue = if (pressed) 0.90f else 1f,
+        animationSpec = spring(dampingRatio = 0.42f, stiffness = 900f),
+        label = "dock-press-$index",
+    )
+    val pressSink by animateDpAsState(
+        targetValue = if (pressed) (if (button == DockButton.KEYCAP) 2.dp else 1.dp) else 0.dp,
+        animationSpec = spring(dampingRatio = 0.5f, stiffness = 800f),
+        label = "dock-sink-$index",
+    )
     val iconScale by animateFloatAsState(
         targetValue = if (selected) 1.08f else 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium,
-        ),
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
         label = "dock-icon-$index",
     )
     val lift by animateDpAsState(
@@ -387,47 +499,43 @@ private fun DockItem(
         modifier = Modifier
             .width(itemW)
             .height(itemH)
-            // 不整体 clip：v10 顶部指示条需要溢出到项外
-            .then(if (itemBg != null) Modifier.background(itemBg, itemShape) else Modifier)
-            .then(
-                when {
-                    style == DockStyle.V7 && selected -> Modifier
-                        .border(1.6.dp, accent.primary.copy(alpha = 0.45f), itemShape)
-                        .drawBehind {
-                            // 外光环 box-shadow:0 0 0 4px rgba(accent,.08)
-                            val p = 4.dp.toPx()
-                            drawRoundRect(
-                                color = accent.primary.copy(alpha = 0.08f),
-                                topLeft = androidx.compose.ui.geometry.Offset(-p, -p),
-                                size = androidx.compose.ui.geometry.Size(size.width + p * 2, size.height + p * 2),
-                                cornerRadius = androidx.compose.ui.geometry.CornerRadius(19.dp.toPx() + p),
-                            )
-                        }
-                    style == DockStyle.V10 && selected -> Modifier
-                        .border(1.2.dp, accent.primary.copy(alpha = 0.20f), itemShape)
-                    else -> Modifier
-                }
-            )
+            .graphicsLayer {
+                scaleX = pressScale
+                scaleY = pressScale
+            }
             .clickable(
-                interactionSource = remember { MutableInteractionSource() },
+                interactionSource = src,
                 indication = null,
                 onClick = onClick,
             ),
         contentAlignment = Alignment.Center,
     ) {
-        // V11 浮起圆片：圆片比项本身小一圈，居中
-        if (style == DockStyle.V11 && selected) {
+        Box(Modifier.size(fillW, fillH)) {
+            DockButtonFill(
+                style = button,
+                selected = selected,
+                shape = shape,
+                accent = accent.primary,
+                accentMid = accent.mid,
+                accentSecond = accent.secondary,
+                dark = dark,
+            )
+        }
+
+        // V11 浮起圆片：选中时按钮下面再垫一枚更小的实底圆
+        if (style == DockStyle.V11 && selected && button != DockButton.CIRCLE) {
             Box(
                 Modifier
                     .size(50.dp)
                     .clip(CircleShape)
-                    .background(gradient),
+                    .background(Brush.linearGradient(listOf(accent.primary, accent.mid, accent.secondary))),
             )
         }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .offset(y = lift),
+                .offset(y = lift + pressSink),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
@@ -437,9 +545,8 @@ private fun DockItem(
                 badgeTintOverride = if (fgTint == Color.White) Color.White else null,
                 scale = iconScale,
                 glow = style == DockStyle.V6 && selected,
-                big = (gradFill || style == DockStyle.V9) && selected,
+                big = false,
             )
-            // 标签：d0 / v1(选中) / v5 / pages(选中) / glass / nocturne 常显样式
             if (showLabel(style, selected)) {
                 Text(
                     text = stringResource(item.label),
@@ -451,7 +558,6 @@ private fun DockItem(
                     modifier = Modifier.padding(top = 2.dp),
                 )
             }
-            // Editorial：选中项下方短横线
             if (style == DockStyle.EDITORIAL) {
                 Spacer(Modifier.height(3.dp))
                 Box(
@@ -464,7 +570,7 @@ private fun DockItem(
             }
         }
 
-        // V10 顶指示条 + 中心小圆点
+        // V10 顶指示条
         if (style == DockStyle.V10 && selected) {
             Box(
                 Modifier
@@ -475,16 +581,7 @@ private fun DockItem(
                     .clip(RoundedCornerShape(99.dp))
                     .background(Brush.linearGradient(listOf(accent.primary, accent.secondary))),
             )
-            Box(
-                Modifier
-                    .align(Alignment.TopCenter)
-                    .offset(y = 8.dp)
-                    .size(5.dp)
-                    .clip(CircleShape)
-                    .background(Brush.linearGradient(listOf(accent.primary, accent.secondary))),
-            )
         }
-        // GLASS 顶部霓虹条（悬在药丸内衬外）
         if (style == DockStyle.GLASS && selected) {
             Box(
                 Modifier
@@ -495,7 +592,6 @@ private fun DockItem(
                     .background(Brush.horizontalGradient(listOf(accent.primary, accent.secondary))),
             )
         }
-        // NOCTURNE 顶部指示条
         if (style == DockStyle.NOCTURNE && selected) {
             Box(
                 Modifier
@@ -509,67 +605,10 @@ private fun DockItem(
     }
 }
 
-private val PAGES_GLASS_NOCTURNE = setOf(DockStyle.PAGES, DockStyle.GLASS, DockStyle.NOCTURNE)
-
 private fun showLabel(style: DockStyle, selected: Boolean): Boolean = when (style) {
     DockStyle.D0, DockStyle.GLASS, DockStyle.NOCTURNE -> true
     DockStyle.V1, DockStyle.PAGES -> selected
     else -> false
-}
-
-/**
- * 设计稿 .dock 的毛玻璃：`backdrop-filter: blur(20px) saturate(1.4)` + `rgba(255,255,255,.78)`。
- *
- * 实现上用「静态磨砂」而不是实时背景采样：底栏在每一页的首帧就要绘制，实时模糊需要先把
- * 整页内容录进 RenderNode 再回读采样，部分真机 GPU 在首帧直接崩溃（启动页卡住→闪退）。
- * 设计稿底色本来就是 78% 白，静态版叠上半透明底 + 顶部高光 + 底部内阴影后观感几乎一致，
- * 而且滚动时不会有采样延迟导致的"糊穿"。
- */
-@Composable
-private fun BoxScope.DockFrost(
-    shape: androidx.compose.ui.graphics.Shape,
-    tint: Color,
-    gloss: Boolean = false,
-) {
-    // 玻璃本体：半透明底 + 上亮下暗的厚度感。
-    // 暗色下顶部高光必须压低：胶囊底是 #1C1B2E 的深玻璃，19% 白叠上去就是
-    // 一条横贯胶囊顶部的白雾（夜间模式里"胶囊上方那块白"就是它）。
-    val dark = me.weishu.kernelsu.ui.screen.ag.Ag.isDark
-    val topLight = if (dark) Color(0x08FFFFFF) else Color(0x30FFFFFF)
-    Box(
-        Modifier
-            .matchParentSize()
-            .clip(shape)
-            .background(tint)
-            .drawBehind {
-                drawRect(
-                    brush = Brush.verticalGradient(
-                        // 顶部一层薄高光给玻璃"厚度"，底部不再压黑。
-                        0f to topLight,
-                        0.55f to Color(0x00FFFFFF),
-                        1f to Color(0x00FFFFFF),
-                        startY = 0f,
-                        endY = size.height,
-                    ),
-                )
-            },
-    )
-    if (gloss) {
-        Box(
-            Modifier
-                .matchParentSize()
-                .clip(shape)
-                .drawBehind {
-                    drawRect(
-                        brush = Brush.verticalGradient(
-                            listOf(if (dark) Color(0x1AFFFFFF) else Color(0x73FFFFFF), Color.Transparent),
-                            startY = 0f,
-                            endY = size.height * 0.32f,
-                        ),
-                    )
-                },
-        )
-    }
 }
 
 /** Dock 单项图标 + 徽标 */
@@ -588,7 +627,6 @@ private fun DockIcon(
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier, contentAlignment = Alignment.TopCenter) {
-        // 设计稿 .dock .dit 图标 22px（选中态 24px），项高 60dp
         val iconSize = if (big) 24.dp else 22.dp
         Icon(
             imageVector = item.filledIcon,
@@ -604,7 +642,6 @@ private fun DockIcon(
         )
         val badge = navigationBadgeFor(index, navigationBadge, floating = true)
         if (badge != null) {
-            // 设计稿 .dit .bdg：17px 品红圆角徽标 + 2px 白边，位于项右上
             Box(
                 Modifier
                     .align(Alignment.TopEnd)
@@ -651,8 +688,6 @@ object AgDockThemes {
             selectedBg = ac.softDark, badge = ac.secondary, glass = false,
             backdrop = Color(0xFF1A192E),
         ) else DockTheme(
-            // 品牌稿（foxsu-brand-ui）：胶囊是接近实心的白，不再靠通透感取巧；
-            // 选中块取淡同色相药丸，未选中图标/文字用设计稿的灰紫 #8E8AA3。
             bg = Color(0xF2FFFFFF), border = Color(0x66FFFFFF), shadow = Color(0x2432286E),
             selected = ac.primary, unselected = Color(0xFF8E8AA3),
             selectedBg = ac.soft, badge = ac.secondary, glass = false,

@@ -65,6 +65,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import me.weishu.kernelsu.ui.util.LauncherIconManager
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -85,6 +86,9 @@ import me.weishu.kernelsu.ui.component.bottombar.BottomBar
 import me.weishu.kernelsu.ui.component.bottombar.MainPagerState
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
 import me.weishu.kernelsu.ui.component.bottombar.SideRail
+import me.weishu.kernelsu.ui.component.bottombar.LocalDockReveal
+import me.weishu.kernelsu.ui.component.bottombar.dockRevealOnTouch
+import me.weishu.kernelsu.ui.component.bottombar.rememberDockRevealState
 import me.weishu.kernelsu.ui.component.hasCustomWallpaper
 import me.weishu.kernelsu.ui.component.scaffoldBackgroundColor
 import me.weishu.kernelsu.ui.component.bottombar.rememberMainPagerState
@@ -165,6 +169,11 @@ class MainActivity : ComponentActivity() {
         if (isManager && Natives.kernelUAPIVersion == Natives.managerUAPIVersion) install()
 
         if (savedInstanceState == null) intent?.let { intentChannel.trySend(it) }
+
+        // 启动时对一次账：系统可能在更新 / 清理后把 activity-alias 还原成清单默认值，
+        // 那样桌面图标就不再跟随设置里的选择了。这里重新对齐一次（代价仅一次
+        // getComponentEnabledSetting，已经一致时不做任何写入）。
+        runCatching { LauncherIconManager.sync() }
 
         setContent {
             val viewModel = viewModel<MainActivityViewModel>()
@@ -492,17 +501,21 @@ fun MainScreen(
     }
     val blurBackdrop = rememberBlurBackdrop(enableBlur)
 
-    // 底栏已统一为静态磨砂，旧的 FloatingBottomBar / BottomBarFresh 不再被调用，
-    // 页面层因此完全不需要被录进 RenderNode：首帧不记录 backdrop，最稳。
+    // 页面层只在这两种「真的要采样身后内容」的材质开启时才录进 RenderNode：
+    // 液态玻璃（底栏折射）与实时模糊（底栏/顶栏磨砂）。默认都关，首帧依旧零开销。
     // （历史上这里恒为 true，导致所有皮肤首帧都要做一次全页录制 + 实时模糊采样，
     //  部分真机 GPU 直接崩溃，表现为启动页卡住后闪退。）
-    val needsPageBackdrop = false
+    val customNow = CustomizationStore.current
+    val needsPageBackdrop = customNow.bottomBarLiquidGlass || enableBlur
 
     val backdrop = rememberLayerBackdrop {
         // ContentDrawScope 里的 drawRect 是成员函数，不需要 import
         drawRect(surfaceColor)
         drawContent()
     }
+
+    // 胶囊读秒自动收起的共享状态：收起后点屏幕任意位置召回
+    val dockReveal = rememberDockRevealState()
 
     val settledPage = mainPagerState.pagerState.settledPage
     LaunchedEffect(settledPage) {
@@ -518,13 +531,17 @@ fun MainScreen(
 
     CompositionLocalProvider(
         LocalMainPagerState provides mainPagerState,
+        LocalDockReveal provides dockReveal,
         // 底栏的液态玻璃需要采样这个 backdrop（Fresh 模式默认不启用 Miuix 的浮动底栏模糊，
         // 所以这里始终记录一份页面内容，开关打开就能立刻用）
         LocalAppBackdrop provides backdrop,
     ) {
         val contentReady = rememberContentReady()
         val pagerContent = @Composable { bottomInnerPadding: Dp ->
-            Box(modifier = if (blurBackdrop != null) Modifier.layerBackdrop(blurBackdrop) else Modifier) {
+            Box(
+                modifier = (if (blurBackdrop != null) Modifier.layerBackdrop(blurBackdrop) else Modifier)
+                    .dockRevealOnTouch(dockReveal)
+            ) {
                 HorizontalPager(
                     modifier = Modifier
                         .pagerGestureOverride(
@@ -648,6 +665,7 @@ fun MainScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .dockRevealOnTouch(dockReveal)
                         // 胶囊下方必须是实底：设计稿里 .dock 是浮在不透明页面底上的，
                         // 之前这里完全透明，页面内容/壁纸会从胶囊四周和下方透出来，
                         // 看起来像"底栏是空的"。用页面色做一段由透明到实色的过渡，

@@ -456,68 +456,28 @@ fun CustomizationScreen() {
                         title = stringResource(R.string.customization_icon),
                         subtitle = stringResource(R.string.customization_icon_hint),
                     ) {
-                        val iconChoices = listOf(
-                            // 白底墨线（默认）
-                            IconChoice(
-                                style = LauncherIconManager.STYLE_FOXSU,
-                                labelRes = R.string.customization_icon_foxsu,
-                                iconRes = R.drawable.ic_launcher_foreground,
-                                background = Brush.linearGradient(
-                                    listOf(Color(0xFFFFFFFF), Color(0xFFF1F1EE))
-                                ),
-                            ),
-                            // 白底七彩
-                            IconChoice(
-                                style = LauncherIconManager.STYLE_FOX2,
-                                labelRes = R.string.customization_icon_fox2,
-                                iconRes = R.drawable.ic_launcher_fox2_foreground,
-                                background = Brush.linearGradient(
-                                    listOf(Color(0xFFFFFFFF), Color(0xFFF6F1FF))
-                                ),
-                            ),
-                            // 墨底月白
-                            IconChoice(
-                                style = LauncherIconManager.STYLE_FOX3,
-                                labelRes = R.string.customization_icon_fox3,
-                                iconRes = R.drawable.ic_launcher_fox3_foreground,
-                                background = Brush.linearGradient(
-                                    listOf(Color(0xFF1C1C21), Color(0xFF08080A))
-                                ),
-                            ),
-                            // 墨底七彩
-                            IconChoice(
-                                style = LauncherIconManager.STYLE_FOX4,
-                                labelRes = R.string.customization_icon_fox4,
-                                iconRes = R.drawable.ic_launcher_fox4_foreground,
-                                background = Brush.linearGradient(
-                                    listOf(Color(0xFF191922), Color(0xFF08080A))
-                                ),
-                            ),
-                            IconChoice(
-                                style = LauncherIconManager.STYLE_KERNELSU,
-                                labelRes = R.string.customization_icon_kernelsu,
-                                iconRes = R.drawable.ic_launcher_kernelsu_foreground,
-                                background = Brush.linearGradient(listOf(Color.White, Color.White)),
-                            ),
-                        )
+                        // 与定制页（Ag）共用同一份图标表：五套新狐狸 + KernelSU
+                        val iconChoices = LauncherIconManager.styles
                         iconChoices.chunked(3).forEach { row ->
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                             ) {
-                                row.forEach { choice ->
+                                row.forEach { style ->
                                     IconChip(
                                         modifier = Modifier.weight(1f),
-                                        label = stringResource(choice.labelRes),
-                                        selected = custom.iconStyle == choice.style,
-                                        background = choice.background,
-                                        iconRes = choice.iconRes,
+                                        label = style.label,
+                                        selected = custom.launcherIcon == style.id,
+                                        background = Brush.linearGradient(
+                                            listOf(Color(0xFFFFFFFF), Color(0xFFF7F4FF))
+                                        ),
+                                        iconRes = style.preview,
                                         onSelect = {
-                                            CustomizationStore.setIconStyle(choice.style)
-                                            LauncherIconManager.apply(choice.style)
+                                            CustomizationStore.setLauncherIcon(style.id)
+                                            val ok = LauncherIconManager.apply(style.id)
                                             Toast.makeText(
                                                 context,
-                                                R.string.customization_icon_hint,
+                                                if (ok) "已切换到「${style.label}」" else "切换失败，请稍后重试",
                                                 Toast.LENGTH_SHORT,
                                             ).show()
                                         },
@@ -527,28 +487,6 @@ fun CustomizationScreen() {
                             }
                             Spacer(Modifier.height(10.dp))
                         }
-
-                        // 七彩狐狸：与上面的选择器共用同一份持久化状态（真实切换启动器图标）
-                        val rainbowOn = custom.iconStyle == LauncherIconManager.STYLE_FOX2
-                        ToggleRow(
-                            title = stringResource(R.string.customization_icon_rainbow),
-                            subtitle = stringResource(R.string.customization_icon_rainbow_sum),
-                            checked = rainbowOn,
-                            onChange = { on ->
-                                val style = if (on) {
-                                    LauncherIconManager.STYLE_FOX2
-                                } else {
-                                    LauncherIconManager.STYLE_FOXSU
-                                }
-                                CustomizationStore.setIconStyle(style)
-                                LauncherIconManager.apply(style)
-                                Toast.makeText(
-                                    context,
-                                    R.string.customization_icon_hint,
-                                    Toast.LENGTH_SHORT,
-                                ).show()
-                            },
-                        )
                     }
                 }
 

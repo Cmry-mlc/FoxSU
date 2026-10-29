@@ -14,6 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.theme.LocalEnableFloatingBottomBar
 import me.weishu.kernelsu.ui.LocalMainPagerState
 import me.weishu.kernelsu.ui.LocalUiMode
@@ -118,6 +119,12 @@ fun BottomBar(
     navigationBadge: NavigationBadgeState,
     modifier: Modifier = Modifier,
 ) {
+    // 传统底栏开关优先：开 = 通栏传统底栏，关 = 胶囊（默认关）
+    if (CustomizationStore.current.classicDock) {
+        ClassicDockBar(AgDockThemes.redesign(), navigationBadge, modifier)
+        return
+    }
+
     // Editorial 默认保留自己的「纸面」通栏底栏：胶囊是 Redesign 的语言，
     // 套在杂志版式上会把栏高、描边、指示器全部搞乱（可在定制里手动打开胶囊）。
     if (!useThemeDock()) {

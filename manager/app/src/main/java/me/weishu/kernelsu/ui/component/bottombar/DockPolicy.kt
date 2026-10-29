@@ -23,5 +23,10 @@ fun useThemeDock(): Boolean = when (LocalUiMode.current) {
  * 页面留白必须跟着这个判断走：底栏没生效时还留 96dp 会凭空多出一条空隙。
  */
 @Composable
-fun useSideDock(): Boolean =
-    useThemeDock() && DockStyle.fromRaw(CustomizationStore.current.dockStyle) == DockStyle.V5
+fun useSideDock(): Boolean {
+    val custom = CustomizationStore.current
+    // 传统底栏是贴底通栏，和「侧边抽屉」互斥
+    return !custom.classicDock &&
+        useThemeDock() &&
+        DockStyle.fromRaw(custom.dockStyle) == DockStyle.V5
+}

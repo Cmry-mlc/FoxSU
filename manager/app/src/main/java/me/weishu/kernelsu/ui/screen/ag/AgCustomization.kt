@@ -28,7 +28,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Construction
 import androidx.compose.material.icons.rounded.FormatSize
 import androidx.compose.material.icons.rounded.Gesture
@@ -60,6 +62,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
@@ -76,6 +79,8 @@ import me.weishu.kernelsu.R
 import me.weishu.kernelsu.data.repository.SettingsRepositoryImpl
 import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.component.ImageCropDialog
+import me.weishu.kernelsu.ui.component.bottombar.DockButton
+import me.weishu.kernelsu.ui.component.bottombar.DockButtonSwatch
 import me.weishu.kernelsu.ui.navigation3.LocalNavigator
 import me.weishu.kernelsu.ui.screen.settings.SettingsScreenActions
 import me.weishu.kernelsu.ui.util.LauncherIconManager
@@ -140,6 +145,57 @@ internal fun AgCustomization(
         }
     }
 
+    // ── 自定义启动器图标 ──
+    var pendingIconCrop by remember { mutableStateOf<String?>(null) }
+    var iconTick by remember { androidx.compose.runtime.mutableIntStateOf(0) }
+    // 恢复默认后自增：让页面里所有 remember 出来的临时开关一起重建
+    var resetTick by remember { androidx.compose.runtime.mutableIntStateOf(0) }
+
+    val iconPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            val saved = withContext(Dispatchers.IO) {
+                savePickedImage(context, uri, "launcher_icon_raw.jpg", maxSide = 1200, quality = 96)
+            }
+            if (saved == null) {
+                Toast.makeText(context, "读取图片失败", Toast.LENGTH_SHORT).show()
+            } else {
+                pendingIconCrop = saved
+            }
+        }
+    }
+
+    pendingIconCrop?.let { raw ->
+        ImageCropDialog(
+            sourcePath = raw,
+            aspectRatio = 1f,
+            outputName = "launcher_icon_square.png",
+            onConfirm = { cropped ->
+                pendingIconCrop = null
+                scope.launch {
+                    val ok = withContext(Dispatchers.IO) {
+                        val bmp = android.graphics.BitmapFactory.decodeFile(cropped)
+                        if (bmp == null) false else LauncherIconManager.saveCustomIcon(bmp) != null
+                    }
+                    iconTick++
+                    if (!ok) {
+                        Toast.makeText(context, "自定义图标保存失败", Toast.LENGTH_SHORT).show()
+                    } else {
+                        CustomizationStore.setLauncherCustom(LauncherIconManager.customFile().absolutePath)
+                        CustomizationStore.setLauncherIcon(LauncherIconManager.STYLE_CUSTOM)
+                        val pinned = LauncherIconManager.apply(LauncherIconManager.STYLE_CUSTOM)
+                        Toast.makeText(
+                            context,
+                            if (pinned) "已设为自定义图标，并按桌面提示固定快捷方式" else "已设为自定义图标（当前桌面不支持固定快捷方式）",
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    }
+                }
+            },
+            onDismiss = { pendingIconCrop = null },
+        )
+    }
+
     pendingWallpaperCrop?.let { raw ->
         ImageCropDialog(
             sourcePath = raw,
@@ -185,6 +241,7 @@ internal fun AgCustomization(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 18.dp),
         ) {
+            androidx.compose.runtime.key(resetTick) {
             // 大标题（设计稿 margin-top:22px）
             Text(
                 buildString { append("定制"); append("功能") },
@@ -224,15 +281,35 @@ internal fun AgCustomization(
             AgGHead("全局强调色")
             AgCard {
                 AgSubLabel("配色（取自 FoxSu logo 的七彩）")
+                var accentPicker by remember { mutableStateOf(false) }
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     repeat(AccentPalettes.size) { i ->
                         item {
                             AgAccentChip(
                                 palette = AccentPalettes[i],
-                                selected = custom.accentPalette == i,
-                            ) { CustomizationStore.setAccentPalette(i) }
+                                selected = custom.accentCustom == 0 && custom.accentPalette == i,
+                            ) { accentPicker = false; CustomizationStore.setAccentPalette(i) }
                         }
                     }
+                    item {
+                        // 自定义：只挑一个主色，另外两个渐变端由它推导
+                        AgAccentCustomChip(
+                            color = custom.accentCustom,
+                            selected = custom.accentCustom != 0,
+                            onClick = { accentPicker = !accentPicker },
+                        )
+                    }
+                }
+                if (accentPicker) {
+                    AgTitlePicker(
+                        initial = custom.accentCustom.takeIf { it != 0 } ?: Ag.Vio.toArgb(),
+                        onPick = { CustomizationStore.setAccentCustom(it) },
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        "当前：${hexOf(custom.accentCustom)}　拖动即时生效，点任意预设色可退出自定义",
+                        fontSize = 11.sp, color = Ag.Tx2,
+                    )
                 }
                 Spacer(Modifier.height(12.dp))
                 Text(
@@ -304,7 +381,7 @@ internal fun AgCustomization(
             AgGHead("显示与效果")
             AgCard(contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 4.dp)) {
                 AgToggleRow(
-                    "模糊", "启用顶栏和底栏的模糊效果",
+                    "模糊", "底栏实时采样身后内容做高斯模糊；其它皮肤的顶栏/底栏模糊也由它控制",
                     Ag.Vio, AgSettingsIcons.Blur,
                     trailing = {
                         var on by remember { mutableStateOf(repo.enableBlur) }
@@ -414,6 +491,12 @@ internal fun AgCustomization(
             AgCard {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
                     item {
+                        // 系统默认：fontFamily = null 即回到平台字体（选了别的字体后靠它退回）
+                        AgFontChip("系统默认", "字A", null, custom.fontStyle == 0) {
+                            CustomizationStore.setFontStyle(0)
+                        }
+                    }
+                    item {
                         AgFontChip("思源宋体", "字A", FontFamily(Font(R.font.noto_serif_sc)), custom.fontStyle == 1) {
                             CustomizationStore.setFontStyle(1)
                         }
@@ -455,56 +538,143 @@ internal fun AgCustomization(
             // ══════════ 应用图标 ══════════
             AgGHead("应用图标")
             AgCard {
-                AgSubLabel("图标风格")
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-                    val geoItems = listOf(
-                        "圆角方" to 9f, "正圆" to -1f, "超椭圆" to 12f, "七彩" to 9f,
-                    )
-                    // 几何风格：作用于 Dock 图标形状（用 iconStyle 持久化 100+）
-                    val curShape = custom.iconStyle.takeIf { it in 100..103 } ?: 100
-                    geoItems.forEachIndexed { i, (name, radius) ->
-                        val code = 100 + i
-                        item {
-                            AgIconCard(
-                                name = name,
-                                shapeRadius = radius,
-                                rainbow = i == 3,
-                                selected = curShape == code,
-                            ) {
-                                CustomizationStore.setIconStyle(code)
-                            }
-                        }
-                    }
-                }
-                Spacer(Modifier.height(18.dp))
                 AgSubLabel("启动器图标")
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-                    val launcherItems = listOf(
-                        Triple("默认", LauncherIconManager.STYLE_FOXSU, R.drawable.ic_fox_global),
-                        Triple("乖巧", LauncherIconManager.STYLE_FOX2, R.drawable.ic_launcher_fox2_foreground),
-                        Triple("招手", LauncherIconManager.STYLE_FOX3, R.drawable.ic_launcher_fox3_foreground),
-                        Triple("回眸", LauncherIconManager.STYLE_FOX4, R.drawable.ic_launcher_fox4_foreground),
-                    )
-                    launcherItems.forEach { (name, style, res) ->
+                    LauncherIconManager.styles.forEach { style ->
                         item {
                             AgLauncherIconCard(
-                                name = name,
-                                iconRes = res,
-                                selected = custom.launcherIcon == style,
+                                style = style,
+                                selected = custom.launcherIcon == style.id,
                             ) {
-                                CustomizationStore.setLauncherIcon(style)
-                                LauncherIconManager.apply(style)
-                                Toast.makeText(context, R.string.customization_icon_hint, Toast.LENGTH_SHORT).show()
+                                CustomizationStore.setLauncherIcon(style.id)
+                                val ok = LauncherIconManager.apply(style.id)
+                                Toast.makeText(
+                                    context,
+                                    if (ok) "已切换到「${style.label}」，桌面若没变请回桌面再返回" else "桌面图标切换失败，请稍后重试",
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            }
+                        }
+                    }
+                    item {
+                        AgLauncherCustomCard(
+                            version = iconTick,
+                            selected = custom.launcherIcon == LauncherIconManager.STYLE_CUSTOM,
+                        ) {
+                            if (LauncherIconManager.hasCustomIcon()) {
+                                CustomizationStore.setLauncherCustom(LauncherIconManager.customFile().absolutePath)
+                                CustomizationStore.setLauncherIcon(LauncherIconManager.STYLE_CUSTOM)
+                                val ok = LauncherIconManager.apply(LauncherIconManager.STYLE_CUSTOM)
+                                Toast.makeText(
+                                    context,
+                                    if (ok) "自定义图标已作为桌面快捷方式放置" else "已应用自定义图标；当前桌面不支持固定快捷方式",
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            } else {
+                                iconPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                             }
                         }
                     }
                 }
+                Spacer(Modifier.height(10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    AgPillAction(
+                        text = if (LauncherIconManager.hasCustomIcon()) "更换自定义图" else "导入自定义图",
+                        icon = AgSettingsIcons.Wallpaper,
+                        primary = false,
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        iconPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    }
+                    if (LauncherIconManager.hasCustomIcon()) {
+                        AgPillAction(
+                            text = "移除",
+                            icon = Icons.Rounded.Close,
+                            primary = false,
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            LauncherIconManager.clearCustomIcon()
+                            if (custom.launcherIcon == LauncherIconManager.STYLE_CUSTOM) {
+                                CustomizationStore.setLauncherIcon(LauncherIconManager.STYLE_FOXSU)
+                                LauncherIconManager.apply(LauncherIconManager.STYLE_FOXSU)
+                            }
+                            CustomizationStore.setLauncherCustom(null)
+                            iconTick++
+                        }
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "自定义图会被裁成正方形，除应用内展示外，还会以「桌面快捷方式」的形式放到桌面——" +
+                        "Android 不允许应用在运行时替换自己的启动图标（图标是编译期资源），" +
+                        "所以系统桌面上原图标仍会保留。",
+                    fontSize = 11.sp, lineHeight = 16.sp, color = Ag.Tx2,
+                )
                 Spacer(Modifier.height(6.dp))
             }
 
             // ══════════ 底部导航栏 ══════════
             AgGHead("底部导航栏")
             AgCard {
+                // ① 形态：胶囊 / 传统底栏
+                AgToggleRow(
+                    "传统底栏",
+                    "关：悬浮胶囊（默认）　开：贴底通栏传统底栏",
+                    Ag.Vio, AgSettingsIcons.FloatingBar,
+                    trailing = {
+                        AgToggle(checked = custom.classicDock, onCheckedChange = {
+                            CustomizationStore.setClassicDock(!custom.classicDock)
+                        }, small = true)
+                    },
+                )
+                // ② 读秒自动收起
+                AgToggleRow(
+                    "读秒自动收起",
+                    if (custom.dockAutoHide > 0) {
+                        "${custom.dockAutoHide} 秒无操作后胶囊沉到屏幕下方，点一下屏幕滑回来"
+                    } else {
+                        "开启后倒计时结束，胶囊自动收到屏幕下方；点任意位置带弹跳滑回"
+                    },
+                    Ag.Teal, AgSettingsIcons.Blur,
+                    trailing = {
+                        AgToggle(checked = custom.dockAutoHide > 0, onCheckedChange = {
+                            CustomizationStore.setDockAutoHide(if (custom.dockAutoHide > 0) 8 else 0)
+                        }, small = true)
+                    },
+                )
+                if (custom.dockAutoHide > 0) {
+                    AgSliderRow(
+                        label = "收起秒数",
+                        sub = "3–30 秒；任何触摸或切换页面都会把读秒重置",
+                        value = custom.dockAutoHide.toFloat(),
+                        range = 3f..30f,
+                        display = "${custom.dockAutoHide} 秒",
+                        steps = 26,
+                        onChange = { CustomizationStore.setDockAutoHide(it.toInt()) },
+                    )
+                }
+                Spacer(Modifier.height(16.dp))
+                AgSubLabel("按钮形状 · 10 套")
+                DockButton.all.chunked(5).forEach { line ->
+                    Row(
+                        Modifier.fillMaxWidth().padding(bottom = 9.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        line.forEach { btn ->
+                            AgButtonShapeCard(
+                                button = btn,
+                                selected = custom.dockButton == btn.ordinal,
+                                modifier = Modifier.weight(1f),
+                            ) { CustomizationStore.setDockButton(btn.ordinal) }
+                        }
+                    }
+                }
+                Text(
+                    DockButton.of(custom.dockButton).hint,
+                    fontSize = 11.sp, color = Ag.Tx2,
+                    modifier = Modifier.padding(start = 2.dp, bottom = 14.dp),
+                )
+                AgSubLabel("胶囊样式")
                 // 2 列样式选择器
                 dockStyles.chunked(2).forEach { rowPair ->
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -572,7 +742,7 @@ internal fun AgCustomization(
                     },
                 )
                 AgToggleRow(
-                    "底栏液态玻璃", "实时折射的玻璃质感高光",
+                    "底栏液态玻璃", "真实采样身后内容：模糊 + 提亮 + 边缘折射（GPU 需要支持）",
                     Ag.Vio, AgSettingsIcons.Blur,
                     trailing = {
                         AgToggle(checked = custom.bottomBarLiquidGlass, onCheckedChange = {
@@ -619,16 +789,84 @@ internal fun AgCustomization(
                 )
             }
 
-            Spacer(Modifier.height(8.dp))
-            AgButton(
-                primary = false,
-                text = stringResource(R.string.customization_reset),
-                onClick = {
-                    CustomizationStore.reset()
-                    LauncherIconManager.apply(LauncherIconManager.STYLE_FOXSU)
-                },
-            )
+            // ══════════ 恢复默认 ══════════
+            Spacer(Modifier.height(18.dp))
+            var confirmReset by remember { mutableStateOf(false) }
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(Ag.Danger.copy(alpha = if (Ag.isDark) 0.10f else 0.05f))
+                    .border(1.dp, Ag.Danger.copy(alpha = 0.26f), RoundedCornerShape(18.dp))
+                    .padding(horizontal = 14.dp, vertical = 13.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(Ag.Danger.copy(alpha = 0.12f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(Icons.Rounded.Refresh, null, tint = Ag.Danger, modifier = Modifier.size(18.dp))
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "恢复默认设置",
+                            fontSize = 14.5.sp, fontWeight = FontWeight.ExtraBold, color = Ag.Tx,
+                        )
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            "壁纸、标题、配色、字体、底栏与图标全部回到初始状态",
+                            fontSize = 11.sp, lineHeight = 15.sp, color = Ag.Tx2,
+                        )
+                    }
+                    Spacer(Modifier.width(10.dp))
+                    Box(
+                        Modifier
+                            .height(34.dp)
+                            .clip(RoundedCornerShape(99.dp))
+                            .border(1.dp, Ag.Danger.copy(alpha = 0.45f), RoundedCornerShape(99.dp))
+                            .agClick { confirmReset = true }
+                            .padding(horizontal = 16.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text("重置", fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = Ag.Danger)
+                    }
+                }
+            }
+            if (confirmReset) {
+                androidx.compose.material3.AlertDialog(
+                    onDismissRequest = { confirmReset = false },
+                    title = { Text("恢复默认设置？", fontWeight = FontWeight.ExtraBold) },
+                    text = { Text("所有个性化设置会被清空，且无法撤销。桌面图标会回到第一套。") },
+                    confirmButton = {
+                        androidx.compose.material3.TextButton(onClick = {
+                            confirmReset = false
+                            // 1) 定制项：整份 prefs 清空（reset 内部 clear）
+                            CustomizationStore.reset()
+                            // 2) 同一页上属于「设置」的项也一并回默认，否则重置完开关还亮着
+                            settingsActions?.onSetEnableBlur?.invoke(false)
+                            settingsActions?.onSetEnableNavigationBadge?.invoke(true)
+                            settingsActions?.onSetPageScale?.invoke(1f)
+                            settingsActions?.onSetEnablePredictiveBack?.invoke(false)
+                            settingsActions?.onSetEnableSwipeDismiss?.invoke(true)
+                            settingsActions?.onSetPagerInterceptionMode?.invoke(1)
+                            settingsActions?.onSetModuleDescriptionMaxLines?.invoke(4)
+                            // 3) 桌面图标 + 自定义图
+                            LauncherIconManager.apply(LauncherIconManager.STYLE_FOXSU)
+                            resetTick++
+                            Toast.makeText(context, "已恢复默认设置", Toast.LENGTH_SHORT).show()
+                        }) { Text("恢复默认", color = Ag.Danger, fontWeight = FontWeight.Bold) }
+                    },
+                    dismissButton = {
+                        androidx.compose.material3.TextButton(onClick = { confirmReset = false }) { Text("取消") }
+                    },
+                )
+            }
             Spacer(Modifier.height(140.dp))
+            }
         }
     }
 }
@@ -1064,76 +1302,92 @@ private fun AgFontChip(name: String, glyph: String, family: FontFamily?, selecte
     }
 }
 
-/** .icard：图标风格卡（几何形状） */
+/** .icard：启动器图标卡（完整展示狐狸图，白底浅描边，选中紫框） */
 @Composable
-private fun AgIconCard(name: String, shapeRadius: Float, rainbow: Boolean, selected: Boolean, onClick: () -> Unit) {
+private fun AgLauncherIconCard(style: LauncherIconManager.Style, selected: Boolean, onClick: () -> Unit) {
     Column(
         Modifier
             .agClick(onClick = onClick)
             .clip(RoundedCornerShape(16.dp))
             .background(if (selected) Ag.Vio.copy(alpha = 0.059f) else Color(0x8CFFFFFF))
             .border(1.4.dp, if (selected) Ag.Vio.copy(alpha = 0.502f) else Ag.Line, RoundedCornerShape(16.dp))
-            .padding(13.dp, 13.dp, 13.dp, 10.dp)
-            .width(74.dp),
+            .padding(10.dp, 10.dp, 10.dp, 9.dp)
+            .width(72.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
-        val shape = if (shapeRadius < 0) CircleShape else RoundedCornerShape(shapeRadius.toInt())
-        Box(
-            Modifier
-                .size(38.dp)
-                .shadow(4.dp, shape, spotColor = Ag.Vio.copy(alpha = 0.278f), ambientColor = Ag.Vio.copy(alpha = 0.278f))
-                .clip(shape)
-                .background(
-                    if (rainbow) {
-                        Brush.sweepGradient(
-                            listOf(
-                                Ag.Vio.copy(alpha = 1.0f), Color(0xFFEC4899), Color(0xFF14B8A6),
-                                Color(0xFFF59E0B), Ag.Vio.copy(alpha = 1.0f),
-                            ),
-                        )
-                    } else {
-                        Brush.linearGradient(listOf(Color(0xFF8E5CF6), Color(0xFFEC4899)))
-                    }
-                ),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(AgSettingsIcons.Gear, null, tint = Color.White, modifier = Modifier.size(19.dp))
+        Box(Modifier.size(46.dp)) {
+            Box(
+                Modifier
+                    .size(46.dp)
+                    .shadow(
+                        4.dp, RoundedCornerShape(14.dp),
+                        spotColor = Ag.Vio.copy(alpha = 0.22f), ambientColor = Ag.Vio.copy(alpha = 0.12f),
+                    )
+                    .clip(RoundedCornerShape(14.dp)),
+            ) {
+                Image(
+                    painter = painterResource(style.preview),
+                    contentDescription = style.label,
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+            if (selected) {
+                Box(
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .offset(x = 3.dp, y = 3.dp)
+                        .size(17.dp)
+                        .background(Color.White, CircleShape)
+                        .padding(1.5.dp)
+                        .background(Ag.Vio, CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Icons.Rounded.Check, null, tint = Color.White, modifier = Modifier.size(10.dp))
+                }
+            }
         }
-        Text(name, fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = if (selected) Ag.Vio else Ag.Tx2)
+        Text(
+            style.label,
+            fontSize = 11.sp,
+            fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Bold,
+            color = if (selected) Ag.Vio else Ag.Tx2,
+            maxLines = 1,
+        )
     }
 }
 
-/** .icard：启动器图标卡（完整展示狐狸图，白底浅描边，选中紫框） */
+/** 自定义强调色卡：未选时是一圈彩虹环，选过之后显示当前色 */
 @Composable
-private fun AgLauncherIconCard(name: String, iconRes: Int, selected: Boolean, onClick: () -> Unit) {
+private fun AgAccentCustomChip(color: Int, selected: Boolean, onClick: () -> Unit) {
     Column(
-        Modifier
-            .agClick(onClick = onClick)
-            .clip(RoundedCornerShape(16.dp))
-            .background(if (selected) Ag.Vio.copy(alpha = 0.059f) else Color(0x8CFFFFFF))
-            .border(1.4.dp, if (selected) Ag.Vio.copy(alpha = 0.502f) else Ag.Line, RoundedCornerShape(16.dp))
-            .padding(13.dp, 13.dp, 13.dp, 10.dp)
-            .width(74.dp),
+        Modifier.agClick(onClick = onClick).width(62.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
         Box(
             Modifier
-                .size(40.dp)
-                .shadow(3.dp, RoundedCornerShape(13.dp), spotColor = Ag.Vio.copy(alpha = 0.2f), ambientColor = Ag.Vio.copy(alpha = 0.102f))
-                .clip(RoundedCornerShape(13.dp))
-                .background(if (Ag.isDark) Color(0xFF2A2940) else Color.White),
+                .size(46.dp)
+                .clip(CircleShape)
+                .background(if (selected) androidx.compose.ui.graphics.SolidColor(Color(color)) else Ag.Grad)
+                .border(if (selected) 3.dp else 0.dp, Color.White, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
-            Image(
-                painter = painterResource(iconRes),
-                contentDescription = name,
-                contentScale = androidx.compose.ui.layout.ContentScale.Fit,
-                modifier = Modifier.size(34.dp),
-            )
+            if (selected) {
+                Icon(Icons.Rounded.Check, null, tint = Color.White, modifier = Modifier.size(20.dp))
+            } else {
+                // 未选：中间挖一枚白点，读起来像「+」号色板
+                Box(Modifier.size(16.dp).background(Color.White, CircleShape))
+            }
         }
-        Text(name, fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = if (selected) Ag.Vio else Ag.Tx2)
+        Text(
+            if (selected) "自定义" else "更多",
+            fontSize = 11.sp,
+            fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Bold,
+            color = if (selected) Ag.Vio else Ag.Tx2,
+            maxLines = 1,
+        )
     }
 }
 
@@ -1280,6 +1534,136 @@ private fun AgPillAction(
             fontSize = 12.5.sp,
             fontWeight = FontWeight.Bold,
             color = if (primary) Color.White else Ag.Vio,
+            maxLines = 1,
+        )
+    }
+}
+
+/**
+ * 按钮形状选择卡（10 套）：小样按真实轮廓绘制，选中项描边 + 底色一起高亮。
+ */
+@Composable
+private fun AgButtonShapeCard(
+    button: DockButton,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    val ac = Ag.accent
+    Column(
+        modifier
+            .agClick(onClick = onClick)
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (selected) Ag.Vio.copy(alpha = 0.059f) else Color(0x8CFFFFFF))
+            .border(
+                1.4.dp,
+                if (selected) Ag.Vio.copy(alpha = 0.502f) else Ag.Line,
+                RoundedCornerShape(12.dp),
+            )
+            .padding(vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        DockButtonSwatch(
+            style = button,
+            selected = selected,
+            accent = ac.primary,
+            accentMid = ac.mid,
+            accentSecond = ac.secondary,
+            dark = Ag.isDark,
+            modifier = Modifier.fillMaxWidth().height(32.dp),
+        )
+        Text(
+            button.label,
+            fontSize = 9.5.sp,
+            fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Bold,
+            color = if (selected) Ag.Vio else Ag.Tx2,
+            maxLines = 1,
+        )
+    }
+}
+
+/**
+ * 自定义启动器图标卡：没设置过时是一圈虚线 + 加号，设置过后直接显示用户那张图。
+ *
+ * 用 [version] 触发重新解码：换图之后同一个 composable 需要重新读文件。
+ */
+@Composable
+private fun AgLauncherCustomCard(
+    version: Int,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    val bitmap = remember(version) {
+        runCatching { LauncherIconManager.loadCustomBitmap()?.asImageBitmap() }.getOrNull()
+    }
+    Column(
+        Modifier
+            .agClick(onClick = onClick)
+            .clip(RoundedCornerShape(16.dp))
+            .background(if (selected) Ag.Vio.copy(alpha = 0.059f) else Color(0x8CFFFFFF))
+            .border(1.4.dp, if (selected) Ag.Vio.copy(alpha = 0.502f) else Ag.Line, RoundedCornerShape(16.dp))
+            .padding(10.dp, 10.dp, 10.dp, 9.dp)
+            .width(72.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(7.dp),
+    ) {
+        Box(Modifier.size(46.dp)) {
+            if (bitmap != null) {
+                Image(
+                    bitmap = bitmap,
+                    contentDescription = "自定义图标",
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                    modifier = Modifier
+                        .size(46.dp)
+                        .clip(RoundedCornerShape(14.dp)),
+                )
+            } else {
+                Box(
+                    Modifier
+                        .size(46.dp)
+                        .drawBehind {
+                            val stroke = 1.5.dp.toPx()
+                            drawRoundRect(
+                                color = Ag.Vio.copy(alpha = 0.45f),
+                                cornerRadius = androidx.compose.ui.geometry.CornerRadius(14.dp.toPx()),
+                                style = androidx.compose.ui.graphics.drawscope.Stroke(
+                                    width = stroke,
+                                    pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(
+                                        floatArrayOf(5.dp.toPx(), 4.dp.toPx()),
+                                    ),
+                                ),
+                                topLeft = androidx.compose.ui.geometry.Offset(stroke, stroke),
+                                size = androidx.compose.ui.geometry.Size(
+                                    size.width - stroke * 2, size.height - stroke * 2,
+                                ),
+                            )
+                        },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Icons.Rounded.Add, null, tint = Ag.Vio, modifier = Modifier.size(18.dp))
+                }
+            }
+            if (selected) {
+                Box(
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .offset(x = 3.dp, y = 3.dp)
+                        .size(17.dp)
+                        .background(Color.White, CircleShape)
+                        .padding(1.5.dp)
+                        .background(Ag.Vio, CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Icons.Rounded.Check, null, tint = Color.White, modifier = Modifier.size(10.dp))
+                }
+            }
+        }
+        Text(
+            "自定义",
+            fontSize = 11.sp,
+            fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Bold,
+            color = if (selected) Ag.Vio else Ag.Tx2,
             maxLines = 1,
         )
     }
