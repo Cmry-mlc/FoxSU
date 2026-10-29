@@ -767,7 +767,7 @@ private fun Modifier.offsetFraction(progress: Float): Modifier =
     this.then(
         Modifier.layout { measurable, constraints ->
             val placeable = measurable.measure(constraints)
-            layout(constraints.maxWidth, placeable.height) {
+            layout(placeable.width, placeable.height) {
                 val travel = (constraints.maxWidth - placeable.width).coerceAtLeast(0)
                 placeable.placeRelative((travel * progress).toInt(), 0)
             }
