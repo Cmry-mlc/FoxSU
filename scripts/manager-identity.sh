@@ -168,7 +168,9 @@ PY
 
 cmd_sign() {
     local keystore="${1:-}" alias="${2:-}"
-    [ -n "$keystore" ] && [ -n "$alias" ] || die "用法: manager-identity.sh sign <keystore> <alias>"
+    if [ -z "$keystore" ] || [ -z "$alias" ]; then
+        die "用法: manager-identity.sh sign <keystore> <alias>"
+    fi
     [ -f "$keystore" ] || die "找不到密钥库: $keystore"
     command -v keytool >/dev/null || die "缺少 keytool（安装 JDK）"
     command -v openssl >/dev/null || die "缺少 openssl"
