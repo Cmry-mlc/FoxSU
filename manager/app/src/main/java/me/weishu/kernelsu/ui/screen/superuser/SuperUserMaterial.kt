@@ -119,9 +119,17 @@ fun SuperUserPagerMaterial(
                             fontSize = 26.sp,
                             lineHeight = 32.sp,
                             fontWeight = FontWeight.ExtraBold,
+                            color = me.weishu.kernelsu.ui.theme.TitleInk.solid(
+                                androidx.compose.material3.MaterialTheme.colorScheme.onSurface
+                            ),
                         )
                     } else {
-                        Text(text = titleText)
+                        Text(
+                            text = titleText,
+                            color = me.weishu.kernelsu.ui.theme.TitleInk.solid(
+                                androidx.compose.material3.MaterialTheme.colorScheme.onSurface
+                            ),
+                        )
                     }
                 },
                 searchText = localSearchText,

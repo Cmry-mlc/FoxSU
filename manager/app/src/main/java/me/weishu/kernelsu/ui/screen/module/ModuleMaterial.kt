@@ -304,9 +304,13 @@ fun ModulePagerMaterial(
                             text = titleText,
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.SemiBold,
+                            color = me.weishu.kernelsu.ui.theme.TitleInk.solid(MaterialTheme.colorScheme.onSurface),
                         )
                     } else {
-                        Text(text = titleText)
+                        Text(
+                            text = titleText,
+                            color = me.weishu.kernelsu.ui.theme.TitleInk.solid(MaterialTheme.colorScheme.onSurface),
+                        )
                     }
                 },
                 searchText = uiState.searchStatus.searchText,

@@ -428,7 +428,8 @@ fun AgTitle(
             fontSize = 32.sp,
             fontWeight = FontWeight.ExtraBold,
             letterSpacing = (-0.6).sp,
-            style = TextStyle(brush = Ag.TitleGrad),
+            // 自定义标题色优先，没设就跟随全局强调色（superuser / module / 主页一致）
+            style = me.weishu.kernelsu.ui.theme.TitleInk.style(),
         )
         if (count != null) {
             Spacer(Modifier.width(8.dp))

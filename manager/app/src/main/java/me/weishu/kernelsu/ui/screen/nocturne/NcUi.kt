@@ -160,7 +160,8 @@ fun NcHeader(
                 fontWeight = FontWeight.ExtraBold,
                 letterSpacing = (-1).sp,
                 lineHeight = 32.sp,
-                color = titleColor ?: t.tx,
+                // 没设自定义色时跟随全局强调色（原来固定 t.tx，跟配色完全脱节）
+                color = titleColor ?: me.weishu.kernelsu.ui.theme.TitleInk.solid(t.tx),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )

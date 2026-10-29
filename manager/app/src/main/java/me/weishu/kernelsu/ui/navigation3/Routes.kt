@@ -59,6 +59,11 @@ sealed interface Route : NavKey, Parcelable {
     @Serializable
     data object Customization : Route
 
+    /** 内置能力：FolkZygisk / Sui / NoMount / Folk Mount 四项引擎的状态页。 */
+    @Parcelize
+    @Serializable
+    data object Builtin : Route
+
     @Parcelize
     @Serializable
     data object AppProfileTemplate : Route

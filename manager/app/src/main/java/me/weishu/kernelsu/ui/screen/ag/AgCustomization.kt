@@ -109,6 +109,7 @@ private val dockStyles = listOf(
 internal fun AgCustomization(
     onBack: () -> Unit,
     settingsActions: SettingsScreenActions? = null,
+    onOpenBuiltin: (() -> Unit)? = null,
 ) {
     val custom = CustomizationStore.current
     val repo = remember { SettingsRepositoryImpl() }
@@ -229,6 +230,45 @@ internal fun AgCustomization(
                 )
             }
 
+            // ══════════ 内置能力入口 ══════════
+            if (onOpenBuiltin != null) {
+                AgGHead("内置能力")
+                AgCard(contentPadding = androidx.compose.foundation.layout.PaddingValues(14.dp)) {
+                    Row(
+                        Modifier.fillMaxWidth().agClick(onClick = onOpenBuiltin),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box(
+                            Modifier
+                                .size(44.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(Ag.Grad),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                AgEngineIcons.Mount,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(22.dp),
+                            )
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text("四个引擎", fontSize = 14.5.sp, fontWeight = FontWeight.Bold, color = Ag.Tx)
+                            Spacer(Modifier.height(3.dp))
+                            Text(
+                                "FolkZygisk · Sui · NoMount · Folk Mount",
+                                fontSize = 11.sp,
+                                color = Ag.Tx3,
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                            )
+                        }
+                        Text("›", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Ag.Chev)
+                    }
+                }
+            }
+
             // ══════════ 全局强调色 ══════════
             AgGHead("全局强调色")
             AgCard {
@@ -298,6 +338,12 @@ internal fun AgCustomization(
                 AgTitleColorRow(
                     selected = custom.titleColor,
                     onPick = CustomizationStore::setTitleColor,
+                )
+
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    "主页、超级用户、模块三处标题共用这个颜色；不选时跟随上面的全局强调色，换配色会一起变。",
+                    fontSize = 11.sp, lineHeight = 17.sp, color = Ag.Tx2,
                 )
 
                 // 自定义取色：色相 / 饱和度 / 明度三条滑轨，拖动即实时生效

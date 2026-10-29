@@ -333,7 +333,8 @@ fun GlassTopBar(
                 title,
                 fontSize = titleSize.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = titleColor ?: t.ink,
+                // 自定义标题色优先；没设则跟随全局强调色
+                color = titleColor ?: me.weishu.kernelsu.ui.theme.TitleInk.solid(t.ink),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )

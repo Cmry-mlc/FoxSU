@@ -105,11 +105,7 @@ fun AgHome(
                     letterSpacing = (-0.6).sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    style = if (custom.titleColor == 0) {
-                        TextStyle(brush = Ag.TitleGrad)
-                    } else {
-                        TextStyle(color = Color(custom.titleColor))
-                    },
+                    style = me.weishu.kernelsu.ui.theme.TitleInk.style(),
                 )
                 Spacer(Modifier.weight(1f))
                 Row(

@@ -606,9 +606,11 @@ private fun FreshHeader(onOpenTheme: () -> Unit) {
         Column(modifier = Modifier.weight(1f)) {
             val custom = CustomizationStore.current
             val customTitle = custom.homeTitle
-            // 主题底色下的默认文字色；定制 → 标题栏 里选过颜色就覆盖标题本身（副标题仍跟随底色）
+            // 定制 → 标题栏 选过颜色就用它；没设过跟随全局强调色（副标题仍跟随底色）
             val baseText = LocalContentColor.current
-            val titleColor = if (custom.titleColor == 0) baseText else androidx.compose.ui.graphics.Color(custom.titleColor)
+            val titleColor = me.weishu.kernelsu.ui.theme.TitleInk.solid(
+                me.weishu.kernelsu.ui.theme.currentAccent.primary
+            )
             Text(
                 text = customTitle.ifBlank { stringResource(R.string.app_name) },
                 fontSize = 24.sp,

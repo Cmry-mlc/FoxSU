@@ -263,6 +263,12 @@ class MainActivity : ComponentActivity() {
                             entry<Route.Author>(swipeDismiss = swipeDismiss) { AuthorScreen() }
                             entry<Route.Sulog>(swipeDismiss = swipeDismiss) { SulogScreen() }
                             entry<Route.ColorPalette>(swipeDismiss = swipeDismiss) { ColorPaletteScreen() }
+                            entry<Route.Builtin>(swipeDismiss = swipeDismiss) {
+                                me.weishu.kernelsu.ui.screen.ag.AgBuiltin(
+                                    onBack = dropUnlessResumed { navigator.pop() },
+                                    onOpenRepo = dropUnlessResumed { navigator.push(Route.ModuleRepo) },
+                                )
+                            }
                             entry<Route.Customization>(swipeDismiss = swipeDismiss) {
                                 // 定制页已统一为 Redesign 的 AgCustomization：五套皮肤共用同一套
                                 // 定制能力（卡片颜色/透明度/胶囊/图标/字体…），不再各皮肤各一套。
@@ -296,6 +302,7 @@ class MainActivity : ComponentActivity() {
                                             onSetPageScale = settingsVm::setPageScale,
                                             onSetModuleDescriptionMaxLines = settingsVm::setModuleDescriptionMaxLines,
                                         ),
+                                        onOpenBuiltin = dropUnlessResumed { navigator.push(Route.Builtin) },
                                     )
                                 }
                             }

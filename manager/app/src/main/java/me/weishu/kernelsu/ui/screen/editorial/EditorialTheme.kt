@@ -134,7 +134,8 @@ fun EdMasthead(
                     fontSize = brandSize.sp,
                     fontWeight = FontWeight.Black,
                     letterSpacing = (-0.5).sp,
-                    color = brandColor ?: t.ink,
+                    // 自定义标题色优先；没设则跟随全局强调色
+                    color = brandColor ?: me.weishu.kernelsu.ui.theme.TitleInk.solid(t.ink),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )

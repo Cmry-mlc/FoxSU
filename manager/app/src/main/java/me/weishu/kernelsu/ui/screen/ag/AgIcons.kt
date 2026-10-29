@@ -541,3 +541,45 @@ object AgDockIcons {
         width = 2.1f,
     )
 }
+
+/**
+ * 「内置能力」页用的四个引擎图标。
+ * 与 AgSettingsIcons 同一套画法（24×24、round cap、stroke 2.2），
+ * 只是图形各自对应引擎的语义：层叠 / 闪电 / 钥匙 / 路径。
+ */
+object AgEngineIcons {
+
+    /** Folk Mount：三层叠放（模块挂载） */
+    val Mount = svgIcon(
+        "AgEngineMount",
+        listOf(
+            SvgBlock("M12 3.6 20 8l-8 4.4L4 8z"),
+            SvgBlock("M4.4 12.2 12 16.4l7.6-4.2"),
+            SvgBlock("M4.4 16.2 12 20.4l7.6-4.2"),
+        ),
+    )
+
+    /** FolkZygisk：闪电（进程注入） */
+    val Zygisk = svgIcon(
+        "AgEngineZygisk",
+        listOf(SvgBlock("M13.4 3.2 6 13.4h4.9L10.2 20.8 18 10.4h-5z")),
+    )
+
+    /** Sui：钥匙（授权后端） */
+    val Sui = svgIcon(
+        "AgEngineSui",
+        listOf(
+            SvgBlock("M13.2 4.2a4.6 4.6 0 1 1 0 9.2 4.6 4.6 0 0 1 0-9.2z"),
+            SvgBlock("M9.9 12.6 4.6 17.9V20.2h2.6v-2.4h2.4"),
+        ),
+    )
+
+    /** NoMount：路径 + 斜杠（不落挂载） */
+    val NoMount = svgIcon(
+        "AgEngineNoMount",
+        listOf(
+            SvgBlock("M4.6 7.4h5l1.9 2.1h7.9v9.1H4.6z"),
+            SvgBlock("M3.8 3.6 20.2 20"),
+        ),
+    )
+}
