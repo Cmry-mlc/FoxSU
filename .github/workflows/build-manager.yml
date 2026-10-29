@@ -302,6 +302,10 @@ jobs:
             echo "SIGN_KEYSTORE_PASSWORD=$PR_KEYSTORE_PASSWORD" >> $GITHUB_ENV
             echo "SIGN_KEY_PASSWORD=$PR_KEY_PASSWORD" >> $GITHUB_ENV
           elif [ -z "$PROD_KEYSTORE" ]; then
+            if [ "${{ github.ref_type }}" = "tag" ]; then
+              echo "::error::发布 tag 必须配置 KEYSTORE / KEYSTORE_PASSWORD / KEY_ALIAS / KEY_PASSWORD 四个 secret，否则每次构建都会换签名，装上的管理器永远对不上内核"
+              exit 1
+            fi
             echo "::warning::KEYSTORE secret not configured, generating a temporary signing key (each build gets a new signature)"
             KEYSTORE_PASSWORD=$(openssl rand -hex 16)
             KEY_PASSWORD=$(openssl rand -hex 16)
@@ -347,6 +351,14 @@ jobs:
         with:
           name: manager
           path: dist/*.apk
+
+      - name: Verify signed APK matches kernel identity
+        if: ${{ github.event_name != 'pull_request' }}
+        run: |
+          APK=$(find dist -name '*.apk' | head -n 1)
+          test -n "$APK"
+          echo "Checking $APK against kernel/Kbuild"
+          python3 scripts/apk_identity.py "$APK" --kbuild kernel/Kbuild
 
       - name: Upload to telegram
         if: github.event_name != 'pull_request' && steps.need_upload.outputs.UPLOAD == 'true'

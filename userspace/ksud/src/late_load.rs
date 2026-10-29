@@ -139,13 +139,46 @@ pub fn run(package_name: &String, kmi: Option<String>, allow_shell: bool) -> Res
     let _ = Command::new("am")
         .args(["force-stop", package_name])
         .status();
-    let _ = Command::new("am")
-        .args([
-            "start",
-            "-n",
-            &format!("{package_name}/me.weishu.kernelsu.ui.MainActivity"),
-        ])
-        .status();
+    let activity = resolve_manager_activity(package_name);
+    info!("Starting manager component {activity}...");
+    let _ = Command::new("am").args(["start", "-n", &activity]).status();
 
     Ok(())
+}
+
+/// 管理器包名可被重新定义，启动组件的类名不一定还叫
+/// `me.weishu.kernelsu.ui.MainActivity`；优先让 PackageManager 解析
+/// LAUNCHER activity，失败才退回旧类名。
+fn resolve_manager_activity(package_name: &str) -> String {
+    let fallback = format!("{package_name}/me.weishu.kernelsu.ui.MainActivity");
+
+    let output = Command::new("cmd")
+        .args([
+            "package",
+            "resolve-activity",
+            "--brief",
+            "-c",
+            "android.intent.category.LAUNCHER",
+            package_name,
+        ])
+        .output();
+
+    if let Ok(out) = output {
+        if out.status.success() {
+            let stdout = String::from_utf8_lossy(&out.stdout);
+            if let Some(line) = stdout
+                .lines()
+                .map(str::trim)
+                .filter(|l| l.starts_with(package_name) && l.contains('/'))
+                .next_back()
+            {
+                if !line.is_empty() {
+                    return line.to_string();
+                }
+            }
+        }
+    }
+
+    warn!("resolve-activity failed for {package_name}, fallback to {fallback}");
+    fallback
 }

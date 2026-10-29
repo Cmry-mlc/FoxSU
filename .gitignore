@@ -9,3 +9,7 @@ __pycache__
 /dist
 /repack-config.json
 /userspace/ksud/.lkm_image_bootstrap.o
+
+# 本地签名密钥
+release-key/
+*.jks
