@@ -22,10 +22,12 @@ fun MaterialKernelSUTheme(
     val systemDarkTheme = isSystemInDarkTheme()
     val darkTheme = appSettings.colorMode.isDark || (appSettings.colorMode.isSystem && systemDarkTheme)
     val amoledMode = appSettings.colorMode.isAmoled
-    val dynamicColor = appSettings.keyColor == 0
+    // 全局强调色（定制 → 全局强调色）优先于主题自带主色：
+    // 7 套配色是品牌级选择，五套皮肤必须一致，否则换肤时按钮颜色会跳变。
+    val accent = me.weishu.kernelsu.ui.theme.currentAccent
 
     val colorScheme = rememberKernelSUColorScheme(
-        seedColor = if (dynamicColor) Color.Unspecified else Color(appSettings.keyColor),
+        seedColor = accent.primary,
         isDark = darkTheme,
         isAmoled = amoledMode,
         paletteStyle = appSettings.paletteStyle,

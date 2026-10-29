@@ -82,10 +82,10 @@ fun AgAuthor(
                     .background(Brush.verticalGradient(listOf(Color(0xFFBFD9EE), Color(0xFFE8DCE2), Color(0xFFD9E4EE)))),
                 contentAlignment = Alignment.Center,
             ) {
-                Image(
-                    painter = painterResource(R.drawable.ic_fox_global),
-                    contentDescription = null,
-                    modifier = Modifier.size(72.dp),
+                // 与桌面一致的启动器图标（自适应图标：白底 + 狐狸前景）
+                me.weishu.kernelsu.ui.component.LauncherMark(
+                    modifier = Modifier.size(74.dp),
+                    cornerPercent = 28,
                 )
             }
             Spacer(Modifier.height(14.dp))
@@ -111,7 +111,7 @@ fun AgAuthor(
 
         // 版本
         AgLinkCard(
-            bg = Color(0xFFE4D9F6), bubble = Color(0xFF6C5CE7), ink = Color(0xFF4C3A86),
+            bg = Color(0xFFE4D9F6), bubble = Ag.Vio.copy(alpha = 1.0f), ink = Color(0xFF4C3A86),
             icon = Icons.Rounded.Tag, title = "版本", desc = "${BuildConfig.VERSION_CODE}（${BuildConfig.VERSION_NAME}）",
         ) { onOpenUrl("https://github.com/Cmry-mlc/FoxSu/releases") }
         // 项目

@@ -16,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -63,7 +64,12 @@ fun NocturneHomeScreen(
         ) {
             // 页头固定在顶部（不随内容滚动）
             Box(Modifier.padding(start = if (sideDock) 96.dp else 18.dp, end = 18.dp)) {
-                NcHeader(kicker = "KERNEL MANAGER", title = "FoxSu") {
+                val custom = me.weishu.kernelsu.data.settings.CustomizationStore.current
+                NcHeader(
+                    kicker = "KERNEL MANAGER",
+                    title = custom.homeTitle.ifBlank { "FoxSu" },
+                    titleColor = if (custom.titleColor == 0) null else Color(custom.titleColor),
+                ) {
                     NcIconButton(iconRes = R.drawable.nc_user, onClick = onOpenAuthor)
                     NcIconButton(iconRes = R.drawable.nc_palette, onClick = { showStylePicker = true })
                     NcIconButton(iconRes = R.drawable.nc_power, onClick = { showReboot = true })

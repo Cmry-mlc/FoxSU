@@ -76,7 +76,7 @@ fun AgAppProfile(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(24.dp))
                 .background(
-                    Brush.linearGradient(listOf(Color(0xFF6C5CE7), Color(0xFFEC4899)))
+                    Brush.linearGradient(listOf(Ag.Vio.copy(alpha = 1.0f), Color(0xFFEC4899)))
                 )
                 .padding(2.dp),
         ) {
@@ -118,8 +118,8 @@ fun AgAppProfile(
                     Box(
                         Modifier
                             .clip(RoundedCornerShape(8.dp))
-                            .background(Color(0x146C5CE7))
-                            .border(1.dp, Color(0x386C5CE7), RoundedCornerShape(8.dp))
+                            .background(Ag.Vio.copy(alpha = 0.078f))
+                            .border(1.dp, Ag.Vio.copy(alpha = 0.22f), RoundedCornerShape(8.dp))
                             .padding(horizontal = 9.dp, vertical = 4.dp),
                     ) {
                         Text("UID ${state.uid}", fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.6.sp, color = Ag.Vio)

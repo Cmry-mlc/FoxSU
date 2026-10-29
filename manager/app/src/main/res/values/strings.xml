@@ -630,7 +630,7 @@
     <string name="onboarding_body_2">Aurora Glass, Pages, Editorial, Daylight and Nocturne — each with its own tokens, spacing and motion. Switching applies instantly, no restart.</string>
     <string name="onboarding_theme_inuse">IN USE</string>
     <string name="onboarding_theme_tap">Tap a card to apply it instantly.</string>
-    <string name="onboarding_skin_nocturne">OLED pure black, violet aurora</string>
+    <string name="onboarding_skin_nocturne">Daylight by default, night on demand</string>
     <string name="onboarding_skin_pages">Pure white, a single blue accent</string>
     <string name="onboarding_skin_editorial">Paper texture, signal orange</string>
     <string name="onboarding_skin_daylight">Daylight glass, violet and mint</string>
@@ -672,6 +672,12 @@
     <string name="onboarding_kicker_5">OPEN SOURCE · GITHUB</string>
     <string name="onboarding_title_5">Growing in the open</string>
     <string name="onboarding_body_5">Five skins, 13 dock styles, image install, module repo, App Profile — the code is public. Issues and PRs welcome.</string>
+    <string name="onboarding_website">Official site</string>
+    <string name="onboarding_github">GitHub repository</string>
+    <string name="onboarding_brand_tagline">Kernel-level root, with an interface worth looking at.</string>
+    <string name="onboarding_repo_license_short">GPL-3.0 · based on KernelSU</string>
+    <string name="onboarding_website_sub">Docs, downloads and release notes</string>
+    <string name="onboarding_github_sub">Source code, changelog and issues</string>
     <string name="onboarding_repo_url">github.com/Cmry-mlc/FoxSu</string>
     <string name="onboarding_repo_copy">Copy link</string>
     <string name="onboarding_repo_open">Open repository</string>
@@ -693,7 +699,7 @@
     <string name="style_picker_in_use">IN USE</string>
     <string name="style_picker_switch">SWITCH</string>
     <string name="style_picker_hint">TAP A CARD TO APPLY · TAP OUTSIDE TO CLOSE</string>
-    <string name="style_picker_desc_nocturne">OLED pure black with a violet aurora; accents in violet and mint. Applies the moment you tap — no restart.</string>
+    <string name="style_picker_desc_nocturne">Ships in a bright Daylight look (F4F5FA) with violet and mint accents; switch to the OLED night theme whenever you like. Applies instantly — no restart.</string>
     <string name="style_picker_desc_daylight">The daylight twin of Nocturne: paper-white panels with violet and mint, easier to read outdoors.</string>
     <string name="style_picker_desc_editorial">Paper texture, hairline rules and signal orange. Built for long reading sessions, tighter type.</string>
     <string name="style_picker_desc_pages">Pure white, a single blue accent, the least decoration. Lowest information density.</string>

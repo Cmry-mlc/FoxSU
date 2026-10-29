@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.systemBars
@@ -84,6 +85,7 @@ import me.weishu.kernelsu.ui.component.bottombar.BottomBar
 import me.weishu.kernelsu.ui.component.bottombar.MainPagerState
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
 import me.weishu.kernelsu.ui.component.bottombar.SideRail
+import me.weishu.kernelsu.ui.component.hasCustomWallpaper
 import me.weishu.kernelsu.ui.component.scaffoldBackgroundColor
 import me.weishu.kernelsu.ui.component.bottombar.rememberMainPagerState
 import me.weishu.kernelsu.ui.component.bottombar.useNavigationRail
@@ -330,7 +332,8 @@ class MainActivity : ComponentActivity() {
                             WallpaperBackground(customization = customNow)
                         }
                         // Glass 模式：纯色底 + 三层独立径向光斑（.screen::before），只模糊光晕层
-                        if (uiMode == UiMode.Glass) {
+                        // 选了壁纸时整层让位，否则不透明的 gt.bg 会把壁纸盖住
+                        if (uiMode == UiMode.Glass && !hasCustomWallpaper()) {
                             val gt = glassTokens()
                             Box(modifier = Modifier.fillMaxSize().background(gt.bg))
                             Box(
@@ -346,7 +349,9 @@ class MainActivity : ComponentActivity() {
                         }
                         when (uiMode) {
                             UiMode.Material -> androidx.compose.material3.Scaffold(
-                                containerColor = me.weishu.kernelsu.ui.screen.editorial.edTokens().paper
+                                containerColor = scaffoldBackgroundColor(
+                                    me.weishu.kernelsu.ui.screen.editorial.edTokens().paper
+                                )
                             ) { navDisplay() }
 
                             UiMode.Miuix -> Scaffold(containerColor = androidx.compose.ui.graphics.Color.Transparent) { navDisplay() }
@@ -476,7 +481,11 @@ fun MainScreen(
     val uiMode = LocalUiMode.current
     val surfaceColor = when (uiMode) {
         UiMode.Material -> me.weishu.kernelsu.ui.screen.editorial.edTokens().paper
-        UiMode.Miuix -> MiuixTheme.colorScheme.surface
+        // Ag 皮肤（Miuix 通道）的页面底色是 160° 的 bg1→bg2 渐变，底部落到 bg2。
+        // 这里必须用 bg2 而不是 MiuixTheme.surface：后者是纯白，底栏下方那段
+        // "由透明渐变到页面色"的遮罩会以白色收尾，在 #F2F4FA 的页面上留下
+        // 一条横贯全屏的白带（真机上就是胶囊下方那块白）。
+        UiMode.Miuix -> me.weishu.kernelsu.ui.screen.ag.Ag.Bg2
         UiMode.Fresh -> MaterialTheme.colorScheme.surface
         UiMode.Glass -> glassTokens().bg
         UiMode.Nocturne -> me.weishu.kernelsu.ui.screen.nocturne.ncTokens().bg
@@ -562,7 +571,7 @@ fun MainScreen(
                     containerColor = scaffoldBackgroundColor(MaterialTheme.colorScheme.surfaceContainer)
                 ) {
                     Row {
-                        SideRail(navigationBadge)
+                        SideRail(navigationBadge, Modifier.padding(end = 12.dp))
                         Box(
                             modifier = Modifier
                                 .weight(1f)
@@ -575,7 +584,7 @@ fun MainScreen(
 
                 UiMode.Miuix -> Scaffold { _ ->
                     Row {
-                        SideRail(navigationBadge)
+                        SideRail(navigationBadge, Modifier.padding(end = 12.dp))
                         Box(
                             modifier = Modifier
                                 .weight(1f)
@@ -590,7 +599,7 @@ fun MainScreen(
                     containerColor = scaffoldBackgroundColor(MaterialTheme.colorScheme.surface)
                 ) {
                     Row {
-                        SideRail(navigationBadge)
+                        SideRail(navigationBadge, Modifier.padding(end = 12.dp))
                         Box(
                             modifier = Modifier
                                 .weight(1f)
@@ -605,7 +614,7 @@ fun MainScreen(
                     containerColor = androidx.compose.ui.graphics.Color.Transparent
                 ) {
                     Row {
-                        SideRail(navigationBadge)
+                        SideRail(navigationBadge, Modifier.padding(end = 12.dp))
                         Box(
                             modifier = Modifier
                                 .weight(1f)
@@ -620,7 +629,7 @@ fun MainScreen(
                     containerColor = androidx.compose.ui.graphics.Color.Transparent
                 ) {
                     Row {
-                        SideRail(navigationBadge)
+                        SideRail(navigationBadge, Modifier.padding(end = 12.dp))
                         Box(
                             modifier = Modifier
                                 .weight(1f)
@@ -632,6 +641,9 @@ fun MainScreen(
                 }
             }
         } else {
+            // 壁纸模式下这层"由透明渐变到页面色"的遮罩要整层让位：
+            // 否则胶囊下方会出现一条与壁纸无关的纯色带。
+            val dockScrim = if (hasCustomWallpaper()) Color.Transparent else surfaceColor
             val bottomBar = @Composable {
                 Box(
                     modifier = Modifier
@@ -643,8 +655,8 @@ fun MainScreen(
                         .background(
                             Brush.verticalGradient(
                                 0f to Color.Transparent,
-                                0.45f to surfaceColor,
-                                1f to surfaceColor,
+                                0.45f to dockScrim,
+                                1f to dockScrim,
                             )
                         )
                 ) {
@@ -660,6 +672,8 @@ fun MainScreen(
             // 所有皮肤共用同一套底栏宿主：胶囊样式是全局设置，
             // 所以侧边抽屉（v5）在其他皮肤下也必须走「浮层」而不是 bottomBar 槽位
             val sideDock = useSideDock()
+            // 侧边胶囊可左右停靠（定制 → 底部导航栏 → 胶囊停靠）
+            val sideDockRight = me.weishu.kernelsu.ui.component.bottombar.sideDockOnRight
             val noBar: @Composable () -> Unit = {}
             val scaffoldColor = when (uiMode) {
                 UiMode.Material -> scaffoldBackgroundColor(MaterialTheme.colorScheme.surfaceContainer)
@@ -675,7 +689,7 @@ fun MainScreen(
                     if (sideDock) {
                         Box(
                             modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.CenterStart,
+                            contentAlignment = if (sideDockRight) Alignment.CenterEnd else Alignment.CenterStart,
                         ) {
                             BottomBar(
                                 blurBackdrop = blurBackdrop,

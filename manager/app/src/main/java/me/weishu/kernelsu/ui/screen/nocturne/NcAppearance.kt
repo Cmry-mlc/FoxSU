@@ -29,7 +29,7 @@ object NcAppearance {
         ksuApp.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
     }
 
-    var mode by mutableIntStateOf(prefs.getInt(KEY_MODE, 0))
+    var mode by mutableIntStateOf(prefs.getInt(KEY_MODE, 1))
         private set
     var accentIndex by mutableIntStateOf(prefs.getInt(KEY_ACCENT, 0))
         private set

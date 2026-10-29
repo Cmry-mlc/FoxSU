@@ -65,14 +65,21 @@ data class EdTokens(
     val mono = FontFamily.Monospace
 }
 
+/** 页面底色：用户开了壁纸就让位，让 Editorial 也能看到壁纸。 */
+@Composable
+fun edPageBg(color: Color): Modifier =
+    if (me.weishu.kernelsu.ui.component.hasCustomWallpaper()) Modifier else Modifier.background(color)
+
 @Composable
 fun edTokens(): EdTokens {
+    // 全局强调色：纸面的信号色（acc）跟随主色，墨色与纸色保持纸面质感
+    val ac = me.weishu.kernelsu.ui.theme.currentAccent.primary
     return if (isNightScheme()) {
         EdTokens(
             dark = true,
             paper = Color(0xFF141319), ink = Color(0xFFF0EFF5), ink2 = Color(0xFFC6C3D0),
             sub = Color(0xFF8E8B9C), faint = Color(0xFF4C4956), hair = Color(0xFF2A2931),
-            acc = Color(0xFFFF6A42), lime = Color(0xFF7FD694), violet = Color(0xFFA89BFF),
+            acc = ac, lime = Color(0xFF7FD694), violet = Color(0xFFA89BFF),
             cyan = Color(0xFF4FC3D0), amber = Color(0xFFE8B45C), rose = Color(0xFFF08BB0),
         )
     } else {
@@ -80,7 +87,7 @@ fun edTokens(): EdTokens {
             dark = false,
             paper = Color(0xFFFAF9F6), ink = Color(0xFF1D1C22), ink2 = Color(0xFF55525F),
             sub = Color(0xFF8E8B9C), faint = Color(0xFFC9C7D4), hair = Color(0xFFE6E4EC),
-            acc = Color(0xFFE8502E), lime = Color(0xFF3E7A4C), violet = Color(0xFF6C5FC7),
+            acc = ac, lime = Color(0xFF3E7A4C), violet = Color(0xFF6C5FC7),
             cyan = Color(0xFF0E8A99), amber = Color(0xFFC98A2F), rose = Color(0xFFC2567E),
         )
     }
@@ -99,6 +106,8 @@ fun EdMasthead(
     tag: String,
     left: String,
     right: String,
+    /** 刊名颜色；null = 纸面墨色。定制 → 标题栏 可覆盖。 */
+    brandColor: Color? = null,
     brandSize: Int = 34,
     showBack: Boolean = false,
     onBack: (() -> Unit)? = null,
@@ -125,7 +134,7 @@ fun EdMasthead(
                     fontSize = brandSize.sp,
                     fontWeight = FontWeight.Black,
                     letterSpacing = (-0.5).sp,
-                    color = t.ink,
+                    color = brandColor ?: t.ink,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -275,7 +284,7 @@ fun EdStatusBand(
     ) {
         // 右上角狐尾水印（设计稿 .tail）：放在顶部角落，尺寸收小，不侵入 KV 区
         Icon(
-            painter = painterResource(R.drawable.ic_launcher_monochrome),
+            painter = painterResource(R.drawable.ic_fox_global),
             contentDescription = null,
             modifier = Modifier
                 .align(Alignment.TopEnd)

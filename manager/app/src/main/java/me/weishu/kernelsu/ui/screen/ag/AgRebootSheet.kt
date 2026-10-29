@@ -79,7 +79,7 @@ fun AgRebootSheet(onDismiss: () -> Unit) {
     // 面板必须近乎不透明：原 0.85 会让下方状态卡/按钮透出，形成一条"白色横条"的错觉
     val panel = if (dark) Color(0xFA1C1B2E) else Color(0xFAFFFFFF)
     val panelLine = if (dark) Color(0x1FFFFFFF) else Color(0xB3FFFFFF)
-    val iconBg = Color(0x1A6C5CE7)
+    val iconBg = Ag.Vio.copy(alpha = 0.102f)
     val mask = Color(0x4719143C)
     val tx = if (dark) Color(0xFFF2F1FA) else Color(0xFF191826)
     val tx3 = if (dark) Color(0xFF7C7A98) else Color(0xFF9C9AAE)

@@ -36,6 +36,7 @@ import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.CropSquare
 import androidx.compose.material.icons.rounded.Extension
+import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.Palette
@@ -54,6 +55,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
@@ -84,6 +86,7 @@ import kotlin.math.absoluteValue
 private const val PAGE_COUNT = 5
 
 private const val REPO_URL = "https://github.com/Cmry-mlc/FoxSu"
+private const val WEBSITE_URL = "https://cmry-mlc.github.io/FoxSu/zh_CN/"
 
 /**
  * 首次安装后的欢迎引导（Dialog 承载，只在 OnboardingPrefs 未标记时出现一次）。
@@ -206,10 +209,10 @@ private fun OnbTopBar(page: Int, t: OnbTokens) {
             contentAlignment = Alignment.Center,
         ) {
             Image(
-                painter = painterResource(R.drawable.fox_hero),
+                painter = painterResource(R.drawable.foxsu_mark),
                 contentDescription = null,
                 contentScale = ContentScale.Fit,
-                modifier = Modifier.size(22.dp),
+                modifier = Modifier.size(24.dp),
             )
         }
         Spacer(Modifier.width(9.dp))
@@ -270,7 +273,8 @@ private fun PrimaryButton(
         modifier = modifier
             .height(46.dp)
             .clip(RoundedCornerShape(14.dp))
-            .background(Brush.horizontalGradient(listOf(Color(0xFFC9F45C), Color(0xFF6FE9C4))))
+            // 品牌渐变与主界面一致（紫 → 粉），不再用设计稿早期的 lime→mint
+            .background(Brush.horizontalGradient(listOf(t.accent, t.accent2)))
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -279,7 +283,7 @@ private fun PrimaryButton(
             fontSize = 12.5.sp,
             fontWeight = FontWeight.ExtraBold,
             letterSpacing = 1.6.sp,
-            color = Color(0xFF0B0D12),
+            color = Color.White,
         )
     }
 }
@@ -414,7 +418,13 @@ private fun OnbPage(index: Int, offset: Float, t: OnbTokens) {
     }
 }
 
-/** 第一页：品牌主视觉 + 三个等宽 chip */
+/**
+ * 第一页：品牌主视觉。
+ *
+ * 原来是一个 Canvas 画的"彩虹圆环 + 96dp 小狐狸"，环细、狐小，页面空得像占位符。
+ * 现在直接上新的狐狸 logo（自带彩虹尾，本身就是"环"），去掉外圈，
+ * 只留一层奶白柔光托底，让方图的边缘融进页面；尺寸放大到 208dp。
+ */
 @Composable
 private fun HeroPanel(t: OnbTokens) {
     Column(
@@ -422,30 +432,27 @@ private fun HeroPanel(t: OnbTokens) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Box(modifier = Modifier.size(190.dp), contentAlignment = Alignment.Center) {
-            Canvas(Modifier.fillMaxSize()) {
-                val d = size.minDimension
+        Box(contentAlignment = Alignment.Center) {
+            // 奶白柔光：把 logo 的方形底晕开，避免出现一块方图
+            Canvas(Modifier.size(272.dp)) {
+                val cream = if (t.dark) Color(0x33FFFDF7) else Color(0xFFFFFDF7)
                 drawCircle(
-                    brush = Brush.sweepGradient(
-                        listOf(
-                            Color(0xFFFF5A5F), Color(0xFFFF9F43), Color(0xFFFFD93D),
-                            Color(0xFF36D399), Color(0xFF3BA3FF), Color(0xFF8B5CF6),
-                            Color(0xFFFF6BC1), Color(0xFFFF5A5F),
-                        )
+                    brush = Brush.radialGradient(
+                        colors = listOf(cream, cream.copy(alpha = 0.55f), Color.Transparent),
+                        center = center,
+                        radius = size.minDimension / 2f,
                     ),
-                    radius = d / 2 - 2.dp.toPx(),
-                    style = Stroke(width = 1.4.dp.toPx()),
-                    alpha = 0.75f,
+                    radius = size.minDimension / 2f,
                 )
             }
             Image(
-                painter = painterResource(R.drawable.fox_hero),
-                contentDescription = null,
+                painter = painterResource(R.drawable.foxsu_mark),
+                contentDescription = "FoxSu",
                 contentScale = ContentScale.Fit,
-                modifier = Modifier.size(96.dp),
+                modifier = Modifier.size(208.dp),
             )
         }
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(10.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
             listOf(
                 R.string.onboarding_chip_1,
@@ -724,15 +731,10 @@ private fun FeaturePanel(
     }
 }
 
-/** 第五页：开源仓库 */
+/** 第五页：开源仓库 —— 品牌卡 + 官网 / GitHub 两个入口（只写按钮名，不露出裸链接） */
 @Composable
 private fun RepoPanel(t: OnbTokens) {
-    val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
-    val clipboard = remember(context) {
-        context.getSystemService(android.content.ClipboardManager::class.java)
-    }
-    var copied by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -740,106 +742,161 @@ private fun RepoPanel(t: OnbTokens) {
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Spacer(Modifier.height(6.dp))
-        Box(
-            modifier = Modifier
-                .size(84.dp)
-                .clip(RoundedCornerShape(26.dp))
-                .background(Brush.verticalGradient(listOf(t.accent, t.accent2))),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Code,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(40.dp),
-            )
-        }
-        Spacer(Modifier.height(18.dp))
+        Spacer(Modifier.height(8.dp))
+
+        // 品牌卡：直接用 FoxSu Redesign 的紫粉渐变，跟主界面同一套语言
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(18.dp))
-                .background(t.cardBg)
-                .border(BorderStroke(1.dp, t.cardBd), RoundedCornerShape(18.dp))
-                .padding(16.dp),
+                .clip(RoundedCornerShape(24.dp))
+                .background(Brush.linearGradient(listOf(t.accent, t.accent2)))
+                .drawBehind {
+                    // 右上角一团柔光，避免整块纯渐变发闷
+                    val r = size.width * 0.62f
+                    val c = Offset(size.width * 0.84f, size.height * 0.10f)
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            listOf(Color(0x40FFFFFF), Color.Transparent),
+                            center = c,
+                            radius = r,
+                        ),
+                        radius = r,
+                        center = c,
+                    )
+                },
+            contentAlignment = Alignment.Center,
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(78.dp)
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(Color.White.copy(alpha = 0.20f))
+                        .border(1.dp, Color.White.copy(alpha = 0.35f), RoundedCornerShape(24.dp)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.foxsu_mark),
+                        contentDescription = null,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.size(66.dp),
+                    )
+                }
+                Spacer(Modifier.height(14.dp))
                 Text(
-                    text = stringResource(R.string.onboarding_repo_url),
-                    fontSize = 12.5.sp,
-                    fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Bold,
-                    color = t.tx,
-                    textAlign = TextAlign.Center,
+                    text = "FoxSu",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = (-0.4).sp,
+                    color = Color.White,
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    text = stringResource(R.string.onboarding_repo_license),
-                    fontSize = 9.5.sp,
-                    letterSpacing = 0.4.sp,
-                    color = t.tx3,
+                    text = stringResource(R.string.onboarding_brand_tagline),
+                    fontSize = 11.5.sp,
+                    lineHeight = 17.sp,
+                    color = Color.White.copy(alpha = 0.86f),
                     textAlign = TextAlign.Center,
                 )
             }
         }
-        Spacer(Modifier.height(12.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(42.dp)
-                    .clip(RoundedCornerShape(13.dp))
-                    .border(BorderStroke(1.dp, t.ghostBd), RoundedCornerShape(13.dp))
-                    .clickable {
-                        clipboard?.setPrimaryClip(
-                            android.content.ClipData.newPlainText("FoxSu", REPO_URL)
-                        )
-                        copied = true
-                    },
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Link,
-                    contentDescription = null,
-                    tint = t.ghostTx,
-                    modifier = Modifier.size(15.dp),
-                )
-                Spacer(Modifier.width(6.dp))
-                Text(
-                    text = stringResource(
-                        if (copied) R.string.onboarding_repo_copied else R.string.onboarding_repo_copy
-                    ),
-                    fontSize = 11.5.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = t.ghostTx,
-                )
-            }
-            Row(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(42.dp)
-                    .clip(RoundedCornerShape(13.dp))
-                    .background(Brush.horizontalGradient(listOf(t.accent, t.accent2)))
-                    .clickable { uriHandler.openUri(REPO_URL) },
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(15.dp),
-                )
-                Spacer(Modifier.width(6.dp))
-                Text(
-                    text = stringResource(R.string.onboarding_repo_open),
-                    fontSize = 11.5.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color.White,
-                )
-            }
+
+        Spacer(Modifier.height(18.dp))
+
+        RepoLink(
+            icon = Icons.Rounded.Language,
+            label = stringResource(R.string.onboarding_website),
+            sub = stringResource(R.string.onboarding_website_sub),
+            t = t,
+            primary = true,
+        ) { uriHandler.openUri(WEBSITE_URL) }
+
+        Spacer(Modifier.height(10.dp))
+
+        RepoLink(
+            icon = Icons.Rounded.Code,
+            label = stringResource(R.string.onboarding_github),
+            sub = stringResource(R.string.onboarding_github_sub),
+            t = t,
+            primary = false,
+        ) { uriHandler.openUri(REPO_URL) }
+
+        Spacer(Modifier.height(14.dp))
+        Text(
+            text = stringResource(R.string.onboarding_repo_license_short),
+            fontSize = 9.5.sp,
+            letterSpacing = 0.4.sp,
+            color = t.tx3,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+/** 仓库入口按钮：主按钮走品牌渐变，次按钮走描边，都不显示网址 */
+@Composable
+private fun RepoLink(
+    icon: ImageVector,
+    label: String,
+    sub: String,
+    t: OnbTokens,
+    primary: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(64.dp)
+            .clip(RoundedCornerShape(17.dp))
+            .then(
+                if (primary) {
+                    Modifier.background(Brush.horizontalGradient(listOf(t.accent, t.accent2)))
+                } else {
+                    Modifier
+                        .background(t.cardBg)
+                        .border(BorderStroke(1.dp, t.cardBd), RoundedCornerShape(17.dp))
+                }
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(if (primary) Color.White.copy(alpha = 0.18f) else t.chipBg),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (primary) Color.White else t.tx2,
+                modifier = Modifier.size(18.dp),
+            )
         }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = label,
+                fontSize = 13.5.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = if (primary) Color.White else t.tx,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = sub,
+                fontSize = 10.sp,
+                color = if (primary) Color.White.copy(alpha = 0.78f) else t.tx3,
+            )
+        }
+        Icon(
+            imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
+            contentDescription = null,
+            tint = if (primary) Color.White.copy(alpha = 0.9f) else t.tx3,
+            modifier = Modifier.size(15.dp),
+        )
     }
 }

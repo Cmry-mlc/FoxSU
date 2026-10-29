@@ -392,7 +392,7 @@ internal fun AgInstall(
                     .then(
                         if (ready) Modifier
                             .background(Ag.Grad, shape)
-                            .shadow(10.dp, shape, spotColor = Color(0x4D6C5CE7), ambientColor = Color(0x1A6C5CE7))
+                            .shadow(10.dp, shape, spotColor = Ag.Vio.copy(alpha = 0.302f), ambientColor = Ag.Vio.copy(alpha = 0.102f))
                         else Modifier.background(SolidColor(Ag.ToggleOff), shape)
                     ),
                 contentAlignment = Alignment.Center,
@@ -427,10 +427,10 @@ private fun AgMethodRow(
         Modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(if (selected) Color(0x0F6C5CE7) else Ag.Card)
+            .background(if (selected) Ag.Vio.copy(alpha = 0.059f) else Ag.Card)
             .border(
                 1.dp,
-                if (selected) Color(0x596C5CE7) else Ag.Line,
+                if (selected) Ag.Vio.copy(alpha = 0.349f) else Ag.Line,
                 shape,
             )
             .agClick(onClick = onClick)

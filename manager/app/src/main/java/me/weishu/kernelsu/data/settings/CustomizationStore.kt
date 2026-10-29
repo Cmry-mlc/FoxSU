@@ -51,6 +51,8 @@ data class Customization(
     val cardAlpha: Float = 1f,
     /** Title shown at the top of the home screen; blank = the app name. */
     val homeTitle: String = "",
+    /** 首页标题文字颜色：0 = 跟随主题（Ag 主题下是品牌渐变），否则 ARGB。 */
+    val titleColor: Int = 0,
     /** 0 = pill bar, 1 = drawer bar that expands the selected tab. */
     val bottomBarStyle: Int = 0,
     val dockStyle: String = "d0",
@@ -90,6 +92,10 @@ data class Customization(
     val iconStyle: Int = 100,
     /** 桌面启动器图标形象：0 彩虹狐狸 / 1 KernelSU / 2 招手 / 3 回眸 / 4 开心。 */
     val launcherIcon: Int = 0,
+    /** 全局强调色：0..6 对应 AccentPalettes（7 套取自 logo 的配色）。 */
+    val accentPalette: Int = 0,
+    /** 侧边胶囊停靠：0 = 左侧（默认），1 = 右侧。 */
+    val dockSide: Int = 0,
 )
 
 /** Number of equal-sized KPI cards on the ColorUI home screen. */
@@ -153,6 +159,7 @@ object CustomizationStore {
     private const val KEY_CARD_COLOR = "card_color"
     private const val KEY_CARD_ALPHA = "card_alpha"
     private const val KEY_HOME_TITLE = "home_title"
+    private const val KEY_TITLE_COLOR = "title_color"
     private const val KEY_BOTTOM_STYLE = "bottom_bar_style"
 private const val KEY_DOCK_STYLE = "dock_style"
     private const val KEY_DOCK_EDITORIAL = "dock_on_editorial"
@@ -171,6 +178,8 @@ private const val KEY_DOCK_STYLE = "dock_style"
     private const val KEY_FONT_STYLE = "font_style"
     private const val KEY_ICON_STYLE = "icon_style"
     private const val KEY_LAUNCHER_ICON = "launcher_icon"
+    private const val KEY_ACCENT_PALETTE = "accent_palette"
+    private const val KEY_DOCK_SIDE = "dock_side"
 
     val cardColorOptions = listOf(
         0x00000000, // follow theme
@@ -215,6 +224,7 @@ private const val KEY_DOCK_STYLE = "dock_style"
             cardColor = getInt(KEY_CARD_COLOR, 0),
             cardAlpha = getFloat(KEY_CARD_ALPHA, 1f),
             homeTitle = getString(KEY_HOME_TITLE, "").orEmpty(),
+            titleColor = getInt(KEY_TITLE_COLOR, 0),
             bottomBarStyle = getInt(KEY_BOTTOM_STYLE, 0),
             dockStyle = getString(KEY_DOCK_STYLE, "d0").orEmpty(),
             dockOnEditorial = getBoolean(KEY_DOCK_EDITORIAL, false),
@@ -238,6 +248,8 @@ private const val KEY_DOCK_STYLE = "dock_style"
             } else {
                 getInt(KEY_ICON_STYLE, 100).takeIf { it in 0..4 } ?: 0
             },
+            accentPalette = getInt(KEY_ACCENT_PALETTE, 0),
+            dockSide = getInt(KEY_DOCK_SIDE, 0),
         )
     }
 
@@ -283,7 +295,10 @@ private const val KEY_DOCK_STYLE = "dock_style"
     }
     fun setModuleImageAlpha(alpha: Float) = update { it.copy(moduleImageAlpha = alpha) }
     fun setCardAlpha(alpha: Float) = update { it.copy(cardAlpha = alpha) }
-    fun setHomeTitle(title: String) = update { it.copy(homeTitle = title) }
+    fun setHomeTitle(title: String) = update { it.copy(homeTitle = title.take(24)) }
+
+    /** 0 = 跟随主题；否则写入 ARGB。 */
+    fun setTitleColor(argb: Int) = update { it.copy(titleColor = argb) }
     fun setBottomBarStyle(style: Int) = update { it.copy(bottomBarStyle = style) }
     fun setDockStyle(style: String) = update { it.copy(dockStyle = style) }
     fun setDockOnEditorial(enabled: Boolean) = update { it.copy(dockOnEditorial = enabled) }
@@ -303,6 +318,8 @@ private const val KEY_DOCK_STYLE = "dock_style"
     fun setFontPath(path: String?) = update { it.copy(fontPath = path) }
     fun setIconStyle(style: Int) = update { it.copy(iconStyle = style) }
     fun setLauncherIcon(style: Int) = update { it.copy(launcherIcon = style) }
+    fun setAccentPalette(index: Int) = update { it.copy(accentPalette = index.coerceIn(0, 6)) }
+    fun setDockSide(side: Int) = update { it.copy(dockSide = side.coerceIn(0, 1)) }
 
     fun reset() = update { Customization() }
 
@@ -337,6 +354,7 @@ private const val KEY_DOCK_STYLE = "dock_style"
             next.moduleImages.forEach { (id, uri) -> putString(KEY_MODULE_IMAGE_PREFIX + id, uri) }
             putFloat(KEY_MODULE_IMAGE_ALPHA, next.moduleImageAlpha)
             putString(KEY_HOME_TITLE, next.homeTitle)
+            putInt(KEY_TITLE_COLOR, next.titleColor)
             putInt(KEY_BOTTOM_STYLE, next.bottomBarStyle)
             putString(KEY_DOCK_STYLE, next.dockStyle)
             putBoolean(KEY_DOCK_EDITORIAL, next.dockOnEditorial)
@@ -355,6 +373,8 @@ private const val KEY_DOCK_STYLE = "dock_style"
             putString(KEY_FONT_PATH, next.fontPath)
             putInt(KEY_ICON_STYLE, next.iconStyle)
             putInt(KEY_LAUNCHER_ICON, next.launcherIcon)
+            putInt(KEY_ACCENT_PALETTE, next.accentPalette)
+            putInt(KEY_DOCK_SIDE, next.dockSide)
         }
         current = next
     }

@@ -56,7 +56,7 @@ fun EditorialFlash(state: FlashUiState, actions: FlashScreenActions) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(t.paper)
+            .then(edPageBg(t.paper))
             .statusBarsPadding(),
     ) {
         EdMasthead(
@@ -144,7 +144,7 @@ fun EditorialSulog(state: SulogScreenState, actions: SulogActions) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(t.paper)
+            .then(edPageBg(t.paper))
             .statusBarsPadding(),
     ) {
         EdMasthead(
@@ -264,7 +264,7 @@ fun EditorialAbout(state: AboutUiState, actions: AboutScreenActions) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(t.paper)
+            .then(edPageBg(t.paper))
             .statusBarsPadding()
             .verticalScroll(rememberScrollState()),
     ) {

@@ -35,7 +35,7 @@ fun EditorialAuthor(onBack: () -> Unit, onOpenUrl: (String) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(t.paper)
+            .then(edPageBg(t.paper))
             .statusBarsPadding()
             .verticalScroll(rememberScrollState()),
     ) {
@@ -84,11 +84,10 @@ fun EditorialAuthor(onBack: () -> Unit, onOpenUrl: (String) -> Unit) {
                     },
                 contentAlignment = Alignment.Center,
             ) {
-                Image(
-                    painter = painterResource(R.drawable.author_avatar),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize().clip(CircleShape),
+                // 头像位改用启动器图标
+                me.weishu.kernelsu.ui.component.LauncherMark(
+                    modifier = Modifier.fillMaxSize().padding(9.dp),
+                    cornerPercent = 28,
                 )
             }
             Spacer(Modifier.width(16.dp))

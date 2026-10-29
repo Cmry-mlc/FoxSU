@@ -112,12 +112,10 @@ fun NocturneAuthorScreen(
                                         .background(Brush.linearGradient(listOf(t.vio, t.vio2))),
                                     contentAlignment = Alignment.Center,
                                 ) {
-                                    Text(
-                                        "FOX",
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        letterSpacing = 1.sp,
-                                        color = Color.White,
+                                    // 头像位改用启动器图标
+                                    me.weishu.kernelsu.ui.component.LauncherMark(
+                                        modifier = Modifier.size(50.dp),
+                                        cornerPercent = 28,
                                     )
                                 }
                             }

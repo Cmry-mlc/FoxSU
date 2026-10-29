@@ -131,7 +131,10 @@ data class GlassTokens(
 @Composable
 fun glassTokens(): GlassTokens {
     val dark = isNightScheme()
-    return if (dark) {
+    // 全局强调色（定制 → 全局强调色）：霓虹盘里的 violet / pink 两个品牌位跟随主色，
+    // flame / cyan / lime 这些纯装饰色保持不变，玻璃的"霓虹感"不会被冲掉。
+    val ac = currentAccent
+    val base = if (dark) {
         GlassTokens(
             isDark = true,
             bg = Color(0xFF0D0D14), panel = Color(0xFF16161F), panel2 = Color(0xFF1C1C28),
@@ -152,4 +155,5 @@ fun glassTokens(): GlassTokens {
             mint = Color(0xFF1E9A78),
         )
     }
+    return base.copy(violet = ac.primary, pink = ac.secondary)
 }

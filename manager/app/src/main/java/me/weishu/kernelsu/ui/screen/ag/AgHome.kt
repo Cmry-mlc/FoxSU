@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -95,12 +96,20 @@ fun AgHome(
                     .padding(start = if (sideDock) 118.dp else headPad, end = headPad),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                // 标题文字与颜色都可在「定制 → 标题栏」里改；留空 / 跟随主题时保持品牌渐变
+                val custom = me.weishu.kernelsu.data.settings.CustomizationStore.current
                 Text(
-                    "FoxSu",
+                    custom.homeTitle.ifBlank { "FoxSu" },
                     fontSize = if (sideDock) 26.sp else 32.sp,
                     fontWeight = FontWeight.ExtraBold,
                     letterSpacing = (-0.6).sp,
-                    style = TextStyle(brush = Ag.TitleGrad),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = if (custom.titleColor == 0) {
+                        TextStyle(brush = Ag.TitleGrad)
+                    } else {
+                        TextStyle(color = Color(custom.titleColor))
+                    },
                 )
                 Spacer(Modifier.weight(1f))
                 Row(
@@ -131,8 +140,8 @@ fun AgHome(
                 .fillMaxWidth()
                 .shadow(
                     12.dp, RoundedCornerShape(24.dp),
-                    spotColor = Color(0x406C5CE7),
-                    ambientColor = Color(0x146C5CE7),
+                    spotColor = Ag.Vio.copy(alpha = 0.251f),
+                    ambientColor = Ag.Vio.copy(alpha = 0.078f),
                 )
                 .clip(RoundedCornerShape(24.dp))
                 .background(Ag.Grad)

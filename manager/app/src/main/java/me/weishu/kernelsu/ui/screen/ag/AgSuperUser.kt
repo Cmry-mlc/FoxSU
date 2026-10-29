@@ -177,8 +177,8 @@ private fun AgAppRow(g: GroupedApps, context: android.content.Context, onClick: 
                 Box(
                     Modifier
                         .clip(RoundedCornerShape(8.dp))
-                        .background(Color(0x146C5CE7))
-                        .border(1.dp, Color(0x386C5CE7), RoundedCornerShape(8.dp))
+                        .background(Ag.Vio.copy(alpha = 0.078f))
+                        .border(1.dp, Ag.Vio.copy(alpha = 0.22f), RoundedCornerShape(8.dp))
                         .padding(horizontal = 9.dp, vertical = 4.dp),
                 ) {
                     Text("ROOT", fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.6.sp, color = Ag.Vio)

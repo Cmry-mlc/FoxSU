@@ -64,7 +64,7 @@ fun EditorialAppProfile(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(t.paper)
+            .then(edPageBg(t.paper))
             .statusBarsPadding(),
     ) {
         EdMasthead(

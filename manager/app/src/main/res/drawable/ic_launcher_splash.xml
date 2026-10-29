@@ -1,21 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 第一启动页（Android 12+ 启动闪屏）图标：与桌面启动器一致的白底彩虹狐狸，
-     白圆底 + 78dp 狐狸完整落在安全区内，避免被系统圆形遮罩切边。 -->
+<!-- 第一启动页图标（Android 12+ 系统闪屏）：直接用新的狐狸 logo。
+     底色本身就是奶油白，与 splash_background 同源，边缘已做羽化，不会有方形接缝。 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:width="108dp"
-        android:height="108dp"
-        android:gravity="center">
-        <shape android:shape="oval">
-            <solid android:color="#FFFFFFFF" />
-        </shape>
-    </item>
-    <item
-        android:width="78dp"
-        android:height="78dp"
+        android:width="128dp"
+        android:height="128dp"
         android:gravity="center">
         <bitmap
-            android:gravity="fill"
-            android:src="@drawable/fox_hero" />
+            android:src="@drawable/foxsu_mark"
+            android:gravity="fill" />
     </item>
 </layer-list>

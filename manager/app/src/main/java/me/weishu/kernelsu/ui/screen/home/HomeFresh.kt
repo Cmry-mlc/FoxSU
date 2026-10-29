@@ -311,7 +311,7 @@ fun HomePagerFresh(
                         bottom = 10.dp,
                     ),
             ) {
-                FreshHeader()
+                FreshHeader(onOpenTheme = { showStylePicker = true })
             }
         }
 
@@ -559,7 +559,7 @@ private fun FreshStylePickerDialog(
 }
 
 @Composable
-private fun FreshHeader() {
+private fun FreshHeader(onOpenTheme: () -> Unit) {
     val navigator = LocalNavigator.current
     var showRebootDialog by remember { mutableStateOf(false) }
 
@@ -593,11 +593,10 @@ private fun FreshHeader() {
             modifier = Modifier.size(46.dp),
         ) {
             Box(contentAlignment = Alignment.Center) {
-                Image(
-                    painter = painterResource(R.drawable.ic_fox_global),
-                    contentDescription = null,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.size(40.dp),
+                // Pages 的界面图标改为启动器图标（与桌面一致）
+                me.weishu.kernelsu.ui.component.LauncherMark(
+                    modifier = Modifier.size(36.dp),
+                    cornerPercent = 28,
                 )
             }
         }
@@ -605,8 +604,11 @@ private fun FreshHeader() {
         Spacer(Modifier.width(12.dp))
 
         Column(modifier = Modifier.weight(1f)) {
-            val customTitle = CustomizationStore.current.homeTitle
-            val titleColor = LocalContentColor.current
+            val custom = CustomizationStore.current
+            val customTitle = custom.homeTitle
+            // 主题底色下的默认文字色；定制 → 标题栏 里选过颜色就覆盖标题本身（副标题仍跟随底色）
+            val baseText = LocalContentColor.current
+            val titleColor = if (custom.titleColor == 0) baseText else androidx.compose.ui.graphics.Color(custom.titleColor)
             Text(
                 text = customTitle.ifBlank { stringResource(R.string.app_name) },
                 fontSize = 24.sp,
@@ -622,7 +624,7 @@ private fun FreshHeader() {
                     text = phrases.getOrElse(index) { "" },
                     fontSize = 11.5.sp,
                     letterSpacing = 0.1.sp,
-                    color = titleColor.copy(alpha = if (cardNeedsLightText()) 0.72f else 0.55f),
+                    color = baseText.copy(alpha = if (cardNeedsLightText()) 0.72f else 0.55f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -642,6 +644,21 @@ private fun FreshHeader() {
                 modifier = Modifier.padding(horizontal = 2.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                // 主题：直接调起皮肤选择，省得为了换个主题先进设置
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .bouncyClick { onOpenTheme() },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Palette,
+                        contentDescription = "主题",
+                        tint = buttonTint,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
                 Box(
                     modifier = Modifier
                         .size(40.dp)

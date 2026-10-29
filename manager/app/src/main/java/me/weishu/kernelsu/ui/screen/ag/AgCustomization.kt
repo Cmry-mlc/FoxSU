@@ -28,6 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Construction
 import androidx.compose.material.icons.rounded.FormatSize
 import androidx.compose.material.icons.rounded.Gesture
@@ -52,11 +53,14 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -76,6 +80,7 @@ import me.weishu.kernelsu.ui.navigation3.LocalNavigator
 import me.weishu.kernelsu.ui.screen.settings.SettingsScreenActions
 import me.weishu.kernelsu.ui.util.LauncherIconManager
 import me.weishu.kernelsu.ui.util.importFontFile
+import me.weishu.kernelsu.ui.theme.AccentPalettes
 import me.weishu.kernelsu.ui.util.savePickedImage
 import java.io.File
 
@@ -215,20 +220,89 @@ internal fun AgCustomization(
                 )
             }
 
-            // ── 主题外观 ──
-            AgGHead("主题外观")
-            AgCard(contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 4.dp)) {
-                AgToggleRow(
-                    "启用 Monet 颜色", "跟随系统壁纸提取动态配色",
-                    Ag.Mag, AgSettingsIcons.Monet,
-                    trailing = {
-                        var on by remember { mutableStateOf(repo.miuixMonet) }
-                        AgToggle(checked = on, onCheckedChange = {
-                            on = !on; repo.miuixMonet = on
-                            Toast.makeText(context, if (on) "已启用 Monet 配色" else "已关闭 Monet 配色", Toast.LENGTH_SHORT).show()
-                        }, small = true)
-                    },
+            // ══════════ 全局强调色 ══════════
+            AgGHead("全局强调色")
+            AgCard {
+                AgSubLabel("配色（取自 FoxSu logo 的七彩）")
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    repeat(AccentPalettes.size) { i ->
+                        item {
+                            AgAccentChip(
+                                palette = AccentPalettes[i],
+                                selected = custom.accentPalette == i,
+                            ) { CustomizationStore.setAccentPalette(i) }
+                        }
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    "选一套主色，按钮、选中态、底栏指示器与渐变会同时换色，五套界面风格一并生效。",
+                    fontSize = 11.5.sp, lineHeight = 17.sp, color = Ag.Tx2,
                 )
+                Spacer(Modifier.height(12.dp))
+            }
+
+            // ══════════ 标题栏 ══════════
+            AgGHead("标题栏")
+            AgCard {
+                AgSubLabel("标题文字")
+                AgTitleField(
+                    value = custom.homeTitle,
+                    onValueChange = CustomizationStore::setHomeTitle,
+                    hint = "留空则显示 FoxSu",
+                )
+                if (custom.homeTitle.isNotBlank()) {
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        "恢复默认",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Ag.Vio,
+                        modifier = Modifier
+                            .agClick { CustomizationStore.setHomeTitle("") }
+                            .padding(vertical = 6.dp, horizontal = 2.dp),
+                    )
+                }
+
+                Spacer(Modifier.height(16.dp))
+                AgSubLabel("标题颜色")
+                AgTitleColorRow(
+                    selected = custom.titleColor,
+                    onPick = CustomizationStore::setTitleColor,
+                )
+
+                // 自定义取色：色相 / 饱和度 / 明度三条滑轨，拖动即实时生效
+                var showTitlePicker by remember { mutableStateOf(false) }
+                Spacer(Modifier.height(12.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        if (showTitlePicker) "收起取色器" else "自定义颜色…",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Ag.Vio,
+                        modifier = Modifier
+                            .agClick { showTitlePicker = !showTitlePicker }
+                            .padding(vertical = 6.dp, horizontal = 2.dp),
+                    )
+                }
+                if (showTitlePicker) {
+                    AgTitlePicker(
+                        initial = custom.titleColor,
+                        onPick = CustomizationStore::setTitleColor,
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        "当前：${hexOf(custom.titleColor)}　·　五套界面风格同时生效",
+                        fontSize = 11.sp,
+                        color = Ag.Tx2,
+                    )
+                }
+                Spacer(Modifier.height(10.dp))
+            }
+
+            // ══════════ 显示与效果 ══════════
+            AgGHead("显示与效果")
+            AgCard(contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 4.dp)) {
                 AgToggleRow(
                     "模糊", "启用顶栏和底栏的模糊效果",
                     Ag.Vio, AgSettingsIcons.Blur,
@@ -236,16 +310,6 @@ internal fun AgCustomization(
                         var on by remember { mutableStateOf(repo.enableBlur) }
                         AgToggle(checked = on, onCheckedChange = {
                             on = !on; settingsActions?.onSetEnableBlur?.invoke(on)
-                        }, small = true)
-                    },
-                )
-                AgToggleRow(
-                    "悬浮底栏", "使用 Apple 风格的悬浮底栏",
-                    Ag.Teal, AgSettingsIcons.FloatingBar,
-                    trailing = {
-                        var on by remember { mutableStateOf(repo.enableFloatingBottomBar) }
-                        AgToggle(checked = on, onCheckedChange = {
-                            on = !on; settingsActions?.onSetEnableFloatingBottomBar?.invoke(on)
                         }, small = true)
                     },
                 )
@@ -259,10 +323,18 @@ internal fun AgCustomization(
                         }, small = true)
                     },
                 )
+                AgSliderRow(
+                    label = "界面缩放",
+                    sub = "调整全局显示比例",
+                    value = repo.pageScale,
+                    range = 0.7f..1.3f,
+                    display = "${(repo.pageScale * 100).toInt()}%",
+                    onChange = { settingsActions?.onSetPageScale?.invoke(it) },
+                )
             }
 
-            // ── 手势与显示 ──
-            AgGHead("手势与显示")
+            // ══════════ 手势操作 ══════════
+            AgGHead("手势操作")
             AgCard(contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 4.dp)) {
                 AgToggleRow(
                     "预测性返回手势", "启用对预测性返回手势的支持",
@@ -301,17 +373,9 @@ internal fun AgCustomization(
                         )
                     },
                 )
-                AgSliderRow(
-                    label = "界面缩放",
-                    sub = "调整全局显示比例",
-                    value = repo.pageScale,
-                    range = 0.7f..1.3f,
-                    display = "${(repo.pageScale * 100).toInt()}%",
-                    onChange = { settingsActions?.onSetPageScale?.invoke(it) },
-                )
             }
 
-            // ── 壁纸 ──
+            // ══════════ 背景壁纸 ══════════
             AgGHead("背景壁纸")
             AgCard(contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 4.dp)) {
                 AgRow(
@@ -328,7 +392,7 @@ internal fun AgCustomization(
                 Row(modifier = Modifier.padding(bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     AgPillAction(
                         text = stringResource(R.string.customization_pick_image),
-                        icon = AgSettingsIcons.Monet,
+                        icon = AgSettingsIcons.Wallpaper,
                         primary = true,
                         modifier = Modifier.weight(1f),
                     ) {
@@ -345,7 +409,7 @@ internal fun AgCustomization(
                 }
             }
 
-            // ── 字体（.fsel chips）──
+            // ══════════ 字体 ══════════
             AgGHead("字体")
             AgCard {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
@@ -388,9 +452,10 @@ internal fun AgCustomization(
                 Spacer(Modifier.height(6.dp))
             }
 
-            // ── 图标风格（.isel icards：几何造型）──
-            AgGHead("图标风格")
+            // ══════════ 应用图标 ══════════
+            AgGHead("应用图标")
             AgCard {
+                AgSubLabel("图标风格")
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
                     val geoItems = listOf(
                         "圆角方" to 9f, "正圆" to -1f, "超椭圆" to 12f, "七彩" to 9f,
@@ -411,18 +476,14 @@ internal fun AgCustomization(
                         }
                     }
                 }
-                Spacer(Modifier.height(6.dp))
-            }
-
-            // ── 启动器图标（.isel：桌面图标形象，写入 activity-alias）──
-            AgGHead("启动器图标")
-            AgCard {
+                Spacer(Modifier.height(18.dp))
+                AgSubLabel("启动器图标")
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
                     val launcherItems = listOf(
-                        Triple("彩虹狐狸", LauncherIconManager.STYLE_FOXSU, R.drawable.fox_hero),
-                        Triple("乖巧", LauncherIconManager.STYLE_FOX2, R.drawable.fox_icon_cute),
-                        Triple("招手", LauncherIconManager.STYLE_FOX3, R.drawable.fox_icon_wave),
-                        Triple("回眸", LauncherIconManager.STYLE_FOX4, R.drawable.fox_icon_glance),
+                        Triple("默认", LauncherIconManager.STYLE_FOXSU, R.drawable.ic_fox_global),
+                        Triple("乖巧", LauncherIconManager.STYLE_FOX2, R.drawable.ic_launcher_fox2_foreground),
+                        Triple("招手", LauncherIconManager.STYLE_FOX3, R.drawable.ic_launcher_fox3_foreground),
+                        Triple("回眸", LauncherIconManager.STYLE_FOX4, R.drawable.ic_launcher_fox4_foreground),
                     )
                     launcherItems.forEach { (name, style, res) ->
                         item {
@@ -441,7 +502,7 @@ internal fun AgCustomization(
                 Spacer(Modifier.height(6.dp))
             }
 
-            // ── 底部导航栏（.dsel 9 样式 + 开关 + 滑杆）──
+            // ══════════ 底部导航栏 ══════════
             AgGHead("底部导航栏")
             AgCard {
                 // 2 列样式选择器
@@ -459,6 +520,38 @@ internal fun AgCustomization(
                     }
                     Spacer(Modifier.height(10.dp))
                 }
+                AgRow(
+                    "胶囊停靠", "侧边抽屉样式下，胶囊停靠在屏幕左侧还是右侧",
+                    Ag.Vio, AgSettingsIcons.FloatingBar,
+                    trailing = {
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            listOf("左", "右").forEachIndexed { i, label ->
+                                val on = custom.dockSide == i
+                                Box(
+                                    Modifier
+                                        .height(28.dp)
+                                        .clip(RoundedCornerShape(99.dp))
+                                        .background(if (on) Ag.Grad else androidx.compose.ui.graphics.SolidColor(Color.Transparent))
+                                        .border(
+                                            1.dp,
+                                            if (on) Color.Transparent else Ag.Line,
+                                            RoundedCornerShape(99.dp),
+                                        )
+                                        .agClick { CustomizationStore.setDockSide(i) }
+                                        .padding(horizontal = 12.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text(
+                                        label,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (on) Color.White else Ag.Tx2,
+                                    )
+                                }
+                            }
+                        }
+                    },
+                )
                 AgToggleRow(
                     "Editorial 使用胶囊底栏",
                     "关闭时 Editorial 主题保留原生纸面底栏（推荐：胶囊会打乱杂志版式）",
@@ -512,8 +605,8 @@ internal fun AgCustomization(
                 )
             }
 
-            // ── 模块 ──
-            AgGHead("模块")
+            // ══════════ 内容显示 ══════════
+            AgGHead("内容显示")
             AgCard(contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 4.dp)) {
                 AgSliderRow(
                     label = "模块描述最大行数",
@@ -540,6 +633,197 @@ internal fun AgCustomization(
     }
 }
 
+/** 标题文字输入框：圆角 14、内衬底、与页面同色系的描边 */
+@Composable
+private fun AgTitleField(value: String, onValueChange: (String) -> Unit, hint: String) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .height(46.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(Ag.searchBg())
+            .border(1.dp, Ag.Line, RoundedCornerShape(14.dp))
+            .padding(horizontal = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        androidx.compose.foundation.text.BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            singleLine = true,
+            textStyle = androidx.compose.ui.text.TextStyle(
+                fontSize = 14.sp,
+                color = Ag.Tx,
+                fontWeight = FontWeight.Bold,
+            ),
+            cursorBrush = androidx.compose.ui.graphics.SolidColor(Ag.Vio),
+            modifier = Modifier.weight(1f),
+            decorationBox = { inner ->
+                Box {
+                    if (value.isEmpty()) Text(hint, fontSize = 13.sp, color = Ag.Tx3)
+                    inner()
+                }
+            },
+        )
+        if (value.isNotEmpty()) {
+            Text(
+                "✕",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = Ag.Tx3,
+                modifier = Modifier.agClick { onValueChange("") }.padding(start = 8.dp, top = 4.dp, bottom = 4.dp),
+            )
+        }
+    }
+}
+
+/** 标题颜色选择：跟随主题 + 7 套品牌色（与「全局强调色」同一份色卡） */
+@Composable
+private fun AgTitleColorRow(selected: Int, onPick: (Int) -> Unit) {
+    val chips = buildList {
+        add(Triple("跟随主题", 0, null as Color?))
+        AccentPalettes.forEach { p ->
+            add(Triple(p.label, p.primary.toArgb(), p.primary as Color?))
+        }
+    }
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        chips.forEach { (label, argb, solid) ->
+            item {
+            val on = selected == argb
+            Column(
+                Modifier.agClick { onPick(argb) }.width(58.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Box(
+                    Modifier
+                        .size(38.dp)
+                        .clip(CircleShape)
+                        .background(solid?.let { androidx.compose.ui.graphics.SolidColor(it) } ?: Ag.Grad)
+                        .border(if (on) 3.dp else 1.dp, if (on) Color.White else Ag.Line, CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (on) {
+                        Icon(Icons.Rounded.Check, null, tint = Color.White, modifier = Modifier.size(16.dp))
+                    }
+                }
+                Text(
+                    label,
+                    fontSize = 10.sp,
+                    fontWeight = if (on) FontWeight.ExtraBold else FontWeight.Bold,
+                    color = if (on) Ag.Vio else Ag.Tx2,
+                    maxLines = 1,
+                )
+            }
+            }
+        }
+    }
+}
+
+/** 自定义取色器：色相 / 饱和度 / 明度三轨，任何时候拖动都即时回调 */
+@Composable
+private fun AgTitlePicker(initial: Int, onPick: (Int) -> Unit) {
+    val start = if (initial == 0) 0xFF6C5CE7.toInt() else initial
+    // 只在「打开取色器」时取一次初值：若跟着每次回调重建，拖动时滑块会被重置成跳动
+    val hsv0 = remember { FloatArray(3).also { android.graphics.Color.colorToHSV(start, it) } }
+    var h by remember { mutableStateOf(hsv0[0]) }
+    var sat by remember { mutableStateOf(hsv0[1]) }
+    var val0 by remember { mutableStateOf(hsv0[2]) }
+
+    fun colorOf(hh: Float, ss: Float, vv: Float): Color =
+        Color(android.graphics.Color.HSVToColor(floatArrayOf(hh, ss, vv)))
+
+    fun emit() = onPick(android.graphics.Color.HSVToColor(floatArrayOf(h, sat, val0)))
+
+    Column(Modifier.padding(top = 8.dp)) {
+        AgTuneBar(
+            brush = Brush.horizontalGradient(
+                listOf(
+                    colorOf(0f, 1f, 1f), colorOf(60f, 1f, 1f), colorOf(120f, 1f, 1f),
+                    colorOf(180f, 1f, 1f), colorOf(240f, 1f, 1f), colorOf(300f, 1f, 1f),
+                    colorOf(359.9f, 1f, 1f),
+                )
+            ),
+            frac = h / 360f,
+        ) { f -> h = (f * 359.9f).coerceIn(0f, 359.9f); emit() }
+
+        AgTuneBar(
+            brush = Brush.horizontalGradient(listOf(colorOf(h, 0f, val0), colorOf(h, 1f, val0))),
+            frac = sat,
+        ) { f -> sat = f.coerceIn(0f, 1f); emit() }
+
+        AgTuneBar(
+            brush = Brush.horizontalGradient(
+                listOf(Color.Black, colorOf(h, sat, 1f))
+            ),
+            frac = val0,
+        ) { f -> val0 = f.coerceIn(0f, 1f); emit() }
+    }
+}
+
+/** 取色滑轨：圆角轨道 + 白色描边圆钮（画在 drawBehind 里，避免 offset 换算） */
+@Composable
+private fun AgTuneBar(brush: Brush, frac: Float, onChange: (Float) -> Unit) {
+    var widthPx by remember { mutableStateOf(1f) }
+    val lineColor = Ag.Line
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .padding(top = 10.dp)
+            .height(24.dp)
+            .onSizeChanged { widthPx = it.width.toFloat().coerceAtLeast(1f) }
+            .pointerInput(Unit) {
+                detectTapGestures { off ->
+                    onChange((off.x / widthPx).coerceIn(0f, 1f))
+                }
+            }
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures { change, _ ->
+                    onChange((change.position.x / widthPx).coerceIn(0f, 1f))
+                }
+            },
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(12.dp)
+                .clip(RoundedCornerShape(99.dp))
+                .background(brush)
+                .border(1.dp, Ag.Line, RoundedCornerShape(99.dp))
+        )
+        Spacer(
+            Modifier
+                .fillMaxWidth()
+                .height(24.dp)
+                .drawBehind {
+                    val r = 8.dp.toPx()
+                    val cx = (frac * size.width).coerceIn(r, size.width - r)
+                    drawCircle(Color.White, r, androidx.compose.ui.geometry.Offset(cx, size.height / 2f))
+                    drawCircle(
+                        lineColor, r, androidx.compose.ui.geometry.Offset(cx, size.height / 2f),
+                        style = androidx.compose.ui.graphics.drawscope.Stroke(1.dp.toPx()),
+                    )
+                }
+        )
+    }
+}
+
+/** 取色结果的十六进制文本，#RRGGBB */
+private fun hexOf(argb: Int): String =
+    if (argb == 0) "#跟随主题" else String.format("#%06X", argb and 0xFFFFFF)
+
+/** 卡片内的小节标题：把同一张卡里的「图标风格 / 启动器图标」分开 */
+@Composable
+private fun AgSubLabel(text: String) {
+    Text(
+        text,
+        fontSize = 12.5.sp,
+        fontWeight = FontWeight.ExtraBold,
+        color = Ag.Tx2,
+        modifier = Modifier.padding(start = 2.dp, bottom = 10.dp),
+    )
+}
+
 /** .dopt：底栏样式选择卡（2 列网格） */
 @Composable
 private fun AgDockStyleCard(name: String, code: String, selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
@@ -547,10 +831,10 @@ private fun AgDockStyleCard(name: String, code: String, selected: Boolean, modif
         modifier
             .agClick(onClick = onClick)
             .clip(RoundedCornerShape(16.dp))
-            .background(if (selected) Color(0x0F6C5CE7) else Color(0x8CFFFFFF))
+            .background(if (selected) Ag.Vio.copy(alpha = 0.059f) else Color(0x8CFFFFFF))
             .border(
                 1.4.dp,
-                if (selected) Color(0x806C5CE7) else Ag.Line,
+                if (selected) Ag.Vio.copy(alpha = 0.502f) else Ag.Line,
                 RoundedCornerShape(16.dp),
             )
             .padding(12.dp),
@@ -566,11 +850,37 @@ private fun AgDockStyleCard(name: String, code: String, selected: Boolean, modif
     }
 }
 
-/** 底栏样式缩略预览：每种样式一个可辨识的小样 */
+/**
+ * 底栏样式缩略预览。
+ *
+ * 所有样式的预览条尺寸完全一致（同一宽高、同一圆角、同一项间距），
+ * 只有「胶囊底色 / 描边 / 指示器造型」随样式变化 —— 和真机上统一后的底栏一一对应。
+ */
 @Composable
 private fun DockStylePreview(code: String) {
-    val dot = Ag.Tx3.copy(alpha = 0.45f)
-    val grad = Brush.linearGradient(listOf(Color(0xFF6C5CE7), Color(0xFFEC4899)))
+    val ac = Ag.accent
+    val dark = Ag.isDark
+    val grad = Brush.linearGradient(listOf(ac.primary, ac.mid, ac.secondary))
+    val dotColor = Ag.Tx3.copy(alpha = 0.45f)
+    val pill = RoundedCornerShape(99.dp)
+
+    // 胶囊底 / 描边：只在这里分叉，尺寸一律不参与
+    val pillBg: Color = when (code) {
+        "editorial" -> if (dark) Color(0xFF1B1A20) else Color(0xFFFFFCF6)
+        "pages" -> if (dark) Color(0xFF1B1C1E) else Color.White
+        "glass" -> if (dark) Color(0xFF14141E) else Color(0xF2FFFFFF)
+        "nocturne" -> Color(0xFF0F1018)
+        "v7", "v10" -> Color.Transparent
+        else -> if (dark) Color(0xFF1F1E32) else Color.White
+    }
+    val pillBorder: Color? = when (code) {
+        "glass" -> Color(0x33FFFFFF)
+        "nocturne" -> Color(0x26FFFFFF)
+        "v7" -> ac.primary.copy(alpha = 0.35f)
+        "pages" -> if (dark) Color(0x29FFFFFF) else Color(0x14111111)
+        else -> null
+    }
+
     Row(
         Modifier
             .fillMaxWidth()
@@ -580,202 +890,153 @@ private fun DockStylePreview(code: String) {
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (code == "v5") {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(2.5.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                repeat(4) { i ->
-                    Box(
-                        Modifier
-                            .size(width = 10.dp, height = 6.dp)
-                            .clip(RoundedCornerShape(3.dp))
-                            .background(if (i == 0) grad else androidx.compose.ui.graphics.SolidColor(dot)),
-                    )
-                }
-            }
-            return@Row
-        }
-
-        // ── 复刻自其他皮肤的 4 种：按各自底栏原样画缩略图 ──
-        if (code == "editorial") {
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .height(34.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(if (Ag.isDark) Color(0xFF1B1A20) else Color(0xFFFFFCF6)),
-            ) {
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .height(1.dp)
-                        .background(if (Ag.isDark) Color(0xFF4A4655) else Color(0xFF1D1C22)),
-                )
-                Row(
-                    Modifier.weight(1f).fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    repeat(4) { i ->
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(3.dp),
-                        ) {
-                            Box(
-                                Modifier
-                                    .size(6.dp)
-                                    .clip(RoundedCornerShape(2.dp))
-                                    .background(
-                                        if (i == 0) Color(0xFFE8502E) else Ag.Tx3.copy(alpha = 0.5f)
-                                    ),
-                            )
-                            Box(
-                                Modifier
-                                    .size(width = 10.dp, height = 1.5.dp)
-                                    .background(if (i == 0) Color(0xFFE8502E) else Color.Transparent),
-                            )
-                        }
-                    }
-                }
-            }
-            return@Row
-        }
-
-        if (code == "pages" || code == "glass") {
-            val light = !Ag.isDark
-            val pillBg = if (code == "pages") {
-                if (light) Color.White else Color(0xFF1B1C1E)
-            } else {
-                if (light) Color(0xF2FFFFFF) else Color(0xFF14141E)
-            }
-            Row(
-                Modifier
-                    .padding(horizontal = 8.dp)
-                    .fillMaxWidth()
-                    .height(21.dp)
-                    .clip(RoundedCornerShape(99.dp))
-                    .background(pillBg)
-                    .then(
-                        if (code == "glass") Modifier.border(1.dp, Ag.Line, RoundedCornerShape(99.dp))
-                        else Modifier
-                    )
-                    .padding(horizontal = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceEvenly,
-            ) {
-                Box(
-                    Modifier
-                        .height(13.dp)
-                        .width(if (code == "pages") 26.dp else 20.dp)
-                        .clip(RoundedCornerShape(99.dp))
-                        .background(Brush.linearGradient(listOf(Color(0xFF6C5CE7), Color(0xFFEC4899)))),
-                )
-                repeat(3) {
-                    Box(Modifier.size(5.dp).clip(CircleShape).background(Ag.Tx3.copy(alpha = 0.5f)))
-                }
-            }
-            return@Row
-        }
-
-        if (code == "nocturne") {
-            Row(
-                Modifier
-                    .padding(horizontal = 6.dp)
-                    .fillMaxWidth()
-                    .height(26.dp)
-                    .clip(RoundedCornerShape(9.dp))
-                    .background(Color(0xFF0F1018))
-                    .border(1.dp, Color(0x26FFFFFF), RoundedCornerShape(9.dp)),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceEvenly,
-            ) {
-                Box(
-                    Modifier
-                        .height(13.dp)
-                        .width(24.dp)
-                        .clip(RoundedCornerShape(5.dp))
-                        .background(Color(0x338B7BFF))
-                        .drawBehind {
-                            val w = 10.dp.toPx()
-                            val h = 1.5.dp.toPx()
-                            drawRoundRect(
-                                brush = Brush.horizontalGradient(
-                                    listOf(Color(0xFF8B7BFF), Color(0xFF4DE2C5))
-                                ),
-                                topLeft = androidx.compose.ui.geometry.Offset((size.width - w) / 2f, 2.dp.toPx()),
-                                size = androidx.compose.ui.geometry.Size(w, h),
-                                cornerRadius = androidx.compose.ui.geometry.CornerRadius(h / 2f),
-                            )
-                        },
-                )
-                repeat(3) {
-                    Box(Modifier.size(5.dp).clip(CircleShape).background(Color(0xFF5D6376)))
-                }
-            }
-            return@Row
-        }
-
-        // 第一个「选中项」小样
-        Box(
+        Row(
             Modifier
-                .padding(end = 4.dp)
-                .then(
-                    when (code) {
-                        "v1" -> Modifier.size(width = 26.dp, height = 11.dp)
-                        "v6" -> Modifier.size(15.dp)
-                        "v7" -> Modifier.size(width = 18.dp, height = 11.dp)
-                        "v8" -> Modifier.size(width = 20.dp, height = 12.dp)
-                        "v9" -> Modifier.size(width = 20.dp, height = 12.dp)
-                        "v10" -> Modifier.size(width = 18.dp, height = 11.dp)
-                        "v11" -> Modifier.size(15.dp)
-                        else -> Modifier.size(width = 26.dp, height = 11.dp)
-                    }
-                )
-                .then(
-                    when (code) {
-                        "v6" -> Modifier
-                            .clip(CircleShape)
-                            .background(
-                                Brush.radialGradient(
-                                    listOf(Color(0xCC6C5CE7), Color(0x66EC4899), Color.Transparent),
-                                )
+                .padding(horizontal = 7.dp)
+                .fillMaxWidth()
+                .height(23.dp)
+                .clip(pill)
+                .background(pillBg)
+                .then(if (pillBorder != null) Modifier.border(1.dp, pillBorder, pill) else Modifier)
+                .padding(horizontal = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceEvenly,
+        ) {
+            // 选中项小样：全部落在同一个 26×15 的视觉盒子里
+            Box(Modifier.size(width = 26.dp, height = 15.dp), contentAlignment = Alignment.Center) {
+                when (code) {
+                    "v6" -> Box(
+                        Modifier.size(14.dp).clip(CircleShape).background(
+                            Brush.radialGradient(
+                                listOf(ac.primary, ac.primary.copy(alpha = 0.35f), Color.Transparent)
                             )
-                        "v7" -> Modifier
-                            .clip(RoundedCornerShape(99.dp))
-                            .border(1.8.dp, Color(0x996C5CE7), RoundedCornerShape(99.dp))
-                        "v8" -> Modifier
+                        )
+                    )
+                    "v7" -> Box(
+                        Modifier.size(width = 22.dp, height = 14.dp)
+                            .clip(pill).border(1.6.dp, ac.primary.copy(alpha = 0.55f), pill)
+                    )
+                    "v8" -> Box(
+                        Modifier.size(width = 22.dp, height = 14.dp)
                             .clip(RoundedCornerShape(5.dp))
-                            .background(if (Ag.isDark) Color(0xFF2A2940) else Color.White)
+                            .background(if (dark) Color(0xFF2A2940) else Color.White)
                             .border(1.dp, Ag.Line, RoundedCornerShape(5.dp))
-                        "v9" -> Modifier.clip(RoundedCornerShape(5.dp)).background(grad)
-                        "v10" -> Modifier
-                            .clip(RoundedCornerShape(99.dp))
-                            .background(Color(0x146C5CE7))
+                    )
+                    "v9" -> Box(
+                        Modifier.size(width = 22.dp, height = 14.dp)
+                            .clip(RoundedCornerShape(5.dp)).background(grad)
+                    )
+                    "v10" -> Box(
+                        Modifier.size(width = 22.dp, height = 14.dp)
+                            .clip(pill)
+                            .background(ac.primary.copy(alpha = 0.12f))
                             .drawBehind {
-                                val w = 14.dp.toPx(); val h = 3.dp.toPx()
+                                val w = 14.dp.toPx(); val h = 2.5.dp.toPx()
                                 drawRoundRect(
-                                    brush = Brush.horizontalGradient(listOf(Color(0xFF6C5CE7), Color(0xFFEC4899))),
-                                    topLeft = androidx.compose.ui.geometry.Offset((size.width - w) / 2f, -h * 1.2f),
+                                    brush = Brush.horizontalGradient(listOf(ac.primary, ac.secondary)),
+                                    topLeft = androidx.compose.ui.geometry.Offset((size.width - w) / 2f, 1.dp.toPx()),
                                     size = androidx.compose.ui.geometry.Size(w, h),
                                     cornerRadius = androidx.compose.ui.geometry.CornerRadius(h / 2f),
                                 )
                             }
-                        "v11" -> Modifier.clip(CircleShape).background(grad)
-                        else -> Modifier.clip(RoundedCornerShape(99.dp)).background(grad)
+                    )
+                    "v11" -> Box(Modifier.size(14.dp).clip(CircleShape).background(grad))
+                    // 侧边抽屉：同样的胶囊里放一枚竖向小条，暗示竖排
+                    "v5" -> Box(
+                        Modifier.size(width = 9.dp, height = 15.dp)
+                            .clip(RoundedCornerShape(4.dp)).background(grad)
+                    )
+                    // Editorial：纸面 + 墨线，选中项是一道短横线
+                    "editorial" -> Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                    ) {
+                        Box(Modifier.size(6.dp).clip(CircleShape).background(ac.primary))
+                        Box(Modifier.size(width = 14.dp, height = 2.dp).clip(pill).background(ac.primary))
                     }
-                ),
-        )
-        // 其余三个未选中项
-        repeat(3) {
-            Box(
-                Modifier
-                    .padding(horizontal = 3.dp)
-                    .size(width = if (code == "v1") 8.dp else 11.dp, height = 11.dp)
-                    .clip(RoundedCornerShape(99.dp))
-                    .background(androidx.compose.ui.graphics.SolidColor(dot)),
-            )
+                    "glass" -> Box(
+                        Modifier.size(width = 24.dp, height = 15.dp)
+                            .clip(pill)
+                            .background(ac.soft)
+                            .drawBehind {
+                                val w = 14.dp.toPx(); val h = 2.dp.toPx()
+                                drawRoundRect(
+                                    brush = Brush.horizontalGradient(listOf(ac.primary, ac.secondary)),
+                                    topLeft = androidx.compose.ui.geometry.Offset((size.width - w) / 2f, 1.dp.toPx()),
+                                    size = androidx.compose.ui.geometry.Size(w, h),
+                                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(h / 2f),
+                                )
+                            }
+                    )
+                    "nocturne" -> Box(
+                        Modifier.size(width = 24.dp, height = 15.dp)
+                            .clip(RoundedCornerShape(5.dp))
+                            .background(ac.primary.copy(alpha = 0.22f))
+                            .drawBehind {
+                                val w = 12.dp.toPx(); val h = 1.6.dp.toPx()
+                                drawRoundRect(
+                                    brush = Brush.horizontalGradient(listOf(ac.primary, ac.secondary)),
+                                    topLeft = androidx.compose.ui.geometry.Offset((size.width - w) / 2f, 1.dp.toPx()),
+                                    size = androidx.compose.ui.geometry.Size(w, h),
+                                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(h / 2f),
+                                )
+                            }
+                    )
+                    // d0 / v1 / pages：渐变实底药丸
+                    else -> Box(
+                        Modifier.size(width = 24.dp, height = 15.dp).clip(pill).background(grad)
+                    )
+                }
+            }
+            repeat(3) {
+                Box(Modifier.size(7.dp).clip(CircleShape).background(dotColor))
+            }
         }
+    }
+}
+
+/** 强调色卡：一枚渐变圆片 + 名称，选中显示对勾 */
+@Composable
+private fun AgAccentChip(
+    palette: me.weishu.kernelsu.ui.theme.AccentPalette,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Column(
+        Modifier.agClick(onClick = onClick).width(62.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(7.dp),
+    ) {
+        Box(
+            Modifier
+                .size(46.dp)
+                .shadow(
+                    if (selected) 8.dp else 2.dp,
+                    CircleShape,
+                    spotColor = palette.primary.copy(alpha = 0.45f),
+                    ambientColor = palette.primary.copy(alpha = 0.18f),
+                )
+                .clip(CircleShape)
+                .background(Brush.linearGradient(listOf(palette.primary, palette.mid, palette.secondary)))
+                .border(if (selected) 3.dp else 0.dp, Color.White, CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (selected) {
+                Icon(
+                    Icons.Rounded.Check,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+        }
+        Text(
+            palette.label,
+            fontSize = 11.sp,
+            fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Bold,
+            color = if (selected) Ag.Vio else Ag.Tx2,
+            maxLines = 1,
+        )
     }
 }
 
@@ -786,8 +1047,8 @@ private fun AgFontChip(name: String, glyph: String, family: FontFamily?, selecte
         Modifier
             .agClick(onClick = onClick)
             .clip(RoundedCornerShape(16.dp))
-            .background(if (selected) Color(0x0F6C5CE7) else Color(0x8CFFFFFF))
-            .border(1.4.dp, if (selected) Color(0x806C5CE7) else Ag.Line, RoundedCornerShape(16.dp))
+            .background(if (selected) Ag.Vio.copy(alpha = 0.059f) else Color(0x8CFFFFFF))
+            .border(1.4.dp, if (selected) Ag.Vio.copy(alpha = 0.502f) else Ag.Line, RoundedCornerShape(16.dp))
             .padding(14.dp, 14.dp, 14.dp, 11.dp)
             .width(96.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -810,8 +1071,8 @@ private fun AgIconCard(name: String, shapeRadius: Float, rainbow: Boolean, selec
         Modifier
             .agClick(onClick = onClick)
             .clip(RoundedCornerShape(16.dp))
-            .background(if (selected) Color(0x0F6C5CE7) else Color(0x8CFFFFFF))
-            .border(1.4.dp, if (selected) Color(0x806C5CE7) else Ag.Line, RoundedCornerShape(16.dp))
+            .background(if (selected) Ag.Vio.copy(alpha = 0.059f) else Color(0x8CFFFFFF))
+            .border(1.4.dp, if (selected) Ag.Vio.copy(alpha = 0.502f) else Ag.Line, RoundedCornerShape(16.dp))
             .padding(13.dp, 13.dp, 13.dp, 10.dp)
             .width(74.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -821,14 +1082,14 @@ private fun AgIconCard(name: String, shapeRadius: Float, rainbow: Boolean, selec
         Box(
             Modifier
                 .size(38.dp)
-                .shadow(4.dp, shape, spotColor = Color(0x476C5CE7), ambientColor = Color(0x476C5CE7))
+                .shadow(4.dp, shape, spotColor = Ag.Vio.copy(alpha = 0.278f), ambientColor = Ag.Vio.copy(alpha = 0.278f))
                 .clip(shape)
                 .background(
                     if (rainbow) {
                         Brush.sweepGradient(
                             listOf(
-                                Color(0xFF6C5CE7), Color(0xFFEC4899), Color(0xFF14B8A6),
-                                Color(0xFFF59E0B), Color(0xFF6C5CE7),
+                                Ag.Vio.copy(alpha = 1.0f), Color(0xFFEC4899), Color(0xFF14B8A6),
+                                Color(0xFFF59E0B), Ag.Vio.copy(alpha = 1.0f),
                             ),
                         )
                     } else {
@@ -850,8 +1111,8 @@ private fun AgLauncherIconCard(name: String, iconRes: Int, selected: Boolean, on
         Modifier
             .agClick(onClick = onClick)
             .clip(RoundedCornerShape(16.dp))
-            .background(if (selected) Color(0x0F6C5CE7) else Color(0x8CFFFFFF))
-            .border(1.4.dp, if (selected) Color(0x806C5CE7) else Ag.Line, RoundedCornerShape(16.dp))
+            .background(if (selected) Ag.Vio.copy(alpha = 0.059f) else Color(0x8CFFFFFF))
+            .border(1.4.dp, if (selected) Ag.Vio.copy(alpha = 0.502f) else Ag.Line, RoundedCornerShape(16.dp))
             .padding(13.dp, 13.dp, 13.dp, 10.dp)
             .width(74.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -860,7 +1121,7 @@ private fun AgLauncherIconCard(name: String, iconRes: Int, selected: Boolean, on
         Box(
             Modifier
                 .size(40.dp)
-                .shadow(3.dp, RoundedCornerShape(13.dp), spotColor = Color(0x336C5CE7), ambientColor = Color(0x1A6C5CE7))
+                .shadow(3.dp, RoundedCornerShape(13.dp), spotColor = Ag.Vio.copy(alpha = 0.2f), ambientColor = Ag.Vio.copy(alpha = 0.102f))
                 .clip(RoundedCornerShape(13.dp))
                 .background(if (Ag.isDark) Color(0xFF2A2940) else Color.White),
             contentAlignment = Alignment.Center,
@@ -962,7 +1223,7 @@ private fun AgSliderRow(
                 Modifier
                     .offset(x = ((trackWidth - 20.dp) * frac).coerceAtLeast(0.dp))
                     .size(20.dp)
-                    .shadow(4.dp, CircleShape, spotColor = Color(0x666C5CE7), ambientColor = Color(0x4D6C5CE7))
+                    .shadow(4.dp, CircleShape, spotColor = Ag.Vio.copy(alpha = 0.4f), ambientColor = Ag.Vio.copy(alpha = 0.302f))
                     .clip(CircleShape)
                     .background(Ag.Grad)
                     .border(3.dp, Color.White, CircleShape),
@@ -1004,8 +1265,8 @@ private fun AgPillAction(
                         .background(Ag.Grad, shape)
                 } else {
                     Modifier
-                        .background(Color(0x126C5CE7), shape)
-                        .border(1.dp, Color(0x406C5CE7), shape)
+                        .background(Ag.Vio.copy(alpha = 0.071f), shape)
+                        .border(1.dp, Ag.Vio.copy(alpha = 0.251f), shape)
                 }
             )
             .padding(horizontal = 14.dp),

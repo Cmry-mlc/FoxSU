@@ -190,14 +190,16 @@ private val PickSkins = listOf(
     PickSkin(
         mode = UiMode.Nocturne,
         name = "Nocturne",
-        tag = "暗夜",
+        tag = "亮色",
         desc = R.string.style_picker_desc_nocturne,
-        bg = Color(0xFF0A0C12),
-        ink = Color(0xFFFFFFFF),
-        block = Color(0x388B7BFF),
-        ring = Color(0x00000000),
-        accent = Color(0xB38B7BFF),
-        mint = Color(0x804DE2C5),
+        // Nocturne 默认走 Daylight 亮色外观，缩略图必须与真实界面同色，
+        // 否则选卡上是黑块、进去却是白页，看着像两套主题。
+        bg = Color(0xFFF4F5FA),
+        ink = Color(0xFF12141B),
+        block = Color(0xFFFFFFFF),
+        ring = Color(0x140F142D),
+        accent = Color(0xFF6A57F5),
+        mint = Color(0xFF0FA98B),
     ),
     PickSkin(
         mode = UiMode.Glass,

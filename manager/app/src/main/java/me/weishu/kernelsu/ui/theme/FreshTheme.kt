@@ -46,8 +46,8 @@ fun FreshKernelSUTheme(
     val context = LocalContext.current
     val systemDarkTheme = isSystemInDarkTheme()
     val darkTheme = appSettings.colorMode.isDark || (appSettings.colorMode.isSystem && systemDarkTheme)
-    // ColorUI follows the key color picked in 设置 → 主题; default seed is the design-spec mint.
-    val seedColor = if (appSettings.keyColor == 0) Color(0xFF3E7A4C) else Color(appSettings.keyColor)
+    // 全局强调色优先：Pages / Glass / Nocturne 的 Material 色板都从这里取种子色
+    val seedColor = me.weishu.kernelsu.ui.theme.currentAccent.primary
 
     val baseScheme = rememberKernelSUColorScheme(
         seedColor = seedColor,

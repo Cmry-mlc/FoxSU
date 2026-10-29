@@ -84,9 +84,16 @@ object NcDimens {
 fun ncTokens(): NcTokens {
     val dark = NcAppearance.resolveDarkMode()
     val base = if (dark) NcTokens.dark else NcTokens.light
-    return base
+    val t = base
         .withAccent(NcAccents[NcAppearance.accentIndex.coerceIn(NcAccents.indices)])
         .withGlow(NcAppearance.glowLevel.coerceIn(0, 2))
+    // 全局强调色覆盖主题内自带的强调色（定制 → 全局强调色）
+    val ac = me.weishu.kernelsu.ui.theme.currentAccent
+    return t.copy(
+        vio = ac.primary,
+        vio2 = ac.mid,
+        glowViolet = ac.primary.copy(alpha = if (t.dark) 0.13f else 0.16f),
+    )
 }
 
 data class NcTokens(

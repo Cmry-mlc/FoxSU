@@ -63,7 +63,9 @@ val ncMono: FontFamily = FontFamily.Monospace
  */
 @Composable
 fun NcGlowBackground(t: NcTokens, modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxSize().background(t.bg)) {
+    // 有壁纸时这层纯色底会盖住壁纸，只保留光晕
+    val wall = me.weishu.kernelsu.ui.component.hasWallpaperBackdrop()
+    Box(modifier.fillMaxSize().then(if (wall) Modifier else Modifier.background(t.bg))) {
         Canvas(Modifier.fillMaxSize()) {
             drawRect(
                 brush = Brush.radialGradient(
@@ -129,6 +131,8 @@ fun NcGradientBorder(
 fun NcHeader(
     kicker: String,
     title: String,
+    /** 标题文字颜色；null = 跟随主题（t.tx）。定制 → 标题栏 可覆盖。 */
+    titleColor: Color? = null,
     actions: @Composable RowScope.() -> Unit = {},
 ) {
     val t = ncTokens()
@@ -156,7 +160,7 @@ fun NcHeader(
                 fontWeight = FontWeight.ExtraBold,
                 letterSpacing = (-1).sp,
                 lineHeight = 32.sp,
-                color = t.tx,
+                color = titleColor ?: t.tx,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )

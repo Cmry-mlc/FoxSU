@@ -79,6 +79,8 @@ fun GlassHome(
         item {
             GlassTopBar(
                 title = CustomizationStore.current.homeTitle.ifBlank { "FoxSu" },
+                titleColor = CustomizationStore.current.titleColor
+                    .takeIf { it != 0 }?.let { Color(it) },
                 subtitle = stringResource(R.string.glass_home_subtitle),
                 showDot = state.isRootAvailable,
                 trailing = {
@@ -281,6 +283,8 @@ fun GlassTopBar(
     actionIconRes: Int = R.drawable.ic_d_user,
     styleIconRes: Int = R.drawable.ic_d_palette,
     titleSize: Int = 22,
+    /** 标题文字颜色；null = 跟随主题。定制 → 标题栏 可覆盖。 */
+    titleColor: Color? = null,
     accent: Color? = null,
     trailing: (@Composable RowScope.() -> Unit)? = null,
 ) {
@@ -306,11 +310,10 @@ fun GlassTopBar(
                     .background(t.avaBg),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_launcher_monochrome),
-                    contentDescription = null,
-                    modifier = Modifier.size(40.dp),
-                    tint = foxColor,
+                // Glass 的界面图标改为启动器图标（与桌面一致）
+                me.weishu.kernelsu.ui.component.LauncherMark(
+                    modifier = Modifier.size(36.dp),
+                    cornerPercent = 28,
                 )
             }
             if (showDot) {
@@ -330,7 +333,7 @@ fun GlassTopBar(
                 title,
                 fontSize = titleSize.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = t.ink,
+                color = titleColor ?: t.ink,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )

@@ -169,13 +169,10 @@ fun GlassAuthor(onBack: () -> Unit, onOpenUrl: (String) -> Unit) {
                                     .border(1.dp, t.glassBorder, CircleShape),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                Image(
-                                    painter = painterResource(R.drawable.author_avatar),
-                                    contentDescription = null,
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier
-                                        .size(66.dp)
-                                        .clip(CircleShape),
+                                // 头像位改用启动器图标，与桌面看到的图标一致
+                                me.weishu.kernelsu.ui.component.LauncherMark(
+                                    modifier = Modifier.size(58.dp),
+                                    cornerPercent = 28,
                                 )
                             }
                         }

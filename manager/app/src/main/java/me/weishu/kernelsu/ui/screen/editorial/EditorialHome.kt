@@ -66,7 +66,7 @@ fun EditorialHome(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(t.paper)
+            .then(edPageBg(t.paper))
             .statusBarsPadding(),
     ) {
         Column(
@@ -77,6 +77,8 @@ fun EditorialHome(
         ) {
             EdMasthead(
                 brand = CustomizationStore.current.homeTitle.ifBlank { "FoxSu" },
+                brandColor = CustomizationStore.current.titleColor
+                    .takeIf { it != 0 }?.let { Color(it) },
                 tag = "ROOT",
                 left = "Kernel Management Journal",
                 right = "VOL.${BuildConfig.VERSION_CODE}",

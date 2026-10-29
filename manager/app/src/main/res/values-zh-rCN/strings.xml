@@ -606,7 +606,7 @@
     <string name="onboarding_body_2">晨曦玻璃 / Pages / Editorial / Daylight / Nocturne，每套都有自己的配色、间距与动效。切换即时生效，不用重启。</string>
     <string name="onboarding_theme_inuse">使用中</string>
     <string name="onboarding_theme_tap">点击卡片即可即时应用。</string>
-    <string name="onboarding_skin_nocturne">OLED 纯黑，紫罗兰极光</string>
+    <string name="onboarding_skin_nocturne">默认亮色，可随时切回暗夜</string>
     <string name="onboarding_skin_pages">纯白留白，单一蓝点</string>
     <string name="onboarding_skin_editorial">纸张质感，信号橙</string>
     <string name="onboarding_skin_daylight">日光玻璃面板，紫罗兰与薄荷</string>
@@ -648,6 +648,12 @@
     <string name="onboarding_kicker_5">OPEN SOURCE · GITHUB</string>
     <string name="onboarding_title_5">在开放中生长</string>
     <string name="onboarding_body_5">FoxSu 是自由软件：五套皮肤、13 种胶囊、镜像安装、模块仓库、App Profile——代码全部公开，欢迎 Issue 与 PR。</string>
+    <string name="onboarding_website">官网</string>
+    <string name="onboarding_github">GitHub 仓库</string>
+    <string name="onboarding_brand_tagline">内核级 Root，界面也值得一看。</string>
+    <string name="onboarding_repo_license_short">GPL-3.0 · 基于 KernelSU</string>
+    <string name="onboarding_website_sub">使用文档 · 下载 · 更新说明</string>
+    <string name="onboarding_github_sub">源码 · 更新日志 · 问题反馈</string>
     <string name="onboarding_repo_url">github.com/Cmry-mlc/FoxSu</string>
     <string name="onboarding_repo_copy">复制链接</string>
     <string name="onboarding_repo_open">打开仓库</string>
@@ -669,7 +675,7 @@
     <string name="style_picker_in_use">使用中</string>
     <string name="style_picker_switch">切换</string>
     <string name="style_picker_hint">点击卡片即切换 · 点击空白处关闭</string>
-    <string name="style_picker_desc_nocturne">OLED 纯黑底 + 紫罗兰极光，强调色紫罗兰 / 薄荷。切换后立即生效，无需重启。</string>
+    <string name="style_picker_desc_nocturne">默认走 Daylight 亮色（#F4F5FA），强调色紫罗兰 / 薄荷，暗夜 OLED 仍可随时切换。切换后立即生效，无需重启。</string>
     <string name="style_picker_desc_daylight">与 Nocturne 同源的亮色版本：纸白面板 + 紫 / 薄荷双色，白天户外更易读。</string>
     <string name="style_picker_desc_editorial">纸张质感 + 细分隔线 + 信号橙点缀。适合长时间阅读，字体更紧凑。</string>
     <string name="style_picker_desc_pages">纯白留白 + 单一蓝点，最少的装饰。信息密度最低，适合极简用户。</string>

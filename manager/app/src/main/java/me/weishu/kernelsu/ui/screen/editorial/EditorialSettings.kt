@@ -181,7 +181,7 @@ fun EditorialSettings(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(t.paper)
+            .then(edPageBg(t.paper))
             .statusBarsPadding(),
         contentPadding = PaddingValues(start = if (useSideDock()) 96.dp else 0.dp, bottom = bottomInnerPadding + 24.dp),
     ) {

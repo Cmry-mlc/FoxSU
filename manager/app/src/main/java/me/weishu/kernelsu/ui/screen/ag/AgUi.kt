@@ -81,17 +81,23 @@ object Ag {
     val Tx3: Color @Composable get() = if (isDark) Color(0xFF7C7A98) else Color(0xFF9C9AAE)
     val Chev: Color @Composable get() = if (isDark) Color(0xFF5E5C7A) else Color(0xFFC6C4D6)
 
-    // ---- 品牌（明暗一致）----
-    val Vio = Color(0xFF6C5CE7)
-    val Vio2 = Color(0xFF8E5CF6)
-    val Mag = Color(0xFFEC4899)
+    // ---- 品牌（明暗一致；随「定制 → 全局强调色」的 7 套配色切换）----
+    val accent: me.weishu.kernelsu.ui.theme.AccentPalette
+        get() = me.weishu.kernelsu.ui.theme.currentAccent
+    val Vio: Color get() = accent.primary
+    val Vio2: Color get() = accent.mid
+    val Mag: Color get() = accent.secondary
     val Teal = Color(0xFF14B8A6)
     val Amber = Color(0xFFF59E0B)
     val Danger = Color(0xFFDC2626)
     val Success = Color(0xFF10B981)
 
     val Grad: Brush
-        get() = Brush.linearGradient(listOf(Color(0xFF6C5CE7), Color(0xFFA855F7), Color(0xFFEC4899)))
+        get() = Brush.linearGradient(listOf(accent.primary, accent.mid, accent.secondary))
+
+    /** 选中底衬：亮色用极淡同色相，暗色用低透明度同色相 */
+    val Soft: Color
+        @Composable get() = if (isDark) accent.softDark else accent.soft
 
     val TitleGrad = Grad
 
@@ -133,6 +139,10 @@ fun Modifier.agHeadBlur(): Modifier = this
  */
 @Composable
 fun Modifier.agPageBg(): Modifier {
+    // 用户选了壁纸时页面背景必须让位：这层渐变原本是不透明底，
+    // 会把 MainActivity 最底层画好的壁纸整片盖掉（其他主题能看见壁纸、
+    // 只有 FoxSu Redesign 看不见，就是这里造成的）。
+    if (me.weishu.kernelsu.ui.component.hasWallpaperBackdrop()) return this
     val b1 = Ag.Bg1
     val b2 = Ag.Bg2
     return this.drawBehind {
@@ -477,10 +487,10 @@ fun AgButton(primary: Boolean, text: String, onClick: () -> Unit, modifier: Modi
                 if (primary) Modifier
                     .clip(shape)
                     .background(Ag.Grad, shape)
-                    .shadow(6.dp, shape, spotColor = Color(0x4D6C5CE7), ambientColor = Color(0x4D6C5CE7))
+                    .shadow(6.dp, shape, spotColor = Ag.Vio.copy(alpha = 0.302f), ambientColor = Ag.Vio.copy(alpha = 0.302f))
                 else Modifier
-                    .background(Color(0x126C5CE7), shape)
-                    .border(1.dp, Color(0x406C5CE7), shape)
+                    .background(Ag.Vio.copy(alpha = 0.071f), shape)
+                    .border(1.dp, Ag.Vio.copy(alpha = 0.251f), shape)
             ),
         contentAlignment = Alignment.Center,
     ) {
@@ -624,7 +634,7 @@ fun AgFab(onClick: () -> Unit) {
             .agClick(pressScale = 0.9f, onClick = onClick)
             .clip(RoundedCornerShape(20.dp))
             .background(Ag.Grad)
-            .shadow(12.dp, RoundedCornerShape(20.dp), spotColor = Color(0x666C5CE7)),
+            .shadow(12.dp, RoundedCornerShape(20.dp), spotColor = Ag.Vio.copy(alpha = 0.4f)),
         contentAlignment = Alignment.Center,
     ) {
         Icon(Icons.Rounded.Add, null, tint = Color.White, modifier = Modifier.size(28.dp))
@@ -639,7 +649,7 @@ fun gradientFor(seed: String): Pair<Color, Color> {
         Color(0xFF64748B) to Color(0xFF2B3648),
         Color(0xFF111827) to Color(0xFF1E3A8A),
         Color(0xFFA78BFA) to Color(0xFF7C3AED),
-        Color(0xFF6C5CE7) to Color(0xFFEC4899),
+        Ag.Vio.copy(alpha = 1.0f) to Color(0xFFEC4899),
         Color(0xFFF59E0B) to Color(0xFFF97316),
         Color(0xFF10B981) to Color(0xFF34D399),
     )

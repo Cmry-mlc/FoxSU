@@ -81,7 +81,7 @@ fun AgModules(
     val rails = remember {
         listOf(
             Color(0xFF10B981) to Color(0xFF34D399),
-            Color(0xFF6C5CE7) to Color(0xFFEC4899),
+            Ag.Vio.copy(alpha = 1.0f) to Color(0xFFEC4899),
             Color(0xFFF59E0B) to Color(0xFFF97316),
             Color(0xFF14B8A6) to Color(0xFF0D9488),
             Color(0xFFEC4899) to Color(0xFFF472B6),
@@ -280,8 +280,8 @@ private fun AgPill(icon: androidx.compose.ui.graphics.vector.ImageVector, text: 
                 onClick = onClick,
             )
             .clip(RoundedCornerShape(11.dp))
-            .background(if (warn) Color(0x0DDC2626) else Color(0x0F6C5CE7))
-            .border(1.dp, if (warn) Color(0x33DC2626) else Color(0x386C5CE7), RoundedCornerShape(11.dp))
+            .background(if (warn) Color(0x0DDC2626) else Ag.Vio.copy(alpha = 0.059f))
+            .border(1.dp, if (warn) Color(0x33DC2626) else Ag.Vio.copy(alpha = 0.22f), RoundedCornerShape(11.dp))
             .padding(horizontal = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),

@@ -29,21 +29,13 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
+import me.weishu.kernelsu.ui.screen.ag.Ag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.vector.ImageVector
 import me.weishu.kernelsu.R
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Extension
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.rounded.Cottage
-import androidx.compose.material.icons.rounded.Extension
-import androidx.compose.material.icons.rounded.Security
-import androidx.compose.material.icons.rounded.Settings
 import top.yukonga.miuix.kmp.blur.Backdrop
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
@@ -92,7 +84,7 @@ fun BottomBarMiuix(
                         .width(76.dp)
                         .clip(RoundedCornerShape(19.dp))
                         .background(
-                            if (selected) Color(0x1A6C5CE7)
+                            if (selected) Ag.Vio.copy(alpha = 0.102f)
                             else Color.Transparent
                         )
                         .clickable(
@@ -140,7 +132,8 @@ fun BottomBarMiuix(
 
 /** Dock 专用色 */
 private object AgDock {
-    val vio = Color(0xFF6C5CE7)
+    // getter 而不是常量：全局强调色变化后要跟着变
+    val vio: Color get() = Ag.Vio
     val tx3 = Color(0xFF9C9AAE)
 }
 
@@ -152,10 +145,12 @@ enum class BottomBarDestination(
     /** 实心图标：Redesign 胶囊（品牌稿）使用，视觉重量更足 */
     val filledIcon: ImageVector = icon,
 ) {
-    Home(R.string.home, Icons.Rounded.Cottage, Icons.Filled.Home),
-    SuperUser(R.string.superuser, Icons.Rounded.Security, Icons.Filled.Security),
-    Module(R.string.module, Icons.Rounded.Extension, Icons.Filled.Extension),
-    Setting(R.string.settings, Icons.Rounded.Settings, Icons.Filled.Settings)
+    // 统一使用品牌稿 .dock .dit 的描边图标（尖顶房子 / 带勾盾牌 / 拼图 / 太阳）。
+    // 旧版是 Material Filled 的粗实心图标，与设计稿的细线语言不一致。
+    Home(R.string.home, DockGlyphs.Home, DockGlyphs.Home),
+    SuperUser(R.string.superuser, DockGlyphs.SuperUser, DockGlyphs.SuperUser),
+    Module(R.string.module, DockGlyphs.Module, DockGlyphs.Module),
+    Setting(R.string.settings, DockGlyphs.Settings, DockGlyphs.Settings)
 }
 
 internal fun navigationBadgeFor(
