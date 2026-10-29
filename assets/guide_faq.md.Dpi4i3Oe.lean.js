@@ -1,0 +1,1 @@
+import{_ as o,o as a,c as t,a0 as r}from"./chunks/framework.DCluYYrN.js";const p=JSON.parse('{"title":"FAQ","description":"","frontmatter":{},"headers":[],"relativePath":"guide/faq.md","filePath":"guide/faq.md"}'),s={name:"guide/faq.md"};function n(i,e,l,d,u,h){return a(),t("div",null,[...e[0]||(e[0]=[r("",41)])])}const m=o(s,[["render",n]]);export{p as __pageData,m as default};
