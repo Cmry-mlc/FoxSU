@@ -152,7 +152,7 @@ pub fn run(package_name: &String, kmi: Option<String>, allow_shell: bool) -> Res
 fn resolve_manager_activity(package_name: &str) -> String {
     let fallback = format!("{package_name}/me.weishu.kernelsu.ui.MainActivity");
 
-    let output = Command::new("cmd")
+    let resolved = Command::new("cmd")
         .args([
             "package",
             "resolve-activity",
@@ -161,24 +161,24 @@ fn resolve_manager_activity(package_name: &str) -> String {
             "android.intent.category.LAUNCHER",
             package_name,
         ])
-        .output();
-
-    if let Ok(out) = output {
-        if out.status.success() {
-            let stdout = String::from_utf8_lossy(&out.stdout);
-            if let Some(line) = stdout
+        .output()
+        .ok()
+        .filter(|out| out.status.success())
+        .and_then(|out| {
+            String::from_utf8_lossy(&out.stdout)
                 .lines()
                 .map(str::trim)
                 .filter(|l| l.starts_with(package_name) && l.contains('/'))
                 .next_back()
-            {
-                if !line.is_empty() {
-                    return line.to_string();
-                }
-            }
+                .map(str::to_string)
+        })
+        .filter(|activity| !activity.is_empty());
+
+    match resolved {
+        Some(activity) => activity,
+        None => {
+            warn!("resolve-activity failed for {package_name}, fallback to {fallback}");
+            fallback
         }
     }
-
-    warn!("resolve-activity failed for {package_name}, fallback to {fallback}");
-    fallback
 }
