@@ -88,7 +88,6 @@ fun AgHome(
         ) {
             Spacer(Modifier.height(10.dp))
             // ── 顶栏：左侧渐变标题 + 右侧 作者/主题/电源（设计稿 .top：padding 10px 4px 14px）──
-            // 侧边抽屉模式下标题右移，避免被左侧胶囊压住（设计稿 .phone.side .headwrap padding-left 124）
             Row(
                 Modifier
                     .fillMaxWidth()
@@ -115,15 +114,12 @@ fun AgHome(
             }
             Spacer(Modifier.height(14.dp))
         }
-        // ── 内容滚动区（从毛玻璃下透出）；侧边抽屉模式整体让距 106dp ──
+        // ── 内容滚动区（侧边抽屉的让位统一由 MainActivity 的 pager inset 负责）──
         Column(
             Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
-                .padding(
-                    start = if (sideDock) 106.dp else edgePad,
-                    end = edgePad,
-                ),
+                .padding(start = if (sideDock) 106.dp else edgePad, end = edgePad),
         ) {
             Spacer(Modifier.height(2.dp))
 

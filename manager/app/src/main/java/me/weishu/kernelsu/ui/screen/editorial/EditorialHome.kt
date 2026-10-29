@@ -60,6 +60,7 @@ fun EditorialHome(
     var showReboot by remember { mutableStateOf(false) }
     var showStyle by remember { mutableStateOf(false) }
     val scroll = rememberScrollState()
+    val sideDock = CustomizationStore.current.dockStyle == "v5"
 
     Column(
         modifier = Modifier
@@ -70,6 +71,7 @@ fun EditorialHome(
         Column(
             modifier = Modifier
                 .weight(1f)
+                .padding(start = if (sideDock) 96.dp else 0.dp)
                 .verticalScroll(scroll),
         ) {
             EdMasthead(

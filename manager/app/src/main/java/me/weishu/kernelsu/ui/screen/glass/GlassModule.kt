@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.screen.module.ModuleCardActions
 import me.weishu.kernelsu.data.model.Module
 import me.weishu.kernelsu.ui.LocalUiMode
@@ -68,7 +69,7 @@ fun GlassModuleList(
     }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 13.dp, end = 13.dp, top = glassStatusBarTop() + 4.dp, bottom = bottomInnerPadding + 96.dp),
+        contentPadding = PaddingValues(start = if (CustomizationStore.current.dockStyle == "v5") 96.dp else 13.dp, end = 13.dp, top = glassStatusBarTop() + 4.dp, bottom = bottomInnerPadding + 96.dp),
     ) {
         item {
             GlassTopBar(

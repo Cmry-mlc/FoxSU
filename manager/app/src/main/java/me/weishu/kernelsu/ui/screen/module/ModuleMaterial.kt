@@ -551,7 +551,7 @@ private fun ModuleList(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(13.dp),
         contentPadding = PaddingValues(
-            start = 16.dp,
+            start = if (CustomizationStore.current.dockStyle == "v5") 96.dp else 16.dp,
             end = 16.dp,
             bottom = 16.dp + bottomInnerPadding + 56.dp + 16.dp
         ),

@@ -66,6 +66,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.data.model.AppInfo
 import me.weishu.kernelsu.ui.component.AppIconImage
 import me.weishu.kernelsu.ui.component.ScrollToTopOnChange
@@ -373,7 +374,7 @@ fun SuperUserPagerMaterial(
                     .nestedScroll(scrollBehavior.nestedScrollConnection),
                 verticalArrangement = Arrangement.spacedBy(if (isFreshStyle()) 10.dp else 2.dp),
                 contentPadding = PaddingValues(
-                    start = 16.dp,
+                    start = if (CustomizationStore.current.dockStyle == "v5") 96.dp else 16.dp,
                     end = 16.dp,
                     top = 0.dp,
                     bottom = 16.dp + bottomInnerPadding

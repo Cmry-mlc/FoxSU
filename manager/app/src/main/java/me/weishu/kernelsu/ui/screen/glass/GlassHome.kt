@@ -67,12 +67,13 @@ fun GlassHome(
     onOpenAuthor: () -> Unit = {},
 ) {
     val issues = state.freshIssues()
+    val sideDock = CustomizationStore.current.dockStyle == "v5"
     var showStylePicker by remember { mutableStateOf(false) }
     var showRebootDialog by remember { mutableStateOf(false) }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 13.dp, end = 13.dp, top = glassStatusBarTop() + 4.dp, bottom = bottomInnerPadding + 88.dp),
+        contentPadding = PaddingValues(start = if (sideDock) 96.dp else 13.dp, end = 13.dp, top = glassStatusBarTop() + 4.dp, bottom = bottomInnerPadding + 88.dp),
     ) {
         item {
             GlassTopBar(

@@ -120,29 +120,11 @@ object Ag {
 }
 
 /**
- * 设计稿 `.headwrap{background:transparent;backdrop-filter:blur(14px)}`。
- *
- * 这里用「半透明雾面 + 底部渐隐」复刻视觉，而不再走 `drawBackdrop` 的实时背景采样：
- * 顶栏是每一页的首帧就要绘制的节点，实时模糊会强制整页内容先录进 RenderNode 再采样，
- * 在部分真机 GPU 上首帧直接崩溃（表现为启动页卡住后闪退）。
- * 14px 模糊在浅色底上的观感与 72%~86% 白雾几乎一致，静态实现更稳。
+ * 设计稿 `.headwrap{background:transparent}`：顶栏是页面里的固定区（不是覆盖在列表上），
+ * 内容不会穿透，所以直接保持完全透明——之前加的半透明白在彩色卡片页上会变成一条白块。
  */
 @Composable
-fun Modifier.agHeadBlur(): Modifier {
-    val top = if (Ag.isDark) Color(0xF21A1826) else Color(0xF7FFFFFF)
-    val mid = if (Ag.isDark) Color(0xD91A1826) else Color(0xE6FFFFFF)
-    return this.drawBehind {
-        drawRect(
-            brush = Brush.verticalGradient(
-                0f to top,
-                0.62f to mid,
-                1f to Color.Transparent,
-                startY = 0f,
-                endY = size.height,
-            ),
-        )
-    }
-}
+fun Modifier.agHeadBlur(): Modifier = this
 
 /**
  * 页面背景：设计稿 .phone 的 linear-gradient(160deg,--bg1,--bg2)

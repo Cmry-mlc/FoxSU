@@ -95,7 +95,6 @@ import me.weishu.kernelsu.ui.screen.about.AboutScreen
 import me.weishu.kernelsu.ui.screen.author.AuthorScreen
 import me.weishu.kernelsu.ui.screen.appprofile.AppProfileScreen
 import me.weishu.kernelsu.ui.screen.colorpalette.ColorPaletteScreen
-import me.weishu.kernelsu.ui.screen.customization.CustomizationScreen
 import me.weishu.kernelsu.ui.screen.executemoduleaction.ExecuteModuleActionScreen
 import me.weishu.kernelsu.ui.screen.flash.FlashScreen
 import me.weishu.kernelsu.ui.screen.home.HomePager
@@ -253,7 +252,9 @@ class MainActivity : ComponentActivity() {
                             entry<Route.Sulog>(swipeDismiss = swipeDismiss) { SulogScreen() }
                             entry<Route.ColorPalette>(swipeDismiss = swipeDismiss) { ColorPaletteScreen() }
                             entry<Route.Customization>(swipeDismiss = swipeDismiss) {
-                                if (LocalUiMode.current == UiMode.Miuix) {
+                                // 定制页已统一为 Redesign 的 AgCustomization：五套皮肤共用同一套
+                                // 定制能力（卡片颜色/透明度/胶囊/图标/字体…），不再各皮肤各一套。
+                                run {
                                     val settingsVm: me.weishu.kernelsu.ui.viewmodel.SettingsViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
                                     me.weishu.kernelsu.ui.screen.ag.AgCustomization(
                                         onBack = dropUnlessResumed { navigator.pop() },
@@ -284,8 +285,6 @@ class MainActivity : ComponentActivity() {
                                             onSetModuleDescriptionMaxLines = settingsVm::setModuleDescriptionMaxLines,
                                         ),
                                     )
-                                } else {
-                                    CustomizationScreen()
                                 }
                             }
                             entry<Route.AppProfileTemplate>(swipeDismiss = swipeDismiss) { AppProfileTemplateScreen() }

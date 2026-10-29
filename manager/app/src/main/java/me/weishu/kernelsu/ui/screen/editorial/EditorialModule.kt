@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.screen.module.ModuleCardActions
 import me.weishu.kernelsu.data.model.Module
 
@@ -72,7 +73,7 @@ fun EditorialModule(
             .fillMaxSize()
             .background(t.paper)
             .statusBarsPadding(),
-        contentPadding = PaddingValues(bottom = bottomInnerPadding + 24.dp),
+        contentPadding = PaddingValues(start = if (CustomizationStore.current.dockStyle == "v5") 96.dp else 0.dp, bottom = bottomInnerPadding + 24.dp),
     ) {
         item {
             EdMasthead(

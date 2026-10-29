@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
 import me.weishu.kernelsu.ui.screen.home.HeroPhase
 import me.weishu.kernelsu.ui.screen.home.HomeActions
@@ -50,6 +51,7 @@ fun NocturneHomeScreen(
     var showStylePicker by remember { mutableStateOf(false) }
     // 越狱入口条件：未安装 + GKI 内核 + SELinux 宽容（与 Fresh / Miuix 完全一致）
     val canJailbreak = state.ksuVersion == null && state.kernelVersion.isGKI() && state.isSELinuxPermissive
+    val sideDock = CustomizationStore.current.dockStyle == "v5"
 
     Box(Modifier.fillMaxSize()) {
         NcGlowBackground(t)
@@ -59,7 +61,7 @@ fun NocturneHomeScreen(
                 .padding(top = ncStatusTop() + 2.dp, bottom = bottomInnerPadding),
         ) {
             // 页头固定在顶部（不随内容滚动）
-            Box(Modifier.padding(horizontal = 18.dp)) {
+            Box(Modifier.padding(start = if (sideDock) 96.dp else 18.dp, end = 18.dp)) {
                 NcHeader(kicker = "KERNEL MANAGER", title = "FoxSu") {
                     NcIconButton(iconRes = R.drawable.nc_user, onClick = onOpenAuthor)
                     NcIconButton(iconRes = R.drawable.nc_palette, onClick = { showStylePicker = true })
@@ -71,7 +73,7 @@ fun NocturneHomeScreen(
                 Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(start = 18.dp, end = 18.dp, bottom = 86.dp),
+                    .padding(start = if (sideDock) 96.dp else 18.dp, end = 18.dp, bottom = 86.dp),
             ) {
                 NcHero(state = state, actions = actions, onOpenTab = onOpenTab)
                 Spacer(Modifier.height(10.dp))

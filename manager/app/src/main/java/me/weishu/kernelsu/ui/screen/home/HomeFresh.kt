@@ -194,6 +194,8 @@ fun HomePagerFresh(
     onOpenTab: (Int) -> Unit,
 ) {
     val issues = state.freshIssues()
+    // 侧边抽屉（v5）时给列表整体让出左侧，避免被浮层胶囊压住
+    val sideDock = CustomizationStore.current.dockStyle == "v5"
     var showStylePicker by remember { mutableStateOf(false) }
     var showHeroMenu by remember { mutableStateOf(false) }
     var kpiMenuIndex by remember { mutableStateOf(-1) }
@@ -298,7 +300,9 @@ fun HomePagerFresh(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(frostedChromeColor(MaterialTheme.colorScheme.surface))
+                    // 顶栏是 Column 里的固定区，不会盖住列表，所以直接透明——
+                    // 之前这里铺的是不透明 surface，在浅色主题下就是一条明显的白块。
+                    .background(Color.Transparent)
                     .padding(
                         start = 16.dp,
                         end = 16.dp,
@@ -315,6 +319,7 @@ fun HomePagerFresh(
                 .fillMaxWidth()
                 .weight(1f),
             contentPadding = PaddingValues(
+                start = if (sideDock) 96.dp else 0.dp,
                 top = 14.dp,
                 bottom = bottomInnerPadding + navigationBarPadding + 16.dp,
             ),

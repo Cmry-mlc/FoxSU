@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.data.model.Module
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.screen.module.ModuleCardActions
@@ -64,7 +65,7 @@ fun NocturneModuleScreen(
     Box(Modifier.fillMaxSize()) {
         NcGlowBackground(t)
         Column(Modifier.fillMaxSize().padding(top = ncStatusTop() + 2.dp)) {
-            Box(Modifier.padding(horizontal = 18.dp)) {
+            Box(Modifier.padding(start = if (CustomizationStore.current.dockStyle == "v5") 96.dp else 18.dp, end = 18.dp)) {
                 NcHeader(kicker = "MODULES", title = "模块") {
                     NcIconButton(iconRes = R.drawable.nc_user, onClick = {})
                     NcIconButton(iconRes = R.drawable.nc_palette, onClick = { showStylePicker = true })
@@ -73,7 +74,7 @@ fun NocturneModuleScreen(
             }
             LazyColumn(
                 Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = 18.dp, end = 18.dp, bottom = bottomInnerPadding + 100.dp),
+                contentPadding = PaddingValues(start = if (CustomizationStore.current.dockStyle == "v5") 96.dp else 18.dp, end = 18.dp, bottom = bottomInnerPadding + 100.dp),
             ) {
                 item {
                     NcSearchField(query, { query = it }, "搜索模块", R.drawable.nc_search_glyph)

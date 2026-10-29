@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.component.AppIconImage
 import me.weishu.kernelsu.ui.screen.superuser.GroupedApps
 
@@ -54,7 +55,7 @@ fun NocturneSuperUserScreen(
     Box(Modifier.fillMaxSize()) {
         NcGlowBackground(t)
         Column(Modifier.fillMaxSize().padding(top = ncStatusTop() + 2.dp, bottom = bottomInnerPadding)) {
-            Box(Modifier.padding(horizontal = 18.dp)) {
+            Box(Modifier.padding(start = if (CustomizationStore.current.dockStyle == "v5") 96.dp else 18.dp, end = 18.dp)) {
                 NcHeader(kicker = "ROOT ACCESS", title = "超级用户") {
                     NcIconButton(iconRes = R.drawable.nc_user, onClick = {})
                     NcIconButton(iconRes = R.drawable.nc_palette, onClick = { showStylePicker = true })
@@ -63,7 +64,7 @@ fun NocturneSuperUserScreen(
             }
             LazyColumn(
                 Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = 18.dp, end = 18.dp, bottom = 86.dp),
+                contentPadding = PaddingValues(start = if (CustomizationStore.current.dockStyle == "v5") 96.dp else 18.dp, end = 18.dp, bottom = 86.dp),
             ) {
                 item {
                     NcSearchField(searchValue, onSearch, "搜索应用或包名", R.drawable.nc_search_glyph)

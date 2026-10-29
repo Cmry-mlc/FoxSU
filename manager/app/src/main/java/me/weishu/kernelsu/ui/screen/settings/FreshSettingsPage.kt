@@ -125,7 +125,9 @@ fun FreshSettingsPage(
 
     var sucompatDialog by remember { mutableStateOf(false) }
 
-    Column {
+    Column(
+        Modifier.padding(start = if (CustomizationStore.current.dockStyle == "v5") 84.dp else 0.dp),
+    ) {
         FreshSettingsSection(stringResource(R.string.settings_grid_section_general)) {
             FreshTileGrid(
                 listOf(
