@@ -168,17 +168,13 @@ fn resolve_manager_activity(package_name: &str) -> String {
             String::from_utf8_lossy(&out.stdout)
                 .lines()
                 .map(str::trim)
-                .filter(|l| l.starts_with(package_name) && l.contains('/'))
-                .next_back()
+                .rfind(|line| line.starts_with(package_name) && line.contains('/'))
                 .map(str::to_string)
         })
         .filter(|activity| !activity.is_empty());
 
-    match resolved {
-        Some(activity) => activity,
-        None => {
-            warn!("resolve-activity failed for {package_name}, fallback to {fallback}");
-            fallback
-        }
-    }
+    resolved.unwrap_or_else(|| {
+        warn!("resolve-activity failed for {package_name}, fallback to {fallback}");
+        fallback
+    })
 }
