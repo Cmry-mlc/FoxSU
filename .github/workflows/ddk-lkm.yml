@@ -83,6 +83,16 @@ jobs:
         llvm-strip -d "$OUT_DIR/$OUTPUT_NAME"
         echo "Size after stripping: $(du -h "$OUT_DIR/$OUTPUT_NAME" | cut -f1)"
 
+        # 自检：ko 必须真的内嵌 KSU_EXPECTED_HASH。若证书 DER 超过 CERT_MAX_LENGTH，
+        # certificate_size 会先命中 "cert length overlimit" 而 return false，编译器把
+        # 后面的 sha256/strcmp 判为不可达整段删除——管理器会永远显示"未安装"。
+        EXPECTED_HASH_VALUE=$(sed -n 's/^KSU_EXPECTED_HASH ?= //p' Kbuild | head -1)
+        if [ -n "$EXPECTED_HASH_VALUE" ] && ! strings "$OUT_DIR/$OUTPUT_NAME" | grep -q "$EXPECTED_HASH_VALUE"; then
+          echo "::error::kernelsu.ko 未内嵌 KSU_EXPECTED_HASH（证书长度可能超过 CERT_MAX_LENGTH，签名校验被优化掉）"
+          exit 1
+        fi
+        echo "Identity check passed: $EXPECTED_HASH_VALUE"
+
     - name: Upload kernelsu.ko artifact
       uses: actions/upload-artifact@v7
       with:
@@ -166,6 +176,16 @@ jobs:
         echo "Size: $(du -h "$OUT_DIR/$OUTPUT_NAME" | cut -f1)"
         llvm-strip -d "$OUT_DIR/$OUTPUT_NAME"
         echo "Size after stripping: $(du -h "$OUT_DIR/$OUTPUT_NAME" | cut -f1)"
+
+        # 自检：ko 必须真的内嵌 KSU_EXPECTED_HASH。若证书 DER 超过 CERT_MAX_LENGTH，
+        # certificate_size 会先命中 "cert length overlimit" 而 return false，编译器把
+        # 后面的 sha256/strcmp 判为不可达整段删除——管理器会永远显示"未安装"。
+        EXPECTED_HASH_VALUE=$(sed -n 's/^KSU_EXPECTED_HASH ?= //p' Kbuild | head -1)
+        if [ -n "$EXPECTED_HASH_VALUE" ] && ! strings "$OUT_DIR/$OUTPUT_NAME" | grep -q "$EXPECTED_HASH_VALUE"; then
+          echo "::error::kernelsu.ko 未内嵌 KSU_EXPECTED_HASH（证书长度可能超过 CERT_MAX_LENGTH，签名校验被优化掉）"
+          exit 1
+        fi
+        echo "Identity check passed: $EXPECTED_HASH_VALUE"
         
     - name: Upload x64 kernelsu.ko artifact
       uses: actions/upload-artifact@v7
