@@ -59,10 +59,10 @@ sealed interface Route : NavKey, Parcelable {
     @Serializable
     data object Customization : Route
 
-    /** 内置能力：FolkZygisk / Sui / NoMount / Folk Mount 四项引擎的状态页。 */
+    /** 内核元模块：内置 Magic Mount-rs 的安装 / 启停 / 配置页。 */
     @Parcelize
     @Serializable
-    data object Builtin : Route
+    data object MetaModule : Route
 
     @Parcelize
     @Serializable

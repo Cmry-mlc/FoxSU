@@ -263,10 +263,9 @@ class MainActivity : ComponentActivity() {
                             entry<Route.Author>(swipeDismiss = swipeDismiss) { AuthorScreen() }
                             entry<Route.Sulog>(swipeDismiss = swipeDismiss) { SulogScreen() }
                             entry<Route.ColorPalette>(swipeDismiss = swipeDismiss) { ColorPaletteScreen() }
-                            entry<Route.Builtin>(swipeDismiss = swipeDismiss) {
-                                me.weishu.kernelsu.ui.screen.ag.AgBuiltin(
+                            entry<Route.MetaModule>(swipeDismiss = swipeDismiss) {
+                                me.weishu.kernelsu.ui.screen.ag.AgMetaModule(
                                     onBack = dropUnlessResumed { navigator.pop() },
-                                    onOpenRepo = dropUnlessResumed { navigator.push(Route.ModuleRepo) },
                                 )
                             }
                             entry<Route.Customization>(swipeDismiss = swipeDismiss) {
@@ -302,7 +301,7 @@ class MainActivity : ComponentActivity() {
                                             onSetPageScale = settingsVm::setPageScale,
                                             onSetModuleDescriptionMaxLines = settingsVm::setModuleDescriptionMaxLines,
                                         ),
-                                        onOpenBuiltin = dropUnlessResumed { navigator.push(Route.Builtin) },
+                                        onOpenBuiltin = dropUnlessResumed { navigator.push(Route.MetaModule) },
                                     )
                                 }
                             }

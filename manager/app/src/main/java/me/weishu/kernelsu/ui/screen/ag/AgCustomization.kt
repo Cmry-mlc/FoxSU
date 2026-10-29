@@ -230,9 +230,9 @@ internal fun AgCustomization(
                 )
             }
 
-            // ══════════ 内置能力入口 ══════════
+            // ══════════ 内核元模块入口 ══════════
             if (onOpenBuiltin != null) {
-                AgGHead("内置能力")
+                AgGHead("内核元模块")
                 AgCard(contentPadding = androidx.compose.foundation.layout.PaddingValues(14.dp)) {
                     Row(
                         Modifier.fillMaxWidth().agClick(onClick = onOpenBuiltin),
@@ -254,10 +254,10 @@ internal fun AgCustomization(
                         }
                         Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f)) {
-                            Text("四个引擎", fontSize = 14.5.sp, fontWeight = FontWeight.Bold, color = Ag.Tx)
+                            Text("Magic Mount-rs", fontSize = 14.5.sp, fontWeight = FontWeight.Bold, color = Ag.Tx)
                             Spacer(Modifier.height(3.dp))
                             Text(
-                                "FolkZygisk · Sui · NoMount · Folk Mount",
+                                "内置元模块 · 接管系统分区的挂载层",
                                 fontSize = 11.sp,
                                 color = Ag.Tx3,
                                 maxLines = 1,
