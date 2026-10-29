@@ -1,5 +1,6 @@
 package me.weishu.kernelsu.ui
 
+import me.weishu.kernelsu.ui.component.bottombar.useSideDock
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
@@ -646,7 +647,7 @@ fun MainScreen(
 
             // 所有皮肤共用同一套底栏宿主：胶囊样式是全局设置，
             // 所以侧边抽屉（v5）在其他皮肤下也必须走「浮层」而不是 bottomBar 槽位
-            val sideDock = CustomizationStore.current.dockStyle == "v5"
+            val sideDock = useSideDock()
             val noBar: @Composable () -> Unit = {}
             val scaffoldColor = when (uiMode) {
                 UiMode.Material -> scaffoldBackgroundColor(MaterialTheme.colorScheme.surfaceContainer)

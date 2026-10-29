@@ -105,13 +105,16 @@ fun EdMasthead(
     actions: List<EdMastAction> = emptyList(),
 ) {
     val t = edTokens()
+    // 右侧动作按钮的实际占位：40dp 圆钮 + 9dp 间距 + 14dp 安全间隙
+    // （之前写死 108dp，而三个按钮实际占 138dp，ROOT 徽标会被按钮压住）。
+    val actionsWidth = if (actions.isEmpty()) 0.dp else (40 * actions.size + 9 * (actions.size - 1) + 14).dp
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .hairBottom(t.ink)
             .padding(start = 22.dp, end = 22.dp, top = 16.dp, bottom = 14.dp),
     ) {
-        Column(modifier = Modifier.padding(end = 108.dp)) {
+        Column(modifier = Modifier.padding(end = actionsWidth + 8.dp)) {
             Row(verticalAlignment = Alignment.Bottom) {
                 if (showBack && onBack != null) {
                     EdCircleButton(iconRes = R.drawable.ic_d_back, onClick = onBack, size = 30)
@@ -141,17 +144,18 @@ fun EdMasthead(
                 )
             }
             Spacer(Modifier.height(6.dp))
-            Row(modifier = Modifier.fillMaxWidth()) {
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                // 之前用 marquee 横向滚动：滚动中途截图就是「rnal Kernel Manage…」这种断头文案，
+                // 而且滚动层会盖到右侧 VOL 上。这里改成单行省略，保证任何时刻都完整可读。
                 Text(
                     text = left,
                     fontSize = 11.sp,
                     color = t.sub,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .weight(1f)
-                        .marquee(),
+                    modifier = Modifier.weight(1f),
                 )
+                Spacer(Modifier.width(10.dp))
                 Text(
                     text = right,
                     fontSize = 11.sp,
@@ -267,8 +271,7 @@ fun EdStatusBand(
         modifier = Modifier
             .fillMaxWidth()
             .clipToBounds()
-            .background(t.ink)
-            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier),
+            .background(t.ink),
     ) {
         // 右上角狐尾水印（设计稿 .tail）：放在顶部角落，尺寸收小，不侵入 KV 区
         Icon(
@@ -318,7 +321,9 @@ fun EdStatusBand(
                 kvs.forEach { (k, v, hot) ->
                     Column(
                         modifier = Modifier
-                            .weight(1f)
+                            // 「界面」列放的是 "FoxSu Editorial" 这类长文案，等比给宽一点，
+                            // 否则 390dp 板上第三列永远只能显示 "FoxSu Edi…"。
+                            .weight(if (hot) 1.3f else 1f)
                             // 文字左侧留 10dp；竖线再往左挪 4dp → 竖线与文字实际间距 14dp
                             .padding(start = 10.dp, end = 4.dp)
                             .drawBehind {
@@ -341,7 +346,8 @@ fun EdStatusBand(
                         )
                         Text(
                             text = v,
-                            fontSize = 12.5.sp,
+                            // 「界面」列是 "FoxSu Editorial" 这类长词，字号收 1sp 换完整显示
+                            fontSize = if (hot) 11.5.sp else 12.5.sp,
                             fontWeight = FontWeight.ExtraBold,
                             lineHeight = 17.sp,
                             color = if (hot) t.acc else t.paper,
@@ -352,48 +358,31 @@ fun EdStatusBand(
                     }
                 }
             }
-            // 真实操作行：版本号可点检查更新 / 刷新镜像
-            if (onCheckUpdate != null || onRefreshImage != null) {
+            // 真实操作行：安装内核 / 刷新镜像 / 检查更新（等距排布 + 统一 11sp 字重）
+            val acts = buildList {
+                if (onClick != null) add("安装内核" to onClick)
+                if (onRefreshImage != null) add(stringResource(R.string.home_refresh_image) to onRefreshImage)
+                if (onCheckUpdate != null) add(stringResource(R.string.home_check_update) to onCheckUpdate)
+            }
+            if (acts.isNotEmpty()) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(20.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    if (onCheckUpdate != null) {
-                        Row(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .clickable { onCheckUpdate() }
-                                .padding(vertical = 4.dp, horizontal = 2.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                text = "VERSION",
-                                fontSize = 8.5.sp,
-                                letterSpacing = 1.4.sp,
-                                color = t.paper.copy(alpha = 0.5f),
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                text = stringResource(R.string.home_check_update),
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = t.acc,
-                            )
-                        }
-                    }
-                    if (onRefreshImage != null) {
-                        Spacer(Modifier.width(16.dp))
+                    acts.forEach { (label, action) ->
                         Text(
-                            text = stringResource(R.string.home_refresh_image),
-                            fontSize = 11.sp,
+                            text = label,
+                            fontSize = 11.5.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = t.acc,
+                            maxLines = 1,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(4.dp))
-                                .clickable { onRefreshImage() }
-                                .padding(vertical = 4.dp, horizontal = 2.dp),
+                                .clickable { action() }
+                                .padding(vertical = 4.dp),
                         )
                     }
                 }
@@ -662,7 +651,9 @@ fun EdTabBar(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(t.paper),
+            .background(t.paper)
+            // 边到边显示：纸面底栏要自己吃掉导航栏高度，否则底部会留一条空洞
+            .navigationBarsPadding(),
     ) {
         Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(t.ink))
         Row(modifier = Modifier.fillMaxWidth()) {

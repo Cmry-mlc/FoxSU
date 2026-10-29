@@ -1,5 +1,6 @@
 package me.weishu.kernelsu.ui.screen.ag
 
+import me.weishu.kernelsu.ui.component.bottombar.useSideDock
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -99,7 +100,7 @@ fun AgModules(
                 .fillMaxWidth()
                 .background(Ag.headSurface()).agHeadBlur()
                 .padding(
-                    start = if (CustomizationStore.current.dockStyle == "v5") 106.dp else 18.dp,
+                    start = if (useSideDock()) 106.dp else 18.dp,
                     end = 18.dp,
                 ),
         ) {
@@ -121,7 +122,7 @@ fun AgModules(
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
-                start = if (CustomizationStore.current.dockStyle == "v5") 106.dp else 18.dp,
+                start = if (useSideDock()) 106.dp else 18.dp,
                 end = 18.dp, top = 4.dp, bottom = bottomInnerPadding + 130.dp),
         ) {
             if (modules.isEmpty()) {

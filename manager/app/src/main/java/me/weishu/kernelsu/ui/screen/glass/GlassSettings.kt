@@ -1,5 +1,6 @@
 package me.weishu.kernelsu.ui.screen.glass
 
+import me.weishu.kernelsu.ui.component.bottombar.useSideDock
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -136,7 +137,7 @@ fun GlassSettingsList(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = if (CustomizationStore.current.dockStyle == "v5") 96.dp else 13.dp, end = 13.dp, top = glassStatusBarTop() + 4.dp, bottom = bottomInnerPadding + 92.dp),
+        contentPadding = PaddingValues(start = if (useSideDock()) 96.dp else 13.dp, end = 13.dp, top = glassStatusBarTop() + 4.dp, bottom = bottomInnerPadding + 92.dp),
     ) {
         item {
             GlassTopBar(

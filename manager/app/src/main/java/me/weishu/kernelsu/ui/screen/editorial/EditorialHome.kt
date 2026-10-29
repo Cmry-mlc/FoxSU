@@ -1,5 +1,6 @@
 package me.weishu.kernelsu.ui.screen.editorial
 
+import me.weishu.kernelsu.ui.component.bottombar.useSideDock
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -60,7 +61,7 @@ fun EditorialHome(
     var showReboot by remember { mutableStateOf(false) }
     var showStyle by remember { mutableStateOf(false) }
     val scroll = rememberScrollState()
-    val sideDock = CustomizationStore.current.dockStyle == "v5"
+    val sideDock = useSideDock()
 
     Column(
         modifier = Modifier

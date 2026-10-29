@@ -460,6 +460,16 @@ internal fun AgCustomization(
                     Spacer(Modifier.height(10.dp))
                 }
                 AgToggleRow(
+                    "Editorial 使用胶囊底栏",
+                    "关闭时 Editorial 主题保留原生纸面底栏（推荐：胶囊会打乱杂志版式）",
+                    Ag.Amber, AgSettingsIcons.FloatingBar,
+                    trailing = {
+                        AgToggle(checked = custom.dockOnEditorial, onCheckedChange = {
+                            CustomizationStore.setDockOnEditorial(!custom.dockOnEditorial)
+                        }, small = true)
+                    },
+                )
+                AgToggleRow(
                     "沉浸浅感", "通透半透明底：更透彻并带玻璃质感高光",
                     Ag.Teal, AgSettingsIcons.FloatingBar,
                     trailing = {

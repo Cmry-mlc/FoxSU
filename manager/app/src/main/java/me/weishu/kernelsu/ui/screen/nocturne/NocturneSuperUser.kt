@@ -1,5 +1,6 @@
 package me.weishu.kernelsu.ui.screen.nocturne
 
+import me.weishu.kernelsu.ui.component.bottombar.useSideDock
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -55,7 +56,7 @@ fun NocturneSuperUserScreen(
     Box(Modifier.fillMaxSize()) {
         NcGlowBackground(t)
         Column(Modifier.fillMaxSize().padding(top = ncStatusTop() + 2.dp, bottom = bottomInnerPadding)) {
-            Box(Modifier.padding(start = if (CustomizationStore.current.dockStyle == "v5") 96.dp else 18.dp, end = 18.dp)) {
+            Box(Modifier.padding(start = if (useSideDock()) 96.dp else 18.dp, end = 18.dp)) {
                 NcHeader(kicker = "ROOT ACCESS", title = "超级用户") {
                     NcIconButton(iconRes = R.drawable.nc_user, onClick = {})
                     NcIconButton(iconRes = R.drawable.nc_palette, onClick = { showStylePicker = true })
@@ -64,7 +65,7 @@ fun NocturneSuperUserScreen(
             }
             LazyColumn(
                 Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = if (CustomizationStore.current.dockStyle == "v5") 96.dp else 18.dp, end = 18.dp, bottom = 86.dp),
+                contentPadding = PaddingValues(start = if (useSideDock()) 96.dp else 18.dp, end = 18.dp, bottom = 86.dp),
             ) {
                 item {
                     NcSearchField(searchValue, onSearch, "搜索应用或包名", R.drawable.nc_search_glyph)

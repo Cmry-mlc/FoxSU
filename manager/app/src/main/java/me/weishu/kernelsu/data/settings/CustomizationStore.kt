@@ -54,6 +54,12 @@ data class Customization(
     /** 0 = pill bar, 1 = drawer bar that expands the selected tab. */
     val bottomBarStyle: Int = 0,
     val dockStyle: String = "d0",
+    /**
+     * Editorial（Material 皮肤）是否使用 Redesign 的胶囊底栏。
+     * 默认 false：Editorial 保留自己的「纸面」底栏——胶囊是 Redesign 的语言，
+     * 强行套在杂志版面上会破坏版式（也容易被误认成主题 BUG）。
+     */
+    val dockOnEditorial: Boolean = false,
     /** Tint the four home KPI cards with the built-in palette (light mode only). */
     val homePalette: Boolean = true,
     /** Corner radius of the floating bottom bar, in dp. */
@@ -149,6 +155,7 @@ object CustomizationStore {
     private const val KEY_HOME_TITLE = "home_title"
     private const val KEY_BOTTOM_STYLE = "bottom_bar_style"
 private const val KEY_DOCK_STYLE = "dock_style"
+    private const val KEY_DOCK_EDITORIAL = "dock_on_editorial"
     private const val KEY_HOME_PALETTE = "home_palette"
     private const val KEY_BOTTOM_RADIUS = "bottom_bar_radius"
     private const val KEY_BOTTOM_IMMERSIVE = "bottom_bar_immersive"
@@ -210,6 +217,7 @@ private const val KEY_DOCK_STYLE = "dock_style"
             homeTitle = getString(KEY_HOME_TITLE, "").orEmpty(),
             bottomBarStyle = getInt(KEY_BOTTOM_STYLE, 0),
             dockStyle = getString(KEY_DOCK_STYLE, "d0").orEmpty(),
+            dockOnEditorial = getBoolean(KEY_DOCK_EDITORIAL, false),
             homePalette = getBoolean(KEY_HOME_PALETTE, true),
             bottomBarRadius = getFloat(KEY_BOTTOM_RADIUS, 30f),
             bottomBarImmersive = getBoolean(KEY_BOTTOM_IMMERSIVE, false),
@@ -278,6 +286,7 @@ private const val KEY_DOCK_STYLE = "dock_style"
     fun setHomeTitle(title: String) = update { it.copy(homeTitle = title) }
     fun setBottomBarStyle(style: Int) = update { it.copy(bottomBarStyle = style) }
     fun setDockStyle(style: String) = update { it.copy(dockStyle = style) }
+    fun setDockOnEditorial(enabled: Boolean) = update { it.copy(dockOnEditorial = enabled) }
 
     fun setHomePalette(enabled: Boolean) = update { it.copy(homePalette = enabled) }
     fun setBottomBarRadius(radius: Float) = update { it.copy(bottomBarRadius = radius) }
@@ -330,6 +339,7 @@ private const val KEY_DOCK_STYLE = "dock_style"
             putString(KEY_HOME_TITLE, next.homeTitle)
             putInt(KEY_BOTTOM_STYLE, next.bottomBarStyle)
             putString(KEY_DOCK_STYLE, next.dockStyle)
+            putBoolean(KEY_DOCK_EDITORIAL, next.dockOnEditorial)
             putBoolean(KEY_HOME_PALETTE, next.homePalette)
             putFloat(KEY_BOTTOM_RADIUS, next.bottomBarRadius)
             putBoolean(KEY_BOTTOM_IMMERSIVE, next.bottomBarImmersive)

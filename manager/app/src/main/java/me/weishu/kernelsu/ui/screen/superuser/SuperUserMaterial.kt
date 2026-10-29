@@ -1,5 +1,6 @@
 package me.weishu.kernelsu.ui.screen.superuser
 
+import me.weishu.kernelsu.ui.component.bottombar.useSideDock
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -374,7 +375,7 @@ fun SuperUserPagerMaterial(
                     .nestedScroll(scrollBehavior.nestedScrollConnection),
                 verticalArrangement = Arrangement.spacedBy(if (isFreshStyle()) 10.dp else 2.dp),
                 contentPadding = PaddingValues(
-                    start = if (CustomizationStore.current.dockStyle == "v5") 96.dp else 16.dp,
+                    start = if (useSideDock()) 96.dp else 16.dp,
                     end = 16.dp,
                     top = 0.dp,
                     bottom = 16.dp + bottomInnerPadding

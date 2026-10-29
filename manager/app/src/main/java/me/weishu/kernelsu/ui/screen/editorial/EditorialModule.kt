@@ -1,5 +1,6 @@
 package me.weishu.kernelsu.ui.screen.editorial
 
+import me.weishu.kernelsu.ui.component.bottombar.useSideDock
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -73,7 +74,7 @@ fun EditorialModule(
             .fillMaxSize()
             .background(t.paper)
             .statusBarsPadding(),
-        contentPadding = PaddingValues(start = if (CustomizationStore.current.dockStyle == "v5") 96.dp else 0.dp, bottom = bottomInnerPadding + 24.dp),
+        contentPadding = PaddingValues(start = if (useSideDock()) 96.dp else 0.dp, bottom = bottomInnerPadding + 24.dp),
     ) {
         item {
             EdMasthead(

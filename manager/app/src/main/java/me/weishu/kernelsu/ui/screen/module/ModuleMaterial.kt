@@ -1,5 +1,6 @@
 package me.weishu.kernelsu.ui.screen.module
 
+import me.weishu.kernelsu.ui.component.bottombar.useSideDock
 import android.annotation.SuppressLint
 import android.app.Activity.RESULT_OK
 import android.content.ClipData
@@ -551,7 +552,7 @@ private fun ModuleList(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(13.dp),
         contentPadding = PaddingValues(
-            start = if (CustomizationStore.current.dockStyle == "v5") 96.dp else 16.dp,
+            start = if (useSideDock()) 96.dp else 16.dp,
             end = 16.dp,
             bottom = 16.dp + bottomInnerPadding + 56.dp + 16.dp
         ),

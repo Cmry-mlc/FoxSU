@@ -1,5 +1,6 @@
 package me.weishu.kernelsu.ui.screen.nocturne
 
+import me.weishu.kernelsu.ui.component.bottombar.useSideDock
 import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -51,7 +52,7 @@ fun NocturneHomeScreen(
     var showStylePicker by remember { mutableStateOf(false) }
     // 越狱入口条件：未安装 + GKI 内核 + SELinux 宽容（与 Fresh / Miuix 完全一致）
     val canJailbreak = state.ksuVersion == null && state.kernelVersion.isGKI() && state.isSELinuxPermissive
-    val sideDock = CustomizationStore.current.dockStyle == "v5"
+    val sideDock = useSideDock()
 
     Box(Modifier.fillMaxSize()) {
         NcGlowBackground(t)
@@ -386,8 +387,12 @@ private fun NcHero(
                     )
                 }
                 Spacer(Modifier.height(10.dp))
-                // Hero 操作区：真实可点的三个功能入口
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Hero 操作区：真实可点入口。四个 chip 在窄屏上放不下一行，
+                // 用 FlowRow 折行；每个 chip 内文字锁单行，避免出现「超级用 / 户」断字。
+                androidx.compose.foundation.layout.FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     HeroAction(
                         label = if (hero.installed) "刷写 / 更新" else "安装内核",
                         enabled = flashable,
@@ -405,12 +410,6 @@ private fun NcHero(
                         enabled = true,
                         primary = hero.hasUpdate,
                         onClick = { actions.onCheckUpdate() },
-                    )
-                    HeroAction(
-                        label = "超级用户",
-                        enabled = true,
-                        primary = false,
-                        onClick = { onOpenTab(1) },
                     )
                 }
             }
@@ -442,6 +441,8 @@ private fun HeroAction(
             text = label,
             fontSize = 10.5.sp,
             fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            softWrap = false,
             color = when {
                 !enabled -> t.tx3
                 primary -> t.heroBadgeText

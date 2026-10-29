@@ -1,5 +1,6 @@
 package me.weishu.kernelsu.ui.screen.ag
 
+import me.weishu.kernelsu.ui.component.bottombar.useSideDock
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -61,7 +62,7 @@ fun AgHome(
     val hero = state.heroState()
     var showReboot by remember { mutableStateOf(false) }
     var showStyle by remember { mutableStateOf(false) }
-    val sideDock = CustomizationStore.current.dockStyle == "v5"
+    val sideDock = useSideDock()
     // 设计稿画板宽 390dp：`.screen{padding:0 18px}`、`.headwrap` 顶栏 22px。
     // 按实际屏宽等比换算，任何机型上卡片留白占比都与设计稿一致
     // （360dp 屏 → 16.6dp，411dp 屏 → 19dp），而不是固定 18dp。
@@ -172,15 +173,41 @@ fun AgHome(
                         }
                     )
                     Spacer(Modifier.height(12.dp))
-                    Row(Modifier.padding(end = 70.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // 三个 chip 在 390dp 板上会超过一行，用 FlowRow 让它自然折行，
+                    // 右侧给环形状态留出 66dp，避免 chip 被圆环压住。
+                    androidx.compose.foundation.layout.FlowRow(
+                        modifier = Modifier.padding(end = 66.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
                         if (hero.modeLabel != null) AgChip(hero.modeLabel)
                         AgChip("版本 ${state.ksuVersion ?: "—"}")
                         AgChip("${hero.versionName}${if (state.showCustomLkmBadge) " · 自定义" else ""}")
                     }
                     Spacer(Modifier.height(14.dp))
+                    // 三个真实动作：安装内核（打开镜像安装页）/ 刷新镜像 / 检查更新。
+                    // 之前大卡上只有后两个，安装入口缺失，用户点卡片进不了安装镜像界面。
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        AgButton(primary = true, text = stringResource(R.string.home_check_update), onClick = actions.onCheckUpdate, modifier = Modifier.weight(1f))
-                        AgButton(primary = false, text = stringResource(R.string.home_refresh_image), onClick = actions.onRefreshImage, modifier = Modifier.weight(1f), enabled = hero.canFlash)
+                        AgButton(
+                            primary = !hero.installed,
+                            text = if (hero.installed) "刷写更新" else "安装内核",
+                            onClick = actions.onInstallClick,
+                            modifier = Modifier.weight(1f),
+                            enabled = hero.canFlash,
+                        )
+                        AgButton(
+                            primary = false,
+                            text = stringResource(R.string.home_refresh_image),
+                            onClick = actions.onRefreshImage,
+                            modifier = Modifier.weight(1f),
+                            enabled = hero.canFlash,
+                        )
+                        AgButton(
+                            primary = hero.installed,
+                            text = stringResource(R.string.home_check_update),
+                            onClick = actions.onCheckUpdate,
+                            modifier = Modifier.weight(1f),
+                        )
                     }
                 }
                 // .okring：绝对定位 right 14 / top 14，64dp

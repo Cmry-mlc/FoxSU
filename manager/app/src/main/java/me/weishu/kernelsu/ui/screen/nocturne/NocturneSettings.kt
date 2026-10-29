@@ -1,5 +1,6 @@
 package me.weishu.kernelsu.ui.screen.nocturne
 
+import me.weishu.kernelsu.ui.component.bottombar.useSideDock
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -44,7 +45,7 @@ fun NocturneSettingsScreen(
     Box(Modifier.fillMaxSize()) {
         NcGlowBackground(t)
         Column(Modifier.fillMaxSize().padding(top = ncStatusTop() + 2.dp, bottom = bottomInnerPadding)) {
-            Box(Modifier.padding(start = if (CustomizationStore.current.dockStyle == "v5") 96.dp else 18.dp, end = 18.dp)) {
+            Box(Modifier.padding(start = if (useSideDock()) 96.dp else 18.dp, end = 18.dp)) {
                 NcHeader(kicker = "PREFERENCES", title = "设置") {
                     NcIconButton(iconRes = R.drawable.nc_user, onClick = actions.onOpenAbout)
                     NcIconButton(iconRes = R.drawable.nc_palette, onClick = { showThemeSheet = true })
@@ -54,7 +55,7 @@ fun NocturneSettingsScreen(
                 Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(start = if (CustomizationStore.current.dockStyle == "v5") 96.dp else 18.dp, end = 18.dp, bottom = 86.dp),
+                    .padding(start = if (useSideDock()) 96.dp else 18.dp, end = 18.dp, bottom = 86.dp),
             ) {
 
                 NcSectionLabel("UPDATES")

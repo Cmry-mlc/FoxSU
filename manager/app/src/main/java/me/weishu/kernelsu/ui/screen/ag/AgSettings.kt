@@ -1,5 +1,6 @@
 package me.weishu.kernelsu.ui.screen.ag
 
+import me.weishu.kernelsu.ui.component.bottombar.useSideDock
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -99,7 +100,7 @@ fun AgSettings(
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
-                start = if (CustomizationStore.current.dockStyle == "v5") 106.dp else 18.dp,
+                start = if (useSideDock()) 106.dp else 18.dp,
                 end = 18.dp, bottom = bottomInnerPadding + 110.dp),
         ) {
             item { AgTitle("设", "置", topMargin = 12.dp) }

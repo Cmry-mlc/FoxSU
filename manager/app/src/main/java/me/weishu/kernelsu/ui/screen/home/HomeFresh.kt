@@ -1,5 +1,6 @@
 package me.weishu.kernelsu.ui.screen.home
 
+import me.weishu.kernelsu.ui.component.bottombar.useSideDock
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -195,7 +196,7 @@ fun HomePagerFresh(
 ) {
     val issues = state.freshIssues()
     // 侧边抽屉（v5）时给列表整体让出左侧，避免被浮层胶囊压住
-    val sideDock = CustomizationStore.current.dockStyle == "v5"
+    val sideDock = useSideDock()
     var showStylePicker by remember { mutableStateOf(false) }
     var showHeroMenu by remember { mutableStateOf(false) }
     var kpiMenuIndex by remember { mutableStateOf(-1) }

@@ -1,5 +1,6 @@
 package me.weishu.kernelsu.ui.screen.glass
 
+import me.weishu.kernelsu.ui.component.bottombar.useSideDock
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -67,7 +68,7 @@ fun GlassHome(
     onOpenAuthor: () -> Unit = {},
 ) {
     val issues = state.freshIssues()
-    val sideDock = CustomizationStore.current.dockStyle == "v5"
+    val sideDock = useSideDock()
     var showStylePicker by remember { mutableStateOf(false) }
     var showRebootDialog by remember { mutableStateOf(false) }
 

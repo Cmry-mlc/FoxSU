@@ -1,5 +1,6 @@
 package me.weishu.kernelsu.ui.screen.settings
 
+import me.weishu.kernelsu.ui.component.bottombar.useSideDock
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -126,7 +127,7 @@ fun FreshSettingsPage(
     var sucompatDialog by remember { mutableStateOf(false) }
 
     Column(
-        Modifier.padding(start = if (CustomizationStore.current.dockStyle == "v5") 84.dp else 0.dp),
+        Modifier.padding(start = if (useSideDock()) 84.dp else 0.dp),
     ) {
         FreshSettingsSection(stringResource(R.string.settings_grid_section_general)) {
             FreshTileGrid(

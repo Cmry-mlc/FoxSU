@@ -1,5 +1,6 @@
 package me.weishu.kernelsu.ui.screen.nocturne
 
+import me.weishu.kernelsu.ui.component.bottombar.useSideDock
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -65,7 +66,7 @@ fun NocturneModuleScreen(
     Box(Modifier.fillMaxSize()) {
         NcGlowBackground(t)
         Column(Modifier.fillMaxSize().padding(top = ncStatusTop() + 2.dp)) {
-            Box(Modifier.padding(start = if (CustomizationStore.current.dockStyle == "v5") 96.dp else 18.dp, end = 18.dp)) {
+            Box(Modifier.padding(start = if (useSideDock()) 96.dp else 18.dp, end = 18.dp)) {
                 NcHeader(kicker = "MODULES", title = "模块") {
                     NcIconButton(iconRes = R.drawable.nc_user, onClick = {})
                     NcIconButton(iconRes = R.drawable.nc_palette, onClick = { showStylePicker = true })
@@ -74,7 +75,7 @@ fun NocturneModuleScreen(
             }
             LazyColumn(
                 Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = if (CustomizationStore.current.dockStyle == "v5") 96.dp else 18.dp, end = 18.dp, bottom = bottomInnerPadding + 100.dp),
+                contentPadding = PaddingValues(start = if (useSideDock()) 96.dp else 18.dp, end = 18.dp, bottom = bottomInnerPadding + 100.dp),
             ) {
                 item {
                     NcSearchField(query, { query = it }, "搜索模块", R.drawable.nc_search_glyph)

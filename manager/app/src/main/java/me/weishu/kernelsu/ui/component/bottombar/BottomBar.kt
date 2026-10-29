@@ -118,16 +118,22 @@ fun BottomBar(
     navigationBadge: NavigationBadgeState,
     modifier: Modifier = Modifier,
 ) {
-    // 统一底栏：所有皮肤都用 Redesign 的悬浮胶囊，样式由「定制 → 胶囊样式」全局控制。
-    // 各皮肤只决定配色（纸张/白/玻璃/暗夜），形状与交互动效全部走 DockStyle。
-    val theme = when (LocalUiMode.current) {
-        UiMode.Miuix -> AgDockThemes.redesign()
-        UiMode.Material -> AgDockThemes.editorial
-        UiMode.Fresh -> AgDockThemes.fresh()
-        UiMode.Glass -> AgDockThemes.glass()
-        UiMode.Nocturne -> AgDockThemes.nocturne
+    // Editorial 默认保留自己的「纸面」通栏底栏：胶囊是 Redesign 的语言，
+    // 套在杂志版式上会把栏高、描边、指示器全部搞乱（可在定制里手动打开胶囊）。
+    if (!useThemeDock()) {
+        val mainState = LocalMainPagerState.current
+        me.weishu.kernelsu.ui.screen.editorial.EdTabBar(
+            currentTab = mainState.selectedPage,
+            badge = navigationBadge,
+            onOpenTab = { page -> mainState.animateToPage(page) },
+        )
+        return
     }
-    ThemeDockBar(theme, navigationBadge, modifier)
+
+    // 胶囊配色统一走 Redesign 的晨曦玻璃：胶囊是「全局样式」，跨皮肤只该换内容，
+    // 不该换底色。之前按皮肤取色会让 Nocturne 拿到近黑的 OLED 胶囊，
+    // 切到浅色版面时就是一条突兀的黑条（用户报的「胶囊底色是黑的」）。
+    ThemeDockBar(AgDockThemes.redesign(), navigationBadge, modifier)
 }
 
 @Composable
