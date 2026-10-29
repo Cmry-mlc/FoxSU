@@ -49,6 +49,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import top.yukonga.miuix.kmp.blur.blur
+import top.yukonga.miuix.kmp.blur.drawBackdrop
 import androidx.compose.animation.animateContentSize
 
 /**
@@ -117,6 +119,20 @@ object Ag {
     /** .ric 图标底透明度：v/m 10%，t/a 12% */
     fun ricAlpha(tint: Color): Float =
         if (tint == Teal || tint == Amber) 0.12f else 0.10f
+}
+
+/**
+ * 设计稿 `.headwrap{background:transparent;backdrop-filter:blur(14px)}`：
+ * 固定顶栏必须做真实背景模糊，否则滚动内容会清晰穿过标题栏，看起来像糊了一层灰。
+ */
+@Composable
+fun Modifier.agHeadBlur(): Modifier {
+    val bd = me.weishu.kernelsu.ui.component.LocalAppBackdrop.current ?: return this
+    return this.drawBackdrop(
+        backdrop = bd,
+        shape = { androidx.compose.ui.graphics.RectangleShape },
+        effects = { blur(14.dp.toPx(), 14.dp.toPx()) },
+    )
 }
 
 /**

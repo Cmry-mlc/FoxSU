@@ -79,7 +79,7 @@ fun AgSuperUser(
             Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(0.dp))
-                .background(Ag.headSurface())
+                .background(Ag.headSurface()).agHeadBlur()
                 .padding(
                     start = if (CustomizationStore.current.dockStyle == "v5") 106.dp else 18.dp,
                     end = 18.dp,

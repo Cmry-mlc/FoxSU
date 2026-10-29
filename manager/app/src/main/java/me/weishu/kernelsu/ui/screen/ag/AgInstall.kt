@@ -69,7 +69,7 @@ internal fun AgInstall(
         Column(
             Modifier
                 .fillMaxWidth()
-                .background(Ag.headSurface())
+                .background(Ag.headSurface()).agHeadBlur()
                 .padding(horizontal = 18.dp),
         ) {
             Spacer(Modifier.height(8.dp))

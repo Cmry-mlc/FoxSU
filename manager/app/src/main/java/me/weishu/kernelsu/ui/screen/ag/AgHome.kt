@@ -62,6 +62,12 @@ fun AgHome(
     var showReboot by remember { mutableStateOf(false) }
     var showStyle by remember { mutableStateOf(false) }
     val sideDock = CustomizationStore.current.dockStyle == "v5"
+    // 设计稿画板宽 390dp：`.screen{padding:0 18px}`、`.headwrap` 顶栏 22px。
+    // 按实际屏宽等比换算，任何机型上卡片留白占比都与设计稿一致
+    // （360dp 屏 → 16.6dp，411dp 屏 → 19dp），而不是固定 18dp。
+    val boardW = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp.dp
+    val edgePad = boardW * (18f / 390f)
+    val headPad = boardW * (22f / 390f)
     val listBottomPad = if (bottomInnerPadding == androidx.compose.ui.unit.Dp.Unspecified) {
         24.dp
     } else {
@@ -78,7 +84,7 @@ fun AgHome(
         Column(
             Modifier
                 .fillMaxWidth()
-                .background(Ag.headSurface()),
+                .background(Ag.headSurface()).agHeadBlur(),
         ) {
             Spacer(Modifier.height(10.dp))
             // ── 顶栏：左侧渐变标题 + 右侧 作者/主题/电源（设计稿 .top：padding 10px 4px 14px）──
@@ -86,7 +92,7 @@ fun AgHome(
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .padding(start = if (sideDock) 118.dp else 22.dp, end = 22.dp),
+                    .padding(start = if (sideDock) 118.dp else headPad, end = headPad),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
@@ -115,8 +121,8 @@ fun AgHome(
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
                 .padding(
-                    start = if (sideDock) 106.dp else 18.dp,
-                    end = 18.dp,
+                    start = if (sideDock) 106.dp else edgePad,
+                    end = edgePad,
                 ),
         ) {
             Spacer(Modifier.height(2.dp))

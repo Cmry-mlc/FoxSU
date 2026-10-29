@@ -79,11 +79,16 @@ import me.weishu.kernelsu.ui.util.importFontFile
 import me.weishu.kernelsu.ui.util.savePickedImage
 import java.io.File
 
-/** Dock 样式定义（设计稿 9 种） */
+/**
+ * Dock 样式定义：设计稿 9 种 + 由其他皮肤原生底栏复刻的 4 种。
+ * 复刻项让「换肤」不再改变操作习惯——样式改为全局可选。
+ */
 private val dockStyles = listOf(
     "d0" to "原有胶囊", "v1" to "展开药丸", "v5" to "侧边抽屉",
     "v6" to "流光光标", "v7" to "描边霓虹", "v8" to "方块卡片",
     "v9" to "渐变实底", "v10" to "顶指示条", "v11" to "浮起圆片",
+    "editorial" to "纸面墨线", "pages" to "白色药丸",
+    "glass" to "液态药丸", "nocturne" to "暗夜霓虹",
 )
 
 /**
@@ -155,7 +160,7 @@ internal fun AgCustomization(
         Column(
             Modifier
                 .fillMaxWidth()
-                .background(Ag.headSurface())
+                .background(Ag.headSurface()).agHeadBlur()
                 .padding(horizontal = 18.dp),
         ) {
             Spacer(Modifier.height(10.dp))
@@ -577,6 +582,125 @@ private fun DockStylePreview(code: String) {
                             .clip(RoundedCornerShape(3.dp))
                             .background(if (i == 0) grad else androidx.compose.ui.graphics.SolidColor(dot)),
                     )
+                }
+            }
+            return@Row
+        }
+
+        // ── 复刻自其他皮肤的 4 种：按各自底栏原样画缩略图 ──
+        if (code == "editorial") {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .height(34.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(if (Ag.isDark) Color(0xFF1B1A20) else Color(0xFFFFFCF6)),
+            ) {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(if (Ag.isDark) Color(0xFF4A4655) else Color(0xFF1D1C22)),
+                )
+                Row(
+                    Modifier.weight(1f).fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    repeat(4) { i ->
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(3.dp),
+                        ) {
+                            Box(
+                                Modifier
+                                    .size(6.dp)
+                                    .clip(RoundedCornerShape(2.dp))
+                                    .background(
+                                        if (i == 0) Color(0xFFE8502E) else Ag.Tx3.copy(alpha = 0.5f)
+                                    ),
+                            )
+                            Box(
+                                Modifier
+                                    .size(width = 10.dp, height = 1.5.dp)
+                                    .background(if (i == 0) Color(0xFFE8502E) else Color.Transparent),
+                            )
+                        }
+                    }
+                }
+            }
+            return@Row
+        }
+
+        if (code == "pages" || code == "glass") {
+            val light = !Ag.isDark
+            val pillBg = if (code == "pages") {
+                if (light) Color.White else Color(0xFF1B1C1E)
+            } else {
+                if (light) Color(0xF2FFFFFF) else Color(0xFF14141E)
+            }
+            Row(
+                Modifier
+                    .padding(horizontal = 8.dp)
+                    .fillMaxWidth()
+                    .height(21.dp)
+                    .clip(RoundedCornerShape(99.dp))
+                    .background(pillBg)
+                    .then(
+                        if (code == "glass") Modifier.border(1.dp, Ag.Line, RoundedCornerShape(99.dp))
+                        else Modifier
+                    )
+                    .padding(horizontal = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceEvenly,
+            ) {
+                Box(
+                    Modifier
+                        .height(13.dp)
+                        .width(if (code == "pages") 26.dp else 20.dp)
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(Brush.linearGradient(listOf(Color(0xFF6C5CE7), Color(0xFFEC4899)))),
+                )
+                repeat(3) {
+                    Box(Modifier.size(5.dp).clip(CircleShape).background(Ag.Tx3.copy(alpha = 0.5f)))
+                }
+            }
+            return@Row
+        }
+
+        if (code == "nocturne") {
+            Row(
+                Modifier
+                    .padding(horizontal = 6.dp)
+                    .fillMaxWidth()
+                    .height(26.dp)
+                    .clip(RoundedCornerShape(9.dp))
+                    .background(Color(0xFF0F1018))
+                    .border(1.dp, Color(0x26FFFFFF), RoundedCornerShape(9.dp)),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceEvenly,
+            ) {
+                Box(
+                    Modifier
+                        .height(13.dp)
+                        .width(24.dp)
+                        .clip(RoundedCornerShape(5.dp))
+                        .background(Color(0x338B7BFF))
+                        .drawBehind {
+                            val w = 10.dp.toPx()
+                            val h = 1.5.dp.toPx()
+                            drawRoundRect(
+                                brush = Brush.horizontalGradient(
+                                    listOf(Color(0xFF8B7BFF), Color(0xFF4DE2C5))
+                                ),
+                                topLeft = androidx.compose.ui.geometry.Offset((size.width - w) / 2f, 2.dp.toPx()),
+                                size = androidx.compose.ui.geometry.Size(w, h),
+                                cornerRadius = androidx.compose.ui.geometry.CornerRadius(h / 2f),
+                            )
+                        },
+                )
+                repeat(3) {
+                    Box(Modifier.size(5.dp).clip(CircleShape).background(Color(0xFF5D6376)))
                 }
             }
             return@Row

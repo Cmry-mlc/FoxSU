@@ -118,46 +118,16 @@ fun BottomBar(
     navigationBadge: NavigationBadgeState,
     modifier: Modifier = Modifier,
 ) {
-    val mainPagerState = LocalMainPagerState.current
-    val dockOn = LocalEnableFloatingBottomBar.current
-    when (LocalUiMode.current) {
-        // Redesign（晨曦玻璃）：悬浮 Dock 就是该皮肤的设计底栏，始终启用
-        UiMode.Miuix -> ThemeDockBar(AgDockThemes.redesign(), navigationBadge, modifier)
-        UiMode.Material -> if (dockOn) {
-            ThemeDockBar(AgDockThemes.editorial, navigationBadge, modifier)
-        } else {
-            me.weishu.kernelsu.ui.screen.editorial.EdTabBar(
-            currentTab = mainPagerState.selectedPage,
-            badge = navigationBadge,
-            onOpenTab = { page -> mainPagerState.animateToPage(page) },
-            )
-        }
-        UiMode.Fresh -> if (dockOn) {
-            ThemeDockBar(AgDockThemes.fresh(), navigationBadge, modifier)
-        } else {
-            BottomBarFresh(navigationBadge)
-        }
-        UiMode.Glass -> if (dockOn) {
-            ThemeDockBar(AgDockThemes.glass(), navigationBadge, modifier)
-        } else {
-            me.weishu.kernelsu.ui.screen.glass.GlassBottomBar(
-            currentTab = mainPagerState.selectedPage,
-            badge = navigationBadge,
-            onOpenTab = { page -> mainPagerState.animateToPage(page) },
-            modifier = modifier,
-            )
-        }
-        UiMode.Nocturne -> if (dockOn) {
-            ThemeDockBar(AgDockThemes.nocturne, navigationBadge, modifier)
-        } else {
-            me.weishu.kernelsu.ui.screen.nocturne.NocturneTabBar(
-            currentTab = mainPagerState.selectedPage,
-            badge = navigationBadge,
-            onOpenTab = { page -> mainPagerState.animateToPage(page) },
-            modifier = modifier,
-            )
-        }
+    // 统一底栏：所有皮肤都用 Redesign 的悬浮胶囊，样式由「定制 → 胶囊样式」全局控制。
+    // 各皮肤只决定配色（纸张/白/玻璃/暗夜），形状与交互动效全部走 DockStyle。
+    val theme = when (LocalUiMode.current) {
+        UiMode.Miuix -> AgDockThemes.redesign()
+        UiMode.Material -> AgDockThemes.editorial
+        UiMode.Fresh -> AgDockThemes.fresh()
+        UiMode.Glass -> AgDockThemes.glass()
+        UiMode.Nocturne -> AgDockThemes.nocturne
     }
+    ThemeDockBar(theme, navigationBadge, modifier)
 }
 
 @Composable

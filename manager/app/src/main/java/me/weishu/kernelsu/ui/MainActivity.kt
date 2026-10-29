@@ -483,9 +483,9 @@ fun MainScreen(
     }
     val blurBackdrop = rememberBlurBackdrop(enableBlur)
 
-    // Fresh 风格的底栏液态玻璃也要采样页面内容，所以这里多算一个条件
-    val needsPageBackdrop = (enableFloatingBottomBar && enableFloatingBottomBarBlur) ||
-        CustomizationStore.current.bottomBarLiquidGlass
+    // 所有皮肤的底栏现在都统一为 Redesign 的磨砂 Dock（backdrop-filter blur 20 + saturate 1.4），
+    // 必须始终记录页面内容层，否则磨砂采样不到东西只能退回纯色底。
+    val needsPageBackdrop = true
 
     val backdrop = rememberLayerBackdrop {
         // ContentDrawScope 里的 drawRect 是成员函数，不需要 import
@@ -643,60 +643,33 @@ fun MainScreen(
                 }
             }
 
-            when (uiMode) {
-                UiMode.Material -> androidx.compose.material3.Scaffold(
-                    bottomBar = bottomBar,
-                    containerColor = scaffoldBackgroundColor(MaterialTheme.colorScheme.surfaceContainer)
-                ) { innerPadding ->
-                    pagerContent(innerPadding.calculateBottomPadding())
-                }
-
-                UiMode.Miuix -> {
-                    // 侧边抽屉（v5）：胶囊是左侧垂直居中的浮层，不能塞进 bottomBar 槽位，
-                    // 否则会被压扁成一条、图标互相重叠。
-                    val sideDock = CustomizationStore.current.dockStyle == "v5"
-                    val noBar: @Composable () -> Unit = {}
-                    Scaffold(
-                        bottomBar = if (sideDock) noBar else bottomBar,
-                        containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                    ) { innerPadding ->
-                        Box(modifier = Modifier.fillMaxSize()) {
-                            pagerContent(if (sideDock) 0.dp else innerPadding.calculateBottomPadding())
-                            if (sideDock) {
-                                Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.CenterStart,
-                                ) {
-                                    BottomBar(
-                                        blurBackdrop = blurBackdrop,
-                                        backdrop = backdrop,
-                                        navigationBadge = navigationBadge,
-                                    )
-                                }
-                            }
+            // 所有皮肤共用同一套底栏宿主：胶囊样式是全局设置，
+            // 所以侧边抽屉（v5）在其他皮肤下也必须走「浮层」而不是 bottomBar 槽位
+            val sideDock = CustomizationStore.current.dockStyle == "v5"
+            val noBar: @Composable () -> Unit = {}
+            val scaffoldColor = when (uiMode) {
+                UiMode.Material -> scaffoldBackgroundColor(MaterialTheme.colorScheme.surfaceContainer)
+                UiMode.Fresh -> scaffoldBackgroundColor(MaterialTheme.colorScheme.surface)
+                else -> androidx.compose.ui.graphics.Color.Transparent
+            }
+            androidx.compose.material3.Scaffold(
+                bottomBar = if (sideDock) noBar else bottomBar,
+                containerColor = scaffoldColor,
+            ) { innerPadding ->
+                Box(modifier = Modifier.fillMaxSize()) {
+                    pagerContent(if (sideDock) 0.dp else innerPadding.calculateBottomPadding())
+                    if (sideDock) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.CenterStart,
+                        ) {
+                            BottomBar(
+                                blurBackdrop = blurBackdrop,
+                                backdrop = backdrop,
+                                navigationBadge = navigationBadge,
+                            )
                         }
                     }
-                }
-
-                UiMode.Fresh -> androidx.compose.material3.Scaffold(
-                    bottomBar = bottomBar,
-                    containerColor = scaffoldBackgroundColor(MaterialTheme.colorScheme.surface)
-                ) { innerPadding ->
-                    pagerContent(innerPadding.calculateBottomPadding())
-                }
-
-                UiMode.Glass -> androidx.compose.material3.Scaffold(
-                    bottomBar = bottomBar,
-                    containerColor = androidx.compose.ui.graphics.Color.Transparent
-                ) { innerPadding ->
-                    pagerContent(innerPadding.calculateBottomPadding())
-                }
-
-                UiMode.Nocturne -> androidx.compose.material3.Scaffold(
-                    bottomBar = bottomBar,
-                    containerColor = androidx.compose.ui.graphics.Color.Transparent
-                ) { innerPadding ->
-                    pagerContent(innerPadding.calculateBottomPadding())
                 }
             }
         }

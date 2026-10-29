@@ -4,15 +4,18 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,6 +27,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -45,6 +49,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.ui.LocalMainPagerState
 import me.weishu.kernelsu.data.settings.CustomizationStore
+import me.weishu.kernelsu.ui.component.LocalAppBackdrop
+import top.yukonga.miuix.kmp.blur.blur
+import top.yukonga.miuix.kmp.blur.colorControls
+import top.yukonga.miuix.kmp.blur.drawBackdrop
 
 /** 各主题的抽屉胶囊配色（设计语言驱动） */
 data class DockTheme(
@@ -59,13 +67,23 @@ data class DockTheme(
     val backdrop: Color? = null, // 槽位底色（与页面底部背景同色，杜绝窗口白底透出）
 )
 
-/** 底栏样式（设计稿 9 种） */
-enum class DockStyle { D0, V1, V5, V6, V7, V8, V9, V10, V11;
+/**
+ * 底栏样式：设计稿 9 种（d0/v1/v5-v11）+ 由其他皮肤原生底栏复刻的 4 种
+ * （editorial 纸面墨线 / pages 白色药丸 / glass 液态药丸 / nocturne 暗夜霓虹）。
+ * 全部皮肤共用这一套选择器，样式全局生效。
+ */
+enum class DockStyle { D0, V1, V5, V6, V7, V8, V9, V10, V11, EDITORIAL, PAGES, GLASS, NOCTURNE;
+
+    /** 是否为「复刻自其他皮肤」的样式（这些不参与 V 系列的项宽/指示器逻辑） */
+    val isPort: Boolean get() = this == EDITORIAL || this == PAGES || this == GLASS || this == NOCTURNE
 
     companion object {
         fun fromRaw(raw: String): DockStyle = when (raw) {
             "v1" -> V1; "v5" -> V5; "v6" -> V6; "v7" -> V7; "v8" -> V8
-            "v9" -> V9; "v10" -> V10; "v11" -> V11; else -> D0
+            "v9" -> V9; "v10" -> V10; "v11" -> V11
+            "editorial" -> EDITORIAL; "pages" -> PAGES
+            "glass" -> GLASS; "nocturne" -> NOCTURNE
+            else -> D0
         }
     }
 }
@@ -128,18 +146,22 @@ fun ThemeDockBar(
 
     // ── V5：侧边抽屉（左侧垂直居中，设计稿 .phone.side .dock）──
     if (style == DockStyle.V5) {
-        Column(
+        val sideShape = RoundedCornerShape(30.dp)
+        val sideBg = if (dark) theme.bg else theme.bg.copy(alpha = 0.86f * alphaK)
+        Box(
             modifier = modifier
                 .padding(start = 14.dp)
-                .shadow(14.dp, RoundedCornerShape(30.dp), spotColor = theme.shadow, ambientColor = theme.shadow)
-                .clip(RoundedCornerShape(30.dp))
-                // 设计稿 .phone.side .dock：白 86%
-                .background(if (dark) theme.bg else theme.bg.copy(alpha = 0.86f * alphaK))
-                .border(1.dp, effBorder, RoundedCornerShape(30.dp))
-                .padding(horizontal = 9.dp, vertical = 10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+                .shadow(14.dp, sideShape, spotColor = theme.shadow, ambientColor = theme.shadow)
+                .clip(sideShape)
+                .border(1.dp, effBorder, sideShape),
         ) {
+            // 设计稿 .phone.side .dock 同样是 backdrop-filter blur(20px)
+            DockFrost(sideShape, sideBg)
+            Column(
+                modifier = Modifier.padding(horizontal = 9.dp, vertical = 10.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
             items.forEachIndexed { index, item ->
                 val selected = mainState.selectedPage == index
                 // 侧边胶囊：暗色模式下胶囊是深色玻璃，未选中图标用亮白才看得清；
@@ -188,33 +210,274 @@ fun ThemeDockBar(
                     )
                 }
             }
+            }
+        }
+        return
+    }
+
+    // ── EDITORIAL：复刻 Material「纸面」底栏 —— 全宽贴底 + 1dp 墨线 + 选中上浮/短横线 ──
+    if (style == DockStyle.EDITORIAL) {
+        Column(
+            modifier
+                .fillMaxWidth()
+                .padding(bottom = navInset)
+                .background(theme.bg),
+        ) {
+            Box(Modifier.fillMaxWidth().height(1.dp).background(theme.border))
+            Row(
+                Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 12.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+            ) {
+                items.forEachIndexed { index, item ->
+                    val selected = mainState.selectedPage == index
+                    val lift by animateDpAsState(
+                        if (selected) (-2).dp else 0.dp, tween(260), label = "ed-lift-$index",
+                    )
+                    val scale by animateFloatAsState(
+                        if (selected) 1.08f else 1f, tween(260), label = "ed-scale-$index",
+                    )
+                    val lineW by animateDpAsState(
+                        if (selected) 18.dp else 0.dp, tween(280), label = "ed-line-$index",
+                    )
+                    Column(
+                        Modifier
+                            .weight(1f)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                            ) { mainState.animateToPage(index) }
+                            .padding(vertical = 3.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        DockIcon(
+                            item, index, selected, navigationBadge, rainbow,
+                            tint = if (rainbow && !selected) rainbowColors[index % 4]
+                            else if (selected) theme.selected else theme.unselected,
+                            badgeTintOverride = null,
+                            scale = scale,
+                            modifier = Modifier.offset(y = lift),
+                        )
+                        Spacer(Modifier.height(5.dp))
+                        Box(
+                            Modifier
+                                .width(lineW)
+                                .height(2.dp)
+                                .clip(CircleShape)
+                                .background(if (selected) theme.selected else Color.Transparent),
+                        )
+                    }
+                }
+            }
+        }
+        return
+    }
+
+    // ── PAGES：复刻 Fresh「白色药丸」—— 等分项，选中项展开文字 ──
+    if (style == DockStyle.PAGES) {
+        val pill = RoundedCornerShape(percent = 50)
+        Box(modifier.fillMaxWidth(), contentAlignment = Alignment.BottomCenter) {
+            Box(
+                Modifier
+                    .padding(bottom = bottomPad)
+                    .padding(horizontal = 24.dp)
+                    .widthIn(max = 440.dp)
+                    .fillMaxWidth()
+                    .shadow(14.dp, pill, spotColor = theme.shadow, ambientColor = theme.shadow)
+                    .clip(pill)
+                    .border(1.dp, theme.border, pill),
+            ) {
+                DockFrost(pill, effBg)
+                Row(
+                    Modifier.fillMaxWidth().height(58.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                items.forEachIndexed { index, item ->
+                    val selected = mainState.selectedPage == index
+                    val tint = if (rainbow && !selected) rainbowColors[index % 4]
+                    else if (selected) theme.selected else theme.unselected
+                    Row(
+                        Modifier
+                            .weight(1f)
+                            .height(58.dp)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                            ) { mainState.animateToPage(index) },
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        DockIcon(
+                            item, index, selected, navigationBadge, rainbow,
+                            tint = tint, badgeTintOverride = null,
+                            scale = if (selected) 1.06f else 1f,
+                        )
+                        if (selected) {
+                            Text(
+                                stringResource(item.label),
+                                fontSize = 11.sp, fontWeight = FontWeight.Bold,
+                                color = tint, maxLines = 1,
+                                modifier = Modifier.padding(start = 6.dp),
+                            )
+                        }
+                    }
+                }
+                }
+            }
+        }
+        return
+    }
+
+    // ── GLASS：复刻 Daylight「液态药丸」—— 4dp 内衬 + 选中药丸底 + 顶部霓虹条 ──
+    if (style == DockStyle.GLASS) {
+        val pill = RoundedCornerShape(99.dp)
+        Box(modifier.fillMaxWidth(), contentAlignment = Alignment.BottomCenter) {
+            Box(
+                Modifier
+                    .padding(bottom = bottomPad)
+                    .shadow(14.dp, pill, spotColor = theme.shadow, ambientColor = theme.shadow)
+                    .clip(pill)
+                    .border(1.dp, theme.border, pill),
+            ) {
+                DockFrost(pill, effBg)
+                Row(
+                    Modifier.padding(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                items.forEachIndexed { index, item ->
+                    val selected = mainState.selectedPage == index
+                    val tint = if (rainbow && !selected) rainbowColors[index % 4]
+                    else if (selected) theme.selected else theme.unselected
+                    Box(
+                        Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                        ) { mainState.animateToPage(index) },
+                    ) {
+                        Column(
+                            Modifier
+                                .clip(RoundedCornerShape(99.dp))
+                                .background(if (selected) theme.selectedBg else Color.Transparent)
+                                .padding(horizontal = 18.dp, vertical = 6.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            DockIcon(
+                                item, index, selected, navigationBadge, rainbow,
+                                tint = tint, badgeTintOverride = null,
+                                scale = if (selected) 1.06f else 1f,
+                            )
+                            Text(
+                                stringResource(item.label),
+                                fontSize = 7.5.sp, lineHeight = 9.sp,
+                                color = tint, maxLines = 1,
+                                modifier = Modifier.padding(top = 2.dp),
+                            )
+                        }
+                        // .ditem.on::before —— 顶部 22×3 霓虹条，悬在药丸外 4dp
+                        if (selected) {
+                            Box(
+                                Modifier
+                                    .align(Alignment.TopCenter)
+                                    .offset(y = (-4).dp)
+                                    .size(width = 22.dp, height = 3.dp)
+                                    .clip(RoundedCornerShape(3.dp))
+                                    .background(
+                                        Brush.horizontalGradient(
+                                            listOf(Color(0xFF6C5CE7), Color(0xFFEC4899))
+                                        )
+                                    ),
+                            )
+                        }
+                    }
+                }
+                }
+            }
+        }
+        return
+    }
+
+    // ── NOCTURNE：复刻 Nocturne「暗夜霓虹」—— 64dp 高、22dp 圆角、顶部 24×2.5 指示条 ──
+    if (style == DockStyle.NOCTURNE) {
+        val r = RoundedCornerShape(22.dp)
+        Box(modifier.fillMaxWidth(), contentAlignment = Alignment.BottomCenter) {
+            Box(
+                Modifier
+                    .padding(start = 18.dp, end = 18.dp, bottom = (navInset.takeIf { it != 0.dp } ?: 16.dp))
+                    .fillMaxWidth()
+                    .height(64.dp)
+                    .clip(r)
+                    .border(1.dp, theme.border, r),
+            ) {
+                DockFrost(r, effBg)
+                Row(
+                    Modifier.fillMaxSize(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                items.forEachIndexed { index, item ->
+                    val selected = mainState.selectedPage == index
+                    val tint = if (rainbow && !selected) rainbowColors[index % 4]
+                    else if (selected) theme.selected else theme.unselected
+                    Box(
+                        Modifier
+                            .weight(1f)
+                            .fillMaxSize()
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                            ) { mainState.animateToPage(index) },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (selected) {
+                            Box(
+                                Modifier
+                                    .align(Alignment.TopCenter)
+                                    .offset(y = 6.dp)
+                                    .size(width = 24.dp, height = 2.5.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        Brush.horizontalGradient(
+                                            listOf(Color(0xFF6C5CE7), Color(0xFFEC4899))
+                                        )
+                                    ),
+                            )
+                        }
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.offset(y = if (selected) (-1).dp else 0.dp),
+                        ) {
+                            DockIcon(
+                                item, index, selected, navigationBadge, rainbow,
+                                tint = tint, badgeTintOverride = null,
+                                scale = if (selected) 1.04f else 1f,
+                            )
+                            Spacer(Modifier.height(3.dp))
+                            Text(
+                                stringResource(item.label),
+                                fontSize = 9.sp,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                color = tint, maxLines = 1,
+                            )
+                        }
+                    }
+                }
+                }
+            }
         }
         return
     }
 
     Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.BottomCenter) {
+        // 设计稿 .dock：backdrop-filter blur(20px) saturate(1.4) + rgba(255,255,255,.78)
+        val shellShape = RoundedCornerShape(if (style == DockStyle.V8) 20.dp else dockRadius)
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = bottomPad)
-                .shadow(if (immersive) 8.dp else 14.dp, RoundedCornerShape(dockRadius), spotColor = theme.shadow, ambientColor = theme.shadow)
-                .clip(RoundedCornerShape(if (style == DockStyle.V8) 20.dp else dockRadius))
-                .background(effBg)
-                .border(1.dp, effBorder, RoundedCornerShape(if (style == DockStyle.V8) 20.dp else dockRadius))
-                .drawBehind {
-                    if (theme.glass) {
-                        drawRect(
-                            brush = Brush.verticalGradient(
-                                listOf(Color(0x59FFFFFF), Color.Transparent),
-                                startY = 0f,
-                                endY = size.height * 0.25f,
-                            ),
-                        )
-                    }
-                }
-                // 设计稿 .dock.v8{padding:6px}，其余 8px
-                .padding(if (style == DockStyle.V8) 6.dp else 8.dp),
+                .shadow(if (immersive) 8.dp else 14.dp, shellShape, spotColor = theme.shadow, ambientColor = theme.shadow)
+                .clip(shellShape)
+                .border(1.dp, effBorder, shellShape),
         ) {
+            DockFrost(shellShape, effBg, gloss = theme.glass)
+            Box(Modifier.padding(if (style == DockStyle.V8) 6.dp else 8.dp)) {
             // 滑动选中指示底衬（d0 / v8）
             if (style == DockStyle.D0 || style == DockStyle.V8) {
                 Box(
@@ -390,13 +653,59 @@ fun ThemeDockBar(
                     }
                 }
             }
+            }
         }
+    }
+}
+
+/**
+ * 设计稿 .dock 的毛玻璃：`backdrop-filter: blur(20px) saturate(1.4)`。
+ * 能采样到页面内容时画真实模糊 + vibrancy（饱和度提升）+ 色调蒙层；
+ * 无壁纸/禁用模糊时退回纯半透明色，保证不出现"糊成一片灰"。
+ */
+@Composable
+private fun BoxScope.DockFrost(
+    shape: androidx.compose.ui.graphics.Shape,
+    tint: Color,
+    gloss: Boolean = false,
+) {
+    val bd = LocalAppBackdrop.current
+    if (bd != null) {
+        Box(
+            Modifier
+                .matchParentSize()
+                .drawBackdrop(
+                    backdrop = bd,
+                    shape = { shape },
+                    effects = {
+                        // 设计稿 backdrop-filter: blur(20px) saturate(1.4)
+                        colorControls(brightness = 0f, contrast = 1f, saturation = 1.4f)
+                        blur(20.dp.toPx(), 20.dp.toPx())
+                    },
+                ),
+        )
+    }
+    Box(Modifier.matchParentSize().background(tint, shape))
+    if (gloss) {
+        Box(
+            Modifier
+                .matchParentSize()
+                .drawBehind {
+                    drawRect(
+                        brush = Brush.verticalGradient(
+                            listOf(Color(0x59FFFFFF), Color.Transparent),
+                            startY = 0f,
+                            endY = size.height * 0.32f,
+                        ),
+                    )
+                },
+        )
     }
 }
 
 /** Dock 单项图标 + 徽标 */
 @Composable
-private fun ColumnScope.DockIcon(
+private fun DockIcon(
     item: BottomBarDestination,
     index: Int,
     selected: Boolean,
@@ -407,8 +716,9 @@ private fun ColumnScope.DockIcon(
     scale: Float = 1f,
     glow: Boolean = false,
     big: Boolean = false,
+    modifier: Modifier = Modifier,
 ) {
-    Box(contentAlignment = Alignment.TopCenter) {
+    Box(modifier = modifier, contentAlignment = Alignment.TopCenter) {
         val iconSize = if (big) 26.dp else 22.dp
         Icon(
             imageVector = item.icon,
