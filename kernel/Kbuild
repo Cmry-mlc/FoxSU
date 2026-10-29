@@ -167,13 +167,19 @@ KSU_NEW_DCACHE_FLUSH := $(shell grep -q __flush_dcache_area $(srctree)/arch/arm6
 $(info -- KSU_NEW_DCACHE_FLUSH: $(KSU_NEW_DCACHE_FLUSH))
 
 KSU_IS_PR_BUILD ?= 0
+# 管理器识别：内核按「包名 + APK 签名」认管理器（manager/throne_tracker.c 的 crown_manager）。
+# 这里的默认值必须是 FoxSu Manager 自己的包名与发布证书，否则内核永远不会把 FoxSu 认成管理器：
+#   - 包名不匹配 → 连候选 APK 都不会被考虑（哪怕签名正确）
+#   - 签名不匹配 → 候选被丢弃，状态栏显示"未安装"，只能靠动态管理器或改包名绕过去
+# 签名值取自发布密钥 /opt/foxsu-build/foxsu.jks（证书 DER 864 字节，sha256 如下），
+# 换签名时用 `scripts/manager-signature.sh` 重新生成。
 ifeq ($(KSU_IS_PR_BUILD),0)
-KSU_PACKAGE_NAME ?= me.weishu.kernelsu
+KSU_PACKAGE_NAME ?= com.foxsu.manager
 else
-KSU_PACKAGE_NAME ?= me.weishu.kernelsu.pr
+KSU_PACKAGE_NAME ?= com.foxsu.manager.pr
 endif
-KSU_EXPECTED_SIZE ?= 0x033b
-KSU_EXPECTED_HASH ?= c371061b19d8c7d7d6133c6a9bafe198fa944e50c1b31c9d8daa8d7f1fc2d2d6
+KSU_EXPECTED_SIZE ?= 0x0360
+KSU_EXPECTED_HASH ?= 436cd0842ed146ae35b386c1b2253634944d6741f1a0278b392f74c4063c8b86
 
 $(info -- KernelSU Manager package name: $(KSU_PACKAGE_NAME))
 $(info -- KernelSU Manager signature size: $(KSU_EXPECTED_SIZE))

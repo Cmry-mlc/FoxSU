@@ -144,11 +144,10 @@ fun ThemeDockBar(
     // ── V5：侧边抽屉（左侧垂直居中，设计稿 .phone.side .dock）──
     if (style == DockStyle.V5) {
         val sideShape = RoundedCornerShape(30.dp)
-        // 侧边胶囊是竖排叠在卡片上的，太透会透出卡片颜色、文字发糊，
-        // 所以比横向底栏更实一些（0.94），保持「一块独立玻璃浮在内容上」的观感。
-        val sideBg = theme.bg.copy(
-            alpha = if (dark) 0.94f else (0.94f * alphaK).coerceAtMost(1f),
-        )
+        // 设计稿 `.phone.side .dock{background:rgba(255,255,255,.86)}`：
+        // 侧边胶囊比横向底栏更实一档，避免竖排叠在彩色卡片上时文字发糊。
+        val sideBase = if (dark) 0.86f else 0.86f * alphaK
+        val sideBg = theme.bg.copy(alpha = sideBase.coerceIn(0.2f, 1f))
         Box(
             modifier = modifier
                 .padding(start = 14.dp)
@@ -778,12 +777,12 @@ object AgDockThemes {
     fun redesign(): DockTheme {
         val dark = me.weishu.kernelsu.ui.screen.ag.Ag.isDark
         return if (dark) DockTheme(
-            bg = Color(0xB31C1B2E), border = Color(0x1FFFFFFF), shadow = Color(0x66000000),
+            bg = Color(0xCC1C1B2E), border = Color(0x1FFFFFFF), shadow = Color(0x66000000),
             selected = Color(0xFF9C90FF), unselected = Color(0xFF7C7A98),
             selectedBg = Color(0x2E6C5CE7), badge = Color(0xFFEC4899), glass = false,
             backdrop = Color(0xFF1A192E),
         ) else DockTheme(
-            bg = Color(0xA8FFFFFF), border = Color(0xB3FFFFFF), shadow = Color(0x2E32286E),
+            bg = Color(0xC7FFFFFF), border = Color(0xB3FFFFFF), shadow = Color(0x2E32286E),
             selected = Color(0xFF6C5CE7), unselected = Color(0xFF66647A),
             selectedBg = Color(0x1A6C5CE7), badge = Color(0xFFEC4899), glass = false,
             backdrop = Color(0xFFF2F4FA),

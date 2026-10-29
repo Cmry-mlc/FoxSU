@@ -1,6 +1,7 @@
 package me.weishu.kernelsu.ui.screen.ag
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -29,10 +31,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Bolt
-import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.CloudDownload
 import androidx.compose.material.icons.rounded.FileOpen
 import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -44,6 +47,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -61,16 +65,11 @@ import me.weishu.kernelsu.ui.screen.install.InstallUiState
 import me.weishu.kernelsu.ui.util.LkmSelection
 
 /**
- * 晨曦玻璃 · 镜像安装。
+ * 镜像安装（全皮肤统一，单屏完成）。
  *
- * 版式：渐变标题头 → 「当前环境」摘要卡 → 安装方式（单选大卡）→ 目标分区 → LKM / 高级选项
- * → 底部渐变主按钮。所有动作都来自 [InstallScreenActions]，点击即真实生效。
- *
- * 相对上一版的关键修正：
- * 1. 「选择镜像 / 在线下载」卡片整卡可点，直接拉起文件选择器 / 下载弹窗
- *    （之前只选中不拉起，下一步时 boot=null 会刷写出错，看起来像"进不去安装界面"）；
- * 2. 选区与卡片状态一一对应，未选方式时不显示分区 / LKM，避免空卡；
- * 3. 所有留白按 390dp 画板等比换算，和首页保持同一套栅格。
+ * 版式对齐 KernelSU 原版安装页的「一屏到底」：安装方式单选 → 本地 LKM → 高级选项 → 下一步，
+ * 不再有二级页面/分步向导；所有可选项都直接铺在同一页里。
+ * 视觉走晨曦玻璃（渐变标题 + 玻璃卡 + 柔和图标块），任何皮肤下都是同一套结构与交互。
  */
 @Composable
 internal fun AgInstall(
@@ -85,6 +84,8 @@ internal fun AgInstall(
     val partIndex = if (isDownload) uiState.remotePartitionSelectionIndex else uiState.partitionSelectionIndex
     val selectedLabel = uiState.installMethod?.label
     var advancedOpen by remember { mutableStateOf(uiState.advancedOptionsShown) }
+    val lkmChosen = uiState.lkmSelection != LkmSelection.KmiNone
+    val ready = uiState.installMethod != null || lkmChosen
 
     Column(
         Modifier
@@ -93,7 +94,7 @@ internal fun AgInstall(
             .statusBarsPadding()
             .imePadding(),
     ) {
-        // ── 顶栏：返回 + KMI 胶囊 + 渐变标题 ──
+        // ── 顶栏：返回 + 标题 + KMI ──
         Column(
             Modifier
                 .fillMaxWidth()
@@ -107,21 +108,15 @@ internal fun AgInstall(
                 Spacer(Modifier.weight(1f))
                 AgChip("KMI ${uiState.currentKmi.ifBlank { "自动" }}")
             }
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(14.dp))
             Text(
-                text = "安装内核",
-                fontSize = 28.sp,
+                text = stringResource(R.string.install),
+                fontSize = 30.sp,
                 fontWeight = FontWeight.ExtraBold,
                 letterSpacing = (-0.6).sp,
                 style = TextStyle(brush = Ag.TitleGrad),
             )
-            Spacer(Modifier.height(5.dp))
-            Text(
-                text = "选择镜像来源，刷入 boot 分区后重启生效",
-                fontSize = 12.5.sp,
-                color = Ag.Tx2,
-            )
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(12.dp))
         }
 
         Column(
@@ -130,58 +125,21 @@ internal fun AgInstall(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = edge),
         ) {
-            // ── 当前环境摘要 ──
-            AgCard(
-                Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 15.dp),
+            // ── 当前环境：一行只读信息，不占版面 ──
+            FlowRow(
+                modifier = Modifier.padding(start = 2.dp, end = 2.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    AgRic(Ag.Vio, AgSettingsIcons.Shield, size = 42.dp)
-                    Spacer(Modifier.width(13.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            "当前环境",
-                            fontSize = 14.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Ag.Tx,
-                        )
-                        Spacer(Modifier.height(3.dp))
-                        Text(
-                            buildString {
-                                append("KMI ")
-                                append(uiState.currentKmi.ifBlank { "自动识别" })
-                                if (partitions.isNotEmpty() && uiState.canSelectPartition) {
-                                    append(" · 目标 ")
-                                    append(partitions.getOrNull(partIndex) ?: "—")
-                                }
-                            },
-                            fontSize = 12.5.sp,
-                            color = Ag.Tx2,
-                            maxLines = 1,
-                        )
-                    }
-                    if (uiState.slotSuffix.isNotBlank()) {
-                        Box(
-                            Modifier
-                                .clip(RoundedCornerShape(9.dp))
-                                .background(Ag.TintInk)
-                                .border(1.dp, Ag.Line, RoundedCornerShape(9.dp))
-                                .padding(horizontal = 9.dp, vertical = 4.dp),
-                        ) {
-                            Text(
-                                uiState.slotSuffix.trim(),
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Ag.Tx2,
-                            )
-                        }
-                    }
+                AgChip("KMI ${uiState.currentKmi.ifBlank { "自动识别" }}")
+                if (uiState.slotSuffix.isNotBlank()) AgChip("槽位 ${uiState.slotSuffix.trim()}")
+                if (partitions.isNotEmpty() && uiState.canSelectPartition) {
+                    AgChip("目标 ${partitions.getOrNull(partIndex) ?: "—"}")
                 }
             }
-            Spacer(Modifier.height(18.dp))
+            Spacer(Modifier.height(14.dp))
 
-            // ── 安装方式 ──
-            AgGHead("安装方式")
+            // ── 安装方式：单选卡（左圆点 + 标题 + 说明），整卡可点 ──
             uiState.installMethodOptions.forEach { method ->
                 val selected = selectedLabel == method.label
                 val (icon, tint) = when (method) {
@@ -190,17 +148,12 @@ internal fun AgInstall(
                     is InstallMethod.DirectInstall -> Icons.Rounded.Bolt to Ag.Mag
                     is InstallMethod.DirectInstallToInactiveSlot -> Icons.Rounded.Bolt to Ag.Amber
                 }
-                AgMethodCard(
+                AgMethodRow(
                     title = stringResource(method.label),
                     desc = method.summary,
                     icon = icon,
                     tint = tint,
                     selected = selected,
-                    trailingHint = when (method) {
-                        is InstallMethod.SelectFile -> "选择文件"
-                        is InstallMethod.DownloadFile -> "输入链接"
-                        else -> null
-                    },
                     onClick = {
                         actions.onSelectMethod(method)
                         when (method) {
@@ -212,14 +165,11 @@ internal fun AgInstall(
                 )
                 Spacer(Modifier.height(9.dp))
             }
-            Spacer(Modifier.height(6.dp))
 
-            // ── 目标分区（仅在选择「直接刷入」/ 在线下载时出现）──
+            // ── 分区选择：只在「直接刷入 / 在线下载」时可换 ──
             if (partitions.isNotEmpty() && uiState.canSelectPartition) {
-                AgGHead(
-                    if (isDownload) stringResource(R.string.install_select_partition)
-                    else "${stringResource(R.string.install_select_partition)}（${uiState.slotSuffix}）"
-                )
+                Spacer(Modifier.height(4.dp))
+                AgGHead(stringResource(R.string.install_select_partition))
                 AgCard(Modifier.fillMaxWidth(), contentPadding = PaddingValues(14.dp)) {
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -249,92 +199,141 @@ internal fun AgInstall(
                         }
                     }
                 }
-                Spacer(Modifier.height(10.dp))
             }
+            Spacer(Modifier.height(14.dp))
 
-            // ── LKM 内核模块 ──
-            if (uiState.installMethod != null) {
-                AgGHead("内核模块")
-                AgCard(
-                    Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+            // ── 本地 LKM：始终可见（原版就在这一步，不藏在选完方式之后）──
+            AgCard(
+                Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 13.dp),
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .agClick(onClick = actions.onUploadLkm),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    AgRow(
-                        stringResource(R.string.install_upload_lkm_file),
-                        (uiState.lkmSelection as? LkmSelection.LkmUri)?.let { it.uri.toString() }
-                            ?: "未选择 · 当前 KMI ${uiState.currentKmi.ifBlank { "自动" }}",
-                        Ag.Mag, AgSettingsIcons.Export, showChev = true,
-                        onClick = actions.onUploadLkm,
+                    Box(
+                        Modifier
+                            .size(34.dp)
+                            .clip(RoundedCornerShape(11.dp))
+                            .background(Ag.TintInk),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            Icons.Rounded.PlayArrow, null,
+                            tint = Ag.Tx,
+                            modifier = Modifier.size(19.dp),
+                        )
+                    }
+                    Spacer(Modifier.width(13.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "使用本地 LKM 文件",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Ag.Tx,
+                        )
+                        val uri = (uiState.lkmSelection as? LkmSelection.LkmUri)?.uri
+                        if (uri != null) {
+                            Spacer(Modifier.height(3.dp))
+                            Text(
+                                uri.toString().substringAfterLast('/'),
+                                fontSize = 12.sp,
+                                color = Ag.Tx2,
+                                maxLines = 1,
+                            )
+                        }
+                    }
+                    Icon(
+                        Icons.Rounded.KeyboardArrowDown, null,
+                        tint = Ag.Chev,
+                        modifier = Modifier
+                            .size(20.dp)
+                            .rotate(-90f),
                     )
-                    if (uiState.canForceBackup) {
+                }
+            }
+            Spacer(Modifier.height(9.dp))
+
+            // ── 高级选项：原地展开，不跳页 ──
+            AgCard(
+                Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+            ) {
+                val arrow by animateFloatAsState(
+                    targetValue = if (advancedOpen) 180f else 0f,
+                    animationSpec = tween(200),
+                    label = "install-adv",
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .agClick {
+                            advancedOpen = !advancedOpen
+                            actions.onAdvancedOptionsClicked()
+                        }
+                        .padding(vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(Icons.Rounded.Tune, null, tint = Ag.Tx3, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(12.dp))
+                    Text(
+                        "高级选项",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Ag.Tx,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Icon(
+                        Icons.Rounded.KeyboardArrowDown, null,
+                        tint = Ag.Chev,
+                        modifier = Modifier
+                            .size(22.dp)
+                            .rotate(arrow),
+                    )
+                }
+                AnimatedVisibility(
+                    visible = advancedOpen,
+                    enter = fadeIn(tween(160)) + expandVertically(tween(200)),
+                    exit = fadeOut(tween(120)) + shrinkVertically(tween(160)),
+                ) {
+                    Column {
                         AgToggleRow(
-                            stringResource(R.string.install_force_backup),
-                            stringResource(R.string.install_force_backup_summary),
-                            Ag.Teal, Icons.Rounded.Check,
-                            divider = false,
+                            stringResource(R.string.allow_shell),
+                            stringResource(R.string.allow_shell_summary),
+                            Ag.Teal, Icons.Rounded.Tune,
                             trailing = {
                                 AgToggle(
-                                    checked = uiState.forceBackup,
-                                    onCheckedChange = { actions.onSelectForceBackup(!uiState.forceBackup) },
+                                    checked = uiState.allowShell,
+                                    onCheckedChange = { actions.onSelectAllowShell(!uiState.allowShell) },
                                     small = true,
                                 )
                             },
                         )
-                    }
-                }
-                Spacer(Modifier.height(10.dp))
-
-                // ── 高级选项（折叠）──
-                AgGHead("高级选项")
-                AgCard(
-                    Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
-                ) {
-                    AgRow(
-                        "高级选项",
-                        "允许 Shell / 启用 ADB Root",
-                        Ag.Vio, Icons.Rounded.Tune,
-                        trailing = {
-                            Text(
-                                if (advancedOpen) "收起" else "展开",
-                                fontSize = 12.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Ag.Vio,
-                            )
-                        },
-                        divider = advancedOpen,
-                        onClick = {
-                            advancedOpen = !advancedOpen
-                            actions.onAdvancedOptionsClicked()
-                        },
-                    )
-                    AnimatedVisibility(
-                        visible = advancedOpen,
-                        enter = fadeIn(tween(160)) + expandVertically(tween(200)),
-                        exit = fadeOut(tween(120)) + shrinkVertically(tween(160)),
-                    ) {
-                        Column {
+                        AgToggleRow(
+                            stringResource(R.string.enable_adb),
+                            stringResource(R.string.enable_adb_summary),
+                            Ag.Mag, Icons.Rounded.Tune,
+                            trailing = {
+                                AgToggle(
+                                    checked = uiState.enableAdb,
+                                    onCheckedChange = { actions.onSelectEnableAdb(!uiState.enableAdb) },
+                                    small = true,
+                                )
+                            },
+                            divider = uiState.canForceBackup,
+                        )
+                        if (uiState.canForceBackup) {
                             AgToggleRow(
-                                stringResource(R.string.allow_shell),
-                                stringResource(R.string.allow_shell_summary),
-                                Ag.Teal, Icons.Rounded.Check,
-                                trailing = {
-                                    AgToggle(
-                                        checked = uiState.allowShell,
-                                        onCheckedChange = { actions.onSelectAllowShell(!uiState.allowShell) },
-                                        small = true,
-                                    )
-                                },
-                            )
-                            AgToggleRow(
-                                stringResource(R.string.enable_adb),
-                                stringResource(R.string.enable_adb_summary),
-                                Ag.Mag, Icons.Rounded.Tune,
+                                stringResource(R.string.install_force_backup),
+                                stringResource(R.string.install_force_backup_summary),
+                                Ag.Amber, Icons.Rounded.Bolt,
                                 divider = false,
                                 trailing = {
                                     AgToggle(
-                                        checked = uiState.enableAdb,
-                                        onCheckedChange = { actions.onSelectEnableAdb(!uiState.enableAdb) },
+                                        checked = uiState.forceBackup,
+                                        onCheckedChange = { actions.onSelectForceBackup(!uiState.forceBackup) },
                                         small = true,
                                     )
                                 },
@@ -342,14 +341,14 @@ internal fun AgInstall(
                         }
                     }
                 }
-                Spacer(Modifier.height(10.dp))
             }
+            Spacer(Modifier.height(14.dp))
 
             // ── 安全提示 ──
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 2.dp, vertical = 4.dp),
+                    .padding(horizontal = 2.dp, vertical = 2.dp),
                 verticalAlignment = Alignment.Top,
             ) {
                 Icon(
@@ -375,12 +374,14 @@ internal fun AgInstall(
         Column(
             Modifier
                 .fillMaxWidth()
+                // 安装页是路由页，宿主没把导航栏 inset 交给内容，这里自己吃掉，
+                // 否则「下一步」会被手势条压住。
+                .navigationBarsPadding()
                 .background(Ag.headSurface())
                 .padding(horizontal = edge),
         ) {
             Box(Modifier.fillMaxWidth().height(1.dp).background(Ag.Line))
             Spacer(Modifier.height(12.dp))
-            val ready = uiState.installMethod != null
             val shape = RoundedCornerShape(16.dp)
             Box(
                 Modifier
@@ -409,94 +410,74 @@ internal fun AgInstall(
 }
 
 /**
- * 安装方式卡片：44dp 渐变衬底图标 + 标题/说明 + 右侧选中环。
- * 选中态用「1.5dp 渐变描边 + 极淡紫底」表达，不再整块套渐变，避免一屏三张卡全都发光。
+ * 安装方式行：左侧单选圆点 + 标题/说明 + 右侧图标块。
+ * 对齐原版安装页的「选择文件并修补 / 下载文件并修补」两行结构，但走晨曦玻璃的圆角与描边。
  */
 @Composable
-private fun AgMethodCard(
+private fun AgMethodRow(
     title: String,
     desc: String?,
     icon: ImageVector,
     tint: Color,
     selected: Boolean,
-    trailingHint: String?,
     onClick: () -> Unit,
 ) {
     val shape = RoundedCornerShape(20.dp)
-    Box(Modifier.fillMaxWidth()) {
-        // 选中态：渐变描边（外圈 1.5dp），未选中：普通发丝线
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(if (selected) Color(0x0F6C5CE7) else Ag.Card)
+            .border(
+                1.dp,
+                if (selected) Color(0x596C5CE7) else Ag.Line,
+                shape,
+            )
+            .agClick(onClick = onClick)
+            .padding(horizontal = 15.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // 单选圆点：未选是空心环，选中是渐变实心 + 白点
         Box(
             Modifier
-                .fillMaxWidth()
-                .clip(shape)
+                .size(20.dp)
+                .clip(CircleShape)
                 .then(
-                    if (selected) Modifier.background(Ag.Grad, shape)
-                    else Modifier.border(1.dp, Ag.Line, shape)
-                )
-                .padding(if (selected) 1.5.dp else 0.dp),
+                    if (selected) Modifier.background(Ag.Grad)
+                    else Modifier.border(1.6.dp, Ag.Chev, CircleShape)
+                ),
+            contentAlignment = Alignment.Center,
         ) {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(if (selected) 18.5.dp else 20.dp))
-                    .background(if (selected) Color(0x0F6C5CE7) else Ag.Card)
-                    .agClick(onClick = onClick)
-                    .padding(horizontal = 14.dp, vertical = 13.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
+            if (selected) {
                 Box(
                     Modifier
-                        .size(44.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(
-                            if (selected) Ag.Grad
-                            else SolidColor(tint.copy(alpha = Ag.ricAlpha(tint)))
-                        ),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        icon, null,
-                        tint = if (selected) Color.White else tint,
-                        modifier = Modifier.size(21.dp),
-                    )
-                }
-                Spacer(Modifier.width(13.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(title, fontSize = 14.5.sp, fontWeight = FontWeight.Bold, color = Ag.Tx)
-                    if (!desc.isNullOrBlank()) {
-                        Spacer(Modifier.height(3.dp))
-                        Text(desc, fontSize = 12.sp, lineHeight = 17.5.sp, color = Ag.Tx2, maxLines = 2)
-                    }
-                }
-                Spacer(Modifier.width(10.dp))
-                if (selected) {
-                    Box(
-                        Modifier
-                            .size(24.dp)
-                            .clip(CircleShape)
-                            .background(Ag.Grad),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(Icons.Rounded.Check, null, tint = Color.White, modifier = Modifier.size(15.dp))
-                    }
-                } else {
-                    Box(
-                        Modifier
-                            .clip(RoundedCornerShape(99.dp))
-                            .background(Ag.TintInk)
-                            .border(1.dp, Ag.Line, RoundedCornerShape(99.dp))
-                            .padding(horizontal = 10.dp, vertical = 5.dp),
-                    ) {
-                        Text(
-                            trailingHint ?: "选择",
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Ag.Tx2,
-                            maxLines = 1,
-                        )
-                    }
-                }
+                        .size(7.dp)
+                        .clip(CircleShape)
+                        .background(Color.White),
+                )
             }
+        }
+        Spacer(Modifier.width(14.dp))
+        Column(Modifier.weight(1f)) {
+            Text(title, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Ag.Tx)
+            if (!desc.isNullOrBlank()) {
+                Spacer(Modifier.height(3.dp))
+                Text(desc, fontSize = 12.5.sp, lineHeight = 18.sp, color = Ag.Tx2, maxLines = 2)
+            }
+        }
+        Spacer(Modifier.width(10.dp))
+        Box(
+            Modifier
+                .size(34.dp)
+                .clip(RoundedCornerShape(11.dp))
+                .background(if (selected) Ag.Grad else SolidColor(tint.copy(alpha = Ag.ricAlpha(tint)))),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                icon, null,
+                tint = if (selected) Color.White else tint,
+                modifier = Modifier.size(18.dp),
+            )
         }
     }
 }

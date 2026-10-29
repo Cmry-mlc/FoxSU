@@ -634,7 +634,19 @@ fun MainScreen(
         } else {
             val bottomBar = @Composable {
                 Box(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        // 胶囊下方必须是实底：设计稿里 .dock 是浮在不透明页面底上的，
+                        // 之前这里完全透明，页面内容/壁纸会从胶囊四周和下方透出来，
+                        // 看起来像"底栏是空的"。用页面色做一段由透明到实色的过渡，
+                        // 既盖住透出的内容，又不会在浅色底上留下一条生硬的横线。
+                        .background(
+                            Brush.verticalGradient(
+                                0f to Color.Transparent,
+                                0.45f to surfaceColor,
+                                1f to surfaceColor,
+                            )
+                        )
                 ) {
                     BottomBar(
                         blurBackdrop = blurBackdrop,

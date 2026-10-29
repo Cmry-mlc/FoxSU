@@ -288,8 +288,7 @@ fun InstallScreen() {
         }
     )
 
-    when (LocalUiMode.current) {
-        UiMode.Miuix -> me.weishu.kernelsu.ui.screen.ag.AgInstall(state, actions)
-        UiMode.Material, UiMode.Fresh, UiMode.Glass, UiMode.Nocturne -> InstallScreenMaterial(state, actions, snackbarHost)
-    }
+    // 安装页全皮肤统一：五套皮肤共用同一套界面与交互（结构对齐原版单页安装），
+    // 不再按 uiMode 分发到四套视觉各不相同、功能入口还不一致的实现。
+    me.weishu.kernelsu.ui.screen.ag.AgInstall(state, actions)
 }

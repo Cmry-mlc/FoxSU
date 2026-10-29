@@ -360,17 +360,25 @@ fun AgToggleRow(
     }
 }
 
-/** 色衬图标容器 .ric：38dp 圆角 12 + 10%/12% tint 底 + 19px 描边图标 */
+/**
+ * 色衬图标块 .ric：40dp / 圆角 14 / 柔和浅色底 + 细描边 + 18px 线性图标。
+ *
+ * 参考定稿样式：方块底是「很淡的同色 + 一点点白」，不是透明的深色块；
+ * 图标本身保持主题色。之前 38dp/圆角 12 在长列表里显得密，这里放大一档并压淡底色，
+ * 深色模式下底色稍重一点，避免整片糊在卡面上。
+ */
 @Composable
-fun AgRic(tint: Color, icon: ImageVector, size: Dp = 38.dp) {
+fun AgRic(tint: Color, icon: ImageVector, size: Dp = 40.dp) {
+    val bgAlpha = Ag.ricAlpha(tint) * (if (Ag.isDark) 1.5f else 1f)
     Box(
         Modifier
             .size(size)
-            .clip(RoundedCornerShape(12.dp))
-            .background(tint.copy(alpha = Ag.ricAlpha(tint))),
+            .clip(RoundedCornerShape(14.dp))
+            .background(tint.copy(alpha = bgAlpha))
+            .border(1.dp, tint.copy(alpha = if (Ag.isDark) 0.10f else 0.06f), RoundedCornerShape(14.dp)),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, null, tint = tint, modifier = Modifier.size(19.dp))
+        Icon(icon, null, tint = tint, modifier = Modifier.size(18.dp))
     }
 }
 

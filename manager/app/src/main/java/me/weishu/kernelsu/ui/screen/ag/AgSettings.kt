@@ -32,15 +32,12 @@ import androidx.compose.material.icons.rounded.Construction
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,12 +51,8 @@ import me.weishu.kernelsu.R
 import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.component.StylePickerDialog
-import me.weishu.kernelsu.ui.component.rebootlistpopup.getRebootListOption
-import me.weishu.kernelsu.ui.component.rebootlistpopup.rememberRebootAction
 import me.weishu.kernelsu.ui.screen.settings.SettingsScreenActions
 import me.weishu.kernelsu.ui.screen.settings.SettingsUiState
-import me.weishu.kernelsu.ui.util.DynamicManager
-import kotlinx.coroutines.launch
 
 /**
  * 晨曦玻璃 · 设置（设计稿 p-set）。
@@ -75,12 +68,6 @@ fun AgSettings(
 ) {
     val context = LocalContext.current
     var showStyle by remember { mutableStateOf(false) }
-    var showReboot by remember { mutableStateOf(false) }
-    var showDynamic by remember { mutableStateOf(false) }
-    var dynamicBusy by remember { mutableStateOf(false) }
-    var dynamicMsg by remember { mutableStateOf<String?>(null) }
-    val scope = rememberCoroutineScope()
-    val reboot = rememberRebootAction()
 
     val styleName = when (LocalUiMode.current.value) {
         "miuix" -> "晨曦玻璃"
@@ -179,15 +166,21 @@ fun AgSettings(
                         Ag.Mag, AgSettingsIcons.Log,
                         trailing = { AgToggle(checked = uiState.isSulogEnabled, onCheckedChange = { actions.onSetSulogEnabled(!uiState.isSulogEnabled) }) },
                     )
-                    AgRow(
-                        "设为动态管理器",
-                        "把当前 App 登记为内核管理器，换包名/签名后也能识别",
-                        Ag.Vio, AgSettingsIcons.Shield, showChev = true,
-                        onClick = { showDynamic = true },
+                    // 恢复上游设置项：安装/更新/开关模块后用的重启方式。
+                    // 面板里的「重启 / Recovery / EDL」入口仍在主页电源键里，设置页只保留这个开关。
+                    AgToggleRow(
+                        stringResource(R.string.settings_soft_reboot),
+                        stringResource(R.string.settings_soft_reboot_summary),
+                        Ag.Amber, AgSettingsIcons.SoftReboot,
+                        trailing = {
+                            AgToggle(
+                                checked = uiState.isLateLoadMode || uiState.useSoftReboot,
+                                onCheckedChange = { actions.onSetUseSoftReboot(!uiState.useSoftReboot) },
+                                small = true,
+                            )
+                        },
+                        divider = false,
                     )
-                    AgRow(
-                        "重启管理", "重启 / 软重启 / Recovery / Bootloader / EDL",
-                        Ag.Amber, AgSettingsIcons.SoftReboot, showChev = true, onClick = { showReboot = true }, divider = false)
                 }
             }
 
@@ -234,42 +227,5 @@ fun AgSettings(
 
     if (showStyle) {
         StylePickerDialog(current = LocalUiMode.current, onDismiss = { showStyle = false })
-    }
-    if (showReboot) {
-        AgRebootSheet(onDismiss = { showReboot = false })
-    }
-
-    if (showDynamic) {
-        AlertDialog(
-            onDismissRequest = { if (!dynamicBusy) showDynamic = false },
-            title = { Text("设为动态管理器", fontWeight = FontWeight.Bold) },
-            text = {
-                Text(
-                    dynamicMsg ?: "KernelSU 默认按「包名 + 签名」认管理器。\n" +
-                        "设为动态管理器后，内核直接登记当前 App（appid ${DynamicManager.selfAppId()}），" +
-                        "换包名或被重新签名也能被识别。\n\n" +
-                        "需要内核开放 ksu_debug_manager_appid 接口；不支持时会如实提示。",
-                    fontSize = 13.5.sp, lineHeight = 21.sp,
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    enabled = !dynamicBusy,
-                    onClick = {
-                        dynamicBusy = true
-                        scope.launch {
-                            val r = DynamicManager.registerSelf(context.packageName)
-                            dynamicMsg = r.getOrElse { it.message ?: "设置失败" }
-                            dynamicBusy = false
-                        }
-                    },
-                ) { Text(if (dynamicBusy) "设置中…" else "设为动态管理器") }
-            },
-            dismissButton = {
-                TextButton(enabled = !dynamicBusy, onClick = { showDynamic = false; dynamicMsg = null }) {
-                    Text("关闭")
-                }
-            },
-        )
     }
 }

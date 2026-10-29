@@ -348,10 +348,11 @@ private fun OnbPage(index: Int, offset: Float, t: OnbTokens) {
                     title = stringResource(R.string.onboarding_title_4),
                     body = stringResource(R.string.onboarding_body_4),
                     rows = listOf(
-                        OnbRow(Icons.Rounded.Shield, R.string.onboarding_fe_superuser, R.string.onboarding_fe_superuser_sum),
+                        OnbRow(Icons.Rounded.Bolt, R.string.onboarding_fe_install, R.string.onboarding_fe_install_sum),
                         OnbRow(Icons.Rounded.Extension, R.string.onboarding_fe_module, R.string.onboarding_fe_module_sum),
-                        OnbRow(Icons.Rounded.Bolt, R.string.onboarding_fe_flash, R.string.onboarding_fe_flash_sum),
-                        OnbRow(Icons.Rounded.Terminal, R.string.onboarding_fe_selinux, R.string.onboarding_fe_selinux_sum),
+                        OnbRow(Icons.Rounded.Shield, R.string.onboarding_fe_profile, R.string.onboarding_fe_profile_sum),
+                        OnbRow(Icons.Rounded.Terminal, R.string.onboarding_fe_state, R.string.onboarding_fe_state_sum),
+                        OnbRow(Icons.Rounded.Code, R.string.onboarding_fe_sulog, R.string.onboarding_fe_sulog_sum),
                     ),
                 )
                 else -> RepoPanel(t)
