@@ -11,3 +11,7 @@ build_manager: build_ksud
 clippy:
     cargo fmt
     cross clippy --target aarch64-linux-android --release
+
+# 检查内核 / 管理器 / ksud 三处包名与签名常量是否一致
+doctor:
+    ./scripts/manager-identity.sh show

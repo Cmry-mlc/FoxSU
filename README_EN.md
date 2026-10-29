@@ -125,12 +125,29 @@ cd manager
 ```
 
 The version code is `30000 + git commit count`; the version name comes from `git describe`.
+Release builds (tag-triggered) and signing-key setup are documented in [RELEASE.md](RELEASE.md).
+
 
 Kernel and userspace:
 
 - `kernel/` — kernel module, built against a device kernel tree or the DDK; after changing the package name or signature constants, the kernel or LKM must be rebuilt for it to take effect
 - `userspace/ksud/` — Rust daemon, `cargo ndk -t arm64-v8a build`
 - `.github/workflows/` — manager, ksud, LKM and full release pipelines
+
+### Changing the package name / signing key
+
+The kernel only recognises a manager when both conditions hold: the package under `/data/app` equals `KSU_PACKAGE_NAME`, and the APK's v2 signing certificate length and SHA-256 equal `KSU_EXPECTED_SIZE` / `KSU_EXPECTED_HASH` (see `kernel/manager/throne_tracker.c`). Those constants live in `kernel/Kbuild`, `manager/app/build.gradle.kts` and `userspace/ksud/build.rs`; touching only one of them, or rebuilding the APK without the LKM, shows up as **"not installed" in the manager, no root prompt, and no way to grant access**.
+
+One script keeps them in sync and derives the signature constants from a keystore:
+
+```bash
+./scripts/manager-identity.sh set com.your.package          # sync all three defaults
+KEYSTORE_PASSWORD=****** ./scripts/manager-identity.sh sign /path/to/your.jks your_alias
+./scripts/manager-identity.sh show                          # are the three consistent?
+./scripts/manager-identity.sh check app-release.apk         # will this APK be recognised?
+```
+
+Then rebuild in order: `ksud` → manager APK → `kernelsu.ko`/LKM, reflash the boot image, and reinstall the manager. Allowlist entries from the old package stay keyed by UID and are harmless, but you will need to grant access again.
 
 ## Relationship to KernelSU
 

@@ -125,12 +125,29 @@ cd manager
 ```
 
 版本号取自 git 提交数（`30000 + commit count`），版本名取自 `git describe`。
+正式包（tag 触发）的密钥、Secrets 与发版步骤见 [RELEASE.md](RELEASE.md)。
+
 
 内核与用户态：
 
 - `kernel/`：内核模块，按设备内核树或 DDK 编译；改动包名 / 签名常量后必须重新编译内核或 LKM 才会生效
 - `userspace/ksud/`：Rust 用户态守护进程，`cargo ndk -t arm64-v8a build`
 - `.github/workflows/`：管理器、ksud、LKM 与整包发布流程
+
+### 改包名 / 换签名
+
+内核只按两个条件认管理器：`/data/app` 里的包名等于 `KSU_PACKAGE_NAME`，且该 APK 的 v2 签名证书长度与 SHA-256 等于 `KSU_EXPECTED_SIZE` / `KSU_EXPECTED_HASH`（见 `kernel/manager/throne_tracker.c`）。两处常量分布在 `kernel/Kbuild`、`manager/app/build.gradle.kts`、`userspace/ksud/build.rs`，只改一处、或者只重打 APK 不重编 LKM，表现都是**管理器显示"未安装"、请求 root 不弹窗、点了也授不了权**。
+
+用脚本一次改齐，并从密钥库生成签名常量：
+
+```bash
+./scripts/manager-identity.sh set com.your.package          # 同步三处默认包名
+KEYSTORE_PASSWORD=****** ./scripts/manager-identity.sh sign /path/to/your.jks your_alias
+./scripts/manager-identity.sh show                          # 检查三处是否一致
+./scripts/manager-identity.sh check app-release.apk         # 检查 APK 能否被内核认成管理器
+```
+
+改完按 `ksud` → 管理器 APK → `kernelsu.ko`/LKM 的顺序重编并重刷启动镜像，再覆盖安装管理器。旧包名留下的白名单条目按 UID 记录，不会影响新包名，但需要重新授权一次。
 
 ## 与 KernelSU 的关系
 

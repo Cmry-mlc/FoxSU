@@ -178,8 +178,8 @@ KSU_PACKAGE_NAME ?= com.foxsu.manager
 else
 KSU_PACKAGE_NAME ?= com.foxsu.manager.pr
 endif
-KSU_EXPECTED_SIZE ?= 0x0360
-KSU_EXPECTED_HASH ?= 436cd0842ed146ae35b386c1b2253634944d6741f1a0278b392f74c4063c8b86
+KSU_EXPECTED_SIZE ?= 0x0528
+KSU_EXPECTED_HASH ?= b0ab9e7d3aab398cacb972cba34c2c561ea665bceace5f0d26681b834e923edd
 
 $(info -- KernelSU Manager package name: $(KSU_PACKAGE_NAME))
 $(info -- KernelSU Manager signature size: $(KSU_EXPECTED_SIZE))
