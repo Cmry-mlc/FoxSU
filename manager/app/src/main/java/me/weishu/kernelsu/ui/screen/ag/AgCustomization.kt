@@ -545,16 +545,26 @@ internal fun AgCustomization(
                         }, small = true)
                     },
                 )
+                // 左右滑动切换四个 Tab 的总开关。
+                // 「无拦截」让 HorizontalPager 直接接管横滑，列表横滑永远优先；
+                // 「跨轴拦截」会接管竖直列表上的横滑（列表带 verticalScroll 时它更灵，
+                // 但也更容易和列表自己的回弹打架）——默认用后者。
                 AgToggleRow(
-                    "页面切换手势", "切换页面时的手势拦截方式",
+                    "滑动切换 Tab",
+                    when (repo.pagerInterceptionMode) {
+                        0 -> "关 · 只能点底栏图标切换（横滑交给页面里的列表）"
+                        1 -> "开 · 横滑按系统最顺的方式处理，长列表里也跟手（默认）"
+                        else -> "开 · 横滑只在页面边缘响应，中间留给页面自己"
+                    },
                     Ag.Teal, AgSettingsIcons.PagerGesture,
                     trailing = {
                         var mode by remember { mutableStateOf(repo.pagerInterceptionMode) }
                         AgPick(
                             text = when (mode) {
-                                1 -> "跨轴拦截"; 2 -> "仅边缘"; else -> "无拦截"
+                                0 -> "关"; 1 -> "开"; else -> "仅边缘"
                             } + " ⇅",
                             onClick = {
+                                // 0 → 1（开）→ 2（仅边缘）→ 0（关）
                                 val next = (mode + 1) % 3
                                 mode = next
                                 settingsActions?.onSetPagerInterceptionMode?.invoke(next)
@@ -915,6 +925,41 @@ internal fun AgCustomization(
                     display = "${repo.moduleDescriptionMaxLines} 行",
                     steps = 6,
                     onChange = { settingsActions?.onSetModuleDescriptionMaxLines?.invoke(it.toInt()) },
+                )
+            }
+
+            // ══════════ 底栏与手势失灵修复 ══════════
+            // 底栏沉底（读秒收起）之后如果没被点回来，或者手势被切成「关」，
+            // 用户会以为「整个导航坏了」——给一个不依赖底栏的恢复口。
+            Spacer(Modifier.height(14.dp))
+            AgCard {
+                AgRow(
+                    "底栏 / 手势失灵？",
+                    "底栏一直不回来、或者滑不动页面时点这里：取消沉底、恢复滑动切换",
+                    Ag.Amber, AgSettingsIcons.PagerGesture,
+                    trailing = {
+                        Box(
+                            Modifier
+                                .height(30.dp)
+                                .clip(RoundedCornerShape(99.dp))
+                                .background(Ag.Amber.copy(alpha = 0.16f))
+                                .border(1.dp, Ag.Amber.copy(alpha = 0.45f), RoundedCornerShape(99.dp))
+                                .agClick {
+                                    // 两件事一起复位：底栏沉底 + 横滑被关
+                                    CustomizationStore.setDockAutoHide(0)
+                                    settingsActions?.onSetPagerInterceptionMode?.invoke(1)
+                                    Toast.makeText(
+                                        context,
+                                        "已取消自动收起并恢复滑动切换，回主页即可看到底栏",
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                }
+                                .padding(horizontal = 12.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text("修复", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = Ag.Amber)
+                        }
+                    },
                 )
             }
 
