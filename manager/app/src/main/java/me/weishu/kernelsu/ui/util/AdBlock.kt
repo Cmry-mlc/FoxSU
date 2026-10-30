@@ -50,10 +50,150 @@ object AdBlock {
         ),
     )
 
+    /**
+     * 手机厂商系统广告专项规则（内置，不走网络）。
+     *
+     * 这些域名是厂商系统应用（安全中心 / 应用商店 / 主题 / 天气 / 云服务推广位）的
+     * 广告与统计通道，主流公开列表普遍不收录（怕误杀系统功能），所以这里按厂商分组
+     * 内置。默认全部关闭，用户按自己的机型勾选。
+     *
+     * risk 说明：affected 是该组可能连带影响的功能，界面上直接标出来，
+     * 避免用户屏蔽完发现应用商店打不开 / 云同步失灵。
+     */
+    data class VendorGroup(
+        val id: String,
+        val name: String,
+        val desc: String,
+        val affected: String,     // 副作用提示（空 = 基本无副作用）
+        val domains: List<String>,
+    )
+
+    val VENDORS = listOf(
+        VendorGroup(
+            "xiaomi", "小米 / 红米（MIUI · HyperOS）",
+            "安全中心推荐位、应用商店推广、天气/日历广告、MIUI 统计上报",
+            "可能影响应用商店更新提示、系统流量校准",
+            listOf(
+                // 广告投放与统计
+                "adv.sec.miui.com", "api.ad.xiaomi.com", "api.ad.miui.com",
+                "test.ad.xiaomi.com", "sdkconfig.ad.xiaomi.com", "adinfo.ra1.xlmc.sec.miui.com",
+                "api.ra1.xlmc.sandai.net", "xlmc.sec.miui.com", "api.tw06.xlmc.sec.miui.com",
+                "data.mistat.xiaomi.com", "tracking.miui.com",
+                "f3.mi-stat.gslb.mi-idc.com", "app01.nodes.gslb.mi-idc.com",
+                "app02.nodes.gslb.mi-idc.com", "resolver.gslb.mi-idc.com",
+                "info.analysis.kp.sec.miui.com", "flash.sec.miui.com",
+                // 浏览器/下载/视频等内容推荐位
+                "starfish.pandora.xiaomi.com", "mishop.pandora.xiaomi.com",
+                "misc.pandora.xiaomi.com", "bss.pandora.xiaomi.com",
+                "dvb.pandora.xiaomi.com", "mishop.cdn.pandora.xiaomi.com",
+                "image.box.xiaomi.com", "cdn.fds.api.xiaomi.com", "cdn-thumb.fds.api.xiaomi.com",
+                "o2o.api.xiaomi.com", "a0.app.xiaomi.com", "api.installer.xiaomi.com",
+                "sousuo.xm.sjzhushou.com", "m.sjzhushou.com", "twin13a131.sandai.net",
+                "etl-xlmc-ssl.sandai.net", "cn.app.chat.xiaomi.net", "mibind.chat.gslb.mi-idc.com",
+                // 安全中心（avlyun 反病毒推广，不影响本地病毒库更新）
+                "log.avlyun.sec.intl.miui.com", "update.avlyun.sec.miui.com",
+                "ixav-cse.avlyun.com", "logupdate.avlyun.sec.miui.com",
+                "miui-fxcse.avlyun.com", "sdkconf.avlyun.com", "miav-cse.avlyun.com",
+                // 广告/推荐附属
+                "pic.xcarimg.com", "yun.rili.cn", "zhwnlapi.etouch.cn", "i3.go2yd.com",
+            ),
+        ),
+        VendorGroup(
+            "huawei", "华为（EMUI）",
+            "应用市场推广、华为广告平台、hiad 投放链路",
+            "可能影响应用市场更新与云空间部分功能",
+            listOf(
+                "adx.huawei.com", "ads.huawei.com", "ad.hicloud.com",
+                "metrics.data.hicloud.com", "metrics2.data.hicloud.com",
+                "ads-drcn.platform.dbankcloud.cn", "hiad.huawei.com",
+                "grs.hicloud.com.ads", "aw.dw.impact-ad.jp",
+                "logservice.hicloud.com", "logbak.hicloud.com",
+            ),
+        ),
+        VendorGroup(
+            "honor", "荣耀（MagicOS）",
+            "荣耀广告平台、应用市场推广、推送附带推荐",
+            "可能影响应用市场更新提示",
+            listOf(
+                "ads-drcn.platform.hihonorcloud.com", "metrics-ad-drcn.dt.hihonorcloud.com",
+                "tracking.ads.honor.com", "adx.hihonor.com", "o2o.hihonorcloud.com",
+                "sdkconfig.ad.hihonor.com", "events.gcloud.hihonor.com",
+            ),
+        ),
+        VendorGroup(
+            "oppo", "OPPO / 一加 / realme（ColorOS）",
+            "HeyTap 广告 SDK、应用商店推广、开屏与信息流",
+            "可能影响软件商店更新、HeyTap 云服务",
+            listOf(
+                "adata.heytapmobi.com", "adx.heytapmobi.com", "adsfs.heytapimage.com",
+                "adsfs-sdkconfig.heytapimage.com", "img-c.heytapimage.com",
+                "iou.oppomobile.com", "cn.ad.oppomobile.com", "adx.oppomobile.com",
+                "adv.oppomobile.com", "sdk.oppomobile.com",
+                "g1.oppomobile.com", "ads.oppomobile.com", "api.ads.heytapmobi.com",
+                "tracker.heytapmobi.com", "event.heytapmobi.com",
+            ),
+        ),
+        VendorGroup(
+            "vivo", "vivo / iQOO（OriginOS）",
+            "vivo 广告联盟、应用商店推广、系统推荐位",
+            "可能影响应用商店更新提示",
+            listOf(
+                "sdk.ads.vivo.com.cn", "adlogs.vivo.com.cn", "adx.vivo.com.cn",
+                "adnet.vivo.com.cn", "ads.vivo.com.cn", "union.vivo.com.cn",
+                "t.app.vivo.com.cn", "event.vivo.com.cn", "metrics.vivo.com.cn",
+                "ad.vivo.com.cn", "api.ad.vivo.com.cn",
+            ),
+        ),
+        VendorGroup(
+            "meizu", "魅族（Flyme）",
+            "Flyme 推送广告、应用商店推广、主题推荐",
+            "可能影响应用商店更新",
+            listOf(
+                "adx.meizu.com", "ads.meizu.com", "api.ad.meizu.com",
+                "push.meizu.com", "track.meizu.com", "stat.meizu.com",
+                "appcenter.meizu.com", "openapi.meizu.com",
+            ),
+        ),
+        VendorGroup(
+            "samsung", "三星（One UI）",
+            "三星广告平台（Samsung Ads）、应用商店推荐位",
+            "可能影响 Galaxy Store 更新",
+            listOf(
+                "samsunganalytics.com", "analytics.samsung.com", "ads.samsung.com",
+                "adx.samsung.com", "sdk-ad.samsung.com", "gads.samsung.com",
+                "impression.samsung.com", "samsungads.com",
+            ),
+        ),
+        VendorGroup(
+            "adnet", "国内广告联盟（穿山甲 / 优量汇 / 快手 / 百青藤）",
+            "App 开屏与信息流广告的 SDK 通道，命中后绝大多数 App 的开屏广告会一起消失",
+            "极少数 App 可能因为广告加载失败而白屏或闪退",
+            listOf(
+                // 穿山甲（字节）
+                "pangle.io", "img.pangle.cn", "sdk.pangle.cn", "api.pangle.cn",
+                "log.pangle.cn", "ad.pangle.cn", "open.e.kuaishou.com",
+                "pangolin-sdk-toutiao.com", "pangolin.snssdk.com", "ad.snssdk.com",
+                "gromore.pangle.cn", "csjplatform.com",
+                // 优量汇（腾讯）
+                "gdt.qq.com", "mi.gdt.qq.com", "adsmind.gdtimg.com", "adx.gdt.qq.com",
+                "pgdt.gtimg.cn", "e.qq.com", "l.qq.com", "c.gdtimg.com",
+                // 快手联盟
+                "adx.kuaishou.com", "ad.e.kuaishou.com", "adlogs.kuaishou.com",
+                "sdk.e.kuaishou.com", "openad.kuaishou.com",
+                // 百度百青藤
+                "mobads.baidu.com", "cpro.baidu.com", "union.baidu.com",
+                "pos.baidu.com", "cbjs.baidu.com", "s.baidu.com.bdstatic.com",
+                // 拼多多/京东等联盟链接
+                "ad.pinduoduo.com", "ads.jd.com",
+            ),
+        ),
+    )
+
     data class Status(
         val installed: Boolean,   // 模块已安装
         val enabled: Boolean,     // 模块未被 disable
         val sourceId: String,
+        val vendorIds: String,
         val entries: Int,         // 当前 hosts 条目数
         val updatedAt: String,    // 上次更新时间（epoch ms，0 = 未更新过）
         val whitelist: List<String>,
@@ -88,7 +228,12 @@ object AdBlock {
         val entries = cfg(shell, "entries").toIntOrNull() ?: 0
         val updatedAt = cfg(shell, "updated_at")
         val wl = cfg(shell, "whitelist").split('\n').map { it.trim() }.filter { it.isNotEmpty() }
-        return Status(installed, enabled, cfg(shell, "source").ifBlank { "antiad" }, entries, updatedAt, wl)
+        return Status(
+            installed, enabled,
+            cfg(shell, "source").ifBlank { "antiad" },
+            cfg(shell, "vendor"),
+            entries, updatedAt, wl,
+        )
     }
 
     // ── 下载与合并 ────────────────────────────────────────────────────────
@@ -155,17 +300,26 @@ object AdBlock {
 
     data class InstallResult(val ok: Boolean, val message: String)
 
-    fun install(sourceIds: List<String>, customUrls: List<String>, useMirror: Boolean, whitelist: Set<String>): InstallResult {
+    fun install(
+        sourceIds: List<String>,
+        vendorIds: Set<String>,
+        customUrls: List<String>,
+        useMirror: Boolean,
+        whitelist: Set<String>,
+    ): InstallResult {
         val shell = sh()
         val texts = mutableListOf<String>()
         val urls = SOURCES.filter { it.id in sourceIds }.map { it.url } + customUrls.filter { it.isNotBlank() }
-        if (urls.isEmpty()) return InstallResult(false, "未选择任何规则源")
+        val vendorText = VENDORS.filter { it.id in vendorIds }.flatMap { it.domains }.joinToString("\n") { "0.0.0.0 $it" }
+        if (urls.isEmpty() && vendorText.isBlank()) return InstallResult(false, "未选择任何规则源")
         for (u in urls) {
             val data = download(u, useMirror) ?: return InstallResult(false, "下载失败：$u\n请检查网络或开启 GitHub 加速镜像")
             texts.add(String(data, Charsets.UTF_8))
         }
+        if (vendorText.isNotBlank()) texts.add(vendorText)
         val (merged, count) = merge(texts, whitelist)
-        if (count < 1000) return InstallResult(false, "合并后仅 $count 条，疑似下载不完整，已放弃安装")
+        // 只有厂商规则时条目数天然很少，阈值按是否有网络源区分
+        if (urls.isNotEmpty() && count < 1000) return InstallResult(false, "合并后仅 $count 条，疑似下载不完整，已放弃安装")
 
         return try {
             val tmp = File.createTempFile("hosts", ".foxsu")
@@ -192,6 +346,7 @@ object AdBlock {
                 "rm -f $MODULE_DIR/disable",
                 "mkdir -p $WORK_DIR",
                 "printf '%s' ${escape(sourceIds.joinToString(","))} > $WORK_DIR/source",
+                "printf '%s' ${escape(vendorIds.joinToString(","))} > $WORK_DIR/vendor",
                 "printf '%s' ${escape(System.currentTimeMillis().toString())} > $WORK_DIR/updated_at",
                 "printf '%s' ${escape(count.toString())} > $WORK_DIR/entries",
                 "printf '%s' ${escape(whitelist.joinToString("\n"))} > $WORK_DIR/whitelist",

@@ -60,6 +60,7 @@ fun AgAdBlock(onBack: () -> Unit) {
 
     var status by remember { mutableStateOf<AdBlock.Status?>(null) }
     var selected by remember { mutableStateOf(setOf("antiad")) }
+    var vendors by remember { mutableStateOf(setOf<String>()) }
     var customUrl by remember { mutableStateOf("") }
     var useMirror by remember { mutableStateOf(true) }
     var liveCount by remember { mutableStateOf(0) }
@@ -79,6 +80,7 @@ fun AgAdBlock(onBack: () -> Unit) {
             status = st
             selected = AdBlock.SOURCES.filter { it.id in st.sourceId.split(',') }.map { it.id }.toSet()
             if (selected.isEmpty()) selected = setOf("antiad")
+            vendors = st.vendorIds.split(',').map { it.trim() }.filter { it.isNotEmpty() }.toSet()
             wlText = st.whitelist.joinToString("\n")
             liveCount = withContext(Dispatchers.IO) { AdBlock.liveEntries() }
         }
@@ -186,6 +188,50 @@ fun AgAdBlock(onBack: () -> Unit) {
                 }
             }
 
+            // ── 手机厂商广告 ──
+            item { AgGHead("手机厂商系统广告（内置，默认关闭）") }
+            item {
+                AgCard(Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)) {
+                    AdBlock.VENDORS.forEachIndexed { i, v ->
+                        val on = v.id in vendors
+                        Column(Modifier.fillMaxWidth()) {
+                            Row(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable { vendors = if (on) vendors - v.id else vendors + v.id }
+                                    .padding(top = 14.dp, bottom = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                AgRic(if (on) Ag.Vio else Ag.Tx2, AgSettingsIcons.Shield, size = 34.dp)
+                                Spacer(Modifier.width(14.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Text(v.name, fontSize = 13.5.sp, fontWeight = FontWeight.Bold, color = Ag.Tx)
+                                    Text("${v.domains.size} 条 · ${v.desc}", fontSize = 11.sp, lineHeight = 16.sp, color = Ag.Tx2)
+                                }
+                                Box(
+                                    Modifier
+                                        .size(20.dp)
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(if (on) Ag.Vio else Color.Transparent)
+                                        .border(1.5.dp, if (on) Ag.Vio else Ag.Line, RoundedCornerShape(6.dp)),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    if (on) Text("✓", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                            if (v.affected.isNotEmpty()) {
+                                Text(
+                                    "⚠ ${v.affected}",
+                                    fontSize = 10.5.sp, lineHeight = 15.sp, color = Color(0xFFC98A2E),
+                                    modifier = Modifier.padding(start = 48.dp, bottom = 10.dp),
+                                )
+                            } else Spacer(Modifier.height(8.dp))
+                        }
+                        if (i < AdBlock.VENDORS.lastIndex) Box(Modifier.fillMaxWidth().height(1.dp).background(Ag.Line))
+                    }
+                }
+            }
+
             // ── 选项 ──
             item {
                 AgCard(Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)) {
@@ -225,7 +271,7 @@ fun AgAdBlock(onBack: () -> Unit) {
                             busy = true
                             scope.launch {
                                 val r = withContext(Dispatchers.IO) {
-                                    AdBlock.install(selected.toList(), listOf(customUrl), useMirror,
+                                    AdBlock.install(selected.toList(), vendors, listOf(customUrl), useMirror,
                                         status?.whitelist?.toSet() ?: emptySet())
                                 }
                                 busy = false
@@ -264,7 +310,7 @@ fun AgAdBlock(onBack: () -> Unit) {
 
             item {
                 Text(
-                    "规则全部来自国内开源仓库：anti-AD（每日更新，国内最权威反广告域名库）、AdGuard 中文过滤。不含国外列表，避免误杀国内 App。屏蔽通过 hosts 域名解析实现，对 App 内嵌 HTTPS 广告同样有效。",
+                    "网络规则来自国内开源仓库：anti-AD（每日更新）、AdGuard 中文过滤，不含国外列表。厂商广告为内置专项清单，按自己机型勾选；带 ⚠ 的分组会附带影响对应功能。屏蔽通过 hosts 域名解析实现，对 App 内嵌 HTTPS 广告同样有效。",
                     fontSize = 11.sp, lineHeight = 16.sp, color = Ag.Tx2.copy(alpha = 0.7f),
                     modifier = Modifier.padding(horizontal = 6.dp),
                 )
