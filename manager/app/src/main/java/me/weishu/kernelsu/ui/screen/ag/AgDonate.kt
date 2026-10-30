@@ -154,37 +154,41 @@ fun AgDonate(
             }
 
             item {
-                AgGHead("感谢")
+                AgGHead("关于作者")
                 AgCard(
                     Modifier.fillMaxWidth(),
                     contentPadding = PaddingValues(horizontal = 18.dp, vertical = 18.dp),
                 ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        AgRic(Ag.Vio, AgSettingsIcons.UserProfile, size = 36.dp)
+                        Spacer(Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                "尘梦如烟",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Ag.Tx,
+                            )
+                            Text(
+                                "FoxSu 作者 · 开发与设计",
+                                fontSize = 11.5.sp,
+                                color = Ag.Tx3,
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(12.dp))
                     Text(
-                        "谢谢你把 FoxSu 装进手机里。",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Ag.Tx,
+                        "本项目由尘梦如烟与 AI 辅助共同完成：需求定义、设计取舍、功能验收由作者负责，界面实现、代码编写、问题排查与文档撰写由 AI 协助完成。",
+                        fontSize = 12.sp,
+                        lineHeight = 19.sp,
+                        color = Ag.Tx2,
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        "这个项目从一行配色开始，是每一次反馈、每一个 Issue、每一句「好用」把它推到了今天。无论是提建议、报问题、帮忙翻译，还是只是安安静静地用着，都是实实在在的支持。",
+                        "所有代码开源（GPL-3.0），可自由审阅、修改与分发。",
                         fontSize = 12.sp,
                         lineHeight = 19.sp,
                         color = Ag.Tx2,
-                    )
-                    Spacer(Modifier.height(10.dp))
-                    Text(
-                        "也感谢 KernelSU、Miuix、Magic Mount-rs、susfs 等开源项目，FoxSu 是站在它们肩上的。",
-                        fontSize = 12.sp,
-                        lineHeight = 19.sp,
-                        color = Ag.Tx2,
-                    )
-                    Spacer(Modifier.height(14.dp))
-                    Text(
-                        "—— FoxSu",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Ag.Tx3,
                     )
                 }
             }
