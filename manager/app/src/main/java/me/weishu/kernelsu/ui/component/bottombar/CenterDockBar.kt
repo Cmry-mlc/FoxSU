@@ -311,6 +311,8 @@ private fun CenterDockTab(
 
     Column(
         modifier = modifier
+            // 底衬左右各留 5dp：整格铺满会让相邻两个 tab 的选中块黏在一起
+            .padding(horizontal = 5.dp)
             .height(56.dp)
             .graphicsLayer {
                 scaleX = pressScale
