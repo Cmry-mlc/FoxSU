@@ -770,6 +770,53 @@ internal fun AgCustomization(
                         ) { CustomizationStore.setDockStyle(code) }
                     }
                 }
+                Spacer(Modifier.height(6.dp))
+                // 侧边抽屉的停靠方向：从原来的通用开关堆里单独拎出来，
+                // 跟着胶囊选择器放——它只对 v5「侧边抽屉」这一套生效，逻辑上是选择器的一部分
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(13.dp))
+                        .background(Ag.Vio.copy(alpha = 0.05f))
+                        .padding(horizontal = 12.dp, vertical = 9.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("侧边胶囊停靠", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Ag.Tx)
+                        Text(
+                            "「侧边抽屉」样式下，胶囊贴屏幕左侧还是右侧",
+                            fontSize = 10.5.sp, color = Ag.Tx3,
+                            modifier = Modifier.padding(top = 1.dp),
+                        )
+                    }
+                    Spacer(Modifier.width(10.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        listOf("左", "右").forEachIndexed { i, label ->
+                            val on = custom.dockSide == i
+                            Box(
+                                Modifier
+                                    .height(28.dp)
+                                    .clip(RoundedCornerShape(99.dp))
+                                    .background(if (on) Ag.Grad else androidx.compose.ui.graphics.SolidColor(Color.Transparent))
+                                    .border(
+                                        1.dp,
+                                        if (on) Color.Transparent else Ag.Line,
+                                        RoundedCornerShape(99.dp),
+                                    )
+                                    .agClick { CustomizationStore.setDockSide(i) }
+                                    .padding(horizontal = 12.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    label,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (on) Color.White else Ag.Tx2,
+                                )
+                            }
+                        }
+                    }
+                }
                 Spacer(Modifier.height(8.dp))
                 Text(
                     "当前：${dockStyles.firstOrNull { it.first == custom.dockStyle }?.second ?: "原有胶囊"}" +
@@ -789,38 +836,6 @@ internal fun AgCustomization(
                         modifier = Modifier.padding(start = 2.dp, bottom = 12.dp),
                     )
                 }
-                AgRow(
-                    "胶囊停靠", "侧边抽屉样式下，胶囊停靠在屏幕左侧还是右侧",
-                    Ag.Vio, AgSettingsIcons.FloatingBar,
-                    trailing = {
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            listOf("左", "右").forEachIndexed { i, label ->
-                                val on = custom.dockSide == i
-                                Box(
-                                    Modifier
-                                        .height(28.dp)
-                                        .clip(RoundedCornerShape(99.dp))
-                                        .background(if (on) Ag.Grad else androidx.compose.ui.graphics.SolidColor(Color.Transparent))
-                                        .border(
-                                            1.dp,
-                                            if (on) Color.Transparent else Ag.Line,
-                                            RoundedCornerShape(99.dp),
-                                        )
-                                        .agClick { CustomizationStore.setDockSide(i) }
-                                        .padding(horizontal = 12.dp),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Text(
-                                        label,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (on) Color.White else Ag.Tx2,
-                                    )
-                                }
-                            }
-                        }
-                    },
-                )
                 AgToggleRow(
                     "Editorial 使用胶囊底栏",
                     "关闭时 Editorial 主题保留原生纸面底栏（推荐：胶囊会打乱杂志版式）",

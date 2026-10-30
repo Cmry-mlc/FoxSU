@@ -1,5 +1,9 @@
 package me.weishu.kernelsu.ui.screen.ag
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -29,7 +33,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -62,8 +65,8 @@ import java.util.Locale
  * 这一页刻意不写「请赞助我」：先把「你已经在用的东西到底值多少」摆在最上面
  * （皮肤 / 底栏造型 / 广告数 0），再列出钱会花在哪、以及不花钱能做什么。
  *
- * 支付通道还没有接（后续走爱发电 / 微信），所以所有付款入口都如实标成
- * 「接入中」，按下去只提示、不假装成功——不做那种点了没反应的假按钮。
+ * 没有金额档位、没有线上支付 SDK：两个大按钮（微信赞赏 / 支付宝收款）各自
+ * 打开一张全屏二维码查看器，内含「保存到相册」，扫完即走。
  */
 @Composable
 fun AgDonate(
@@ -71,16 +74,8 @@ fun AgDonate(
     onOpenAuthor: () -> Unit = {},
 ) {
     val context = LocalContext.current
-    var tier by remember { mutableIntStateOf(1) }
-    var customOpen by remember { mutableStateOf(false) }
-    var customAmount by remember { mutableStateOf("") }
-
-    val tiers = listOf(18, 38, 68, 128)
-    val amount = if (tier >= 0) tiers[tier].toString() else customAmount.ifBlank { "—" }
-
-    fun notReady() {
-        Toast.makeText(context, "支付通道正在接入，暂未开放付款", Toast.LENGTH_SHORT).show()
-    }
+    // 二维码查看器：null 关闭，其它为当前展示的码
+    var viewer by remember { mutableStateOf<QrTarget?>(null) }
 
     Column(
         Modifier
@@ -110,28 +105,28 @@ fun AgDonate(
             item { DonateHero() }
 
             item {
-                AgGHead("选择金额")
-                TierGrid(
-                    tiers = tiers,
-                    tier = tier,
-                    customAmount = customAmount,
-                    onPick = { tier = it },
-                    onCustom = { customOpen = true },
-                )
-            }
-
-            item {
-                AgGHead("付款方式")
-                AgCard(contentPadding = PaddingValues(vertical = 4.dp)) {
-                    PayRow("微信支付", "扫码 / 公众号赞赏", Color(0xFF07C160), onOpenAuthor)
-                    PayRow("支付宝", "转账或收款码", Color(0xFF1677FF), onOpenAuthor)
-                    PayRow("爱发电", "按月赞助，可随时取消", Color(0xFF946CE6), onOpenAuthor, last = true)
+                AgGHead("请作者喝一杯")
+                // 两个入口：微信赞赏 / 支付宝收款。点开是全屏二维码查看器，
+                // 长按或点保存可以存到相册，没有任何金额档位和线上支付
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    QrEntry(
+                        label = "微信赞赏",
+                        sub = "打开赞赏码",
+                        tint = Color(0xFF07C160),
+                        icon = Icons.Rounded.Favorite,
+                        modifier = Modifier.weight(1f),
+                    ) { viewer = QrTarget.WECHAT }
+                    QrEntry(
+                        label = "支付宝",
+                        sub = "打开收款码",
+                        tint = Color(0xFF1677FF),
+                        icon = Icons.Rounded.Star,
+                        modifier = Modifier.weight(1f),
+                    ) { viewer = QrTarget.ALIPAY }
                 }
-                Spacer(Modifier.height(12.dp))
-                NotReadyButton(amount) { notReady() }
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(10.dp))
                 Text(
-                    "通道接通之前，这里不会收款。想先支持的话，页面底部的几种方式现在就能用。",
+                    "扫码是自愿的，项目永远免费开源（GPL-3.0）。二维码可以长按保存到相册。",
                     fontSize = 11.5.sp,
                     lineHeight = 17.sp,
                     color = Ag.Tx3,
@@ -187,16 +182,174 @@ fun AgDonate(
         }
     }
 
-    if (customOpen) {
-        CustomAmountDialog(
-            initial = customAmount,
-            onDismiss = { customOpen = false },
-            onConfirm = {
-                customAmount = it
-                tier = -1
-                customOpen = false
-            },
-        )
+    viewer?.let { target ->
+        QrViewerDialog(target) { viewer = null }
+    }
+}
+
+/** 两个二维码资源，查看器和保存都认它。 */
+private enum class QrTarget(val resId: Int, val title: String, val tip: String) {
+    WECHAT(
+        me.weishu.kernelsu.R.drawable.donate_qr_wechat,
+        "微信赞赏码",
+        "打开微信「扫一扫」，扫描二维码赞赏",
+    ),
+    ALIPAY(
+        me.weishu.kernelsu.R.drawable.donate_qr_alipay,
+        "支付宝收款码",
+        "打开支付宝「扫一扫」，扫描二维码转账",
+    ),
+}
+
+/** 捐赠页的两个大按钮：微信 / 支付宝。 */
+@Composable
+private fun QrEntry(
+    label: String,
+    sub: String,
+    tint: Color,
+    icon: ImageVector,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Column(
+        modifier
+            .clip(RoundedCornerShape(18.dp))
+            .background(tint.copy(alpha = if (Ag.isDark) 0.16f else 0.10f))
+            .border(1.dp, tint.copy(alpha = 0.34f), RoundedCornerShape(18.dp))
+            .agClick(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 14.dp),
+    ) {
+        Box(
+            Modifier
+                .size(38.dp)
+                .clip(CircleShape)
+                .background(tint.copy(alpha = 0.18f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(icon, null, tint = tint, modifier = Modifier.size(19.dp))
+        }
+        Spacer(Modifier.height(9.dp))
+        Text(label, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold, color = Ag.Tx)
+        Text(sub, fontSize = 10.5.sp, color = Ag.Tx3, modifier = Modifier.padding(top = 1.dp))
+    }
+}
+
+/**
+ * 二维码查看器：全屏 Dialog，白底大图 + 标题 + 操作提示。
+ * 「保存到相册」把 res 里的图写进 Pictures/FoxSu，扫码不一定要存，
+ * 但很多人习惯截图后再扫，直接给一个干净的保存入口省一步。
+ */
+@Composable
+private fun QrViewerDialog(target: QrTarget, onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.72f))
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                    onClick = onDismiss,
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(
+                Modifier
+                    .padding(horizontal = 34.dp)
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(26.dp))
+                    .background(Color.White)
+                    .padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    target.title,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color(0xFF1B1B22),
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(target.tip, fontSize = 11.sp, color = Color(0xFF7A7A86))
+                Spacer(Modifier.height(14.dp))
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(Color.White)
+                        .border(1.dp, Color(0x141B1B22), RoundedCornerShape(18.dp))
+                        .padding(12.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Image(
+                        painter = androidx.compose.ui.res.painterResource(target.resId),
+                        contentDescription = target.title,
+                        contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                Spacer(Modifier.height(14.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                    // 保存到相册
+                    Box(
+                        Modifier
+                            .weight(1f)
+                            .height(42.dp)
+                            .clip(RoundedCornerShape(13.dp))
+                            .background(Ag.Grad)
+                            .clickable {
+                                runCatching {
+                                    saveQrToGallery(context, target.resId)
+                                    Toast.makeText(context, "已保存到相册 Pictures/FoxSu", Toast.LENGTH_SHORT).show()
+                                }.onFailure {
+                                    Toast.makeText(context, "保存失败：${it.message}", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text("保存到相册", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
+                    Box(
+                        Modifier
+                            .weight(1f)
+                            .height(42.dp)
+                            .clip(RoundedCornerShape(13.dp))
+                            .border(1.dp, Color(0x1F1B1B22), RoundedCornerShape(13.dp))
+                            .clickable(onClick = onDismiss),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text("关闭", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF55555F))
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** 把 drawable 里的二维码存进系统相册（Pictures/FoxSu）。 */
+private fun saveQrToGallery(context: android.content.Context, resId: Int) {
+    val bmp = android.graphics.BitmapFactory.decodeResource(context.resources, resId)
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+        val values = android.content.ContentValues().apply {
+            put(android.provider.MediaStore.Images.Media.DISPLAY_NAME, "foxsu_donate_${System.currentTimeMillis()}.png")
+            put(android.provider.MediaStore.Images.Media.MIME_TYPE, "image/png")
+            put(android.provider.MediaStore.Images.Media.RELATIVE_PATH, "Pictures/FoxSu")
+        }
+        val uri = context.contentResolver.insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+            ?: return
+        context.contentResolver.openOutputStream(uri)?.use { os ->
+            bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, os)
+        }
+    } else {
+        @Suppress("DEPRECATION")
+        val dir = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_PICTURES)
+        val sub = java.io.File(dir, "FoxSu").apply { mkdirs() }
+        val f = java.io.File(sub, "foxsu_donate_${System.currentTimeMillis()}.png")
+        java.io.FileOutputStream(f).use { os -> bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, os) }
+        android.media.MediaScannerConnection.scanFile(context, arrayOf(f.absolutePath), arrayOf("image/png"), null)
     }
 }
 
@@ -304,184 +457,8 @@ private fun HeroDivider() {
     )
 }
 
-/** 金额：4 档 + 自定义；选中用渐变描边，不选中只留发丝线。 */
-@Composable
-private fun TierGrid(
-    tiers: List<Int>,
-    tier: Int,
-    customAmount: String,
-    onPick: (Int) -> Unit,
-    onCustom: () -> Unit,
-) {
-    val accent = Ag.accent
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        tiers.chunked(2).forEachIndexed { rowIndex, pair ->
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                pair.forEachIndexed { colIndex, value ->
-                    val index = rowIndex * 2 + colIndex
-                    val selected = tier == index
-                    Column(
-                        Modifier
-                            .weight(1f)
-                            .height(74.dp)
-                            .agClick { onPick(index) }
-                            .clip(RoundedCornerShape(18.dp))
-                            .background(if (selected) accent.primary.copy(alpha = 0.075f) else Ag.Card)
-                            .border(
-                                if (selected) 1.6.dp else 1.dp,
-                                if (selected) accent.primary.copy(alpha = 0.55f) else Ag.Line,
-                                RoundedCornerShape(18.dp),
-                            )
-                            .padding(horizontal = 14.dp, vertical = 12.dp),
-                        verticalArrangement = Arrangement.Center,
-                    ) {
-                        Row(verticalAlignment = Alignment.Bottom) {
-                            Text("¥", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = if (selected) accent.primary else Ag.Tx3)
-                            Spacer(Modifier.width(2.dp))
-                            Text(
-                                value.toString(),
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                letterSpacing = (-0.5).sp,
-                                color = if (selected) accent.primary else Ag.Tx,
-                            )
-                        }
-                        Spacer(Modifier.height(3.dp))
-                        Text(
-                            when (index) {
-                                0 -> "一瓶饮料"
-                                1 -> "一顿午饭"
-                                2 -> "一次月费"
-                                else -> "一年心意"
-                            },
-                            fontSize = 10.5.sp,
-                            color = Ag.Tx3,
-                        )
-                    }
-                }
-            }
-        }
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .height(50.dp)
-                .agClick(onClick = onCustom)
-                .clip(RoundedCornerShape(16.dp))
-                .background(if (tier == -1) accent.primary.copy(alpha = 0.075f) else Ag.Card)
-                .border(
-                    if (tier == -1) 1.6.dp else 1.dp,
-                    if (tier == -1) accent.primary.copy(alpha = 0.55f) else Ag.Line,
-                    RoundedCornerShape(16.dp),
-                )
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                if (tier == -1 && customAmount.isNotBlank()) "¥ $customAmount" else "自定义金额",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = if (tier == -1) accent.primary else Ag.Tx2,
-            )
-            Spacer(Modifier.weight(1f))
-            Text(
-                if (tier == -1) "修改" else "任意金额",
-                fontSize = 11.sp,
-                color = Ag.Tx3,
-            )
-        }
-    }
-}
 
-/** 一行付款方式：品牌色圆底图标 + 名称 + 说明 + 右侧「接入中」。 */
-@Composable
-private fun PayRow(
-    name: String,
-    desc: String,
-    brand: Color,
-    onClick: () -> Unit,
-    last: Boolean = false,
-) {
-    Column {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .agClick(onClick = onClick)
-                .padding(horizontal = 14.dp, vertical = 13.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                Modifier
-                    .size(38.dp)
-                    .clip(CircleShape)
-                    .background(brand.copy(alpha = 0.12f))
-                    .border(1.dp, brand.copy(alpha = 0.20f), CircleShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    name.take(1),
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = brand,
-                )
-            }
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(name, fontSize = 13.5.sp, fontWeight = FontWeight.Bold, color = Ag.Tx)
-                Spacer(Modifier.height(2.dp))
-                Text(desc, fontSize = 11.sp, color = Ag.Tx3)
-            }
-            Box(
-                Modifier
-                    .clip(CircleShape)
-                    .background(Ag.TintInk)
-                    .border(1.dp, Ag.Line, CircleShape)
-                    .padding(horizontal = 9.dp, vertical = 4.dp),
-            ) {
-                Text("接入中", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Ag.Tx3)
-            }
-        }
-        if (!last) {
-            Box(
-                Modifier
-                    .padding(start = 64.dp, end = 14.dp)
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .background(Ag.Line),
-            )
-        }
-    }
-}
 
-/** 主按钮：灰底 + 「接入中」，不假装能点。 */
-@Composable
-private fun NotReadyButton(amount: String, onClick: () -> Unit) {
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .height(48.dp)
-            .agClick(onClick = onClick)
-            .clip(RoundedCornerShape(14.dp))
-            .background(Ag.Vio.copy(alpha = 0.10f))
-            .border(1.dp, Ag.Vio.copy(alpha = 0.22f), RoundedCornerShape(14.dp)),
-        contentAlignment = Alignment.Center,
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                Icons.Rounded.Favorite,
-                contentDescription = null,
-                tint = Ag.Vio.copy(alpha = 0.75f),
-                modifier = Modifier.size(16.dp),
-            )
-            Spacer(Modifier.width(8.dp))
-            Text(
-                "支持 ¥$amount · 通道接入中",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = Ag.Vio.copy(alpha = 0.85f),
-            )
-        }
-    }
-}
 
 /** 「钱花在哪」的一行。 */
 @Composable
@@ -573,72 +550,3 @@ private fun DonateFooter() {
     }
 }
 
-/** 自定义金额输入。 */
-@Composable
-private fun CustomAmountDialog(
-    initial: String,
-    onDismiss: () -> Unit,
-    onConfirm: (String) -> Unit,
-) {
-    var text by remember { mutableStateOf(initial) }
-    Dialog(onDismissRequest = onDismiss) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(24.dp))
-                .background(Ag.Bg2)
-                .padding(18.dp),
-        ) {
-            Text("自定义金额", fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, color = Ag.Tx)
-            Spacer(Modifier.height(4.dp))
-            Text("金额随意，1 元也是心意。", fontSize = 11.5.sp, color = Ag.Tx3)
-            Spacer(Modifier.height(16.dp))
-
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(Ag.searchBg())
-                    .border(1.dp, Ag.Line, RoundedCornerShape(14.dp))
-                    .padding(horizontal = 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text("¥", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Ag.Tx3)
-                Spacer(Modifier.width(8.dp))
-                BasicTextField(
-                    value = text,
-                    onValueChange = { input ->
-                        text = input.filter { it.isDigit() }.take(5)
-                    },
-                    singleLine = true,
-                    textStyle = TextStyle(
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Ag.Tx,
-                        fontFamily = FontFamily.Default,
-                    ),
-                    cursorBrush = SolidColor(Ag.Vio),
-                    modifier = Modifier.weight(1f),
-                )
-            }
-
-            Spacer(Modifier.height(16.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                AgButton(
-                    primary = false,
-                    text = "取消",
-                    modifier = Modifier.weight(1f),
-                    onClick = onDismiss,
-                )
-                AgButton(
-                    primary = true,
-                    text = "确定",
-                    modifier = Modifier.weight(1f),
-                    enabled = text.isNotBlank(),
-                    onClick = { onConfirm(text) },
-                )
-            }
-        }
-    }
-}
