@@ -60,6 +60,8 @@ fun AgHome(
     onOpenAuthor: () -> Unit,
     bottomInnerPadding: androidx.compose.ui.unit.Dp = androidx.compose.ui.unit.Dp.Unspecified,
 ) {
+    // LocalNavigator 必须在 composable 上下文取一次：onClick 里不能再读 CompositionLocal
+    val donateNav = me.weishu.kernelsu.ui.navigation3.LocalNavigator.current
     val hero = state.heroState()
     var showReboot by remember { mutableStateOf(false) }
     var showStyle by remember { mutableStateOf(false) }
@@ -288,6 +290,7 @@ fun AgHome(
                 stringResource(R.string.home_support_title),
                 stringResource(R.string.home_support_desc),
                 Ag.Amber, AgHomeIcons.Heart, showChev = true,
+                onClick = { donateNav.push(me.weishu.kernelsu.ui.navigation3.Route.Donate) },
             )
             AgRow(
                 stringResource(R.string.home_learn_kernelsu),

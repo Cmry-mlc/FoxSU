@@ -129,12 +129,12 @@
     <string name="home_seccomp_enforcing">Enforcing</string>
     <string name="home_seccomp_permissive">Permissive</string>
     <string name="home_seccomp_unknown">Unknown</string>
-    <string name="home_support_desc">KernelSU stays free and open-source; donate to support development</string>
+    <string name="home_support_desc">FoxSu is free and open source — support pays for hosting, builds and testing</string>
     <string name="home_learn_kernelsu_desc">Learn how to install KernelSU and develop modules</string>
     <string name="home_learn_kernelsu_url">https://kernelsu.org/guide/what-is-kernelsu.html</string>
     <string name="home_click_to_learn_kernelsu">Learn how to install KernelSU and use modules.</string>
     <string name="home_support_title">Support Us</string>
-    <string name="home_support_content">KernelSU is, and always will be, free, and open source. However, you can show us that you care by making a donation.</string>
+    <string name="home_support_content">FoxSu is free, open source, with no ads and no in-app purchases. Your support pays for hosting, build machines and device testing.</string>
     <string name="home_gki_warning">Starting from v3.0.0, the GKI work mode will be used only in testing environments. We do not recommend it for daily use, and image files will no longer be provided.</string>
     <string name="about_source_code"><![CDATA[View source code at %1$s<br/>Join our %2$s channel<br/>Join our <b><a href="https://pd.qq.com/s/8glxclfk6?b=9">QQ</a></b> channel]]></string>
     <string name="profile" translatable="false">App Profile</string>

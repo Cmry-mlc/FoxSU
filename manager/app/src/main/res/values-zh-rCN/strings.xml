@@ -109,12 +109,12 @@
     <string name="home_seccomp_enforcing">强制执行</string>
     <string name="home_seccomp_permissive">宽松模式</string>
     <string name="home_seccomp_unknown">未知</string>
-    <string name="home_support_desc">KernelSU 将保持免费开源，向开发者捐赠以表示支持</string>
+    <string name="home_support_desc">FoxSu 免费开源，支持会用在域名、构建机与真机测试上</string>
     <string name="home_learn_kernelsu_desc">了解如何安装 KernelSU 以及如何开发模块</string>
     <string name="home_learn_kernelsu_url">https://kernelsu.org/zh_CN/guide/what-is-kernelsu.html</string>
     <string name="home_click_to_learn_kernelsu">了解如何安装 KernelSU 以及如何开发模块</string>
     <string name="home_support_title">支持开发</string>
-    <string name="home_support_content">KernelSU 将保持免费开源，向开发者捐赠以表示支持</string>
+    <string name="home_support_content">FoxSu 免费开源，没有广告也没有内购。你的支持会用在域名、构建机与真机测试上。</string>
     <string name="home_gki_warning">自 v3.0.0 起 GKI 工作模式将仅用于测试环境，我们不建议用于日常使用，也不再提供镜像文件</string>
     <string name="about_source_code"><![CDATA[在 %1$s 查看源码<br/>加入我们的 %2$s 频道<br/>加入我们的 <b><a href="https://pd.qq.com/s/8glxclfk6?b=9">QQ</a></b> 频道]]></string>
     <string name="profile_default">默认</string>

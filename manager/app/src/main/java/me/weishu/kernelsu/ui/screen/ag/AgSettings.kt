@@ -67,6 +67,7 @@ fun AgSettings(
     onOpenAuthor: () -> Unit,
 ) {
     val context = LocalContext.current
+    val donateNav = me.weishu.kernelsu.ui.navigation3.LocalNavigator.current
     var showStyle by remember { mutableStateOf(false) }
 
     val styleName = when (LocalUiMode.current.value) {
@@ -196,7 +197,7 @@ fun AgSettings(
                     AgRow(
                         stringResource(R.string.home_support_title), stringResource(R.string.home_support_desc),
                         Ag.Mag, AgHomeIcons.Heart, showChev = true,
-                        onClick = { actions.onOpenAbout() },
+                        onClick = { donateNav.push(me.weishu.kernelsu.ui.navigation3.Route.Donate) },
                     )
                     AgRow(
                         "GitHub 仓库", "查看源码与提交 Issue",

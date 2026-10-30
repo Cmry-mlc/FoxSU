@@ -54,6 +54,8 @@ fun NocturneHomeScreen(
     // 越狱入口条件：未安装 + GKI 内核 + SELinux 宽容（与 Fresh / Miuix 完全一致）
     val canJailbreak = state.ksuVersion == null && state.kernelVersion.isGKI() && state.isSELinuxPermissive
     val sideDock = useSideDock()
+    val donateNav = me.weishu.kernelsu.ui.navigation3.LocalNavigator.current
+    val onClickDonate = { donateNav.push(me.weishu.kernelsu.ui.navigation3.Route.Donate) }
 
     Box(Modifier.fillMaxSize()) {
         NcGlowBackground(t)
@@ -145,10 +147,10 @@ fun NocturneHomeScreen(
                     NcRow(
                         iconRes = R.drawable.nc_heart,
                         title = "支持开发",
-                        subtitle = "KernelSU 保持免费开源，欢迎捐赠",
+                        subtitle = "FoxSu 免费开源，欢迎支持后续开发",
                         accent = NcAccentTone.Red,
                         showDivider = true,
-                        onClick = onOpenAuthor,
+                        onClick = onClickDonate,
                         trailing = { NcChevron() },
                     )
                 }
