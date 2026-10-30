@@ -439,8 +439,8 @@ private fun SkinPage(t: OnbTokens) {
         ) {
             MiniPhone(
                 t = t,
-                accent = skin.accent,
-                accent2 = skin.accent2,
+                accent = t.accent,
+                accent2 = t.accent2,
                 screenBg = skin.bg,
                 title = stringResource(R.string.onb_mini_home),
                 dock = DockButton.of(CustomizationStore.current.dockButton),
@@ -450,9 +450,9 @@ private fun SkinPage(t: OnbTokens) {
                 width = 188.dp,
                 height = 384.dp,
             ) {
-                MiniCard(skin.accent, Icons.Rounded.Shield, true, "Termux", "已授权 · 永久", skin.dark)
+                MiniCard(t.accent, Icons.Rounded.Shield, true, "Termux", "已授权 · 永久", skin.dark)
                 Spacer(Modifier.height(6.dp))
-                MiniCard(skin.accent, Icons.Rounded.Extension, false, "Zygisk Next", "已安装 · 4 个模块", skin.dark)
+                MiniCard(t.accent, Icons.Rounded.Extension, false, "Zygisk Next", "已安装 · 4 个模块", skin.dark)
             }
         }
 
@@ -509,7 +509,7 @@ private fun SkinChip(
                     .padding(5.dp)
                     .size(width = 14.dp, height = 5.dp)
                     .clip(RoundedCornerShape(3.dp))
-                    .background(item.accent),
+                    .background(t.accent),
             )
         }
         Spacer(Modifier.height(5.dp))

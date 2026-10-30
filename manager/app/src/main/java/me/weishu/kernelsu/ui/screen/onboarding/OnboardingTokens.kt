@@ -2,8 +2,10 @@ package me.weishu.kernelsu.ui.screen.onboarding
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.UiMode
+import me.weishu.kernelsu.ui.theme.currentAccent
 
 /**
  * 欢迎引导专用的设计令牌。
@@ -51,9 +53,12 @@ data class OnbTokens(
     val ghostBd: Color,
     val ripple: Color,
 ) {
-    /** 顶部光晕：暗色用紫罗兰 32%，亮色用 16%。 */
+    /**
+     * 顶部光晕：直接由 [accent] 派生，不再写死紫罗兰。
+     * 暗色 34%、亮色 16%，正好是原设计稿里紫罗兰那两个透明度。
+     */
     val glow: Color
-        get() = if (dark) Color(0x578B7BFF) else Color(0x298B7BFF)
+        get() = accent.copy(alpha = if (dark) 0.34f else 0.16f)
 }
 
 /** Nocturne · 暗夜 */
@@ -127,7 +132,36 @@ private val Daylight = OnbTokens(
     ripple = Color(0x596A57F5),
 )
 
-fun onbTokens(dark: Boolean): OnbTokens = if (dark) Nocturne else Daylight
+/**
+ * 把一整组令牌里「所有由强调色派生出来的值」重新算一遍。
+ *
+ * 令牌表里写死的那些 0x33F97316 / 0xBFF97316 都是珊瑚橙时代的常量，
+ * 一旦用户换成薄荷绿就全错。这里统一按 [accent] 现场推导，
+ * 明暗两套用不同透明度，保证对比度不掉。
+ */
+private fun OnbTokens.recolor(accent: Color, accent2: Color): OnbTokens {
+    // 强调色上的文字：暗色往上提亮，亮色往下压深，避免橙底白字发飘
+    val onAccent = if (dark) lerp(accent, Color.White, 0.42f) else lerp(accent, Color.Black, 0.16f)
+    return copy(
+        accent = accent,
+        accent2 = accent2,
+        // 第三光斑取两者的中间色，整页保持同一色系，不再混进一抹薄荷绿
+        mint = lerp(accent, accent2, 0.5f),
+        segOnBg = accent.copy(alpha = if (dark) 0.20f else 0.16f),
+        segOnBd = accent.copy(alpha = if (dark) 0.42f else 0.30f),
+        segOnTx = onAccent,
+        selBg = accent.copy(alpha = if (dark) 0.12f else 0.07f),
+        selBd = accent.copy(alpha = if (dark) 0.72f else 0.85f),
+        selRing = accent.copy(alpha = if (dark) 0.14f else 0.10f),
+        ripple = accent.copy(alpha = 0.32f),
+    )
+}
+
+fun onbTokens(dark: Boolean): OnbTokens {
+    val base = if (dark) Nocturne else Daylight
+    val a = currentAccent
+    return base.recolor(a.primary, a.secondary)
+}
 
 /**
  * 按当前界面风格取令牌：组件层（--pk-*）随明暗切换，
@@ -137,13 +171,12 @@ fun onbTokens(dark: Boolean): OnbTokens = if (dark) Nocturne else Daylight
 fun onbTokens(mode: UiMode): OnbTokens {
     val skin = OnbSkins.firstOrNull { it.mode == mode } ?: return onbTokens(false)
     val base = if (skin.dark) Nocturne else Daylight
-    return base.copy(
-        bg = skin.bg,
-        surface = skin.surface,
-        accent = skin.accent,
-        accent2 = skin.accent2,
-        mint = skin.mint,
-    )
+    // 底色跟着皮肤走（五套皮肤的区别就在底色和材质上），
+    // 强调色一律取全局设置——和主页、底栏、标题用的是同一个 currentAccent。
+    val a = currentAccent
+    return base
+        .copy(bg = skin.bg, surface = skin.surface)
+        .recolor(a.primary, a.secondary)
 }
 
 /**

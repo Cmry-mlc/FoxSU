@@ -540,7 +540,7 @@ fun Caption(text: String, t: OnbTokens, modifier: Modifier = Modifier) {
             Modifier
                 .size(5.dp)
                 .clip(CircleShape)
-                .background(t.mint),
+                .background(t.accent),
         )
         Spacer(Modifier.width(7.dp))
         Text(
