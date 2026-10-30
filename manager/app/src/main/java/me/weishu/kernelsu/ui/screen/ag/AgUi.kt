@@ -394,9 +394,9 @@ fun AgRic(tint: Color, icon: ImageVector, size: Dp = 40.dp) {
 
 /** 顶栏 40dp 圆角玻璃图标按钮 .icbtn（18px 描边图标） */
 @Composable
-fun AgIconBtn(icon: ImageVector, onClick: () -> Unit, tint: Color = Ag.Tx2) {
+fun AgIconBtn(icon: ImageVector, onClick: () -> Unit, tint: Color = Ag.Tx2, modifier: Modifier = Modifier) {
     Box(
-        Modifier
+        modifier
             .size(40.dp)
             .agClick(onClick = onClick)
             .clip(RoundedCornerShape(14.dp))
@@ -478,30 +478,36 @@ fun AgChip(text: String) {
 
 /** 主/次操作按钮 .gbtn */
 @Composable
-fun AgButton(primary: Boolean, text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
+fun AgButton(
+    primary: Boolean,
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    particleEdge: Boolean = false,
+) {
     val shape = RoundedCornerShape(12.dp)
     Box(
         modifier
             .height(38.dp)
-            .agClick(enabled = enabled, onClick = onClick)
-            .then(
-                if (primary) Modifier
-                    .clip(shape)
-                    .background(Ag.Grad, shape)
-                    .shadow(6.dp, shape, spotColor = Ag.Vio.copy(alpha = 0.302f), ambientColor = Ag.Vio.copy(alpha = 0.302f))
-                else Modifier
-                    .background(Ag.Vio.copy(alpha = 0.071f), shape)
-                    .border(1.dp, Ag.Vio.copy(alpha = 0.251f), shape)
-            ),
+            .agClick(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        if (primary && enabled) {
+        if (primary) {
+            // 背景 + 阴影放在独立的裁剪层：粒子要飘出按钮外，根 Box 不能整体 clip
+            Box(
+                Modifier
+                    .matchParentSize()
+                    .shadow(6.dp, shape, spotColor = Ag.Vio.copy(alpha = 0.302f), ambientColor = Ag.Vio.copy(alpha = 0.302f))
+                    .clip(shape)
+                    .background(Ag.Grad, shape)
+            )
             // 静态斜向高光（原来是一条 2.6s 循环流动的高光带：每一次循环都要重绘整颗按钮，
             //  在列表页里几十个按钮同时跑就是纯粹的耗电，肉眼观感几乎没有区别）
             Box(
                 Modifier
-                    .fillMaxWidth()
-                    .height(38.dp)
+                    .matchParentSize()
+                    .clip(shape)
                     .background(
                         Brush.linearGradient(
                             0f to Color.White.copy(alpha = 0.18f),
@@ -509,6 +515,17 @@ fun AgButton(primary: Boolean, text: String, onClick: () -> Unit, modifier: Modi
                             1f to Color.White.copy(alpha = 0.07f),
                         ),
                     ),
+            )
+            // 科幻粒子边：彩色光点沿边流动，尾段向外飘散入虚空
+            if (enabled && particleEdge) {
+                ParticleEdgeOverlay(Modifier.matchParentSize())
+            }
+        } else {
+            Box(
+                Modifier
+                    .matchParentSize()
+                    .background(Ag.Vio.copy(alpha = 0.071f), shape)
+                    .border(1.dp, Ag.Vio.copy(alpha = 0.251f), shape)
             )
         }
         Text(text, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = if (primary) Color.White else Ag.Vio)

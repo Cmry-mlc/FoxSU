@@ -30,12 +30,21 @@ import androidx.compose.material.icons.rounded.PowerSettingsNew
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -50,9 +59,25 @@ import me.weishu.kernelsu.ui.component.rebootlistpopup.rememberRebootAction
  */
 @Composable
 @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
-fun AgRebootSheet(onDismiss: () -> Unit) {
+fun AgRebootSheet(
+    onDismiss: () -> Unit,
+    origin: androidx.compose.ui.geometry.Rect = androidx.compose.ui.geometry.Rect.Zero,
+) {
     val options = getRebootListOption()
     val reboot = rememberRebootAction()
+    // 共享元素：从电源按钮放大进入，关闭时缩回原按钮
+    var leaving by remember { mutableStateOf(false) }
+    val zoom = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        zoom.animateTo(1f, spring(dampingRatio = 0.82f, stiffness = 420f))
+    }
+    LaunchedEffect(leaving) {
+        if (leaving) {
+            zoom.animateTo(0f, tween(200))
+            onDismiss()
+        }
+    }
+    fun requestDismiss() { leaving = true }
     // options 顺序即 getRebootListOption 返回顺序；EDL 恒为最后一项且为红色警示
     fun subtitleFor(reason: String): String = when (reason) {
         "" -> "完整重启设备"
@@ -85,7 +110,7 @@ fun AgRebootSheet(onDismiss: () -> Unit) {
     val tx3 = if (dark) Color(0xFF7C7A98) else Color(0xFF9C9AAE)
 
     androidx.compose.ui.window.Dialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { requestDismiss() },
         properties = androidx.compose.ui.window.DialogProperties(
             usePlatformDefaultWidth = false,
             decorFitsSystemWindows = false,
@@ -104,8 +129,9 @@ fun AgRebootSheet(onDismiss: () -> Unit) {
         Box(
             Modifier
                 .fillMaxSize()
+                .graphicsLayer { alpha = zoom.value }
                 .background(mask)
-                .agClick(onClick = onDismiss),
+                .agClick(onClick = { requestDismiss() }),
         )
         Column(
             // 设计稿 .sheet：锚定电源按钮的下拉菜单（右上角，宽 230，圆角 22）
@@ -113,6 +139,7 @@ fun AgRebootSheet(onDismiss: () -> Unit) {
             Modifier
                 .align(Alignment.TopEnd)
                 .padding(top = 118.dp, end = 14.dp)
+                .zoomFromOrigin(origin, zoom.value)
                 .width(230.dp)
                 .shadow(
                     18.dp, RoundedCornerShape(22.dp),

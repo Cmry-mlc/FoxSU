@@ -50,6 +50,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
+import me.weishu.kernelsu.ui.screen.ag.drawInnerShadow
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -301,10 +302,24 @@ private fun CenterDockTab(
     val src = remember { MutableInteractionSource() }
     val pressed by src.collectIsPressedAsState()
     val pressScale by animateFloatAsState(
-        targetValue = if (pressed) 0.92f else 1f,
-        animationSpec = spring(dampingRatio = 0.42f, stiffness = 900f),
+        targetValue = if (pressed) 0.96f else 1f,
+        // 按下快速压扁，松手低阻尼弹簧超调回弹（Spring Overshoot）
+        animationSpec = if (pressed) {
+            spring(dampingRatio = 0.72f, stiffness = 1600f)
+        } else {
+            spring(dampingRatio = 0.35f, stiffness = 760f)
+        },
         label = "center-dock-press-$index",
     )
+    // 深度内阴影：按压加深，松手淡出
+    val innerShadow = remember { Animatable(0f) }
+    LaunchedEffect(pressed) {
+        if (pressed) {
+            innerShadow.animateTo(1f, spring(dampingRatio = 0.7f, stiffness = 1900f))
+        } else {
+            innerShadow.animateTo(0f, tween(280))
+        }
+    }
     val plate by animateColorAsState(
         targetValue = if (selected) (if (dark) accent.softDark else accent.soft) else Color.Transparent,
         animationSpec = tween(220),
@@ -332,6 +347,10 @@ private fun CenterDockTab(
             }
             .clip(RoundedCornerShape(20.dp))
             .background(plate)
+            .drawWithContent {
+                drawContent()
+                drawInnerShadow(innerShadow.value)
+            }
             .clickable(interactionSource = src, indication = null, onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,

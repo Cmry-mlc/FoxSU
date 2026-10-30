@@ -51,6 +51,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
+import me.weishu.kernelsu.ui.screen.ag.drawInnerShadow
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
@@ -288,23 +289,23 @@ internal fun DockKitBar(
     // ── 配色：暗色下各变体各自加深，亮色下保持设计稿的轻 ──
     val surf = when (style) {
         DockKitStyle.BUBBLE -> if (dark) Color(0xFF2A2636) else Color.White
-        DockKitStyle.FILM -> if (dark) Color(0xFF0E0C15) else Color(0xFF2E2A3A)
-        DockKitStyle.NEON -> if (dark) Color(0xFF221D31) else Color(0xFF1E1A29)
+        DockKitStyle.FILM -> if (dark) Color(0xFF0E0C15) else Color(0xFFF7F1E8)
+        DockKitStyle.NEON -> if (dark) Color(0xFF221D31) else Color(0xF2FFFFFF)
         DockKitStyle.FROST -> if (dark) Color(0x8C3A344A) else Color(0xE6FFFFFF)
         DockKitStyle.FOCUS -> if (dark) Color(0xFF2A2636) else Color.White
         DockKitStyle.STICKER -> if (dark) Color(0xFF2A2636) else Color.White
         DockKitStyle.TRACK -> if (dark) Color(0xFF221F2C) else Color(0xFFF4EFFA)
     }
     val edge = when (style) {
-        DockKitStyle.FILM -> if (dark) Color(0x29FFD84D) else Color(0x14000000)
-        DockKitStyle.NEON -> accent.primary.copy(alpha = if (dark) 0.28f else 0.3f)
+        DockKitStyle.FILM -> if (dark) Color(0x29FFD84D) else Color(0x231D1C22)
+        DockKitStyle.NEON -> accent.primary.copy(alpha = if (dark) 0.28f else 0.38f)
         DockKitStyle.FROST -> if (dark) Color(0x1FFFFFFF) else Color(0x66FFFFFF)
         DockKitStyle.TRACK -> Color.Transparent
         else -> if (dark) Color(0x1AFFFFFF) else Color(0x0F1E1946)
     }
     val unselected = when (style) {
-        DockKitStyle.FILM -> Color(0xFF8C86A0)
-        DockKitStyle.NEON -> Color(0xFF5E5872)
+        DockKitStyle.FILM -> if (dark) Color(0xFF8C86A0) else Color(0xFF9A93AC)
+        DockKitStyle.NEON -> if (dark) Color(0xFF5E5872) else Color(0xFF9AA0B0)
         DockKitStyle.FROST -> if (dark) Color(0xFF7C8294) else Color(0xFF9AA0B0)
         DockKitStyle.TRACK -> if (dark) Color(0xFF6F6884) else Color(0xFFB9B3C6)
         else -> if (dark) Color(0xFF6F6884) else Color(0xFFB9B3C6)
@@ -414,7 +415,7 @@ internal fun DockKitBar(
                     Modifier
                         .matchParentSize()
                         .drawBehind {
-                            drawFilmPerforations(if (dark) Color(0xB34A4560) else Color(0x8C6E6880))
+                            drawFilmPerforations(if (dark) Color(0xB34A4560) else Color(0x33504A64))
                         }
                 )
             }
@@ -505,10 +506,24 @@ private fun KitTab(
     val src = remember { MutableInteractionSource() }
     val pressed by src.collectIsPressedAsState()
     val pressScale by animateFloatAsState(
-        targetValue = if (pressed) 0.88f else 1f,
-        animationSpec = spring(dampingRatio = 0.42f, stiffness = 900f),
+        targetValue = if (pressed) 0.96f else 1f,
+        // 按下快速压扁（高刚度），松手用低阻尼弹簧超调回弹（Spring Overshoot）
+        animationSpec = if (pressed) {
+            spring(dampingRatio = 0.72f, stiffness = 1600f)
+        } else {
+            spring(dampingRatio = 0.35f, stiffness = 760f)
+        },
         label = "kit-press-$index",
     )
+    // 深度内阴影：按压时加深，松手随回弹淡出
+    val innerShadow = remember { Animatable(0f) }
+    LaunchedEffect(pressed) {
+        if (pressed) {
+            innerShadow.animateTo(1f, spring(dampingRatio = 0.7f, stiffness = 1900f))
+        } else {
+            innerShadow.animateTo(0f, tween(280))
+        }
+    }
     val iconScale by animateFloatAsState(
         targetValue = if (pressed) 0.82f else if (selected) 1.06f else 1f,
         animationSpec = spring(dampingRatio = 0.45f, stiffness = 620f),
@@ -531,8 +546,8 @@ private fun KitTab(
     val fg by animateColorAsState(
         targetValue = when {
             !selected -> unselected
-            style == DockKitStyle.FILM -> Color(0xFFFFD84D)
-            style == DockKitStyle.NEON -> accent.secondary
+            style == DockKitStyle.FILM -> if (dark) Color(0xFFFFD84D) else accent.primary
+            style == DockKitStyle.NEON -> if (dark) accent.secondary else accent.primary
             style == DockKitStyle.BUBBLE -> Color.White
             else -> accent.primary
         },
@@ -626,6 +641,10 @@ private fun KitTab(
                     Modifier
                 }
             )
+            .drawWithContent {
+                drawContent()
+                drawInnerShadow(innerShadow.value)
+            }
             .rotate(rotation)
             .clickable(interactionSource = src, indication = null, onClick = onClick),
         contentAlignment = Alignment.Center,
@@ -731,7 +750,7 @@ private fun KitAvatar(
         label = "kit-avatar-press",
     )
     val ring = when (style) {
-        DockKitStyle.FILM -> Color(0xFFFFD84D).copy(alpha = 0.55f)
+        DockKitStyle.FILM -> if (dark) Color(0xFFFFD84D).copy(alpha = 0.55f) else accent.primary.copy(alpha = 0.35f)
         DockKitStyle.NEON -> accent.primary.copy(alpha = 0.45f)
         DockKitStyle.STICKER, DockKitStyle.FROST -> if (dark) Color(0x24FFFFFF) else Color.White
         DockKitStyle.TRACK -> Color.Transparent
@@ -739,7 +758,7 @@ private fun KitAvatar(
     }
 
     val glow = when (style) {
-        DockKitStyle.FILM -> Color(0x73FFD84D)
+        DockKitStyle.FILM -> if (dark) Color(0x73FFD84D) else accent.primary.copy(alpha = 0.30f)
         DockKitStyle.NEON -> accent.primary.copy(alpha = 0.6f)
         DockKitStyle.STICKER -> accent.primary.copy(alpha = 0.28f)
         DockKitStyle.TRACK -> Color.Transparent

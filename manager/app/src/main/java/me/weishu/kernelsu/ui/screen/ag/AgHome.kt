@@ -30,6 +30,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -65,6 +67,10 @@ fun AgHome(
     val hero = state.heroState()
     var showReboot by remember { mutableStateOf(false) }
     var showStyle by remember { mutableStateOf(false) }
+    // 顶栏三个按钮的屏幕位置：弹层从这里做共享元素放大，关闭时缩回
+    var authorBtnBounds by remember { mutableStateOf(androidx.compose.ui.geometry.Rect.Zero) }
+    var themeBtnBounds by remember { mutableStateOf(androidx.compose.ui.geometry.Rect.Zero) }
+    var powerBtnBounds by remember { mutableStateOf(androidx.compose.ui.geometry.Rect.Zero) }
     val sideDock = useSideDock()
     // 设计稿画板宽 390dp：`.screen{padding:0 18px}`、`.headwrap` 顶栏 22px。
     // 按实际屏宽等比换算，任何机型上卡片留白占比都与设计稿一致
@@ -114,10 +120,13 @@ fun AgHome(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    AgIconBtn(AgTopIcons.User, onClick = onOpenAuthor)
+                    AgIconBtn(AgTopIcons.User, onClick = onOpenAuthor,
+                        modifier = Modifier.onGloballyPositioned { authorBtnBounds = it.boundsInRoot() })
                     // 主题：打开界面风格选择（原深色切换位）
-                    AgIconBtn(AgTopIcons.Theme, onClick = { showStyle = true })
-                    AgIconBtn(AgTopIcons.Power, onClick = { showReboot = true })
+                    AgIconBtn(AgTopIcons.Theme, onClick = { showStyle = true },
+                        modifier = Modifier.onGloballyPositioned { themeBtnBounds = it.boundsInRoot() })
+                    AgIconBtn(AgTopIcons.Power, onClick = { showReboot = true },
+                        modifier = Modifier.onGloballyPositioned { powerBtnBounds = it.boundsInRoot() })
                 }
             }
             Spacer(Modifier.height(14.dp))
@@ -136,6 +145,7 @@ fun AgHome(
         Box(
             Modifier
                 .fillMaxWidth()
+                .tiltCardFx()
                 .shadow(
                     12.dp, RoundedCornerShape(24.dp),
                     spotColor = Ag.Vio.copy(alpha = 0.251f),
@@ -201,6 +211,7 @@ fun AgHome(
                             onClick = actions.onInstallClick,
                             modifier = Modifier.weight(1f),
                             enabled = hero.canFlash,
+                            particleEdge = true,
                         )
                         AgButton(
                             primary = false,
@@ -304,10 +315,10 @@ fun AgHome(
     }
 
     if (showReboot) {
-        AgRebootSheet(onDismiss = { showReboot = false })
+        AgRebootSheet(origin = powerBtnBounds, onDismiss = { showReboot = false })
     }
     if (showStyle) {
-        StylePickerDialog(current = LocalUiMode.current, onDismiss = { showStyle = false })
+        StylePickerDialog(current = LocalUiMode.current, origin = themeBtnBounds, onDismiss = { showStyle = false })
     }
 }
 

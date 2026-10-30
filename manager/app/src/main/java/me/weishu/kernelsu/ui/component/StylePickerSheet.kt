@@ -53,6 +53,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.data.repository.SettingsRepositoryImpl
+import me.weishu.kernelsu.ui.screen.ag.zoomFromOrigin
 import me.weishu.kernelsu.ui.UiMode
 
 /**
@@ -255,6 +256,7 @@ private val PickSkins = listOf(
 fun StylePickerDialog(
     current: UiMode,
     onDismiss: () -> Unit,
+    origin: androidx.compose.ui.geometry.Rect = androidx.compose.ui.geometry.Rect.Zero,
 ) {
     val repo = remember { SettingsRepositoryImpl() }
     val appDark = isAppDark()
@@ -284,9 +286,19 @@ fun StylePickerDialog(
         animationSpec = tween(durationMillis = 280),
         label = "picker-enter",
     )
+    // 共享元素：从主题按钮放大进入，关闭时缩回原按钮
+    var leaving by remember { mutableStateOf(false) }
+    val zoom = remember { androidx.compose.animation.core.Animatable(0f) }
+    LaunchedEffect(Unit) { zoom.animateTo(1f, androidx.compose.animation.core.spring(dampingRatio = 0.82f, stiffness = 420f)) }
+    LaunchedEffect(leaving) {
+        if (leaving) {
+            zoom.animateTo(0f, tween(200))
+            onDismiss()
+        }
+    }
 
     Dialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { leaving = true },
         properties = DialogProperties(
             usePlatformDefaultWidth = false,
             decorFitsSystemWindows = false,
@@ -299,12 +311,13 @@ fun StylePickerDialog(
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
-                    onClick = onDismiss,
+                    onClick = { leaving = true },
                 ),
             contentAlignment = Alignment.Center,
         ) {
             Column(
                 modifier = Modifier
+                    .zoomFromOrigin(origin, zoom.value)
                     .padding(horizontal = 12.dp)
                     .widthIn(max = 560.dp)
                     .fillMaxWidth()

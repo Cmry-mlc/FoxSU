@@ -1127,8 +1127,8 @@ private fun MiniDockPreview(code: String) {
     val kitCenter = code == "center" || code in setOf("bubble", "film", "neon", "frost", "sticker")
 
     val pillBg: Color = when (code) {
-        "film" -> if (dark) Color(0xFF0E0C15) else Color(0xFF2E2A3A)
-        "neon" -> Color(0xFF1E1A29)
+        "film" -> if (dark) Color(0xFF0E0C15) else Color(0xFFF7F1E8)
+        "neon" -> if (dark) Color(0xFF221D31) else Color(0xF2FFFFFF)
         "frost" -> if (dark) Color(0x8C3A344A) else Color(0xE6FFFFFF)
         "track" -> if (dark) Color(0xFF221F2C) else Color(0xFFF4EFFA)
         "editorial" -> if (dark) Color(0xFF1B1A20) else Color(0xFFFFFCF6)
@@ -1210,10 +1210,12 @@ private fun MiniSelected(code: String, grad: Brush, ac: me.weishu.kernelsu.ui.th
                 )
             }
             "bubble" -> Box(Modifier.size(10.dp).clip(CircleShape).background(grad))
-            "film" -> Box(Modifier.size(8.dp).clip(CircleShape).border(1.8.dp, Color(0xFFFFD84D), CircleShape))
+            "film" -> Box(Modifier.size(8.dp).clip(CircleShape).border(1.8.dp, if (dark) Color(0xFFFFD84D) else ac.primary, CircleShape))
             "neon" -> Box(
                 Modifier.size(10.dp).clip(CircleShape).background(
-                    Brush.radialGradient(listOf(ac.secondary, ac.secondary.copy(alpha = 0.2f), Color.Transparent))
+                    Brush.radialGradient(
+                        listOf(if (dark) ac.secondary else ac.primary, ac.secondary.copy(alpha = 0.2f), Color.Transparent)
+                    )
                 )
             )
             "frost" -> Box(Modifier.size(11.dp).clip(CircleShape).background(if (dark) Color(0xFF3A3448) else Color.White)) {
