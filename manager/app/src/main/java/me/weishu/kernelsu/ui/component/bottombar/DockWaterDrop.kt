@@ -18,6 +18,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
@@ -163,15 +167,45 @@ internal fun DockSlideIndicator(
     val left = x.value + insetX - max(tail, 0f)
     val width = (plateW.value + abs(tail)).dp
 
+    // 拖尾段用 DstOut 擦成半透明：真实水滴被拉长时尾部是变薄变淡的，
+    // 整块等不透明度的色块拉过去，会像一张贴纸被拽，而不是水。
+    // 擦除量随拉伸幅度增长，静止时 tailPx = 0，这一步直接跳过。
+    val tailPx = with(LocalDensity.current) { abs(tail).dp.toPx() }
+    val tailAlpha = 0.72f * (abs(mag).coerceAtMost(1f))
+
     Box(modifier) {
         Box(
             modifier = Modifier
                 .offset(x = left.dp, y = insetY.dp)
                 .width(width)
                 .height(plateH)
-                .graphicsLayer { scaleY = squash }
+                .graphicsLayer {
+                    scaleY = squash
+                    // DstOut 必须在独立图层里做，否则会把底栏背景一起擦穿
+                    compositingStrategy = CompositingStrategy.Offscreen
+                }
                 .clip(shape)
-                .background(brush),
+                .background(brush)
+                .drawWithContent {
+                    drawContent()
+                    if (tailPx > 0.5f) {
+                        // 0f 落在拖尾最末端（擦得最多），1f 落在靠主体一侧（完全不擦）；
+                        // 向左流时整段翻到右侧，所以两个 alpha 直接对调
+                        val start = if (dir > 0) 0f else size.width - tailPx
+                        val end = if (dir > 0) tailPx else size.width
+                        drawRect(
+                            brush = Brush.horizontalGradient(
+                                colorStops = arrayOf(
+                                    0f to Color.Black.copy(alpha = if (dir > 0) tailAlpha else 0f),
+                                    1f to Color.Black.copy(alpha = if (dir > 0) 0f else tailAlpha),
+                                ),
+                                startX = start,
+                                endX = end,
+                            ),
+                            blendMode = BlendMode.DstOut,
+                        )
+                    }
+                },
             contentAlignment = Alignment.Center,
         ) {
             // 顶部一道极细高光：反射亮边，鼓包时更明显
