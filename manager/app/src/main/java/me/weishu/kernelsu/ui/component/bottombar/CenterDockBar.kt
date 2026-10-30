@@ -33,7 +33,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -150,9 +149,9 @@ internal fun CenterDockBar(
     // 所以不管以后怎么调 DockMetrics，这里永远和默认胶囊同宽同高。
     val barW = DockMetrics.itemW * 4 + DockMetrics.gap * 3 + DockMetrics.pad * 2
     val barH = DockMetrics.itemH + DockMetrics.pad * 2
-    // 参考图的比例：头像直径 ≈ 胶囊高 × 1.16，上下各凸出 6dp；里面的图案只占头像 72%，
-    // 剩下全靠白环和留白撑出「小图装在大圆里」的呼吸感。
-    val avatarD = barH + 12.dp
+    // 参考图里头像是「嵌在底栏里」的：直径约为栏高的 92%（167/180），上下各留 3dp，
+    // 不顶出胶囊。里面图案再占头像的七成，靠白环撑出呼吸感。
+    val avatarD = barH - 6.dp
     val shape = RoundedCornerShape(barH / 2)
 
     val sinkModifier = Modifier.graphicsLayer {
@@ -247,9 +246,8 @@ internal fun CenterDockBar(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 items.forEachIndexed { index, item ->
-                    // 正中留出卡位：头像画在外层（不被胶囊裁切），这里只占一格宽度。
-                    // 权重 1.15，把两侧 tab 各推开约 3dp，文字不会贴到头像的白环
-                    if (index == 2) Spacer(Modifier.weight(1.15f))
+                    // 正中留出卡位：头像画在外层（不被胶囊裁切），这里只占一格宽度
+                    if (index == 2) Spacer(Modifier.weight(1f))
                     CenterDockTab(
                         item = item,
                         index = index,
@@ -264,7 +262,7 @@ internal fun CenterDockBar(
             }
         }
 
-        // 头像单独一层：居中对齐胶囊中线，requiredSize 让它合法顶出胶囊上下各 6dp。
+        // 头像单独一层：居中对齐胶囊中线，70 < 76，完整落在底栏内部，不顶出。
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -276,7 +274,7 @@ internal fun CenterDockBar(
             CenterAvatar(
                 avatar = avatar,
                 dark = dark,
-                modifier = Modifier.requiredSize(avatarD),
+                modifier = Modifier.size(avatarD),
                 onClick = onOpenDonate,
                 onLongClick = {
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -417,7 +415,7 @@ private fun CenterAvatar(
                 scaleY = scale
             }
             .shadow(
-                12.dp,
+                6.dp,
                 CircleShape,
                 spotColor = if (dark) Color(0x99000000) else Color(0x3332286E),
                 ambientColor = if (dark) Color(0x66000000) else Color(0x1F32286E),
@@ -442,8 +440,8 @@ private fun CenterAvatar(
                     .clip(CircleShape),
             )
         } else {
-            // 默认狐狸标：原图内容占画布 90.8%，这里再缩到 85%，
-            // 内容直径约为头像的 72%，四周留出约 12dp 白 —— 与参考图一致。
+            // 默认狐狸标：原图内容占画布 90.8%，这里缩到 87%，
+            // 内容直径约为头像的 72%，四周留约 9dp 白 —— 与参考图一致。
             Image(
                 painter = painterResource(R.drawable.foxsu_mark),
                 contentDescription = "支持 FoxSu",
@@ -451,8 +449,8 @@ private fun CenterAvatar(
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer {
-                        scaleX = 0.85f
-                        scaleY = 0.85f
+                        scaleX = 0.87f
+                        scaleY = 0.87f
                     },
             )
         }
