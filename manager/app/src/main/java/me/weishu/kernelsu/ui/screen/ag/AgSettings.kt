@@ -68,6 +68,7 @@ fun AgSettings(
 ) {
     val context = LocalContext.current
     val donateNav = me.weishu.kernelsu.ui.navigation3.LocalNavigator.current
+    val nav = me.weishu.kernelsu.ui.navigation3.LocalNavigator.current
     var showStyle by remember { mutableStateOf(false) }
 
     val styleName = when (LocalUiMode.current.value) {
@@ -166,6 +167,13 @@ fun AgSettings(
                         "SU 日志", "将 Root 相关事件记录到 KernelSU 的 SU 日志",
                         Ag.Mag, AgSettingsIcons.Log,
                         trailing = { AgToggle(checked = uiState.isSulogEnabled, onCheckedChange = { actions.onSetSulogEnabled(!uiState.isSulogEnabled) }) },
+                    )
+                    // SusFs 管理：隐藏路径 / 隐藏挂载 / uname、cmdline 伪装 / 开机自动应用。
+                    // 内核由用户自行刷入 susfs 补丁，管理器只提供配置界面与开机脚本。
+                    AgRow(
+                        "SusFs 管理", "Root 隐藏：路径 / 挂载 / 伪装（需 SusFs 内核）",
+                        Ag.Teal, AgSettingsIcons.Moon, showChev = true,
+                        onClick = { nav.push(me.weishu.kernelsu.ui.navigation3.Route.SusFs) },
                     )
                     // 恢复上游设置项：安装/更新/开关模块后用的重启方式。
                     // 面板里的「重启 / Recovery / EDL」入口仍在主页电源键里，设置页只保留这个开关。

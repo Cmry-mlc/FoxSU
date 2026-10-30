@@ -56,6 +56,11 @@ sealed interface Route : NavKey, Parcelable {
     @Serializable
     data object Sulog : Route
 
+    /** SusFs 管理：隐藏路径 / 隐藏挂载 / 伪装 / 开机自动应用（内核由用户自行刷入）。 */
+    @Parcelize
+    @Serializable
+    data object SusFs : Route
+
     @Parcelize
     @Serializable
     data object ColorPalette : Route

@@ -267,6 +267,11 @@ class MainActivity : ComponentActivity() {
                                     onOpenAuthor = dropUnlessResumed { navigator.push(Route.Author) },
                                 )
                             }
+                            entry<Route.SusFs>(swipeDismiss = swipeDismiss) {
+                                me.weishu.kernelsu.ui.screen.ag.AgSusFs(
+                                    onBack = dropUnlessResumed { navigator.pop() },
+                                )
+                            }
                             entry<Route.Sulog>(swipeDismiss = swipeDismiss) { SulogScreen() }
                             entry<Route.ColorPalette>(swipeDismiss = swipeDismiss) { ColorPaletteScreen() }
                             entry<Route.MetaModule>(swipeDismiss = swipeDismiss) {
