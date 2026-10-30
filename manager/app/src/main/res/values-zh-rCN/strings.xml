@@ -482,6 +482,13 @@
     <string name="module_shortcut_scheme_copied">已复制 URL Scheme</string>
     <string name="install_force_backup">备份为原厂镜像</string>
     <string name="install_force_backup_summary">请确保你选择的 boot 镜像是原厂镜像</string>
+    <string name="install_block_modules">屏蔽内核模块</string>
+    <string name="install_block_modules_summary">启动时不加载这些内核模块，逗号分隔，主要针对厂商反 root 模块（vr、vklp、oplus_secure_guard、mkp）。只接受字母、数字和下划线。改完要重新刷写镜像才生效；屏蔽 init 第一阶段就要加载的模块会让设备开不了机。</string>
+    <string name="install_block_modules_hint">留空则不屏蔽，例如 vr, vklp, mkp</string>
+    <string name="install_block_modules_clear">清空</string>
+    <string name="install_block_modules_count">将屏蔽 %1$d 个</string>
+    <string name="install_block_modules_ignored">已忽略 %1$d 个非法名称</string>
+    <string name="install_block_modules_none">没有合法的模块名，这次不会屏蔽任何模块</string>
     <string name="settings_sulog">SU 日志</string>
     <string name="settings_sulog_summary">将 Root 相关事件记录到 KernelSU 的 SU 日志文件中</string>
     <string name="sulog_log_files">日志文件</string>

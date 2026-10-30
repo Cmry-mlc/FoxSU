@@ -227,6 +227,13 @@
     <string name="install_upload_lkm_file">Use local LKM file</string>
     <string name="install_force_backup">Backup as stock image</string>
     <string name="install_force_backup_summary">Please make sure your selected boot image is a stock image</string>
+    <string name="install_block_modules">Block kernel modules</string>
+    <string name="install_block_modules_summary">Skip loading these kernel modules at boot, comma separated. Aimed at vendor anti-root modules (vr, vklp, oplus_secure_guard, mkp); only letters, digits and underscores are accepted. Takes effect after re-patching the image — blocking a module that first-stage init loads will bootloop the device.</string>
+    <string name="install_block_modules_hint">Empty = block nothing, e.g. vr, vklp, mkp</string>
+    <string name="install_block_modules_clear">Clear</string>
+    <string name="install_block_modules_count">Blocking %1$d module(s)</string>
+    <string name="install_block_modules_ignored">%1$d invalid name(s) ignored</string>
+    <string name="install_block_modules_none">No valid module name — nothing will be blocked</string>
     <string name="install_only_support_ko_file">Only .ko files are supported</string>
     <string name="select_file_tip">%1$s partition image is recommended</string>
     <string name="select_kmi">Select KMI</string>

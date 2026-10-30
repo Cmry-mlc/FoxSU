@@ -360,10 +360,74 @@ private fun bootPatchFlags(
     allowShell: Boolean,
     enableAdb: Boolean,
     forceBackup: Boolean,
+    blockModules: List<String>,
 ): String = buildString {
     if (allowShell) append(" --allow-shell")
     if (enableAdb) append(" --enable-adbd")
     if (forceBackup) append(" --backup")
+    // ksud 的 --block-module 接受逗号分隔、也可重复给；这里合并成一次，
+    // 顺序保持用户输入顺序，方便对照。
+    if (blockModules.isNotEmpty()) {
+        append(" --block-module ").append(blockModules.joinToString(","))
+    }
+}
+
+/**
+ * 内核启动时会去加载、且专门用来对抗 root 的厂商模块。
+ * 只做「自动预填」的候选，不强制：设备上没有就不填。
+ */
+val AntiRootKernelModules = listOf(
+    "vr", "vklp", "oplus_secure_guard", "oplus_secure_guard_new", "mkp",
+)
+
+/**
+ * 校验并归一化「屏蔽内核模块」输入。
+ *
+ * 规则与 ksud 的 `parse_block_module` 完全一致（字母/数字/下划线、≤64 字节），
+ * 总长度再卡在 255 字节以内——内核那边是 256 字节缓冲区，超了会被静默截断，
+ * 结果就是「以为屏蔽了、其实只屏蔽了一半」。非法项直接丢弃而不是让整条命令失败。
+ */
+fun sanitizeBlockModules(input: String): List<String> {
+    val names = splitBlockModulesInput(input)
+        .filter { it.matches(Regex("^[A-Za-z0-9_]{1,64}$")) }
+        .distinct()
+    val kept = mutableListOf<String>()
+    var len = 0
+    for (name in names) {
+        val next = len + if (kept.isEmpty()) name.length else name.length + 1
+        if (next > 255) break
+        kept += name
+        len = next
+    }
+    return kept
+}
+
+/**
+ * 把输入框里的一整串拆成候选名字（不做合法性校验）。
+ *
+ * 中文输入法打出来的是全角「，」「、」「；」，直接按半角逗号切会把两个名字粘成一个
+ * 然后整条被丢弃——所以全角、半角、顿号、分号、空格、换行一律当分隔符。
+ */
+fun splitBlockModulesInput(input: String): List<String> =
+    input.split(',', '，', ';', '；', '、', ' ', '\n', '\t', '\r')
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+
+/**
+ * 读 `/proc/modules`，挑出这台设备上真实加载了的反 root 模块。
+ *
+ * 只用于安装页的「一次性预填」：读不到（无 root、hidepid 限制）就返回空，
+ * 界面留空即可，不猜也不编。
+ */
+suspend fun loadedAntiRootModules(): List<String> = withContext(Dispatchers.IO) {
+    runCatching {
+        File("/proc/modules").useLines { lines ->
+            lines.mapNotNull { it.substringBefore(' ').takeIf(String::isNotBlank) }
+                .filter { it in AntiRootKernelModules }
+                .distinct()
+                .toList()
+        }
+    }.getOrDefault(emptyList())
 }
 
 fun installBoot(
@@ -374,6 +438,7 @@ fun installBoot(
     allowShell: Boolean,
     enableAdb: Boolean,
     forceBackup: Boolean,
+    blockModules: List<String>,
     onStdout: (String) -> Unit,
     onStderr: (String) -> Unit,
 ): FlashResult {
@@ -398,7 +463,7 @@ fun installBoot(
     } else {
         " -b ${bootFile.absolutePath}"
     }
-    cmd += bootPatchFlags(allowShell, enableAdb, forceBackup)
+    cmd += bootPatchFlags(allowShell, enableAdb, forceBackup, blockModules)
 
     if (ota) {
         cmd += " -u"
@@ -442,6 +507,7 @@ fun downloadBoot(
     allowShell: Boolean,
     enableAdb: Boolean,
     forceBackup: Boolean,
+    blockModules: List<String>,
     onStdout: (String) -> Unit,
     onStderr: (String) -> Unit,
 ): FlashResult {
@@ -498,7 +564,7 @@ fun downloadBoot(
     }
 
     var cmd = "${getKsuDaemonPath()} boot-patch -b ${bootFile.absolutePath}"
-    cmd += bootPatchFlags(allowShell, enableAdb, forceBackup)
+    cmd += bootPatchFlags(allowShell, enableAdb, forceBackup, blockModules)
 
     val lkmFile = writeLkmFile(lkm)
     if (lkmFile != null) {

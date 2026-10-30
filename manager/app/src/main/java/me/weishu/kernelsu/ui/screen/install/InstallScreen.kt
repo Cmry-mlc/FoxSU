@@ -38,6 +38,8 @@ import me.weishu.kernelsu.ui.util.getCurrentKmi
 import me.weishu.kernelsu.ui.util.getDefaultPartition
 import me.weishu.kernelsu.ui.util.getSlotSuffix
 import me.weishu.kernelsu.ui.util.isAbDevice
+import me.weishu.kernelsu.ui.util.loadedAntiRootModules
+import me.weishu.kernelsu.ui.util.sanitizeBlockModules
 import me.weishu.kernelsu.ui.util.probeRemoteBootPartitions
 import me.weishu.kernelsu.ui.util.rootAvailable
 import top.yukonga.miuix.kmp.basic.SnackbarHostState as MiuixSnackbarHostState
@@ -66,6 +68,16 @@ fun InstallScreen() {
     var allowShell by rememberSaveable { mutableStateOf(false) }
     var enableAdb by rememberSaveable { mutableStateOf(false) }
     var forceBackup by rememberSaveable { mutableStateOf(false) }
+    var blockModules by rememberSaveable { mutableStateOf("") }
+
+    // 一次性预填：进来读 /proc/modules，把设备上真在跑的反 root 模块填进去。
+    // 只填一次 —— 用户清空后不该在重组时又被写回来。
+    LaunchedEffect(Unit) {
+        if (blockModules.isBlank()) {
+            val loaded = loadedAntiRootModules()
+            if (loaded.isNotEmpty()) blockModules = loaded.joinToString(", ")
+        }
+    }
 
     val currentKmi by produceState(initialValue = "") { value = getCurrentKmi() }
     val partitions by produceState(initialValue = emptyList()) { value = getAvailablePartitions() }
@@ -131,7 +143,8 @@ fun InstallScreen() {
                             lkm = lkmSelection,
                             allowShell = allowShell,
                             enableAdb = enableAdb,
-                            backup = forceBackup
+                            backup = forceBackup,
+                            blockModules = sanitizeBlockModules(blockModules),
                         )
                         else -> FlashIt.FlashBoot(
                             boot = if (method is InstallMethod.SelectFile) method.uri else null,
@@ -140,7 +153,8 @@ fun InstallScreen() {
                             partition = partitions.getOrNull(partitionSelectionIndex),
                             allowShell = allowShell,
                             enableAdb = enableAdb,
-                            backup = method is InstallMethod.SelectFile && forceBackup
+                            backup = method is InstallMethod.SelectFile && forceBackup,
+                            blockModules = sanitizeBlockModules(blockModules),
                         )
                     }
                 )
@@ -236,6 +250,7 @@ fun InstallScreen() {
         enableAdb = enableAdb,
         forceBackup = forceBackup,
         canForceBackup = installMethod is InstallMethod.SelectFile,
+        blockModules = blockModules,
     )
     val actions = InstallScreenActions(
         onBack = dropUnlessResumed { navigator.pop() },
@@ -285,7 +300,8 @@ fun InstallScreen() {
         },
         onSelectForceBackup = {
             forceBackup = it
-        }
+        },
+        onBlockModulesChange = { blockModules = it },
     )
 
     // 安装页全皮肤统一：五套皮肤共用同一套界面与交互（结构对齐原版单页安装），

@@ -78,6 +78,8 @@ sealed class FlashIt : Parcelable {
         val allowShell: Boolean = false,
         val enableAdb: Boolean = false,
         val backup: Boolean = false,
+        /** 启动时屏蔽的内核模块名，已由 [me.weishu.kernelsu.ui.util.sanitizeBlockModules] 校验。 */
+        val blockModules: List<String> = emptyList(),
     ) : FlashIt()
 
     @Parcelize
@@ -88,6 +90,7 @@ sealed class FlashIt : Parcelable {
         val allowShell: Boolean = false,
         val enableAdb: Boolean = false,
         val backup: Boolean = false,
+        val blockModules: List<String> = emptyList(),
     ) : FlashIt()
 
     @Parcelize
@@ -131,6 +134,7 @@ fun flashIt(
             flashIt.allowShell,
             flashIt.enableAdb,
             flashIt.backup,
+            flashIt.blockModules,
             onStdout,
             onStderr
         )
@@ -142,6 +146,7 @@ fun flashIt(
             flashIt.allowShell,
             flashIt.enableAdb,
             flashIt.backup,
+            flashIt.blockModules,
             onStdout,
             onStderr
         )

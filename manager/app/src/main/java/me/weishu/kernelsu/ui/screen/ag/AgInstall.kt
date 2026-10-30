@@ -9,6 +9,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,6 +32,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.CloudDownload
 import androidx.compose.material.icons.rounded.FileOpen
@@ -55,7 +58,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
@@ -63,6 +68,8 @@ import me.weishu.kernelsu.ui.screen.install.InstallMethod
 import me.weishu.kernelsu.ui.screen.install.InstallScreenActions
 import me.weishu.kernelsu.ui.screen.install.InstallUiState
 import me.weishu.kernelsu.ui.util.LkmSelection
+import me.weishu.kernelsu.ui.util.sanitizeBlockModules
+import me.weishu.kernelsu.ui.util.splitBlockModulesInput
 
 /**
  * 镜像安装（全皮肤统一，单屏完成）。
@@ -338,6 +345,111 @@ internal fun AgInstall(
                                     )
                                 },
                             )
+                        }
+
+                        // ── 屏蔽内核模块：启动时不加载（主要针对厂商反 root 模块）──
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .height(1.dp)
+                                .background(Ag.Line),
+                        )
+                        Column(Modifier.padding(top = 14.dp, bottom = 14.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    Icons.Rounded.Block, null,
+                                    tint = Ag.Tx3,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                                Spacer(Modifier.width(12.dp))
+                                Text(
+                                    stringResource(R.string.install_block_modules),
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Ag.Tx,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                if (uiState.blockModules.isNotBlank()) {
+                                    Text(
+                                        stringResource(R.string.install_block_modules_clear),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Ag.Tx3,
+                                        modifier = Modifier
+                                            .agClick(onClick = { actions.onBlockModulesChange("") })
+                                            .padding(horizontal = 4.dp, vertical = 2.dp),
+                                    )
+                                }
+                            }
+                            Spacer(Modifier.height(5.dp))
+                            Text(
+                                stringResource(R.string.install_block_modules_summary),
+                                fontSize = 11.5.sp,
+                                lineHeight = 17.sp,
+                                color = Ag.Tx3,
+                                modifier = Modifier.padding(start = 30.dp),
+                            )
+                            Spacer(Modifier.height(10.dp))
+                            Box(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Ag.TintInk)
+                                    .border(1.dp, Ag.Line, RoundedCornerShape(12.dp))
+                                    .padding(horizontal = 12.dp, vertical = 11.dp),
+                            ) {
+                                if (uiState.blockModules.isEmpty()) {
+                                    Text(
+                                        stringResource(R.string.install_block_modules_hint),
+                                        fontSize = 13.sp,
+                                        color = Ag.Tx3,
+                                    )
+                                }
+                                BasicTextField(
+                                    value = uiState.blockModules,
+                                    onValueChange = actions.onBlockModulesChange,
+                                    textStyle = TextStyle(
+                                        fontSize = 13.sp,
+                                        fontFamily = FontFamily.Monospace,
+                                        color = Ag.Tx,
+                                    ),
+                                    cursorBrush = SolidColor(Ag.Vio),
+                                    singleLine = true,
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii),
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                            }
+                            // 把「真正会写进 ksu_config 的名字」摊开给用户看：
+                            // 输错了不报错、静默丢弃最坑人，这里直接说清吃了哪几个。
+                            val typed = splitBlockModulesInput(uiState.blockModules)
+                            if (typed.isNotEmpty()) {
+                                val parsed = sanitizeBlockModules(uiState.blockModules)
+                                Spacer(Modifier.height(8.dp))
+                                Text(
+                                    when {
+                                        parsed.isEmpty() ->
+                                            stringResource(R.string.install_block_modules_none)
+                                        else -> buildString {
+                                            append(stringResource(R.string.install_block_modules_count, parsed.size))
+                                            append("：")
+                                            append(parsed.joinToString(", "))
+                                            if (parsed.size < typed.size) {
+                                                append("（")
+                                                append(
+                                                    stringResource(
+                                                        R.string.install_block_modules_ignored,
+                                                        typed.size - parsed.size,
+                                                    )
+                                                )
+                                                append("）")
+                                            }
+                                        }
+                                    },
+                                    fontSize = 11.sp,
+                                    lineHeight = 16.sp,
+                                    color = if (parsed.isEmpty()) Ag.Amber else Ag.Tx2,
+                                )
+                            }
                         }
                     }
                 }
