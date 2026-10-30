@@ -4,20 +4,66 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "发布版本号（如 v3.0.41）。留空则按 versionCode 自动生成 v3.0.N"
+        required: false
+        type: string
 
 jobs:
   build-manager:
     uses: ./.github/workflows/build-manager.yml
     secrets: inherit
+
   release:
     needs:
       - build-manager
+    # 上游只要还留下了 APK 就发，不因为某个可选平台（比如 macOS 的 ksud）
+    # 排队超时被取消而把整次发布一起带下去。
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          merge-multiple: false
+
+      # download-artifact 会按 artifact 名建子目录（manager-gradle/、ksud-xxx/），
+      # 这里统一摊平，后面就不用猜结构了。
+      - name: Collect apk
+        run: |
+          mkdir -p manager
+          find . -maxdepth 3 -type f -name "*.apk" -exec cp -f {} manager/ \;
+          ls -l manager/
+
+      - name: Verify apk exists
+        run: |
+          if ! ls manager/*.apk >/dev/null 2>&1; then
+            echo "::error::没有拿到管理器 APK，放弃发布（检查 build-manager 是否成功）"
+            exit 1
+          fi
+
+      - name: Resolve tag
+        id: tag
+        run: |
+          if [ -n "${{ github.event.inputs.tag }}" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          elif [ "${{ github.ref_type }}" = "tag" ]; then
+            TAG="${GITHUB_REF_NAME}"
+          else
+            APK=$(ls manager/*.apk | head -n 1)
+            VC=$(echo "$APK" | sed -E 's/.*_([0-9]+)-release\.apk$/\1/')
+            if ! echo "$VC" | grep -qE '^[0-9]+$'; then
+              echo "::error::无法从 $APK 解析 versionCode，请在触发时手动填写 tag"
+              exit 1
+            fi
+            TAG="v3.0.$((VC - 30000))"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "发布版本号：$TAG"
 
       - name: Rename ksud
         run: |
@@ -50,13 +96,15 @@ jobs:
       - name: Rename lkm
         run: |
           mkdir -p lkm
-          for dir in ./*-android*-lkm; do
+          for dir in ./*android*-lkm*; do
             if [ -d "$dir" ]; then
                 echo "----- Rename $dir -----"
                 lkm_platform_name=$(basename "$dir")
                 lkm_platform_name="lkm-${lkm_platform_name%-lkm}_kernelsu.ko"
-                KO="$(ls $dir/*_kernelsu.ko)"
-                mv "$KO" "lkm/$lkm_platform_name"
+                KO="$(ls $dir/*_kernelsu.ko 2>/dev/null | head -n 1)"
+                if [ -n "$KO" ]; then
+                  mv "$KO" "lkm/$lkm_platform_name"
+                fi
             fi
           done
 
@@ -66,6 +114,12 @@ jobs:
       - name: release
         uses: softprops/action-gh-release@v3
         with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: ${{ steps.tag.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          generate_release_notes: true
+          make_latest: true
+          fail_on_unmatched_files: false
           files: |
             manager/*.apk
             lkm/lkm-*_kernelsu.ko
