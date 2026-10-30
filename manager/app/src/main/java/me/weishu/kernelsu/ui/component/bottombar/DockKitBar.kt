@@ -344,7 +344,10 @@ internal fun DockKitBar(
     val materialOn = liquid || blurOn
 
     Box(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            // 在底栏上横滑也能切页：这一圈没有滚动容器，不会和页面列表抢手势
+            .dockSwipeToPager(mainState.pagerState, true, scope),
         contentAlignment = Alignment.BottomCenter,
     ) {
         Box(

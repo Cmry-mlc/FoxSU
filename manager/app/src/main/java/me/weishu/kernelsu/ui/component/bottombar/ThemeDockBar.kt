@@ -296,7 +296,13 @@ fun ThemeDockBar(
     }
 
     // ── 横向胶囊：所有样式共用一个外壳（同宽同高）──
-    Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.BottomCenter) {
+    // 底栏这一圈没有滚动容器，横滑在这里能被稳定识别（页面里的列表不会抢），
+    // 所以「在底栏上横滑切页」始终可用，和「页面切换手势」的三档无关。
+    val swipeScope = androidx.compose.runtime.rememberCoroutineScope()
+    Box(
+        modifier = modifier.fillMaxWidth().dockSwipeToPager(mainState.pagerState, true, swipeScope),
+        contentAlignment = Alignment.BottomCenter,
+    ) {
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)

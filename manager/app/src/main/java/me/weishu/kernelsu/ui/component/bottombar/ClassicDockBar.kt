@@ -73,9 +73,12 @@ fun ClassicDockBar(
     val barBg = theme.bg.copy(alpha = (if (dark) 1f else 0.97f) * alphaK)
     val hairline = if (dark) Color(0x1AFFFFFF) else Color(0x121E1946)
 
+    // 通栏传统底栏同样支持横滑切页：这一条也是纯按钮区，没有滚动容器
+    val swipeScope = androidx.compose.runtime.rememberCoroutineScope()
     Column(
         modifier
             .fillMaxWidth()
+            .dockSwipeToPager(mainState.pagerState, true, swipeScope)
             .background(barBg)
             // 顶部 1px 发丝线（画在底色之上、内容之下）
             .drawBehind {
