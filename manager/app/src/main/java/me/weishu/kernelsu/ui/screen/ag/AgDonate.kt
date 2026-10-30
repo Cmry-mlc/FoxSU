@@ -135,26 +135,56 @@ fun AgDonate(
             }
 
             item {
-                AgGHead("这笔钱用在哪儿")
-                AgCard(contentPadding = PaddingValues(4.dp)) {
-                    MoneyRow(
-                        icon = AgSettingsIcons.Shield,
-                        tint = Ag.Vio,
-                        title = "域名、CDN 与构建机",
-                        desc = "下载服务、模块仓库镜像、每次发版的 CI 时长",
+                AgGHead("免责声明")
+                AgCard(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp)) {
+                    NoticeLine(
+                        "本软件按「现状」（AS IS）提供，不附带任何明示或暗示的担保，包括但不限于适销性、特定用途适用性及不侵权的保证。",
                     )
-                    MoneyRow(
-                        icon = AgSettingsIcons.Modules,
-                        tint = Ag.Teal,
-                        title = "真机回归",
-                        desc = "不同 KMI、不同厂商的机器，用来验证内核与模块",
+                    NoticeLine(
+                        "刷机、Root、安装模块均会修改设备系统，可能导致数据丢失、系统无法启动、保修失效或硬件损坏。是否使用及使用方式由你自行判断并承担全部风险。",
                     )
-                    MoneyRow(
-                        icon = AgSettingsIcons.Style,
-                        tint = Ag.Amber,
-                        title = "回馈上游",
-                        desc = "FoxSu 站在 KernelSU、Miuix、Magic Mount-rs 之上",
+                    NoticeLine(
+                        "请务必提前备份重要数据，并确认已了解自己设备的解锁与回滚流程。因使用本软件造成的任何直接或间接损失，开发者不承担任何责任。",
+                    )
+                    NoticeLine(
+                        "本软件为纯本地工具，不含广告、不设后台服务、不上传任何个人数据；赞赏是完全自愿的，与功能使用无关。",
                         last = true,
+                    )
+                }
+            }
+
+            item {
+                AgGHead("感谢")
+                AgCard(
+                    Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(horizontal = 18.dp, vertical = 18.dp),
+                ) {
+                    Text(
+                        "谢谢你把 FoxSu 装进手机里。",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Ag.Tx,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "这个项目从一行配色开始，是每一次反馈、每一个 Issue、每一句「好用」把它推到了今天。无论是提建议、报问题、帮忙翻译，还是只是安安静静地用着，都是实实在在的支持。",
+                        fontSize = 12.sp,
+                        lineHeight = 19.sp,
+                        color = Ag.Tx2,
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        "也感谢 KernelSU、Miuix、Magic Mount-rs、susfs 等开源项目，FoxSu 是站在它们肩上的。",
+                        fontSize = 12.sp,
+                        lineHeight = 19.sp,
+                        color = Ag.Tx2,
+                    )
+                    Spacer(Modifier.height(14.dp))
+                    Text(
+                        "—— FoxSu",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Ag.Tx3,
                     )
                 }
             }
@@ -460,39 +490,30 @@ private fun HeroDivider() {
 
 
 
-/** 「钱花在哪」的一行。 */
+/** 免责声明的一条：小圆点 + 正文，最后一条不留底部间距。 */
 @Composable
-private fun MoneyRow(
-    icon: ImageVector,
-    tint: Color,
-    title: String,
-    desc: String,
-    last: Boolean = false,
-) {
-    Column {
-        Row(
+private fun NoticeLine(text: String, last: Boolean = false) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(bottom = if (last) 0.dp else 12.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Box(
             Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.Top,
-        ) {
-            AgRic(tint = tint, icon = icon, size = 34.dp)
-            Spacer(Modifier.width(12.dp))
-            Column {
-                Text(title, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Ag.Tx)
-                Spacer(Modifier.height(3.dp))
-                Text(desc, fontSize = 11.5.sp, lineHeight = 16.sp, color = Ag.Tx3)
-            }
-        }
-        if (!last) {
-            Box(
-                Modifier
-                    .padding(start = 58.dp, end = 12.dp)
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .background(Ag.Line),
-            )
-        }
+                .padding(top = 7.dp)
+                .size(4.dp)
+                .clip(CircleShape)
+                .background(Ag.Tx3),
+        )
+        Spacer(Modifier.width(10.dp))
+        Text(
+            text,
+            fontSize = 12.sp,
+            lineHeight = 19.sp,
+            color = Ag.Tx2,
+            modifier = Modifier.weight(1f),
+        )
     }
 }
 
