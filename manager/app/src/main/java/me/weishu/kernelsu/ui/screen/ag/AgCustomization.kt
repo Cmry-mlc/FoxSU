@@ -61,6 +61,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
@@ -95,6 +96,11 @@ import java.io.File
  * 复刻项让「换肤」不再改变操作习惯——样式改为全局可选。
  */
 private val dockStyles = listOf(
+    // Dock Kit v2.0：设计稿定稿的 7 套（48dp 栅格 + 中央狐狸卡位）
+    "bubble" to "珊瑚气泡", "film" to "胶片孔",
+    "neon" to "霓虹管", "frost" to "玻璃叠层",
+    "focus" to "单点聚焦", "sticker" to "云朵贴纸",
+    "track" to "滑轨卡片",
     "d0" to "原有胶囊", "v1" to "展开药丸", "v5" to "侧边抽屉",
     "v6" to "流光光标", "v7" to "描边霓虹", "v8" to "方块卡片",
     "v9" to "渐变实底", "v10" to "顶指示条", "v11" to "浮起圆片",
@@ -684,9 +690,11 @@ internal fun AgCustomization(
                     }
                     Spacer(Modifier.height(10.dp))
                 }
-                if (custom.dockStyle == "center") {
+                val kitCenter = custom.dockStyle == "center" ||
+                    me.weishu.kernelsu.ui.component.bottombar.DockKitStyle.of(custom.dockStyle)?.hasCenter == true
+                if (kitCenter) {
                     Text(
-                        "这个样式不用按钮形状：中间那颗头像是捐赠入口，点一下打开，长按换图。",
+                        "中间那颗狐狸是捐赠入口，点一下打开，长按换图。",
                         fontSize = 11.sp,
                         lineHeight = 16.sp,
                         color = Ag.Tx3,
@@ -1106,12 +1114,17 @@ private fun DockStylePreview(code: String) {
     val pill = RoundedCornerShape(99.dp)
 
     // 胶囊底 / 描边：只在这里分叉，尺寸一律不参与
+    val kitCenterCodes = setOf("bubble", "film", "neon", "frost", "sticker")
     val pillBg: Color = when (code) {
         "editorial" -> if (dark) Color(0xFF1B1A20) else Color(0xFFFFFCF6)
         "pages" -> if (dark) Color(0xFF1B1C1E) else Color.White
         "glass" -> if (dark) Color(0xFF14141E) else Color(0xF2FFFFFF)
         "nocturne" -> Color(0xFF0F1018)
         "center" -> if (dark) Color(0xFF22213A) else Color.White
+        "film" -> if (dark) Color(0xFF0E0C15) else Color(0xFF2E2A3A)
+        "neon" -> Color(0xFF1E1A29)
+        "frost" -> if (dark) Color(0x8C3A344A) else Color(0xE6FFFFFF)
+        "track" -> if (dark) Color(0xFF221F2C) else Color(0xFFF4EFFA)
         "v7", "v10" -> Color.Transparent
         else -> if (dark) Color(0xFF1F1E32) else Color.White
     }
@@ -1120,6 +1133,9 @@ private fun DockStylePreview(code: String) {
         "nocturne" -> Color(0x26FFFFFF)
         "v7" -> ac.primary.copy(alpha = 0.35f)
         "pages" -> if (dark) Color(0x29FFFFFF) else Color(0x14111111)
+        "film" -> if (dark) Color(0x29FFD84D) else Color(0x14000000)
+        "neon" -> ac.primary.copy(alpha = 0.30f)
+        "frost" -> Color(0x59FFFFFF)
         else -> null
     }
 
@@ -1237,6 +1253,49 @@ private fun DockStylePreview(code: String) {
                                 )
                             }
                     )
+                    // ── Dock Kit v2.0 的 7 套 ──
+                    "bubble" -> Box(Modifier.size(15.dp).clip(CircleShape).background(grad))
+                    "film" -> Box(
+                        Modifier.size(13.dp).clip(CircleShape)
+                            .border(1.8.dp, Color(0xFFFFD84D), CircleShape)
+                    )
+                    "neon" -> Box(
+                        Modifier.size(14.dp).clip(CircleShape).background(
+                            Brush.radialGradient(
+                                listOf(ac.secondary, ac.secondary.copy(alpha = 0.25f), Color.Transparent)
+                            )
+                        )
+                    )
+                    "frost" -> Box(
+                        Modifier.size(width = 20.dp, height = 15.dp)
+                            .clip(CircleShape)
+                            .background(if (dark) Color(0xFF3A3448) else Color.White),
+                        contentAlignment = Alignment.Center,
+                    ) { Box(Modifier.size(6.dp).clip(CircleShape).background(ac.primary)) }
+                    "focus" -> Box(
+                        Modifier.size(width = 24.dp, height = 15.dp)
+                            .clip(pill)
+                            .background(ac.soft),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(Modifier.size(5.dp).clip(CircleShape).background(ac.primary))
+                            Spacer(Modifier.width(2.dp))
+                            Box(Modifier.size(width = 8.dp, height = 2.dp).clip(pill).background(ac.primary))
+                        }
+                    }
+                    "sticker" -> Box(
+                        Modifier.size(14.dp).clip(RoundedCornerShape(5.dp))
+                            .graphicsLayer { rotationZ = -8f }
+                            .background(Color(0xFFFFE7DF)),
+                        contentAlignment = Alignment.Center,
+                    ) { Box(Modifier.size(6.dp).clip(CircleShape).background(ac.primary)) }
+                    "track" -> Box(
+                        Modifier.size(width = 20.dp, height = 15.dp)
+                            .clip(RoundedCornerShape(5.dp))
+                            .background(if (dark) Color(0xFF322D40) else Color.White),
+                        contentAlignment = Alignment.Center,
+                    ) { Box(Modifier.size(6.dp).clip(CircleShape).background(ac.primary)) }
                     // d0 / v1 / pages：渐变实底药丸
                     else -> Box(
                         Modifier.size(width = 24.dp, height = 15.dp).clip(pill).background(grad)
@@ -1244,7 +1303,7 @@ private fun DockStylePreview(code: String) {
                 }
             }
             repeat(3) { i ->
-                if (code == "center" && i == 1) {
+                if ((code == "center" || code in kitCenterCodes) && i == 1) {
                     Box(
                         Modifier
                             .size(12.dp)

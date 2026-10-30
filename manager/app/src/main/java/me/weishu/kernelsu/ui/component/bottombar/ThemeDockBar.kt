@@ -205,6 +205,17 @@ fun ThemeDockBar(
         alpha = sinkAlpha
     }
 
+    // ── 设计稿 Dock Kit（7 套）：另一套 48dp 栅格的版式，单独实现 ──
+    DockKitStyle.of(custom.dockStyle)?.let { kit ->
+        DockKitBar(
+            style = kit,
+            navigationBadge = navigationBadge,
+            modifier = modifier,
+            onOpenDonate = onOpenDonate,
+        )
+        return
+    }
+
     // ── CENTER：宽胶囊 + 中间凸起头像（点击进捐赠页，长按换图）──
     if (style == DockStyle.CENTER) {
         CenterDockBar(
