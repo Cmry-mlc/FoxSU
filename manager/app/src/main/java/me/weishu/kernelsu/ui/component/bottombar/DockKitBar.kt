@@ -249,7 +249,7 @@ internal fun DockKitBar(
     }
 
     val navInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    val bottomPad = if (navInset != 0.dp) 10.dp + navInset else 22.dp
+    val bottomPad = if (navInset != 0.dp) 8.dp + navInset else 14.dp
 
     // ── 栅格：设计稿 48 / 2 / 6，滑轨卡片单独一套 68×62 ──
     val track = style == DockKitStyle.TRACK
@@ -336,6 +336,12 @@ internal fun DockKitBar(
         picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
     }
 
+    // ── 材质：液态玻璃 / 实时模糊开启时，底交给 DockMaterial 采样身后页面 ──
+    val appBackdrop = me.weishu.kernelsu.ui.component.LocalAppBackdrop.current
+    val liquid = custom.bottomBarLiquidGlass && appBackdrop != null
+    val blurOn = !liquid && me.weishu.kernelsu.ui.theme.LocalEnableBlur.current && appBackdrop != null
+    val materialOn = liquid || blurOn
+
     Box(
         modifier = modifier.fillMaxWidth(),
         contentAlignment = Alignment.BottomCenter,
@@ -356,22 +362,20 @@ internal fun DockKitBar(
                 )
                 .clip(shape)
                 .drawBehind {
-                    drawRect(surf)
-                    when (style) {
-                        DockKitStyle.FILM -> drawFilmPerforations(
-                            if (dark) Color(0xB34A4560) else Color(0x8C6E6880)
-                        )
-                        DockKitStyle.FROST -> drawRect(
-                            Brush.verticalGradient(
-                                listOf(
-                                    if (dark) Color(0x1FFFFFFF) else Color(0xB3FFFFFF),
-                                    Color.Transparent,
-                                ),
-                                startY = 0f,
-                                endY = size.height * 0.4f,
+                    if (!materialOn) {
+                        drawRect(surf)
+                        if (style == DockKitStyle.FROST) {
+                            drawRect(
+                                Brush.verticalGradient(
+                                    listOf(
+                                        if (dark) Color(0x1FFFFFFF) else Color(0xB3FFFFFF),
+                                        Color.Transparent,
+                                    ),
+                                    startY = 0f,
+                                    endY = size.height * 0.4f,
+                                )
                             )
-                        )
-                        else -> Unit
+                        }
                     }
                 }
                 .border(if (style == DockKitStyle.TRACK) 0.dp else 1.dp, edge, shape)
@@ -390,6 +394,30 @@ internal fun DockKitBar(
                     }
                 },
         ) {
+            if (materialOn) {
+                DockMaterial(
+                    shape = shape,
+                    tint = surf,
+                    liquid = liquid,
+                    blur = blurOn,
+                    theme = DockTheme(
+                        bg = surf, border = edge, shadow = Color.Transparent,
+                        selected = accent.primary, unselected = unselected,
+                        selectedBg = accent.soft, badge = accent.secondary,
+                    ),
+                    modifier = Modifier.matchParentSize(),
+                )
+            }
+            // 胶片齿孔要在材质之上才透得出来
+            if (style == DockKitStyle.FILM) {
+                Box(
+                    Modifier
+                        .matchParentSize()
+                        .drawBehind {
+                            drawFilmPerforations(if (dark) Color(0xB34A4560) else Color(0x8C6E6880))
+                        }
+                )
+            }
             Row(
                 modifier = Modifier
                     .fillMaxSize()

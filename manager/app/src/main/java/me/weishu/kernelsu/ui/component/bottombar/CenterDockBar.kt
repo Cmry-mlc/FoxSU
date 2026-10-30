@@ -143,7 +143,7 @@ internal fun CenterDockBar(
     val effBorder = if (liquid || blurOn) Color.Transparent else theme.border
 
     val navInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    val bottomPad = if (navInset != 0.dp) 10.dp + navInset else 22.dp
+    val bottomPad = if (navInset != 0.dp) 8.dp + navInset else 14.dp
 
     // 尺寸不自己写死：直接套主底栏那套栅格（4×78 + 3×4 间隙 + 两侧 8 内边距），
     // 所以不管以后怎么调 DockMetrics，这里永远和默认胶囊同宽同高。

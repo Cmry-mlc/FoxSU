@@ -52,6 +52,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
@@ -192,7 +193,8 @@ fun ThemeDockBar(
     val effBorder = if (immersive || liquid || blurOn) Color.Transparent else theme.border
 
     val navInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    val bottomPad = if (navInset != 0.dp) 10.dp + navInset else 22.dp
+    // 离屏幕底部 14dp：胶囊是悬浮件，贴太近会像通栏，留太大又显得空
+    val bottomPad = if (navInset != 0.dp) 8.dp + navInset else 14.dp
 
     val itemW = DockMetrics.itemW
     val itemH = DockMetrics.itemH
@@ -281,6 +283,9 @@ fun ThemeDockBar(
                         theme = theme,
                         dark = dark,
                         tint = tint,
+                        // 侧边抽屉比横向胶囊窄一截：78 宽的项竖排在屏幕边上会占掉一整条
+                        itemW = 58.dp,
+                        itemH = 54.dp,
                         onClick = { mainState.animateToPage(index) },
                     )
                 }
@@ -522,11 +527,11 @@ private fun DockItem(
     dark: Boolean,
     tint: Color?,
     forceShape: Shape? = null,
+    itemW: Dp = DockMetrics.itemW,
+    itemH: Dp = DockMetrics.itemH,
     onClick: () -> Unit,
 ) {
     val accent = me.weishu.kernelsu.ui.screen.ag.Ag.accent
-    val itemW = DockMetrics.itemW
-    val itemH = DockMetrics.itemH
 
     val baseTint = tint ?: if (rainbow && !selected) rainbowColors[index % 4] else theme.unselected
     // 正圆 / 超椭圆必须落在正方形里，否则会被 78×60 的项拉成椭圆

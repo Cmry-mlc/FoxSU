@@ -674,22 +674,33 @@ internal fun AgCustomization(
                     fontSize = 11.sp, color = Ag.Tx2,
                     modifier = Modifier.padding(start = 2.dp, bottom = 14.dp),
                 )
-                AgSubLabel("胶囊样式")
-                // 2 列样式选择器
-                dockStyles.chunked(2).forEach { rowPair ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        rowPair.forEach { (code, name) ->
-                            AgDockStyleCard(
-                                name = name,
-                                code = code,
-                                selected = custom.dockStyle == code,
-                                modifier = Modifier.weight(1f),
-                            ) { CustomizationStore.setDockStyle(code) }
-                        }
-                        if (rowPair.size == 1) Spacer(Modifier.weight(1f))
+                AgSubLabel("胶囊样式 · ${dockStyles.size} 套")
+                // 横向滑动选择器：一屏 4 张小卡，其余的手指滑出来
+                val screenW = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp.dp
+                val chipW = ((screenW - 36.dp - 16.dp - 18.dp) / 4).coerceAtLeast(64.dp)
+                androidx.compose.foundation.lazy.LazyRow(
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    items(dockStyles.size) { i ->
+                        val (code, name) = dockStyles[i]
+                        AgDockStyleChip(
+                            name = name,
+                            code = code,
+                            selected = custom.dockStyle == code,
+                            modifier = Modifier.width(chipW),
+                        ) { CustomizationStore.setDockStyle(code) }
                     }
-                    Spacer(Modifier.height(10.dp))
                 }
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "当前：${dockStyles.firstOrNull { it.first == custom.dockStyle }?.second ?: "原有胶囊"}" +
+                        " · 左右滑动查看全部",
+                    fontSize = 11.sp,
+                    color = Ag.Tx3,
+                    modifier = Modifier.padding(start = 2.dp, bottom = 12.dp),
+                )
                 val kitCenter = custom.dockStyle == "center" ||
                     me.weishu.kernelsu.ui.component.bottombar.DockKitStyle.of(custom.dockStyle)?.hasCenter == true
                 if (kitCenter) {
@@ -1073,248 +1084,177 @@ private fun AgSubLabel(text: String) {
     )
 }
 
-/** .dopt：底栏样式选择卡（2 列网格） */
+/** .dopt：底栏样式选择卡（横向滑动选择器里的紧凑小卡） */
 @Composable
-private fun AgDockStyleCard(name: String, code: String, selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
+private fun AgDockStyleChip(name: String, code: String, selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Column(
         modifier
             .agClick(onClick = onClick)
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(14.dp))
             .background(if (selected) Ag.Vio.copy(alpha = 0.059f) else Color(0x8CFFFFFF))
             .border(
                 1.4.dp,
                 if (selected) Ag.Vio.copy(alpha = 0.502f) else Ag.Line,
-                RoundedCornerShape(16.dp),
+                RoundedCornerShape(14.dp),
             )
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(9.dp),
+            .padding(horizontal = 5.dp, vertical = 9.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(7.dp),
     ) {
-        // 预览条：按样式渲染差异化缩略图（设计稿 .dprev .dp 各变体）
-        DockStylePreview(code)
+        MiniDockPreview(code)
         Text(
             name,
-            fontSize = 12.sp, fontWeight = FontWeight.ExtraBold,
+            fontSize = 10.sp,
+            maxLines = 1,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            fontWeight = FontWeight.ExtraBold,
             color = if (selected) Ag.Vio else Ag.Tx2,
         )
     }
 }
 
 /**
- * 底栏样式缩略预览。
- *
- * 所有样式的预览条尺寸完全一致（同一宽高、同一圆角、同一项间距），
- * 只有「胶囊底色 / 描边 / 指示器造型」随样式变化 —— 和真机上统一后的底栏一一对应。
+ * 迷你底栏预览：一颗 48×18 的缩比胶囊，里面 4 个格子 ——
+ * 第 1 格是该样式的「选中代表元素」，其余是未选中点；带中央卡位的样式第 2 格换成狐狸圆。
+ * 所有色块都带一圈 1dp 描边或足够深的底色，浅色背景下不会糊成一片白。
  */
 @Composable
-private fun DockStylePreview(code: String) {
+private fun MiniDockPreview(code: String) {
     val ac = Ag.accent
     val dark = Ag.isDark
     val grad = Brush.linearGradient(listOf(ac.primary, ac.mid, ac.secondary))
     val dotColor = Ag.Tx3.copy(alpha = 0.45f)
-    val pill = RoundedCornerShape(99.dp)
+    val kitCenter = code == "center" || code in setOf("bubble", "film", "neon", "frost", "sticker")
 
-    // 胶囊底 / 描边：只在这里分叉，尺寸一律不参与
-    val kitCenterCodes = setOf("bubble", "film", "neon", "frost", "sticker")
     val pillBg: Color = when (code) {
-        "editorial" -> if (dark) Color(0xFF1B1A20) else Color(0xFFFFFCF6)
-        "pages" -> if (dark) Color(0xFF1B1C1E) else Color.White
-        "glass" -> if (dark) Color(0xFF14141E) else Color(0xF2FFFFFF)
-        "nocturne" -> Color(0xFF0F1018)
-        "center" -> if (dark) Color(0xFF22213A) else Color.White
         "film" -> if (dark) Color(0xFF0E0C15) else Color(0xFF2E2A3A)
         "neon" -> Color(0xFF1E1A29)
         "frost" -> if (dark) Color(0x8C3A344A) else Color(0xE6FFFFFF)
         "track" -> if (dark) Color(0xFF221F2C) else Color(0xFFF4EFFA)
+        "editorial" -> if (dark) Color(0xFF1B1A20) else Color(0xFFFFFCF6)
+        "nocturne" -> Color(0xFF0F1018)
         "v7", "v10" -> Color.Transparent
         else -> if (dark) Color(0xFF1F1E32) else Color.White
     }
-    val pillBorder: Color? = when (code) {
-        "glass" -> Color(0x33FFFFFF)
-        "nocturne" -> Color(0x26FFFFFF)
-        "v7" -> ac.primary.copy(alpha = 0.35f)
-        "pages" -> if (dark) Color(0x29FFFFFF) else Color(0x14111111)
+    val pillBorder: Color = when (code) {
         "film" -> if (dark) Color(0x29FFD84D) else Color(0x14000000)
         "neon" -> ac.primary.copy(alpha = 0.30f)
         "frost" -> Color(0x59FFFFFF)
-        else -> null
+        "editorial" -> Color(0x231D1C22)
+        "nocturne" -> Color(0x26FFFFFF)
+        else -> Ag.Line.copy(alpha = 0.7f)
+    }
+    val pillRadius = when (code) {
+        "film", "track" -> 5.dp
+        "neon" -> 6.dp
+        "frost" -> 7.dp
+        else -> 9.dp
     }
 
-    Row(
+    Box(
         Modifier
             .fillMaxWidth()
-            .height(34.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .height(26.dp)
+            .clip(RoundedCornerShape(9.dp))
             .background(Ag.TintInk),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
+        contentAlignment = Alignment.Center,
     ) {
         Row(
             Modifier
-                .padding(horizontal = 7.dp)
+                .padding(horizontal = 5.dp)
                 .fillMaxWidth()
-                .height(23.dp)
-                .clip(pill)
+                .height(18.dp)
+                .clip(RoundedCornerShape(pillRadius))
                 .background(pillBg)
-                .then(if (pillBorder != null) Modifier.border(1.dp, pillBorder, pill) else Modifier)
-                .padding(horizontal = 6.dp),
+                .border(1.dp, pillBorder, RoundedCornerShape(pillRadius))
+                .padding(horizontal = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
-            // 选中项小样：全部落在同一个 26×15 的视觉盒子里
-            Box(Modifier.size(width = 26.dp, height = 15.dp), contentAlignment = Alignment.Center) {
-                when (code) {
-                    "v6" -> Box(
-                        Modifier.size(14.dp).clip(CircleShape).background(
-                            Brush.radialGradient(
-                                listOf(ac.primary, ac.primary.copy(alpha = 0.35f), Color.Transparent)
-                            )
-                        )
-                    )
-                    "v7" -> Box(
-                        Modifier.size(width = 22.dp, height = 14.dp)
-                            .clip(pill).border(1.6.dp, ac.primary.copy(alpha = 0.55f), pill)
-                    )
-                    "v8" -> Box(
-                        Modifier.size(width = 22.dp, height = 14.dp)
-                            .clip(RoundedCornerShape(5.dp))
-                            .background(if (dark) Color(0xFF2A2940) else Color.White)
-                            .border(1.dp, Ag.Line, RoundedCornerShape(5.dp))
-                    )
-                    "v9" -> Box(
-                        Modifier.size(width = 22.dp, height = 14.dp)
-                            .clip(RoundedCornerShape(5.dp)).background(grad)
-                    )
-                    "v10" -> Box(
-                        Modifier.size(width = 22.dp, height = 14.dp)
-                            .clip(pill)
-                            .background(ac.primary.copy(alpha = 0.12f))
-                            .drawBehind {
-                                val w = 14.dp.toPx(); val h = 2.5.dp.toPx()
-                                drawRoundRect(
-                                    brush = Brush.horizontalGradient(listOf(ac.primary, ac.secondary)),
-                                    topLeft = androidx.compose.ui.geometry.Offset((size.width - w) / 2f, 1.dp.toPx()),
-                                    size = androidx.compose.ui.geometry.Size(w, h),
-                                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(h / 2f),
-                                )
-                            }
-                    )
-                    "v11" -> Box(Modifier.size(14.dp).clip(CircleShape).background(grad))
-                    // 中央头像：选中项是圆角方块底衬（图标 + 文字纵向）
-                    "center" -> Box(
-                        Modifier.size(width = 20.dp, height = 16.dp)
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(ac.primary.copy(alpha = 0.14f)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Box(Modifier.size(6.dp).clip(CircleShape).background(ac.primary))
-                            Spacer(Modifier.height(1.5.dp))
-                            Box(Modifier.size(width = 9.dp, height = 1.5.dp).clip(pill).background(ac.primary))
-                        }
-                    }
-                    // 侧边抽屉：同样的胶囊里放一枚竖向小条，暗示竖排
-                    "v5" -> Box(
-                        Modifier.size(width = 9.dp, height = 15.dp)
-                            .clip(RoundedCornerShape(4.dp)).background(grad)
-                    )
-                    // Editorial：纸面 + 墨线，选中项是一道短横线
-                    "editorial" -> Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
-                    ) {
-                        Box(Modifier.size(6.dp).clip(CircleShape).background(ac.primary))
-                        Box(Modifier.size(width = 14.dp, height = 2.dp).clip(pill).background(ac.primary))
-                    }
-                    "glass" -> Box(
-                        Modifier.size(width = 24.dp, height = 15.dp)
-                            .clip(pill)
-                            .background(ac.soft)
-                            .drawBehind {
-                                val w = 14.dp.toPx(); val h = 2.dp.toPx()
-                                drawRoundRect(
-                                    brush = Brush.horizontalGradient(listOf(ac.primary, ac.secondary)),
-                                    topLeft = androidx.compose.ui.geometry.Offset((size.width - w) / 2f, 1.dp.toPx()),
-                                    size = androidx.compose.ui.geometry.Size(w, h),
-                                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(h / 2f),
-                                )
-                            }
-                    )
-                    "nocturne" -> Box(
-                        Modifier.size(width = 24.dp, height = 15.dp)
-                            .clip(RoundedCornerShape(5.dp))
-                            .background(ac.primary.copy(alpha = 0.22f))
-                            .drawBehind {
-                                val w = 12.dp.toPx(); val h = 1.6.dp.toPx()
-                                drawRoundRect(
-                                    brush = Brush.horizontalGradient(listOf(ac.primary, ac.secondary)),
-                                    topLeft = androidx.compose.ui.geometry.Offset((size.width - w) / 2f, 1.dp.toPx()),
-                                    size = androidx.compose.ui.geometry.Size(w, h),
-                                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(h / 2f),
-                                )
-                            }
-                    )
-                    // ── Dock Kit v2.0 的 7 套 ──
-                    "bubble" -> Box(Modifier.size(15.dp).clip(CircleShape).background(grad))
-                    "film" -> Box(
-                        Modifier.size(13.dp).clip(CircleShape)
-                            .border(1.8.dp, Color(0xFFFFD84D), CircleShape)
-                    )
-                    "neon" -> Box(
-                        Modifier.size(14.dp).clip(CircleShape).background(
-                            Brush.radialGradient(
-                                listOf(ac.secondary, ac.secondary.copy(alpha = 0.25f), Color.Transparent)
-                            )
-                        )
-                    )
-                    "frost" -> Box(
-                        Modifier.size(width = 20.dp, height = 15.dp)
-                            .clip(CircleShape)
-                            .background(if (dark) Color(0xFF3A3448) else Color.White),
-                        contentAlignment = Alignment.Center,
-                    ) { Box(Modifier.size(6.dp).clip(CircleShape).background(ac.primary)) }
-                    "focus" -> Box(
-                        Modifier.size(width = 24.dp, height = 15.dp)
-                            .clip(pill)
-                            .background(ac.soft),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(Modifier.size(5.dp).clip(CircleShape).background(ac.primary))
-                            Spacer(Modifier.width(2.dp))
-                            Box(Modifier.size(width = 8.dp, height = 2.dp).clip(pill).background(ac.primary))
-                        }
-                    }
-                    "sticker" -> Box(
-                        Modifier.size(14.dp).clip(RoundedCornerShape(5.dp))
-                            .graphicsLayer { rotationZ = -8f }
-                            .background(Color(0xFFFFE7DF)),
-                        contentAlignment = Alignment.Center,
-                    ) { Box(Modifier.size(6.dp).clip(CircleShape).background(ac.primary)) }
-                    "track" -> Box(
-                        Modifier.size(width = 20.dp, height = 15.dp)
-                            .clip(RoundedCornerShape(5.dp))
-                            .background(if (dark) Color(0xFF322D40) else Color.White),
-                        contentAlignment = Alignment.Center,
-                    ) { Box(Modifier.size(6.dp).clip(CircleShape).background(ac.primary)) }
-                    // d0 / v1 / pages：渐变实底药丸
-                    else -> Box(
-                        Modifier.size(width = 24.dp, height = 15.dp).clip(pill).background(grad)
-                    )
+            MiniSelected(code, grad, ac, dark)
+            if (kitCenter) {
+                Box(
+                    Modifier
+                        .size(9.dp)
+                        .clip(CircleShape)
+                        .background(grad)
+                        .border(1.2.dp, if (dark) Color(0xFF22213A) else Color.White, CircleShape)
+                )
+            }
+            repeat(if (kitCenter) 2 else 3) {
+                Box(Modifier.size(4.dp).clip(CircleShape).background(dotColor))
+            }
+        }
+    }
+}
+
+/** 选中代表元素：每套一个 14dp 以内的小色块，一眼能认出是哪套 */
+@Composable
+private fun MiniSelected(code: String, grad: Brush, ac: me.weishu.kernelsu.ui.theme.AccentPalette, dark: Boolean) {
+    val pill = RoundedCornerShape(99.dp)
+    Box(contentAlignment = Alignment.Center) {
+        when (code) {
+            "v6", "v11", "v9" -> Box(Modifier.size(9.dp).clip(CircleShape).background(grad))
+            "v7" -> Box(Modifier.size(9.dp).clip(CircleShape).border(1.6.dp, ac.primary, CircleShape))
+            "v8" -> Box(
+                Modifier.size(9.dp).clip(RoundedCornerShape(3.dp))
+                    .background(if (dark) Color(0xFF2A2940) else Color.White)
+                    .border(1.dp, Ag.Line, RoundedCornerShape(3.dp))
+            )
+            "v10" -> Box(Modifier.size(9.dp).clip(CircleShape).background(ac.primary.copy(alpha = 0.14f))) {
+                Box(
+                    Modifier
+                        .align(Alignment.TopCenter)
+                        .width(7.dp).height(1.6.dp)
+                        .clip(pill).background(grad)
+                )
+            }
+            "bubble" -> Box(Modifier.size(10.dp).clip(CircleShape).background(grad))
+            "film" -> Box(Modifier.size(8.dp).clip(CircleShape).border(1.8.dp, Color(0xFFFFD84D), CircleShape))
+            "neon" -> Box(
+                Modifier.size(10.dp).clip(CircleShape).background(
+                    Brush.radialGradient(listOf(ac.secondary, ac.secondary.copy(alpha = 0.2f), Color.Transparent))
+                )
+            )
+            "frost" -> Box(Modifier.size(11.dp).clip(CircleShape).background(if (dark) Color(0xFF3A3448) else Color.White)) {
+                Box(Modifier.size(4.dp).clip(CircleShape).background(ac.primary))
+            }
+            "focus" -> Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(width = 14.dp, height = 9.dp).clip(pill).background(ac.soft)) {
+                    Box(Modifier.align(Alignment.Center).size(4.dp).clip(CircleShape).background(ac.primary))
                 }
             }
-            repeat(3) { i ->
-                if ((code == "center" || code in kitCenterCodes) && i == 1) {
-                    Box(
-                        Modifier
-                            .size(12.dp)
-                            .clip(CircleShape)
-                            .background(grad)
-                            .border(1.5.dp, if (dark) Color(0xFF22213A) else Color.White, CircleShape)
-                    )
-                } else {
-                    Box(Modifier.size(7.dp).clip(CircleShape).background(dotColor))
-                }
+            "sticker" -> Box(
+                Modifier
+                    .size(9.dp)
+                    .graphicsLayer { rotationZ = -8f }
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(Color(0xFFFFE7DF))
+            ) {
+                Box(Modifier.align(Alignment.Center).size(4.dp).clip(CircleShape).background(ac.primary))
             }
+            "track" -> Box(
+                Modifier.size(width = 12.dp, height = 10.dp).clip(RoundedCornerShape(3.dp))
+                    .background(if (dark) Color(0xFF322D40) else Color.White)
+            ) {
+                Box(Modifier.align(Alignment.Center).size(4.dp).clip(CircleShape).background(ac.primary))
+            }
+            "editorial" -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(Modifier.size(4.dp).clip(CircleShape).background(ac.primary))
+                Spacer(Modifier.height(1.5.dp))
+                Box(Modifier.size(width = 8.dp, height = 1.6.dp).clip(pill).background(ac.primary))
+            }
+            "glass" -> Box(Modifier.size(width = 13.dp, height = 9.dp).clip(pill).background(ac.soft)) {
+                Box(
+                    Modifier
+                        .align(Alignment.Center)
+                        .width(7.dp).height(1.6.dp)
+                        .clip(pill).background(Brush.horizontalGradient(listOf(ac.primary, ac.secondary)))
+                )
+            }
+            "nocturne" -> Box(Modifier.size(9.dp).clip(RoundedCornerShape(3.dp)).background(ac.primary.copy(alpha = 0.22f)))
+            // d0 / v1 / pages / center：渐变实底
+            else -> Box(Modifier.size(width = 12.dp, height = 9.dp).clip(pill).background(grad))
         }
     }
 }
