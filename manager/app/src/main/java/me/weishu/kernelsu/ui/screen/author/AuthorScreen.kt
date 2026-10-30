@@ -61,6 +61,7 @@ import me.weishu.kernelsu.ui.component.material.ExpressiveScaffold
 import me.weishu.kernelsu.ui.component.material.TopBarBackButton
 import me.weishu.kernelsu.ui.component.material.expressiveTopAppBarColors
 import me.weishu.kernelsu.ui.navigation3.LocalNavigator
+import me.weishu.kernelsu.ui.navigation3.Route
 import me.weishu.kernelsu.ui.theme.UiPalette
 import me.weishu.kernelsu.ui.component.isNightScheme
 import androidx.compose.foundation.BorderStroke
@@ -98,6 +99,7 @@ fun AuthorScreen() {
             me.weishu.kernelsu.ui.screen.ag.AgAuthor(
                 onBack = dropUnlessResumed { navigator.pop() },
                 onOpenUrl = uriHandler::openUri,
+                onOpenCredits = dropUnlessResumed { navigator.push(Route.Credits) },
             )
             return
         }

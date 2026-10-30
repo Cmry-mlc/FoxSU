@@ -154,46 +154,6 @@ fun AgDonate(
             }
 
             item {
-                AgGHead("关于作者")
-                AgCard(
-                    Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(horizontal = 18.dp, vertical = 18.dp),
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        AgRic(Ag.Vio, AgSettingsIcons.UserProfile, size = 36.dp)
-                        Spacer(Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                "尘梦如烟",
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Ag.Tx,
-                            )
-                            Text(
-                                "FoxSu 作者 · 开发与设计",
-                                fontSize = 11.5.sp,
-                                color = Ag.Tx3,
-                            )
-                        }
-                    }
-                    Spacer(Modifier.height(12.dp))
-                    Text(
-                        "本项目由尘梦如烟与 AI 辅助共同完成：需求定义、设计取舍、功能验收由作者负责，界面实现、代码编写、问题排查与文档撰写由 AI 协助完成。",
-                        fontSize = 12.sp,
-                        lineHeight = 19.sp,
-                        color = Ag.Tx2,
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        "所有代码开源（GPL-3.0），可自由审阅、修改与分发。",
-                        fontSize = 12.sp,
-                        lineHeight = 19.sp,
-                        color = Ag.Tx2,
-                    )
-                }
-            }
-
-            item {
                 AgGHead("不花钱也能支持")
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     FreeTile(Icons.Rounded.Star, "Star 项目", Modifier.weight(1f)) {

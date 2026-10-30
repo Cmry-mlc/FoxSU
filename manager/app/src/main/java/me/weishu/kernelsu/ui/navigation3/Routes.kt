@@ -47,10 +47,15 @@ sealed interface Route : NavKey, Parcelable {
     @Serializable
     data object Author : Route
 
-    /** 支持 FoxSu：捐赠档位、用途说明与鸣谢（支付通道接入中）。 */
+    /** 支持 FoxSu：赞赏码与免责声明。 */
     @Parcelize
     @Serializable
     data object Donate : Route
+
+    /** 开源致谢：按「根 / 界面 / 能力 / 数据」四组列出全部上游项目与许可证。 */
+    @Parcelize
+    @Serializable
+    data object Credits : Route
 
     @Parcelize
     @Serializable

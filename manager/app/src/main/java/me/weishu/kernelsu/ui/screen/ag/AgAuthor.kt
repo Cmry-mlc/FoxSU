@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -49,6 +50,7 @@ import me.weishu.kernelsu.R
 fun AgAuthor(
     onBack: () -> Unit,
     onOpenUrl: (String) -> Unit,
+    onOpenCredits: () -> Unit = {},
 ) {
     Column(
         Modifier
@@ -135,6 +137,10 @@ fun AgAuthor(
             icon = Icons.Rounded.Code, title = "上游项目", desc = "KernelSU · tiann/KernelSU",
         ) { onOpenUrl("https://github.com/tiann/KernelSU") }
 
+        // 致谢入口：不放第 6 张同款彩色卡（那样像还有第六个链接），
+        // 换成一张中性底的横条 + 四个叠在一起的色点，隐喻「一群人」。
+        CreditEntry(onOpenCredits)
+
         Spacer(Modifier.height(24.dp))
     }
 }
@@ -175,6 +181,60 @@ private fun AgLinkCard(
                 Text(desc, fontSize = 12.5.sp, color = ink.copy(alpha = 0.85f), modifier = Modifier.padding(top = 2.dp))
             }
             Text("›", fontSize = 20.sp, color = ink.copy(alpha = 0.5f), fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+/**
+ * 「开源致谢」入口。
+ *
+ * 左侧四个叠在一起的色点对应致谢页的四个分组（根 / 界面 / 能力 / 数据），
+ * 比再放一张彩色链接卡更克制：它不是「又一个链接」，而是「一层人」。
+ */
+@Composable
+private fun CreditEntry(onClick: () -> Unit) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .padding(bottom = 12.dp)
+            .agClick(onClick = onClick)
+            .clip(RoundedCornerShape(20.dp))
+            .background(Ag.Card)
+            .border(1.dp, Ag.Line, RoundedCornerShape(20.dp))
+            .padding(13.dp, 13.dp, 14.dp, 13.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.width(58.dp).height(26.dp)) {
+                listOf(Ag.Vio, Ag.Teal, Ag.Amber, Ag.Mag).forEachIndexed { index, tint ->
+                    Box(
+                        Modifier
+                            .offset(x = (index * 11).dp)
+                            .size(26.dp)
+                            .clip(CircleShape)
+                            .background(tint.copy(alpha = if (Ag.isDark) 0.26f else 0.18f))
+                            .border(1.dp, tint.copy(alpha = 0.38f), CircleShape),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Box(
+                            Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(tint),
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.width(13.dp))
+            Column(Modifier.weight(1f)) {
+                Text("开源致谢", fontSize = 14.5.sp, fontWeight = FontWeight.ExtraBold, color = Ag.Tx)
+                Text(
+                    "15 个项目 · 根 / 界面 / 能力 / 数据",
+                    fontSize = 12.5.sp,
+                    color = Ag.Tx3,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+            }
+            Text("›", fontSize = 20.sp, color = Ag.Chev, fontWeight = FontWeight.Bold)
         }
     }
 }

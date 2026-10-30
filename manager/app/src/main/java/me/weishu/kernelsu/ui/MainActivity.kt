@@ -264,6 +264,13 @@ class MainActivity : ComponentActivity() {
                             entry<Route.Main>(swipeDismiss = swipeDismiss) { mainScreenEntry() }
                             entry<Route.About>(swipeDismiss = swipeDismiss) { AboutScreen() }
                             entry<Route.Author>(swipeDismiss = swipeDismiss) { AuthorScreen() }
+                            entry<Route.Credits>(swipeDismiss = swipeDismiss) {
+                                val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+                                me.weishu.kernelsu.ui.screen.ag.AgCredits(
+                                    onBack = dropUnlessResumed { navigator.pop() },
+                                    onOpenUrl = uriHandler::openUri,
+                                )
+                            }
                             entry<Route.Donate>(swipeDismiss = swipeDismiss) {
                                 me.weishu.kernelsu.ui.screen.ag.AgDonate(
                                     onBack = dropUnlessResumed { navigator.pop() },
