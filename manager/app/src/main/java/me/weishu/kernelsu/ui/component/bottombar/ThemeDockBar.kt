@@ -3,6 +3,7 @@ package me.weishu.kernelsu.ui.component.bottombar
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -581,14 +582,20 @@ private fun DockItem(
     val gradFill = selected && button in setOf(
         DockButton.PILL, DockButton.CIRCLE, DockButton.SQUIRCLE, DockButton.CUT, DockButton.GLOW, DockButton.DOUBLE,
     )
-    // 滑动指示器盖在本格时，前景必须反色，否则「强调色圆 + 同色图标」会糊成一片
-    val fgTint = when {
-        slidePlate && selected -> slidePlateInk(dark)
-        gradFill -> Color.White
-        style == DockStyle.EDITORIAL && selected -> theme.selected
-        selected -> theme.selected
-        else -> baseTint
-    }
+    // 滑动指示器盖在本格时，前景必须反色，否则「强调色圆 + 同色图标」会糊成一片。
+    // 用渐变动画而不是直接赋值：色块滑过来的那 400ms 里，图标和文字要跟着一起
+    // 从灰过渡到白，颜色瞬切会让「色块到达」这个瞬间显得很硬。
+    val fgTint by animateColorAsState(
+        targetValue = when {
+            slidePlate && selected -> slidePlateInk(dark)
+            gradFill -> Color.White
+            style == DockStyle.EDITORIAL && selected -> theme.selected
+            selected -> theme.selected
+            else -> baseTint
+        },
+        animationSpec = tween(durationMillis = if (slidePlate) 260 else 180),
+        label = "dock-fg-$index",
+    )
 
     // 按下反馈
     val src = remember { MutableInteractionSource() }

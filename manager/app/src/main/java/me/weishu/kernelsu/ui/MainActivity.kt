@@ -576,8 +576,10 @@ fun MainScreen(
         val pushX = remember { Animatable(0f) }
         LaunchedEffect(mainPagerState.selectedPage) {
             if (!pushOn || pushDir == 0) return@LaunchedEffect
-            pushX.snapTo(14f * pushDir)
-            pushAlpha.snapTo(0.35f)
+            // 26dp 的推入量：14dp 在 6.7 寸屏上几乎看不出来，
+            // 26dp 才够让「新页面从点击方向滑进来」这件事被眼睛捕捉到
+            pushX.snapTo(26f * pushDir)
+            pushAlpha.snapTo(0.55f)
             // 位移与淡入同步走完：stiffness 260 / 无回弹 ≈ 400ms 到位，
             // 和水滴指示器「前缘到站」是同一拍，两层动效不会各走各的。
             launch { pushAlpha.animateTo(1f, spring(dampingRatio = 1f, stiffness = 260f)) }
