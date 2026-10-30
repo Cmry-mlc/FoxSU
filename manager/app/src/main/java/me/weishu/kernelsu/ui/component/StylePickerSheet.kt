@@ -103,6 +103,31 @@ private data class PickTokens(
     val checkText: Color,
 )
 
+/**
+ * 把一套原本写死「紫罗兰」的令牌，整体换成当前全局强调色。
+ *
+ * 用户要求「界面风格页面的颜色跟随全局颜色」，所以这里不再保留任何 violet 常量：
+ * 面板的描边、光晕、kicker、选中态、勾选章、主按钮全部由 [currentAccent] 的三个色阶推导，
+ * 只是按暗/亮两套基底分别给出不同的不透明度，保证两种模式下对比度都不塌。
+ */
+private fun PickTokens.withAccent(a: me.weishu.kernelsu.ui.theme.AccentPalette, dark: Boolean): PickTokens {
+    fun mix(c: Color, alpha: Float) = c.copy(alpha = alpha)
+    return copy(
+        border = mix(a.primary, if (dark) 0.34f else 0.28f),
+        glow = mix(a.primary, if (dark) 0.32f else 0.16f),
+        kicker = if (dark) a.mid else a.primary,
+        segOnBg = if (dark) mix(a.primary, 0.22f) else Color.White,
+        segOnText = if (dark) a.mid else a.primary,
+        segOnBorder = mix(a.primary, if (dark) 0.40f else 0.26f),
+        status = a.mid,
+        selBorder = mix(a.primary, 0.80f),
+        selBg = mix(a.primary, if (dark) 0.14f else 0.06f),
+        selRing = mix(a.primary, if (dark) 0.14f else 0.10f),
+        checkBg = a.secondary,
+        checkText = if (dark) Color(0xFF151221) else Color.White,
+    )
+}
+
 private val PickDark = PickTokens(
     g1 = Color(0xFF171A25),
     g2 = Color(0xFF090B10),
@@ -275,8 +300,10 @@ fun StylePickerDialog(
             }
         )
     }
-    val t = if (panelMode == 2) (if (appDark) PickDark else PickLight)
-    else if (panelMode == 0) PickDark else PickLight
+    val isPanelDark = if (panelMode == 2) appDark else panelMode == 0
+    // 全部紫色系色值改为跟随全局强调色
+    val accentNow = me.weishu.kernelsu.ui.theme.currentAccent
+    val t = (if (isPanelDark) PickDark else PickLight).withAccent(accentNow, isPanelDark)
 
     var selected by remember { mutableStateOf(current) }
     var shown by remember { mutableStateOf(false) }
@@ -455,6 +482,7 @@ fun StylePickerDialog(
                                 skin = skin,
                                 selected = skin.mode == selected,
                                 tokens = t,
+                                accent = accentNow,
                                 onClick = {
                                     selected = skin.mode
                                     applyUiMode(skin.mode)
@@ -507,6 +535,7 @@ private fun SkinCard(
     skin: PickSkin,
     selected: Boolean,
     tokens: PickTokens,
+    accent: me.weishu.kernelsu.ui.theme.AccentPalette,
     onClick: () -> Unit,
 ) {
     val source = remember { MutableInteractionSource() }
@@ -566,7 +595,10 @@ private fun SkinCard(
                         .fillMaxWidth(0.64f)
                         .height(8.dp)
                         .clip(RoundedCornerShape(4.dp))
-                        .background(skin.accent),
+                        .background(
+                            // 缩略图顶部色条 = 全局强调色 → 次强调色，换色后预览跟着变
+                            Brush.horizontalGradient(listOf(accent.primary, accent.secondary)),
+                        ),
                 )
                 Box(
                     modifier = Modifier

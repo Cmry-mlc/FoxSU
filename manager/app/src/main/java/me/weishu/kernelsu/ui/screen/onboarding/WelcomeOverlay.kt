@@ -50,6 +50,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -76,6 +81,7 @@ import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.UiMode
 import me.weishu.kernelsu.ui.component.applyUiMode
+import me.weishu.kernelsu.ui.component.bottombar.DockKitStyle
 import me.weishu.kernelsu.ui.component.bottombar.DockButton
 import me.weishu.kernelsu.ui.screen.ag.AgEngineIcons
 import me.weishu.kernelsu.ui.util.WelcomeFacts
@@ -163,7 +169,7 @@ private fun WelcomeContent(onFinish: () -> Unit) {
                         1 -> SkinPage(t)
                         2 -> DockPage(t)
                         3 -> KernelPage(t, facts)
-                        else -> RepoPage(t)
+                        else -> CustomPage(t)
                     }
                 }
             }
@@ -338,12 +344,30 @@ private fun BrandPage(t: OnbTokens, facts: WelcomeFacts) {
         }
 
         Spacer(Modifier.height(4.dp))
+        // 彩色品牌字：三段渐变跟随全局强调色，左起「主色 → 中段 → 次强调」，
+        // 换配色后首屏立刻变色，和其它页面是同一套颜色
+        val brandAccent = me.weishu.kernelsu.ui.theme.currentAccent
         Text(
             "FoxSu",
-            fontSize = 40.sp,
+            fontSize = 42.sp,
             fontWeight = FontWeight.ExtraBold,
             letterSpacing = (-1.4).sp,
-            color = t.tx,
+            style = TextStyle(
+                brush = Brush.linearGradient(
+                    listOf(brandAccent.primary, brandAccent.mid, brandAccent.secondary),
+                ),
+            ),
+            modifier = Modifier.drawBehind {
+                // 极淡的彩色投影，让字从浅底上"浮"起来
+                drawRoundRect(
+                    brush = Brush.verticalGradient(
+                        listOf(brandAccent.primary.copy(alpha = 0.18f), Color.Transparent),
+                    ),
+                    topLeft = Offset(0f, size.height * 0.72f),
+                    size = Size(size.width, size.height * 0.34f),
+                    cornerRadius = CornerRadius(size.height * 0.16f),
+                )
+            },
         )
         Spacer(Modifier.height(6.dp))
         Text(
@@ -741,11 +765,18 @@ private fun KernelCard(
     }
 }
 
-/* ───────────────────────── 第五页：仓库 ───────────────────────── */
+/* ───────────────────────── 第五页：定制与特效 ───────────────────────── */
 
+/**
+ * 第五页讲「这一版真正加了什么」。
+ *
+ * 旧版是仓库导流页（官网 / GitHub 两个按钮），信息已经过时——现在真正值得说的是
+ * 定制中心里的那套东西：七套强调色、二十一胶囊样式、十种按钮形状、特效开关。
+ * 每一项都用真实控件（滑块 / 开关 / 色块），不是示意图。
+ */
 @Composable
-private fun RepoPage(t: OnbTokens) {
-    val uriHandler = LocalUriHandler.current
+private fun CustomPage(t: OnbTokens) {
+    val custom = CustomizationStore.current
 
     Column(
         Modifier
@@ -753,102 +784,235 @@ private fun RepoPage(t: OnbTokens) {
             .verticalScroll(rememberScrollState()),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            KickerMark(t, Icons.Rounded.Code)
+            KickerMark(t, Icons.Rounded.Tune)
             Spacer(Modifier.width(8.dp))
-            OnbKicker(stringResource(R.string.onboarding_kicker_5), t)
+            OnbKicker("CUSTOMIZE · 定制中心", t)
         }
         Spacer(Modifier.height(10.dp))
-        OnbTitle(stringResource(R.string.onboarding_title_5), t)
+        OnbTitle("从头到脚，都是你的", t)
         Spacer(Modifier.height(8.dp))
-        OnbBody(stringResource(R.string.onboarding_body_5), t)
-        Spacer(Modifier.height(18.dp))
+        OnbBody("颜色、胶囊、按钮、动效四个维度全部可调，改完立刻生效，不用重启。", t)
+        Spacer(Modifier.height(16.dp))
 
-        // 品牌卡
+        // ① 强调色：七块可点的真实色卡
+        OnbMiniHead("① 全局强调色", "${me.weishu.kernelsu.ui.theme.AccentPalettes.size} 套 + 自定义", t)
+        Spacer(Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            me.weishu.kernelsu.ui.theme.AccentPalettes.forEachIndexed { i, p ->
+                val on = custom.accentCustom == 0 && custom.accentPalette == i
+                Box(
+                    Modifier
+                        .size(34.dp)
+                        .clip(RoundedCornerShape(11.dp))
+                        .background(Brush.linearGradient(listOf(p.primary, p.mid, p.secondary)))
+                        .then(
+                            if (on) Modifier.border(2.dp, t.tx, RoundedCornerShape(11.dp))
+                            else Modifier.border(1.dp, t.cardBd, RoundedCornerShape(11.dp))
+                        )
+                        .clickable { CustomizationStore.setAccentPalette(i) },
+                )
+            }
+        }
+        Spacer(Modifier.height(6.dp))
+        Text(
+            "当前：${me.weishu.kernelsu.ui.theme.currentAccent.label}　·　按钮、选中态、底栏指示器、标题渐变同时换色",
+            fontSize = 9.5.sp, color = t.tx3,
+        )
+
+        Spacer(Modifier.height(16.dp))
+        // ② 胶囊底栏：横向滑动的缩略条，点一下真的换
+        OnbMiniHead("② 胶囊底栏", "21 套样式 · 左右滑动", t)
+        Spacer(Modifier.height(8.dp))
+        androidx.compose.foundation.lazy.LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(7.dp),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 1.dp),
+        ) {
+            items(DockKitStyle.entries.size) { i ->
+                val st = DockKitStyle.entries[i]
+                val on = custom.dockStyle == st.key
+                Column(
+                    Modifier
+                        .width(62.dp)
+                        .clip(RoundedCornerShape(13.dp))
+                        .background(if (on) t.accent.copy(alpha = 0.12f) else t.cardBg)
+                        .border(
+                            if (on) 1.6.dp else 1.dp,
+                            if (on) t.accent.copy(alpha = 0.5f) else t.cardBd,
+                            RoundedCornerShape(13.dp),
+                        )
+                        .clickable { CustomizationStore.setDockStyle(st.key) }
+                        .padding(vertical = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    DockPreviewBar(st, t, on)
+                    Spacer(Modifier.height(5.dp))
+                    Text(
+                        st.title,
+                        fontSize = 8.sp,
+                        fontWeight = if (on) FontWeight.ExtraBold else FontWeight.Bold,
+                        color = if (on) t.accent else t.tx3,
+                        maxLines = 1,
+                    )
+                }
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
+        // ③ 按钮形状 + ④ 特效档位：两个小卡并排
+        Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+            OnbMiniCard(t, Modifier.weight(1f)) {
+                Text("③ 按钮形状", fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, color = t.tx)
+                Spacer(Modifier.height(3.dp))
+                Text(
+                    "10 种形态，横向滑动选",
+                    fontSize = 8.5.sp, color = t.tx3,
+                )
+                Spacer(Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    listOf("圆", "方", "键", "胶").forEachIndexed { i, tx ->
+                        val on = custom.dockButton == i
+                        Text(
+                            tx,
+                            fontSize = 8.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (on) Color.White else t.tx2,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(7.dp))
+                                .background(if (on) t.accent else t.chipBg)
+                                .clickable { CustomizationStore.setDockButton(i) }
+                                .padding(horizontal = 7.dp, vertical = 4.dp),
+                        )
+                    }
+                }
+            }
+            OnbMiniCard(t, Modifier.weight(1f)) {
+                Text("④ 动效开关", fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, color = t.tx)
+                Spacer(Modifier.height(3.dp))
+                Text(
+                    when (custom.fxLevel) {
+                        0 -> "已关闭：零动画，最省电"
+                        1 -> "克制：角度减半、颗粒更少"
+                        else -> "全开：粒子边 + 3D 倾斜"
+                    },
+                    fontSize = 8.5.sp, color = t.tx3, lineHeight = 12.sp,
+                )
+                Spacer(Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    listOf("关", "轻", "全").forEachIndexed { i, tx ->
+                        val on = custom.fxLevel == i
+                        Text(
+                            tx,
+                            fontSize = 8.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (on) Color.White else t.tx2,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(7.dp))
+                                .background(if (on) t.accent else t.chipBg)
+                                .clickable { CustomizationStore.setFxLevel(i) }
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
+        // ⑤ 品牌卡（保留仓库入口，但压缩成一条）
         Box(
             Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(24.dp))
+                .clip(RoundedCornerShape(20.dp))
                 .background(Brush.linearGradient(listOf(t.accent, t.accent2))),
         ) {
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 15.dp, vertical = 15.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(
                     Modifier
-                        .size(72.dp)
-                        .clip(RoundedCornerShape(22.dp))
+                        .size(46.dp)
+                        .clip(RoundedCornerShape(15.dp))
                         .background(Color.White.copy(alpha = 0.18f))
-                        .border(1.dp, Color.White.copy(alpha = 0.32f), RoundedCornerShape(22.dp)),
+                        .border(1.dp, Color.White.copy(alpha = 0.32f), RoundedCornerShape(15.dp)),
                     contentAlignment = Alignment.Center,
                 ) {
                     Image(
                         painter = painterResource(R.drawable.foxsu_mark),
                         contentDescription = null,
                         contentScale = ContentScale.Fit,
-                        modifier = Modifier.size(62.dp),
+                        modifier = Modifier.size(40.dp),
                     )
                 }
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    "FoxSu",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    letterSpacing = (-0.4).sp,
-                    color = Color.White,
-                )
-                Spacer(Modifier.height(5.dp))
-                Text(
-                    stringResource(R.string.onboarding_brand_tagline),
-                    fontSize = 11.sp,
-                    lineHeight = 16.sp,
-                    color = Color.White.copy(alpha = 0.88f),
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(Modifier.height(14.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-                    RepoStat("5", stringResource(R.string.onb_stat_skins))
-                    RepoStat("10", stringResource(R.string.onb_stat_docks))
-                    RepoStat("GPL", "Open Source")
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        "FoxSu · v${BuildConfig.VERSION_NAME}",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color.White,
+                    )
+                    Spacer(Modifier.height(3.dp))
+                    Text(
+                        "GPL-3.0 · 开源 · 基于 KernelSU",
+                        fontSize = 9.5.sp,
+                        color = Color.White.copy(alpha = 0.82f),
+                    )
+                }
+                Column(horizontalAlignment = Alignment.End) {
+                    RepoStat("21", "胶囊")
+                    Spacer(Modifier.height(3.dp))
+                    RepoStat("7", "配色")
                 }
             }
         }
 
-        Spacer(Modifier.height(16.dp))
-        RepoLink(
-            icon = Icons.Rounded.Language,
-            label = stringResource(R.string.onboarding_website),
-            sub = stringResource(R.string.onboarding_website_sub),
-            t = t,
-            primary = true,
-        ) { uriHandler.openUri(WEBSITE_URL) }
-
-        Spacer(Modifier.height(10.dp))
-        RepoLink(
-            icon = Icons.Rounded.Code,
-            label = stringResource(R.string.onboarding_github),
-            sub = stringResource(R.string.onboarding_github_sub),
-            t = t,
-            primary = false,
-        ) { uriHandler.openUri(REPO_URL) }
-
-        Spacer(Modifier.height(14.dp))
-        Text(
-            stringResource(R.string.onboarding_repo_license_short),
-            fontSize = 9.5.sp,
-            color = t.tx3,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        Spacer(Modifier.height(12.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+            val uriHandler = LocalUriHandler.current
+            SmallLink(t, "官网", Modifier.weight(1f)) { uriHandler.openUri(WEBSITE_URL) }
+            SmallLink(t, "GitHub", Modifier.weight(1f)) { uriHandler.openUri(REPO_URL) }
+        }
         Spacer(Modifier.height(10.dp))
     }
 }
 
+/** 底栏缩略小条：每种样式一个色块组合，扫一眼能分辨形状。 */
+@Composable
+private fun DockPreviewBar(style: DockKitStyle, t: OnbTokens, on: Boolean) {
+    val ac = if (on) t.accent else t.tx3
+    val ac2 = if (on) t.accent2 else t.tx3.copy(alpha = 0.6f)
+    Box(
+        Modifier.width(42.dp).height(24.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+            repeat(4) { i ->
+                val isCenter = i == 1
+                Box(
+                    Modifier
+                        .size(if (isCenter) 9.dp else 7.dp)
+                        .clip(
+                            when (style) {
+                                DockKitStyle.FILM -> RoundedCornerShape(2.dp)
+                                DockKitStyle.TRACK -> RoundedCornerShape(2.dp)
+                                DockKitStyle.STICKER -> RoundedCornerShape(3.dp)
+                                else -> CircleShape
+                            }
+                        )
+                        .background(
+                            if (isCenter) Brush.linearGradient(listOf(ac, ac2))
+                            else Brush.linearGradient(listOf(ac.copy(alpha = 0.45f), ac2.copy(alpha = 0.45f)))
+                        ),
+                )
+            }
+        }
+    }
+}
+
+/** 品牌卡右侧的两格读数（胶囊套数 / 配色套数）。 */
 @Composable
 private fun RepoStat(value: String, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
             value,
             fontSize = 15.sp,
@@ -856,73 +1020,44 @@ private fun RepoStat(value: String, label: String) {
             color = Color.White,
             fontFamily = FontFamily.Monospace,
         )
-        Text(
-            label,
-            fontSize = 8.sp,
-            color = Color.White.copy(alpha = 0.72f),
-        )
+        Spacer(Modifier.width(4.dp))
+        Text(label, fontSize = 8.sp, color = Color.White.copy(alpha = 0.75f))
     }
 }
 
 @Composable
-private fun RepoLink(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    sub: String,
-    t: OnbTokens,
-    primary: Boolean,
-    onClick: () -> Unit,
-) {
+private fun OnbMiniHead(title: String, tail: String, t: OnbTokens) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(title, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = t.tx)
+        Spacer(Modifier.weight(1f))
+        Text(tail, fontSize = 8.5.sp, color = t.tx3)
+    }
+}
+
+@Composable
+private fun OnbMiniCard(t: OnbTokens, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    Column(
+        modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(t.cardBg)
+            .border(1.dp, t.cardBd, RoundedCornerShape(16.dp))
+            .padding(horizontal = 11.dp, vertical = 11.dp),
+    ) { content() }
+}
+
+@Composable
+private fun SmallLink(t: OnbTokens, text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Row(
-        Modifier
-            .fillMaxWidth()
-            .height(62.dp)
-            .clip(RoundedCornerShape(17.dp))
-            .then(
-                if (primary) Modifier.background(Brush.horizontalGradient(listOf(t.accent, t.accent2)))
-                else Modifier
-                    .background(t.cardBg)
-                    .border(1.dp, t.cardBd, RoundedCornerShape(17.dp)),
-            )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp),
+        modifier
+            .height(40.dp)
+            .clip(RoundedCornerShape(13.dp))
+            .background(t.chipBg)
+            .border(1.dp, t.cardBd, RoundedCornerShape(13.dp))
+            .clickable(onClick = onClick),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
     ) {
-        Box(
-            Modifier
-                .size(34.dp)
-                .clip(RoundedCornerShape(11.dp))
-                .background(if (primary) Color.White.copy(alpha = 0.18f) else t.chipBg),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                icon,
-                contentDescription = null,
-                tint = if (primary) Color.White else t.tx2,
-                modifier = Modifier.size(17.dp),
-            )
-        }
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-            Text(
-                label,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = if (primary) Color.White else t.tx,
-            )
-            Spacer(Modifier.height(2.dp))
-            Text(
-                sub,
-                fontSize = 9.5.sp,
-                color = if (primary) Color.White.copy(alpha = 0.78f) else t.tx3,
-            )
-        }
-        Icon(
-            Icons.AutoMirrored.Rounded.OpenInNew,
-            contentDescription = null,
-            tint = if (primary) Color.White.copy(alpha = 0.9f) else t.tx3,
-            modifier = Modifier.size(14.dp),
-        )
+        Text(text, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = t.tx2)
     }
 }
 

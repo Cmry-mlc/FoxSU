@@ -1,8 +1,13 @@
 package me.weishu.kernelsu.ui.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.dp
+
+/** 把强调色往白色混一点，得到暗色模式下的提亮版。 */
+private fun lerpAccent(c: Color, amount: Float): Color = lerp(c, Color.White, amount)
 
 /**
  * 参考图（foxsu-ui-refined）的设计规范：主页 / 设置 / 重启弹层共用同一套
@@ -24,9 +29,18 @@ object UiPalette {
     /** 主状态卡：粉桃渐变（135deg #FDE4E0 → #FBD8E4）。 */
     val HeroGradientStart = Color(0xFFFDE4E0)
     val HeroGradientEnd = Color(0xFFFBD8E4)
-    /** 主卡文字墨色与强调色（薰衣草紫）。 */
+    /** 主卡文字墨色。 */
     val HeroContent = Color(0xFF2B2B33)
-    val HeroAccent = Color(0xFF6C5FC7)
+
+    /**
+     * 主卡强调色。
+     *
+     * 原来写死成薰衣草紫（#6C5FC7），用户在「界面风格」里换任何配色都不动，
+     * 于是浅色主题里总有一块永远紫的按钮。现在直接取全局强调色，
+     * 跟着定制中心的七套配色一起换。
+     */
+    val HeroAccent: Color
+        @Composable get() = me.weishu.kernelsu.ui.theme.currentAccent.primary
     /** 状态章描边玫红。 */
     val StatusRose = Color(0xFFC2567E)
     /** 兼容旧引用（作者页头像卡 / 重启弹层图标底）：淡紫。 */
@@ -54,7 +68,11 @@ object UiPalette {
 
     val HeroSurfaceDark = Color(0xFF2A2124)
     val HeroContentDark = InkDark
-    val HeroAccentDark = Color(0xFFA99DF0)
+    /** 暗色下把主色提亮一档，避免深底上的对比度不足。 */
+    val HeroAccentDark: Color
+        @Composable get() = lerpAccent(
+            me.weishu.kernelsu.ui.theme.currentAccent.primary, 0.34f,
+        )
 
     val KpiMintDark = Color(0xFF1F2F26) to Color(0xFF8FD6A4)
     val KpiCreamDark = Color(0xFF332C1C) to Color(0xFFE3C26E)

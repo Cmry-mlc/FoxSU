@@ -106,6 +106,15 @@ data class Customization(
     val dockAutoHide: Int = 0,
     /** 传统底栏：false = 胶囊（默认），true = 通栏传统底栏。 */
     val classicDock: Boolean = false,
+
+    /**
+     * 全场特效档位（0 关闭 / 1 克制 / 2 全开）。
+     *
+     * 统一管三类动效：卡片外轮廓粒子边、按压内阴影、3D 触摸倾斜。
+     * 默认 2——新装用户直接看到完整效果；老版本升级上来的人读到默认值也是 2，
+     * 因为之前这些特效本来就一直在跑。
+     */
+    val fxLevel: Int = 2,
     /**
      * 「凸起中间」底栏中央那颗头像的本地图片路径（长按可换）。
      * 只存路径不存 Uri：GET_CONTENT 的读权限是临时的，重启后 Uri 就打不开了。
@@ -198,6 +207,7 @@ private const val KEY_DOCK_STYLE = "dock_style"
     private const val KEY_DOCK_SIDE = "dock_side"
     private const val KEY_DOCK_BUTTON = "dock_button_style"
     private const val KEY_DOCK_AUTOHIDE = "dock_auto_hide"
+    private const val KEY_FX_LEVEL = "fx_level"
     private const val KEY_CLASSIC_DOCK = "classic_dock"
     private const val KEY_DONATE_AVATAR = "donate_avatar"
     private const val KEY_BRAND_DEFAULTS = "brand_defaults_v1"
@@ -295,6 +305,7 @@ private const val KEY_DOCK_STYLE = "dock_style"
             dockSide = getInt(KEY_DOCK_SIDE, 0),
             dockButton = getInt(KEY_DOCK_BUTTON, 1).coerceIn(0, 9),
             dockAutoHide = getInt(KEY_DOCK_AUTOHIDE, 0).coerceIn(0, 60),
+            fxLevel = getInt(KEY_FX_LEVEL, 2).coerceIn(0, 2),
             classicDock = getBoolean(KEY_CLASSIC_DOCK, false),
             donateAvatar = getString(KEY_DONATE_AVATAR, null),
         )
@@ -369,6 +380,8 @@ private const val KEY_DOCK_STYLE = "dock_style"
 
     /** 自定义强调色；传 0 表示回到当前预设配色。 */
     fun setAccentCustom(argb: Int) = update { it.copy(accentCustom = argb) }
+    /** 0 关闭 / 1 克制 / 2 全开 */
+    fun setFxLevel(level: Int) = update { it.copy(fxLevel = level.coerceIn(0, 2)) }
     fun setDockSide(side: Int) = update { it.copy(dockSide = side.coerceIn(0, 1)) }
 
     fun setDockButton(style: Int) = update { it.copy(dockButton = style.coerceIn(0, 9)) }
@@ -446,6 +459,7 @@ private const val KEY_DOCK_STYLE = "dock_style"
             putInt(KEY_DOCK_SIDE, next.dockSide)
             putInt(KEY_DOCK_BUTTON, next.dockButton)
             putInt(KEY_DOCK_AUTOHIDE, next.dockAutoHide)
+            putInt(KEY_FX_LEVEL, next.fxLevel)
             putBoolean(KEY_CLASSIC_DOCK, next.classicDock)
             putString(KEY_DONATE_AVATAR, next.donateAvatar)
         }

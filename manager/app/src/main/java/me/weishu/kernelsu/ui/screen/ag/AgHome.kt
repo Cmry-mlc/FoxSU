@@ -136,7 +136,10 @@ fun AgHome(
             Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
-                .padding(start = if (sideDock) 106.dp else edgePad, end = edgePad),
+                // 左右各让出 6dp：大卡片外轮廓的粒子要飘到卡片之外，
+                // 贴边放会被滚动容器裁掉半截
+                .padding(start = if (sideDock) 106.dp else edgePad, end = edgePad)
+                .padding(horizontal = 6.dp),
         ) {
             Spacer(Modifier.height(2.dp))
 
@@ -217,7 +220,9 @@ fun AgHome(
                             onClick = actions.onInstallClick,
                             modifier = Modifier.weight(1f),
                             enabled = hero.canFlash,
-                            particleEdge = true,
+                            // 大卡片本身已经有外轮廓粒子边，按钮再来一圈会互相抢，
+                            // 所以这三个按钮一律走干净的渐变底（用户：取消外圈特效）
+                            particleEdge = false,
                         )
                         AgButton(
                             primary = false,

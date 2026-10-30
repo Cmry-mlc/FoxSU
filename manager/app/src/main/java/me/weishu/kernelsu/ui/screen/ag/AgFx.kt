@@ -38,6 +38,7 @@ import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.graphics.asAndroidPath
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import me.weishu.kernelsu.data.settings.CustomizationStore
 
 /**
  * 主页大卡片的 3D 触摸特效：
@@ -50,6 +51,10 @@ import androidx.compose.ui.unit.dp
 fun Modifier.tiltCardFx(): Modifier = tiltTransform()
 
 private fun Modifier.tiltTransform(): Modifier = composed {
+    // 档位：0 关闭（完全不动）/ 1 克制（角度减半）/ 2 全开
+    val level = CustomizationStore.current.fxLevel
+    if (level <= 0) return@composed this
+    val maxTilt = if (level >= 2) 12f else 6f
     val rotX = remember { Animatable(0f) }
     val rotY = remember { Animatable(0f) }
     val glow = remember { Animatable(0f) }
@@ -59,18 +64,19 @@ private fun Modifier.tiltTransform(): Modifier = composed {
         .graphicsLayer {
             rotationX = rotX.value
             rotationY = rotY.value
-            cameraDistance = 24f * density
+            // cameraDistance 拉大 = 透视更"远"，大角度下也不会出现明显的梯形畸变
+            cameraDistance = 16f * density
         }
         .drawWithContent {
             drawContent()
             if (glow.value > 0.01f) {
                 drawRect(
                     Brush.radialGradient(
-                        0f to Color.White.copy(alpha = 0.18f * glow.value),
-                        0.45f to Color.White.copy(alpha = 0.05f * glow.value),
+                        0f to Color.White.copy(alpha = 0.26f * glow.value),
+                        0.45f to Color.White.copy(alpha = 0.07f * glow.value),
                         1f to Color.Transparent,
                         center = light,
-                        radius = size.width * 0.55f,
+                        radius = size.width * 0.62f,
                     )
                 )
             }
@@ -91,8 +97,8 @@ private fun Modifier.tiltTransform(): Modifier = composed {
                     light = pos
                     val nx = (pos.x - size.width / 2f) / (size.width / 2f)
                     val ny = (pos.y - size.height / 2f) / (size.height / 2f)
-                    val rx = (-ny * 7f).coerceIn(-7f, 7f)
-                    val ry = (nx * 7f).coerceIn(-7f, 7f)
+                    val rx = (-ny * maxTilt).coerceIn(-maxTilt, maxTilt)
+                    val ry = (nx * maxTilt).coerceIn(-maxTilt, maxTilt)
                     scope.launch {
                         rotY.snapTo(ry)
                         rotX.snapTo(rx)
@@ -330,13 +336,15 @@ fun Modifier.particleOutline(
     accent: Color? = null,
     running: Boolean = true,
 ): Modifier = composed {
+    // 特效档位：0 关闭（连无限动画都不创建，省掉整帧重绘）/ 1 克制（颗粒少一半、速度再慢一档）/ 2 全开
+    val fx = CustomizationStore.current.fxLevel
+    if (!running || fx <= 0) return@composed this
+    val slow = fx <= 1
     val transition = rememberInfiniteTransition(label = "p-outline")
     val phase by transition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            if (running) tween(3600, easing = LinearEasing) else tween(3600, easing = LinearEasing),
-        ),
+        animationSpec = infiniteRepeatable(tween(if (slow) 8600 else 6200, easing = LinearEasing)),
         label = "p-outline-phase",
     )
     val density = androidx.compose.ui.platform.LocalDensity.current
@@ -377,7 +385,7 @@ fun Modifier.particleOutline(
             // 2) 流动粒子 + 尾段飘散
             val overflow = bleedPx * 6f
             val head = phase * (len + overflow)
-            val tail = 14
+            val tail = if (slow) 8 else 14
             val gap = (len / (tail * 7.5f)).coerceIn(5f, 13f)
             val driftMax = bleedPx * 1.15f
             val headAlpha = (1f - (head - len).coerceAtLeast(0f) / overflow).coerceIn(0f, 1f)

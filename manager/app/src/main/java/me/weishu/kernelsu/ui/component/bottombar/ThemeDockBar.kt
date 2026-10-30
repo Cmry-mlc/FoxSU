@@ -564,15 +564,7 @@ private fun DockItem(
         },
         label = "dock-press-$index",
     )
-    // 深度内阴影：按压加深，松手淡出
-    val innerShadow = remember { Animatable(0f) }
-    LaunchedEffect(pressed) {
-        if (pressed) {
-            innerShadow.animateTo(1f, spring(dampingRatio = 0.7f, stiffness = 1900f))
-        } else {
-            innerShadow.animateTo(0f, tween(280))
-        }
-    }
+    // 内阴影已移除：小圆片上会显出一块发黑的脏影，改由图标点击涟漪表达按压
     val pressSink by animateDpAsState(
         targetValue = if (pressed) (if (button == DockButton.KEYCAP) 2.dp else 1.dp) else 0.dp,
         animationSpec = spring(dampingRatio = 0.5f, stiffness = 800f),
@@ -612,11 +604,7 @@ private fun DockItem(
         Box(
             Modifier
                 .size(fillW, fillH)
-                .drawWithContent {
-                    drawContent()
-                    drawInnerShadow(innerShadow.value)
-                }
-        ) {
+            ) {
             DockButtonFill(
                 style = button,
                 selected = selected,
@@ -652,6 +640,8 @@ private fun DockItem(
                 scale = iconScale,
                 glow = style == DockStyle.V6 && selected,
                 big = false,
+                pressed = pressed,
+                pressAccent = accent.primary,
             )
             if (showLabel(style, selected)) {
                 Text(
@@ -730,22 +720,33 @@ private fun DockIcon(
     scale: Float = 1f,
     glow: Boolean = false,
     big: Boolean = false,
+    pressed: Boolean = false,
+    pressAccent: Color = Color.Unspecified,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier, contentAlignment = Alignment.TopCenter) {
         val iconSize = if (big) 24.dp else 22.dp
-        Icon(
-            imageVector = item.filledIcon,
-            contentDescription = stringResource(item.label),
-            tint = tint,
-            modifier = Modifier
-                .size(iconSize)
-                .graphicsLayer {
-                    scaleX = scale
-                    scaleY = scale
-                    if (selected && !big) translationY = -1.dp.toPx()
-                },
-        )
+        // 点击特效：涟漪 + 图标回弹（替代发黑的内阴影）
+        DockIconTapFx(
+            pressed = pressed,
+            accent = if (pressAccent == Color.Unspecified) {
+                me.weishu.kernelsu.ui.screen.ag.Ag.accent.primary
+            } else pressAccent,
+            iconSize = iconSize,
+        ) {
+            Icon(
+                imageVector = item.filledIcon,
+                contentDescription = stringResource(item.label),
+                tint = tint,
+                modifier = Modifier
+                    .size(iconSize)
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                        if (selected && !big) translationY = -1.dp.toPx()
+                    },
+            )
+        }
         val badge = navigationBadgeFor(index, navigationBadge, floating = true)
         if (badge != null) {
             Box(

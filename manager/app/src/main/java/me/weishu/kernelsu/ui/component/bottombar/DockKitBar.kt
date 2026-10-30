@@ -515,15 +515,7 @@ private fun KitTab(
         },
         label = "kit-press-$index",
     )
-    // 深度内阴影：按压时加深，松手随回弹淡出
-    val innerShadow = remember { Animatable(0f) }
-    LaunchedEffect(pressed) {
-        if (pressed) {
-            innerShadow.animateTo(1f, spring(dampingRatio = 0.7f, stiffness = 1900f))
-        } else {
-            innerShadow.animateTo(0f, tween(280))
-        }
-    }
+    // 内阴影已移除：48dp 圆片上那是一块发黑的脏灰，改由图标点击特效表达按压
     val iconScale by animateFloatAsState(
         targetValue = if (pressed) 0.82f else if (selected) 1.06f else 1f,
         animationSpec = spring(dampingRatio = 0.45f, stiffness = 620f),
@@ -641,10 +633,6 @@ private fun KitTab(
                     Modifier
                 }
             )
-            .drawWithContent {
-                drawContent()
-                drawInnerShadow(innerShadow.value)
-            }
             .rotate(rotation)
             .clickable(interactionSource = src, indication = null, onClick = onClick),
         contentAlignment = Alignment.Center,
@@ -667,19 +655,26 @@ private fun KitTab(
 
         val glyph: @Composable () -> Unit = {
             Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = KitGlyphs.of(item),
-                    contentDescription = stringResource(item.label),
-                    tint = fg,
-                    modifier = Modifier
-                        .size(if (style == DockKitStyle.TRACK) 20.dp else 21.dp)
-                        .graphicsLayer {
-                            scaleX = iconScale
-                            scaleY = iconScale
-                            // 贴纸变体的图标反向转回来，图案本身始终是正的
-                            rotationZ = if (style == DockKitStyle.STICKER) -rotation * 0.85f else 0f
-                        },
-                )
+                // 按压/点击特效挂在这里：涟漪从图标中心荡开，图标本身有一次回弹
+                DockIconTapFx(
+                    pressed = pressed,
+                    accent = accent.primary,
+                    iconSize = if (style == DockKitStyle.TRACK) 20.dp else 21.dp,
+                ) {
+                    Icon(
+                        imageVector = KitGlyphs.of(item),
+                        contentDescription = stringResource(item.label),
+                        tint = fg,
+                        modifier = Modifier
+                            .size(if (style == DockKitStyle.TRACK) 20.dp else 21.dp)
+                            .graphicsLayer {
+                                scaleX = iconScale
+                                scaleY = iconScale
+                                // 贴纸变体的图标反向转回来，图案本身始终是正的
+                                rotationZ = if (style == DockKitStyle.STICKER) -rotation * 0.85f else 0f
+                            },
+                    )
+                }
                 val count = badgeFor(index, navigationBadge)?.count
                 if (count != null) {
                     Box(

@@ -311,15 +311,7 @@ private fun CenterDockTab(
         },
         label = "center-dock-press-$index",
     )
-    // 深度内阴影：按压加深，松手淡出
-    val innerShadow = remember { Animatable(0f) }
-    LaunchedEffect(pressed) {
-        if (pressed) {
-            innerShadow.animateTo(1f, spring(dampingRatio = 0.7f, stiffness = 1900f))
-        } else {
-            innerShadow.animateTo(0f, tween(280))
-        }
-    }
+    // 内阴影已移除：改由图标点击涟漪表达按压
     val plate by animateColorAsState(
         targetValue = if (selected) (if (dark) accent.softDark else accent.soft) else Color.Transparent,
         animationSpec = tween(220),
@@ -347,26 +339,24 @@ private fun CenterDockTab(
             }
             .clip(RoundedCornerShape(20.dp))
             .background(plate)
-            .drawWithContent {
-                drawContent()
-                drawInnerShadow(innerShadow.value)
-            }
             .clickable(interactionSource = src, indication = null, onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         Box(contentAlignment = Alignment.Center) {
-            Icon(
-                imageVector = item.filledIcon,
-                contentDescription = stringResource(item.label),
-                tint = fg,
-                modifier = Modifier
-                    .size(21.dp)
-                    .graphicsLayer {
-                        scaleX = iconScale
-                        scaleY = iconScale
-                    },
-            )
+            DockIconTapFx(pressed = pressed, accent = accent.primary, iconSize = 21.dp) {
+                Icon(
+                    imageVector = item.filledIcon,
+                    contentDescription = stringResource(item.label),
+                    tint = fg,
+                    modifier = Modifier
+                        .size(21.dp)
+                        .graphicsLayer {
+                            scaleX = iconScale
+                            scaleY = iconScale
+                        },
+                )
+            }
             // 角标：贴在图标右上角外侧，洋红实心 + 白色 2dp 描边（和参考图一致）
             val badgeCount = badgeFor(index, navigationBadge)?.count
             if (badgeCount != null) {

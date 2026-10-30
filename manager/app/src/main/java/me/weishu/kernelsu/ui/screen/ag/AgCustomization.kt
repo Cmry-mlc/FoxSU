@@ -317,6 +317,72 @@ internal fun AgCustomization(
                 }
             }
 
+            // ══════════ 特效 ══════════
+            AgGHead("特效")
+            AgCard {
+                AgSubLabel("动效强度")
+                // 三档：关 / 克制 / 全开。统一管粒子边、3D 触摸倾斜、底栏点击涟漪
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Ag.Vio.copy(alpha = 0.06f))
+                        .border(1.dp, Ag.Line, RoundedCornerShape(12.dp))
+                        .padding(3.dp),
+                    horizontalArrangement = Arrangement.spacedBy(3.dp),
+                ) {
+                    listOf("关闭", "克制", "全开").forEachIndexed { i, label ->
+                        val on = custom.fxLevel == i
+                        Box(
+                            Modifier
+                                .weight(1f)
+                                .height(34.dp)
+                                .clip(RoundedCornerShape(9.dp))
+                                .then(
+                                    if (on) Modifier.background(Ag.Grad)
+                                    else Modifier
+                                )
+                                .agClick(onClick = {
+                                    CustomizationStore.setFxLevel(i)
+                                }),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                label,
+                                fontSize = 12.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (on) Color.White else Ag.Tx2,
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(9.dp))
+                Text(
+                    when (custom.fxLevel) {
+                        0 -> "全部动效关闭：卡片不再流动粒子、不再 3D 倾斜，底栏点击也没有涟漪。最省电，老机型建议选它。"
+                        1 -> "克制档：粒子颗粒减半、流速放慢，3D 倾斜角度限制在 ±6°，日常够看又不打扰。"
+                        else -> "全开：卡片外轮廓彩色粒子边 + 触摸 3D 透视倾斜 + 底栏图标点击涟漪，全部启用。"
+                    },
+                    fontSize = 11.5.sp, lineHeight = 17.sp, color = Ag.Tx2,
+                )
+                Spacer(Modifier.height(12.dp))
+                AgToggleRow(
+                    "卡片 3D 触摸倾斜",
+                    "手指按住大卡片时跟着触摸点做透视倾斜，松手弹回",
+                    Ag.Mag, AgSettingsIcons.Blur,
+                    trailing = {
+                        AgToggle(
+                            checked = custom.fxLevel > 0,
+                            onCheckedChange = {
+                                CustomizationStore.setFxLevel(if (custom.fxLevel > 0) 0 else 2)
+                            },
+                            small = true,
+                        )
+                    },
+                    divider = false,
+                )
+            }
+
             // ══════════ 全局强调色 ══════════
             AgGHead("全局强调色")
             AgCard {
@@ -654,23 +720,34 @@ internal fun AgCustomization(
                     )
                 }
                 Spacer(Modifier.height(16.dp))
-                AgSubLabel("按钮形状 · 10 套")
-                DockButton.all.chunked(5).forEach { line ->
-                    Row(
-                        Modifier.fillMaxWidth().padding(bottom = 9.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        line.forEach { btn ->
-                            AgButtonShapeCard(
-                                button = btn,
-                                selected = custom.dockButton == btn.ordinal,
-                                modifier = Modifier.weight(1f),
-                            ) { CustomizationStore.setDockButton(btn.ordinal) }
-                        }
+                AgSubLabel("按钮形状 · ${DockButton.all.size} 套")
+                // 横向滑动选择器：和下方胶囊样式选择器同一套交互——一屏 4 张、
+                // 其余手指滑出来，选中项自动滚到可见位置，不再铺成两行 5 列
+                val shapeScreenW = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp.dp
+                val shapeCardW = ((shapeScreenW - 36.dp - 16.dp - 18.dp) / 4).coerceAtLeast(62.dp)
+                val shapeListState = androidx.compose.foundation.lazy.rememberLazyListState()
+                androidx.compose.runtime.LaunchedEffect(custom.dockButton) {
+                    val target = (custom.dockButton - 1).coerceIn(0, (DockButton.all.size - 4).coerceAtLeast(0))
+                    shapeListState.animateScrollToItem(target)
+                }
+                androidx.compose.foundation.lazy.LazyRow(
+                    state = shapeListState,
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    items(DockButton.all.size) { i ->
+                        val btn = DockButton.all[i]
+                        AgButtonShapeCard(
+                            button = btn,
+                            selected = custom.dockButton == btn.ordinal,
+                            modifier = Modifier.width(shapeCardW),
+                        ) { CustomizationStore.setDockButton(btn.ordinal) }
                     }
                 }
+                Spacer(Modifier.height(7.dp))
                 Text(
-                    DockButton.of(custom.dockButton).hint,
+                    DockButton.of(custom.dockButton).hint + "　·　左右滑动查看全部",
                     fontSize = 11.sp, color = Ag.Tx2,
                     modifier = Modifier.padding(start = 2.dp, bottom = 14.dp),
                 )
