@@ -29,11 +29,25 @@ object AdBlock {
 
     data class Source(val id: String, val name: String, val desc: String, val url: String)
 
+    /**
+     * 规则源全部为国内来源（国外列表误杀国内 App 的比率高，且体积大）：
+     *  - anti-AD：国内最权威的反广告域名库，每天更新，10 万+ 域名，覆盖国内 App / 运营商广告
+     *  - AdGuard Chinese：AdGuard 官方中文过滤规则中的纯域名部分（国内站点广告网络）
+     * 格式兼容 hosts / dnsmasq(address=/x/) / 纯域名 三种。
+     */
     val SOURCES = listOf(
-        Source("sb", "StevenBlack 统一列表", "广告 + 恶意域名，约 7.2 万条，最均衡", "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"),
-        Source("sbf", "StevenBlack + 假新闻", "统一列表 + fakenews 扩展，约 7.4 万条", "https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/fakenews/hosts"),
-        Source("adaway", "AdAway 官方", "经典轻量列表，约 4 万条，误杀最少", "https://adaway.org/hosts.txt"),
-        Source("neo", "neoHosts", "国内源：国内广告、运营商劫持、统计", "https://raw.githubusercontent.com/neoo-lol/neohosts/master/hosts"),
+        Source(
+            "antiad", "anti-AD 国内广告库", "10 万+ 国内 App / 运营商广告域名，每日更新（推荐）",
+            "https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/adblock-for-dnsmasq.conf",
+        ),
+        Source(
+            "antiad_dom", "anti-AD 纯域名精简版", "同一库的纯域名列表，体积更小、解析更快",
+            "https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/anti-ad-domains.txt",
+        ),
+        Source(
+            "adguard_cn", "AdGuard 中文过滤", "AdGuard 官方中文规则中的国内广告网络域名",
+            "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/ChineseFilter/sections/adservers.txt",
+        ),
     )
 
     data class Status(
@@ -74,7 +88,7 @@ object AdBlock {
         val entries = cfg(shell, "entries").toIntOrNull() ?: 0
         val updatedAt = cfg(shell, "updated_at")
         val wl = cfg(shell, "whitelist").split('\n').map { it.trim() }.filter { it.isNotEmpty() }
-        return Status(installed, enabled, cfg(shell, "source").ifBlank { "sb" }, entries, updatedAt, wl)
+        return Status(installed, enabled, cfg(shell, "source").ifBlank { "antiad" }, entries, updatedAt, wl)
     }
 
     // ── 下载与合并 ────────────────────────────────────────────────────────
@@ -111,10 +125,20 @@ object AdBlock {
         var count = 0
         for (raw in texts) {
             for (line0 in raw.lineSequence()) {
-                val line = line0.substringBefore('#').trim()
+                var line = line0.trim()
+                if (line.isEmpty() || line.startsWith("!") || line.startsWith("[")) continue
+                // dnsmasq 格式：address=/example.com/
+                if (line.startsWith("address=/")) {
+                    line = line.removePrefix("address=/").trimEnd('/').trim()
+                } else {
+                    line = line.substringBefore('#').trim()
+                }
                 if (line.isEmpty()) continue
-                val parts = line.split(Regex("\\s+"))
-                val domain = parts.lastOrNull()?.lowercase() ?: continue
+                // AdGuard 规则的例外语法 @@||domain^ 表示放行，直接跳过
+                if (line.startsWith("@@")) continue
+                val domain = line.split(Regex("[\\s^|/]+")).filter { it.isNotEmpty() }
+                    .lastOrNull()?.lowercase()?.removePrefix("||") ?: continue
+                if (!domain.contains('.')) continue
                 if (domain !in seen) {
                     seen.add(domain)
                     if (whitelist.any { domain == it || domain.endsWith(".$it") }) continue

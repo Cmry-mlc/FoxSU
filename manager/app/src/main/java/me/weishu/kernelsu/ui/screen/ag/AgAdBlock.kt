@@ -59,7 +59,7 @@ fun AgAdBlock(onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
 
     var status by remember { mutableStateOf<AdBlock.Status?>(null) }
-    var selected by remember { mutableStateOf(setOf("sb")) }
+    var selected by remember { mutableStateOf(setOf("antiad")) }
     var customUrl by remember { mutableStateOf("") }
     var useMirror by remember { mutableStateOf(true) }
     var liveCount by remember { mutableStateOf(0) }
@@ -78,7 +78,7 @@ fun AgAdBlock(onBack: () -> Unit) {
             val st = withContext(Dispatchers.IO) { AdBlock.status() }
             status = st
             selected = AdBlock.SOURCES.filter { it.id in st.sourceId.split(',') }.map { it.id }.toSet()
-            if (selected.isEmpty()) selected = setOf("sb")
+            if (selected.isEmpty()) selected = setOf("antiad")
             wlText = st.whitelist.joinToString("\n")
             liveCount = withContext(Dispatchers.IO) { AdBlock.liveEntries() }
         }
@@ -264,7 +264,7 @@ fun AgAdBlock(onBack: () -> Unit) {
 
             item {
                 Text(
-                    "规则来自开源仓库：StevenBlack/hosts（聚合 AdAway、URLHaus 等 14 个源）、AdAway、neoHosts。屏蔽通过 hosts 域名解析实现，对 App 内嵌 HTTPS 广告同样有效。",
+                    "规则全部来自国内开源仓库：anti-AD（每日更新，国内最权威反广告域名库）、AdGuard 中文过滤。不含国外列表，避免误杀国内 App。屏蔽通过 hosts 域名解析实现，对 App 内嵌 HTTPS 广告同样有效。",
                     fontSize = 11.sp, lineHeight = 16.sp, color = Ag.Tx2.copy(alpha = 0.7f),
                     modifier = Modifier.padding(horizontal = 6.dp),
                 )
