@@ -33,13 +33,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -64,6 +63,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -72,6 +72,7 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import me.weishu.kernelsu.R
 import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.LocalMainPagerState
 import me.weishu.kernelsu.ui.component.LocalAppBackdrop
@@ -145,8 +146,12 @@ internal fun CenterDockBar(
     val navInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val bottomPad = if (navInset != 0.dp) 10.dp + navInset else 22.dp
 
-    val barH = 72.dp
-    val avatarD = 60.dp
+    // 尺寸不自己写死：直接套主底栏那套栅格（4×78 + 3×4 间隙 + 两侧 8 内边距），
+    // 所以不管以后怎么调 DockMetrics，这里永远和默认胶囊同宽同高。
+    val barW = DockMetrics.itemW * 4 + DockMetrics.gap * 3 + DockMetrics.pad * 2
+    val barH = DockMetrics.itemH + DockMetrics.pad * 2
+    // 头像比胶囊高 8dp：上下各凸 4dp，卡位宽 65.6dp，半径 42 不会压到相邻图标
+    val avatarD = barH + 8.dp
     val shape = RoundedCornerShape(barH / 2)
 
     val sinkModifier = Modifier.graphicsLayer {
@@ -154,7 +159,7 @@ internal fun CenterDockBar(
         alpha = sinkAlpha
     }
 
-    // ── 中央头像：本地文件 → 位图；没有就画品牌渐变的默认心形 ──
+    // ── 中央头像：本地文件 → 位图；没有就用随包内置的狐狸标 ──
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val haptics = LocalHapticFeedback.current
@@ -189,8 +194,9 @@ internal fun CenterDockBar(
                 .align(Alignment.BottomCenter)
                 .then(sinkModifier)
                 .padding(bottom = bottomPad)
+                // widthIn 在前：小屏（<340dp）自动退化成填满可用宽度，不溢出
+                .widthIn(max = barW)
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp)
                 .height(barH)
                 // 参考图那层很淡的落地阴影：胶囊是浮在页面上的，不是贴死在底边
                 .shadow(
@@ -256,20 +262,27 @@ internal fun CenterDockBar(
             }
         }
 
-        // 头像比胶囊高一点点：视觉上「顶出来一块」，但不是真的溢出（60 < 72）
-        CenterAvatar(
-            avatar = avatar,
-            dark = dark,
+        // 头像单独一层：居中对齐胶囊中线，requiredSize 让它合法突破 76dp 的高度，
+        // 上下各露 4dp，看起来是「从胶囊里顶出来」而不是压在胶囊上。
+        Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .then(sinkModifier)
-                .padding(bottom = bottomPad + (barH - avatarD) / 2),
-            onClick = onOpenDonate,
-            onLongClick = {
-                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                pickAvatar()
-            },
-        )
+                .padding(bottom = bottomPad)
+                .height(barH),
+            contentAlignment = Alignment.Center,
+        ) {
+            CenterAvatar(
+                avatar = avatar,
+                dark = dark,
+                modifier = Modifier.requiredSize(avatarD),
+                onClick = onOpenDonate,
+                onLongClick = {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    pickAvatar()
+                },
+            )
+        }
     }
 }
 
@@ -313,12 +326,12 @@ private fun CenterDockTab(
         modifier = modifier
             // 底衬左右各留 5dp：整格铺满会让相邻两个 tab 的选中块黏在一起
             .padding(horizontal = 5.dp)
-            .height(56.dp)
+            .height(DockMetrics.itemH)
             .graphicsLayer {
                 scaleX = pressScale
                 scaleY = pressScale
             }
-            .clip(RoundedCornerShape(19.dp))
+            .clip(RoundedCornerShape(20.dp))
             .background(plate)
             .clickable(interactionSource = src, indication = null, onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -374,7 +387,10 @@ private fun CenterDockTab(
     }
 }
 
-/** 中央卡位：白色圆环 + 圆图；没有图时用品牌渐变 + 心形兜底。 */
+/**
+ * 中央卡位：外圈白环 + 圆图。
+ * 没换过图时画随包内置的狐狸标（`foxsu_mark`，透明底），不再用「渐变色 + 心形」凑数。
+ */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun CenterAvatar(
@@ -395,7 +411,6 @@ private fun CenterAvatar(
 
     Box(
         modifier = modifier
-            .size(60.dp)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
@@ -426,20 +441,19 @@ private fun CenterAvatar(
                     .clip(CircleShape),
             )
         } else {
-            Box(
-                Modifier
+            // 默认狐狸标：原图四周留白约 11%，1.18 倍后彩色圆正好撑满卡位。
+            // 这里不自己 clip —— 外层 Box 已经裁成圆，放大后的溢出一并被裁掉。
+            Image(
+                painter = painterResource(R.drawable.foxsu_mark),
+                contentDescription = "支持 FoxSu",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
                     .fillMaxSize()
-                    .clip(CircleShape)
-                    .background(Brush.linearGradient(listOf(accent.primary, accent.mid, accent.secondary))),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Favorite,
-                    contentDescription = "支持 FoxSu",
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp),
-                )
-            }
+                    .graphicsLayer {
+                        scaleX = 1.18f
+                        scaleY = 1.18f
+                    },
+            )
         }
     }
 }

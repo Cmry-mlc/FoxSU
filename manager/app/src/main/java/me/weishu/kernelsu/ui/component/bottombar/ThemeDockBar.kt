@@ -113,7 +113,7 @@ private val rainbowColors = listOf(
  * 13 种样式共用同一组尺寸：项宽 78dp、项高 60dp、间距 4dp、内衬 8dp。
  * 样式只决定「长什么样」，不决定「有多大」——切换样式时底栏的长宽不再跳变。
  */
-private object DockMetrics {
+internal object DockMetrics {
     val itemW = 78.dp
     val itemH = 60.dp
     val gap = 4.dp
