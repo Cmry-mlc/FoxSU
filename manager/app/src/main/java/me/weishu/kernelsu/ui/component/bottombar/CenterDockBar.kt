@@ -150,8 +150,9 @@ internal fun CenterDockBar(
     // 所以不管以后怎么调 DockMetrics，这里永远和默认胶囊同宽同高。
     val barW = DockMetrics.itemW * 4 + DockMetrics.gap * 3 + DockMetrics.pad * 2
     val barH = DockMetrics.itemH + DockMetrics.pad * 2
-    // 头像比胶囊高 8dp：上下各凸 4dp，卡位宽 65.6dp，半径 42 不会压到相邻图标
-    val avatarD = barH + 8.dp
+    // 头像比胶囊高 12dp（上下各凸 6dp）。中间卡位权重 1.15，把两侧 tab 稍微推开，
+    // 半径 44 才不会压到相邻的文字（中文 4 字约 42dp 宽，间距 68dp 够用）。
+    val avatarD = barH + 12.dp
     val shape = RoundedCornerShape(barH / 2)
 
     val sinkModifier = Modifier.graphicsLayer {
@@ -246,8 +247,9 @@ internal fun CenterDockBar(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 items.forEachIndexed { index, item ->
-                    // 正中留出卡位：头像画在外层（不被胶囊裁切），这里只占一格宽度
-                    if (index == 2) Spacer(Modifier.weight(1f))
+                    // 正中留出卡位：头像画在外层（不被胶囊裁切），这里只占一格宽度。
+                    // 权重比普通 tab 大 15%，给 88dp 的头像让出呼吸空间
+                    if (index == 2) Spacer(Modifier.weight(1.15f))
                     CenterDockTab(
                         item = item,
                         index = index,
