@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
+import me.weishu.kernelsu.ui.screen.ag.particleOutline
 import me.weishu.kernelsu.ui.screen.home.HeroPhase
 import me.weishu.kernelsu.ui.screen.home.HomeActions
 import me.weishu.kernelsu.ui.screen.home.HomeIssueStrip
@@ -290,6 +291,12 @@ private fun NcHero(
 
     NcGradientBorder(
         radius = 24.dp,
+        // 暗夜主题：粒子边挂在渐变小卡外层，颜色取主题强调色（amber/mint），不破坏暗色氛围
+        modifier = Modifier.particleOutline(
+            shape = RoundedCornerShape(24.dp),
+            accent = accent,
+            bleed = 11.dp,
+        ),
         borderColors = t.heroBorder,
         borderStops = t.heroBorderStops,
         borderAngle = 150f,

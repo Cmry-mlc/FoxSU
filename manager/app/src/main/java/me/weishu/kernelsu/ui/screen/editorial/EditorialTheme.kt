@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.component.bouncyClick
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
+import me.weishu.kernelsu.ui.screen.ag.particleOutline
 import me.weishu.kernelsu.ui.screen.glass.marquee
 import me.weishu.kernelsu.ui.component.isNightScheme
 
@@ -280,7 +281,12 @@ fun EdStatusBand(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clipToBounds()
+            // 编辑风格是直角版式，粒子边跟着走 2dp 微圆角，只在外侧铺一层，不做裁切
+            .particleOutline(
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(2.dp),
+                accent = t.rose,
+                bleed = 10.dp,
+            )
             .background(t.ink),
     ) {
         // 右上角狐尾水印（设计稿 .tail）：放在顶部角落，尺寸收小，不侵入 KV 区

@@ -146,6 +146,12 @@ fun AgHome(
             Modifier
                 .fillMaxWidth()
                 .tiltCardFx()
+                // 卡片「外围」的科幻粒子边：沿 24dp 圆角轮廓流动，尾段向外飘散
+                .particleOutline(
+                    shape = RoundedCornerShape(24.dp),
+                    accent = Ag.Vio,
+                    bleed = 12.dp,
+                )
                 .shadow(
                     12.dp, RoundedCornerShape(24.dp),
                     spotColor = Ag.Vio.copy(alpha = 0.251f),

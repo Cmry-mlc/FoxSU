@@ -9,6 +9,11 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.addOutline
+import androidx.compose.ui.platform.LocalDensity
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -31,6 +36,7 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.graphics.asAndroidPath
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
@@ -104,98 +110,188 @@ private fun Modifier.tiltTransform(): Modifier = composed {
 }
 
 /**
- * 科幻粒子边：彩色光点沿按钮圆角路径流动，拖尾逐颗变淡，
+ * 科幻粒子边：彩色光点沿圆角轮廓流动，拖尾逐颗变淡，
  * 尾段沿法线方向向外飘散进虚空（飘散距离随拖尾加深）。
  *
- * 用 android PathMeasure 取路径坐标，16 颗粒子一帧画完，只在原地循环。
+ * 有两处细节保证「粒子是贴着外形走的、而且能飘出去」：
+ *   - 路径从 [inset] 处向内收一点，这样粒子中心正好压在描边中线上，
+ *     视觉上像正沿着边缘跑，而不是被边缘切掉半个；
+ *   - 飘散方向统一朝外，并且额外加大头部半径的亮芯，
+ *     让小尺寸按钮（安装按钮）上也看得清。
+ *
+ * 调用方必须让本 Canvas 的绘制区域比实体轮廓大一圈（或不做 clip），
+ * 否则飘出去的粒子会被父级裁掉。
  */
 @Composable
-fun ParticleEdgeOverlay(modifier: Modifier = Modifier) {
+fun ParticleEdgeOverlay(
+    modifier: Modifier = Modifier,
+    colorSeed: Int = 0,
+    cornerRadius: Dp = 999.dp,
+    speedMillis: Int = 2800,
+    tailLength: Int = 16,
+    dotMinRadius: Dp = 1.1.dp,
+    dotMaxRadius: Dp = 2.7.dp,
+) {
     val transition = rememberInfiniteTransition(label = "p-edge")
     val phase by transition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(2800, easing = LinearEasing)),
+        animationSpec = infiniteRepeatable(tween(speedMillis, easing = LinearEasing)),
         label = "p-edge-phase",
     )
-    val colors = listOf(
-        Color(0xFFFF7A5C), Color(0xFFFFD84D), Color(0xFF7FD896),
-        Color(0xFFA88BFF), Color(0xFFEC4899), Color(0xFF38BDF8),
-    )
-    Canvas(modifier) { drawParticleEdge(phase, colors) }
+    Canvas(modifier) { drawParticleEdge(phase, cornerRadius, colorSeed, tailLength, dotMinRadius, dotMaxRadius) }
 }
 
-private fun DrawScope.drawParticleEdge(phase: Float, colors: List<Color>) {
-    val r = size.height / 2f
+/** 六色霓虹调色板，按 seed 轮转起点，多块同时出现时不会完全同步。 */
+private val particlePalette = listOf(
+    Color(0xFFFF7A5C), Color(0xFFFFD84D), Color(0xFF7FD896),
+    Color(0xFFA88BFF), Color(0xFFEC4899), Color(0xFF38BDF8),
+)
+
+/**
+ * 实际绘制。坐标系是「当前 DrawScope 的全尺寸」= 实体轮廓 + 四周 bleed。
+ * [bleedPx] 由调用方通过 size 与真实轮廓的差值反推，这里以 6dp 兜底。
+ */
+private fun DrawScope.drawParticleEdge(
+    phase: Float,
+    cornerRadius: Dp,
+    colorSeed: Int,
+    tailLength: Int,
+    dotMinRadius: Dp,
+    dotMaxRadius: Dp,
+) {
+    // Canvas 通常比实体轮廓外扩了一圈，收回来才是实体边缘
+    val bleed = minOf(6.dp.toPx(), size.width * 0.16f, size.height * 0.16f)
+    val left = bleed
+    val top = bleed
+    val right = size.width - bleed
+    val bottom = size.height - bleed
+    val w = right - left
+    val h = bottom - top
+    if (w <= 1f || h <= 1f) return
+
+    val r = if (cornerRadius >= 999.dp) minOf(w, h) / 2f
+    else minOf(cornerRadius.toPx(), minOf(w, h) / 2f)
+
     val composePath = Path().apply {
-        addRoundRect(
-            RoundRect(
-                0f, 0f, size.width, size.height,
-                CornerRadius(r, r),
-            )
-        )
+        addRoundRect(RoundRect(left, top, right, bottom, CornerRadius(r, r)))
     }
     val pm = android.graphics.PathMeasure(composePath.asAndroidPath(), false)
     val len = pm.length
     if (len <= 0f) return
-    val head = phase * (len + 90f)
-    val tail = 16
-    val gap = 8.5f
-    val driftMax = 9.dp.toPx()
+
+    val palette = particlePalette.let { p ->
+        val s = ((colorSeed % p.size) + p.size) % p.size
+        p.subList(s, p.size) + p.subList(0, s)
+    }
+    val overflow = 90f                 // 头部跑出终点后继续飞行的一段距离（像素）
+    val head = phase * (len + overflow)
+    val tail = tailLength
+    val gap = (len / (tail * 6.5f)).coerceIn(4.5f, 11f)
+    val driftMax = (minOf(w, h) * 0.26f).coerceIn(6.dp.toPx(), 13.dp.toPx())
     val pos = FloatArray(2)
     val tan = FloatArray(2)
-    for (i in 0 until tail) {
+    val headAlpha = (1f - (head - len).coerceAtLeast(0f) / overflow).coerceIn(0f, 1f)
+
+    for (i in tail - 1 downTo 0) {
         val d = head - i * gap
-        if (d < 0f) continue
+        if (d < 0f || d > len) continue
         val t = i.toFloat() / tail
-        pm.getPosTan(d.coerceAtMost(len), pos, tan)
-        // 法线方向（头在左上顺时针走时法线朝外）
+        pm.getPosTan(d, pos, tan)
+        // 法线：路径顺时针走时 (-tanY, tanX) 指向外侧
         val nx = -tan[1]
         val ny = tan[0]
-        val drift = t * t * driftMax * (if (i % 2 == 0) 1f else -0.55f)
-        val beyond = (d - len).coerceAtLeast(0f) / 90f
-        val alpha = ((1f - t) * (1f - t) * (1f - beyond)).coerceIn(0f, 1f)
+        // 越靠尾越往外飘，并且交替换边产生细碎感
+        val drift = t * t * driftMax * (if (i % 3 == 0) 1.35f else 1f)
+        val alpha = ((1f - t) * (1f - t) * headAlpha).coerceIn(0f, 1f)
         if (alpha < 0.02f) continue
+        val rad = (dotMaxRadius * (1f - t) + dotMinRadius * t).toPx()
         drawCircle(
-            color = colors[i % colors.size].copy(alpha = alpha * 0.85f),
-            radius = (2.6f - t * 1.6f).dp.toPx(),
+            color = palette[i % palette.size].copy(alpha = alpha * 0.9f),
+            radius = rad,
             center = Offset(pos[0] + nx * drift, pos[1] + ny * drift),
         )
+        // 飘散最外段补一层同色柔光，形成「入虚空」的淡出感
+        if (t > 0.55f) {
+            drawCircle(
+                color = palette[i % palette.size].copy(alpha = alpha * 0.28f),
+                radius = rad * 2.4f,
+                center = Offset(pos[0] + nx * drift, pos[1] + ny * drift),
+            )
+        }
     }
-    // 头部主光点：亮白芯 + 外圈第一色，视觉焦点
+
+    // 头部主光点：亮白芯 + 外圈弥散，做视觉焦点
     if (head <= len) {
         pm.getPosTan(head, pos, tan)
-        drawCircle(Color(0x66FFFFFF), radius = 5.dp.toPx(), center = Offset(pos[0], pos[1]))
-        drawCircle(colors[0], radius = 2.8.dp.toPx(), center = Offset(pos[0], pos[1]))
+        val c = Offset(pos[0], pos[1])
+        drawCircle(Color(0x88FFFFFF), radius = dotMaxRadius.toPx() * 2.2f, center = c)
+        drawCircle(palette[0], radius = dotMaxRadius.toPx(), center = c)
     }
 }
 
 /**
- * 按压「深度内阴影」：四边各画一条向内衰减的暗色渐变，
- * alpha 由按压动画驱动，松手随回弹一起淡出。画在 clip 内即成内阴影。
+ * 按压「深度内阴影」。
+ *
+ * 早期版本用四条矩形渐变模拟四边压暗，在 48dp 小按钮上会沿矩形边界留下
+ * 一圈生硬的直角黑框，所以要换掉。现在只做两件事：
+ *   1. 从边缘向内、多层「描边」叠加的圆角凹陷——每层都是 stroke，天然贴合圆角，
+ *      且 alpha 逐层减半，叠加出向内衰减的软边；
+ *   2. 整体压一层极淡的暗色，让按下时表面显得「陷进去」。
+ * 形状跟着实际尺寸走（圆形按钮 = 圆形，矩形按钮 = 12dp 圆角），不再有方框。
  */
 fun DrawScope.drawInnerShadow(alpha: Float) {
     if (alpha <= 0.01f) return
-    val c = Color.Black.copy(alpha = 0.30f * alpha)
     val w = size.width
     val h = size.height
+    if (w <= 0f || h <= 0f) return
+    val radius = minOf(w, h) / 2f
+    val shape = RoundRect(0f, 0f, w, h, CornerRadius(radius, radius))
+
+    // 1) 整体极淡压暗，越靠边越暗（radial 反向：中心透明、外圈微暗）
     drawRect(
-        Brush.verticalGradient(0f to c, 0.28f to Color.Transparent, startY = 0f, endY = h * 0.35f),
-        size = androidx.compose.ui.geometry.Size(w, h * 0.35f),
+        Brush.radialGradient(
+            0f to Color.Transparent,
+            0.72f to Color.Black.copy(alpha = 0.06f * alpha),
+            1f to Color.Black.copy(alpha = 0.16f * alpha),
+            center = Offset(w / 2f, h * 0.42f),
+            radius = maxOf(w, h) * 0.78f,
+        )
     )
-    drawRect(
-        Brush.verticalGradient(0f to Color.Transparent, 1f to c, startY = h * 0.65f, endY = h),
-        topLeft = Offset(0f, h * 0.65f),
-        size = androidx.compose.ui.geometry.Size(w, h * 0.35f),
-    )
-    drawRect(
-        Brush.horizontalGradient(0f to c, 0.22f to Color.Transparent, startX = 0f, endX = w * 0.3f),
-        size = androidx.compose.ui.geometry.Size(w * 0.3f, h),
-    )
-    drawRect(
-        Brush.horizontalGradient(0f to Color.Transparent, 1f to c, startX = w * 0.7f, endX = w),
-        topLeft = Offset(w * 0.7f, 0f),
-        size = androidx.compose.ui.geometry.Size(w * 0.3f, h),
+
+    // 2) 多层圆角描边，向内衰减成软内阴影
+    val layers = 6
+    val maxStroke = minOf(w, h) * 0.22f
+    for (i in 0 until layers) {
+        val t = i.toFloat() / (layers - 1)          // 0 = 最外层
+        val stroke = (maxStroke * (1f - t * 0.82f)).coerceAtLeast(0.6f)
+        val a = (0.13f * (1f - t) * (1f - t)) * alpha
+        if (a < 0.004f) continue
+        drawRoundRect(
+            color = Color.Black.copy(alpha = a),
+            topLeft = Offset(stroke / 2f, stroke / 2f),
+            size = androidx.compose.ui.geometry.Size(
+                (w - stroke).coerceAtLeast(0.1f),
+                (h - stroke).coerceAtLeast(0.1f),
+            ),
+            cornerRadius = CornerRadius(
+                (radius - stroke / 2f).coerceAtLeast(0f),
+                (radius - stroke / 2f).coerceAtLeast(0f),
+            ),
+            style = androidx.compose.ui.graphics.drawscope.Stroke(width = stroke),
+        )
+    }
+
+    // 3) 顶部一道极细高光，暗示按压处被挤出的小凸面
+    drawRoundRect(
+        brush = Brush.verticalGradient(
+            0f to Color.White.copy(alpha = 0.10f * alpha),
+            1f to Color.Transparent,
+            startY = 0f,
+            endY = h * 0.5f,
+        ),
+        size = androidx.compose.ui.geometry.Size(w, h * 0.5f),
+        cornerRadius = CornerRadius(radius, radius),
     )
 }
 
@@ -213,4 +309,106 @@ fun Modifier.zoomFromOrigin(origin: androidx.compose.ui.geometry.Rect, progress:
     translationX = (origin.center.x - selfCenter.x) * (1f - progress)
     translationY = (origin.center.y - selfCenter.y) * (1f - progress)
     alpha = (progress * 2.6f).coerceIn(0f, 1f)
+}
+
+/**
+ * 卡片/按钮外轮廓的科幻粒子边。
+ *
+ * 与 [ParticleEdgeOverlay] 的区别：这里不额外占布局空间，直接在元素自身尺寸上
+ * 「外扩一圈」作画。做三件事：
+ *   1. 沿 [shape] 的轮廓描一条极细的渐变光带（1dp，跟着粒子方向旋转的扫描光）；
+ *   2. 粒子沿轮廓流动，尾段向外飘出到 [bleed] 距离之外；
+ *   3. 描边色由 [colors] 循环，多张卡片同时出现不会撞色。
+ *
+ * 注意：调用方的父级容器不要做 clip，否则飘出去的粒子会被裁掉；
+ * 确实需要裁（例如列表里），把 [bleed] 设小一点即可。
+ */
+fun Modifier.particleOutline(
+    shape: Shape = RoundedCornerShape(28.dp),
+    colors: List<Color> = particlePalette,
+    bleed: Dp = 10.dp,
+    accent: Color? = null,
+    running: Boolean = true,
+): Modifier = composed {
+    val transition = rememberInfiniteTransition(label = "p-outline")
+    val phase by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            if (running) tween(3600, easing = LinearEasing) else tween(3600, easing = LinearEasing),
+        ),
+        label = "p-outline-phase",
+    )
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val bleedPx = with(density) { bleed.toPx() }
+    this.drawWithCache {
+        val outline = shape.createOutline(size, layoutDirection, density)
+        val path = Path().apply { addOutline(outline) }
+        onDrawWithContent {
+            drawContent()
+            val pm = android.graphics.PathMeasure(path.asAndroidPath(), false)
+            val len = pm.length
+            if (len <= 0f) return@onDrawWithContent
+            val pos = FloatArray(2)
+            val tan = FloatArray(2)
+
+            // 1) 极细轮廓光带：两段弧，跟着相位绕圈
+            for (k in 0 until 3) {
+                val start = ((phase + k / 3f) % 1f) * len
+                val span = len * 0.16f
+                val steps = 14
+                val pts = ArrayList<Offset>(steps + 1)
+                for (s in 0..steps) {
+                    pm.getPosTan((start + span * s / steps) % len, pos, tan)
+                    pts += Offset(pos[0], pos[1])
+                }
+                for (s in 1 until pts.size) {
+                    val a = (1f - kotlin.math.abs(s / pts.size.toFloat() - 0.5f) * 2f).coerceIn(0f, 1f)
+                    drawLine(
+                        color = (accent ?: colors[k % colors.size]).copy(alpha = a * 0.55f),
+                        start = pts[s - 1],
+                        end = pts[s],
+                        strokeWidth = 1.dp.toPx(),
+                        cap = androidx.compose.ui.graphics.StrokeCap.Round,
+                    )
+                }
+            }
+
+            // 2) 流动粒子 + 尾段飘散
+            val overflow = bleedPx * 6f
+            val head = phase * (len + overflow)
+            val tail = 14
+            val gap = (len / (tail * 7.5f)).coerceIn(5f, 13f)
+            val driftMax = bleedPx * 1.15f
+            val headAlpha = (1f - (head - len).coerceAtLeast(0f) / overflow).coerceIn(0f, 1f)
+            for (i in tail - 1 downTo 0) {
+                val d = head - i * gap
+                if (d < 0f || d > len) continue
+                val t = i.toFloat() / tail
+                pm.getPosTan(d, pos, tan)
+                val nx = -tan[1]
+                val ny = tan[0]
+                val drift = t * t * driftMax
+                val alpha = ((1f - t) * (1f - t) * headAlpha).coerceIn(0f, 1f)
+                if (alpha < 0.02f) continue
+                val c = colors[i % colors.size]
+                val rad = (2.5f - t * 1.4f).dp.toPx()
+                drawCircle(c.copy(alpha = alpha * 0.9f), rad, Offset(pos[0] + nx * drift, pos[1] + ny * drift))
+                if (t > 0.5f) {
+                    drawCircle(
+                        c.copy(alpha = alpha * 0.3f),
+                        rad * 2.6f,
+                        Offset(pos[0] + nx * drift, pos[1] + ny * drift),
+                    )
+                }
+            }
+            // 3) 头部亮芯
+            if (head <= len) {
+                pm.getPosTan(head, pos, tan)
+                val c = Offset(pos[0], pos[1])
+                drawCircle(Color(0x99FFFFFF), 5.2.dp.toPx(), c)
+                drawCircle(accent ?: colors[0], 2.8.dp.toPx(), c)
+            }
+        }
+    }
 }

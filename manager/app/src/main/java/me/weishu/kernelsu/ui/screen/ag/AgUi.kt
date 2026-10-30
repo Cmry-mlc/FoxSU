@@ -490,6 +490,12 @@ fun AgButton(
     Box(
         modifier
             .height(38.dp)
+            .particleOutline(
+                shape = shape,
+                bleed = if (enabled && particleEdge) 9.dp else 0.dp,
+                accent = Ag.Vio,
+                running = enabled && particleEdge,
+            )
             .agClick(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -516,10 +522,6 @@ fun AgButton(
                         ),
                     ),
             )
-            // 科幻粒子边：彩色光点沿边流动，尾段向外飘散入虚空
-            if (enabled && particleEdge) {
-                ParticleEdgeOverlay(Modifier.matchParentSize())
-            }
         } else {
             Box(
                 Modifier
@@ -630,18 +632,29 @@ fun AgGHead(text: String) {
     )
 }
 
-/** 品牌渐变 FAB .fab */
+/** 品牌渐变 FAB .fab（模块页右下角「刷入 zip」） */
 @Composable
-fun AgFab(onClick: () -> Unit) {
+fun AgFab(onClick: () -> Unit, particleEdge: Boolean = true) {
     Box(
         Modifier
             .size(58.dp)
-            .agClick(pressScale = 0.9f, onClick = onClick)
-            .clip(RoundedCornerShape(20.dp))
-            .background(Ag.Grad)
-            .shadow(12.dp, RoundedCornerShape(20.dp), spotColor = Ag.Vio.copy(alpha = 0.4f)),
+            .particleOutline(
+                shape = RoundedCornerShape(20.dp),
+                accent = Ag.Vio,
+                bleed = if (particleEdge) 11.dp else 0.dp,
+                running = particleEdge,
+            )
+            .agClick(pressScale = 0.9f, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
+        // 底与投影放子层并裁剪，粒子才能飘到外面去
+        Box(
+            Modifier
+                .matchParentSize()
+                .shadow(12.dp, RoundedCornerShape(20.dp), spotColor = Ag.Vio.copy(alpha = 0.4f))
+                .clip(RoundedCornerShape(20.dp))
+                .background(Ag.Grad),
+        )
         Icon(Icons.Rounded.Add, null, tint = Color.White, modifier = Modifier.size(28.dp))
     }
 }

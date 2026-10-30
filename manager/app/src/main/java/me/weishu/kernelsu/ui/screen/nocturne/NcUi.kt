@@ -93,6 +93,7 @@ fun NcGlowBackground(t: NcTokens, modifier: Modifier = Modifier) {
 @Composable
 fun NcGradientBorder(
     radius: Dp,
+    modifier: Modifier = Modifier,
     borderColors: List<Color>,
     borderStops: List<Float>,
     borderAngle: Float,
@@ -102,9 +103,8 @@ fun NcGradientBorder(
     content: @Composable BoxScope.() -> Unit,
 ) {
     BoxWithConstraints(
-        Modifier
+        modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(radius))
     ) {
         val wPx = constraints.maxWidth.toFloat()
         val hPx = constraints.maxHeight.let { if (it == Constraints.Infinity) 220f else it.toFloat() }

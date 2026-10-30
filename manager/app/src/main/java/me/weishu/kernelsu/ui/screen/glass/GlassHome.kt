@@ -50,6 +50,7 @@ import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
 import me.weishu.kernelsu.ui.screen.home.HeroPhase
 import me.weishu.kernelsu.ui.screen.home.HomeActions
 import me.weishu.kernelsu.ui.screen.home.HomeIssueStrip
+import me.weishu.kernelsu.ui.screen.ag.particleOutline
 import me.weishu.kernelsu.ui.screen.home.HomeUiState
 import me.weishu.kernelsu.ui.screen.home.freshIssues
 import me.weishu.kernelsu.ui.screen.home.heroState
@@ -424,6 +425,12 @@ fun GlassHeroCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            // 玻璃主题：粒子边取主题自身强调色，和玻璃高光同频，不抢主体
+            .particleOutline(
+                shape = RoundedCornerShape(26.dp),
+                accent = t.violet,
+                bleed = 11.dp,
+            )
             .shadow(
                 10.dp,
                 RoundedCornerShape(26.dp),

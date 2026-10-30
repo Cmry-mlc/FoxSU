@@ -12,6 +12,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -69,6 +70,7 @@ import androidx.compose.ui.unit.sp
 import me.weishu.kernelsu.KernelVersion
 import me.weishu.kernelsu.Natives
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.ui.screen.ag.particleOutline
 import me.weishu.kernelsu.ui.component.WarningLevel
 import me.weishu.kernelsu.ui.component.dialog.rememberConfirmDialog
 import me.weishu.kernelsu.ui.component.miuix.WarningCard
@@ -327,7 +329,15 @@ private fun StatusCard(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        // 米物主题：卡片本身走 Miuix 表面色，只在外轮廓补一层粒子科幻边，
+                        // 颜色取自当前主色，跟卡片底色（浅绿容器）形成冷暖对比
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .particleOutline(
+                                shape = RoundedCornerShape(16.dp),
+                                accent = colorScheme.primary,
+                                bleed = 10.dp,
+                            ),
                         colors = CardDefaults.defaultColors(
                             color = when {
                                 isDynamicColor -> colorScheme.secondaryContainer

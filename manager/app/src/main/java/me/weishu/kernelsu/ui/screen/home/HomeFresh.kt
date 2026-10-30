@@ -1,5 +1,6 @@
 package me.weishu.kernelsu.ui.screen.home
 
+import me.weishu.kernelsu.ui.screen.ag.particleOutline
 import me.weishu.kernelsu.ui.component.bottombar.useSideDock
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -1095,6 +1096,12 @@ private fun FreshStatusCard(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
+            // 清爽主题：粒子边用 HeroAccent，粉桃卡面上偏冷色点缀
+            .particleOutline(
+                shape = RoundedCornerShape(26.dp),
+                accent = UiPalette.HeroAccent,
+                bleed = 11.dp,
+            )
             .clip(RoundedCornerShape(26.dp))
             .combinedClickable(
                 onClick = { if (!state.isLateLoadMode) onInstall() },

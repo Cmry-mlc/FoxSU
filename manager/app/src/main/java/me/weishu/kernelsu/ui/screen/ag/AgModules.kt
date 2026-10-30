@@ -159,7 +159,7 @@ fun AgModules(
             .align(Alignment.BottomEnd)
             .padding(end = 22.dp, bottom = bottomInnerPadding + 64.dp)
     ) {
-        AgFab { picker.launch(Intent(Intent.ACTION_GET_CONTENT).apply { type = "application/zip" }) }
+        AgFab(onClick = { picker.launch(Intent(Intent.ACTION_GET_CONTENT).apply { type = "application/zip" }) })
     }
     }
 }
@@ -237,8 +237,17 @@ private fun AgModuleCard(
                 Spacer(Modifier.height(8.dp))
                 Text(m.description, fontSize = 12.5.sp, lineHeight = 20.sp, color = Ag.Tx2)
             }
-            Spacer(Modifier.height(14.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Spacer(Modifier.height(12.dp))
+            // 模块界面「安装/刷入」入口：整条操作带也带一圈粒子科幻边，
+            // 和 FAB、主页大卡片保持同一套视觉语言
+            Row(
+                modifier = Modifier.particleOutline(
+                    shape = RoundedCornerShape(13.dp),
+                    accent = Ag.Vio,
+                    bleed = 7.dp,
+                ).padding(vertical = 5.dp, horizontal = 1.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 if (m.hasActionScript && !m.remove) {
                     AgPill(icon = Icons.Rounded.PlayArrow, text = "执行", onClick = onExecute)
                 }
