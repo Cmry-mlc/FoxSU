@@ -109,7 +109,8 @@ fun AgModules(
                 AgIconBtn(AgTopIcons.Import, onClick = actions.onRefresh)
                 Spacer(Modifier.weight(1f))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    AgIconBtn(AgTopIcons.Chart, onClick = actions.onOpenRepo)
+                    // 模块仓库入口：图标 + 文字胶囊（原来是纯图标按钮，看不出是干嘛的）
+                    AgPill(icon = Icons.Rounded.Web, text = "仓库", onClick = actions.onOpenRepo)
                 }
             }
             Spacer(Modifier.height(10.dp))
