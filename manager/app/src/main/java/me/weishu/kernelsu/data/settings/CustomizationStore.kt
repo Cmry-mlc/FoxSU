@@ -91,8 +91,8 @@ data class Customization(
     /** Dock 图标造型：100 圆角方（默认）/ 101 正圆 / 102 超椭圆 / 103 七彩（渐变实底）。 */
     /** 桌面启动器图标形象：0 彩虹狐狸 / 1 KernelSU / 2 招手 / 3 回眸 / 4 开心。 */
     val launcherIcon: Int = 0,
-    /** 全局强调色：0..6 对应 AccentPalettes（7 套取自 logo 的配色）。 */
-    val accentPalette: Int = 0,
+    /** 全局强调色：0..6 对应 AccentPalettes（7 套取自 logo 的配色），默认珊瑚橙。 */
+    val accentPalette: Int = 2,
     /** 自定义强调色（ARGB）；非 0 时覆盖 [accentPalette]。 */
     val accentCustom: Int = 0,
     /** 侧边胶囊停靠：0 = 左侧（默认），1 = 右侧。 */
@@ -101,11 +101,16 @@ data class Customization(
      * 胶囊按钮造型：0..9 对应 DockButton 的 10 套按钮样式。
      * （旧版这里是「图标风格」圆角/正圆/超椭圆/七彩，已整体升级为按钮形状。）
      */
-    val dockButton: Int = 0,
+    val dockButton: Int = 1,
     /** 胶囊自动收起：0 = 关闭；3..60 = 无操作多少秒后沉到屏幕下方。 */
     val dockAutoHide: Int = 0,
     /** 传统底栏：false = 胶囊（默认），true = 通栏传统底栏。 */
     val classicDock: Boolean = false,
+    /**
+     * 「凸起中间」底栏中央那颗头像的本地图片路径（长按可换）。
+     * 只存路径不存 Uri：GET_CONTENT 的读权限是临时的，重启后 Uri 就打不开了。
+     */
+    val donateAvatar: String? = null,
 )
 
 /** Number of equal-sized KPI cards on the ColorUI home screen. */
@@ -194,6 +199,8 @@ private const val KEY_DOCK_STYLE = "dock_style"
     private const val KEY_DOCK_BUTTON = "dock_button_style"
     private const val KEY_DOCK_AUTOHIDE = "dock_auto_hide"
     private const val KEY_CLASSIC_DOCK = "classic_dock"
+    private const val KEY_DONATE_AVATAR = "donate_avatar"
+    private const val KEY_BRAND_DEFAULTS = "brand_defaults_v1"
 
     val cardColorOptions = listOf(
         0x00000000, // follow theme
@@ -211,11 +218,30 @@ private const val KEY_DOCK_STYLE = "dock_style"
         ksuApp.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
     }
 
+    /**
+     * 品牌默认值迁移（珊瑚橙 + 正圆按钮）。
+     *
+     * 老安装里 `accent_palette=0` / `dock_button=0` 就是「从来没改过」的旧默认值，
+     * 直接抬到新默认；只要用户动过（`!= 0`）就原样保留。标记位保证只跑一次。
+     */
+    private fun migrateBrandDefaults() {
+        val p = prefs
+        if (p.getBoolean(KEY_BRAND_DEFAULTS, false)) return
+        p.edit {
+            if (p.getInt(KEY_ACCENT_CUSTOM, 0) == 0 && p.getInt(KEY_ACCENT_PALETTE, 0) == 0) {
+                putInt(KEY_ACCENT_PALETTE, 2)
+            }
+            if (p.getInt(KEY_DOCK_BUTTON, 0) == 0) putInt(KEY_DOCK_BUTTON, 1)
+            putBoolean(KEY_BRAND_DEFAULTS, true)
+        }
+    }
+
     /** Compose-observable snapshot so every screen repaints as soon as it changes. */
     var current by mutableStateOf(read())
         private set
 
     private fun read(): Customization = with(prefs) {
+        migrateBrandDefaults()
         Customization(
             wallpaperUri = getString(KEY_WALLPAPER, null),
             wallpaperScale = getFloat(KEY_SCALE, 1f),
@@ -264,12 +290,13 @@ private const val KEY_DOCK_STYLE = "dock_style"
             } else {
                 getInt(KEY_ICON_STYLE, 100).takeIf { it in 0..5 } ?: 0
             },
-            accentPalette = getInt(KEY_ACCENT_PALETTE, 0),
+            accentPalette = getInt(KEY_ACCENT_PALETTE, 2),
             accentCustom = getInt(KEY_ACCENT_CUSTOM, 0),
             dockSide = getInt(KEY_DOCK_SIDE, 0),
-            dockButton = getInt(KEY_DOCK_BUTTON, 0).coerceIn(0, 9),
+            dockButton = getInt(KEY_DOCK_BUTTON, 1).coerceIn(0, 9),
             dockAutoHide = getInt(KEY_DOCK_AUTOHIDE, 0).coerceIn(0, 60),
             classicDock = getBoolean(KEY_CLASSIC_DOCK, false),
+            donateAvatar = getString(KEY_DONATE_AVATAR, null),
         )
     }
 
@@ -346,6 +373,8 @@ private const val KEY_DOCK_STYLE = "dock_style"
 
     fun setDockButton(style: Int) = update { it.copy(dockButton = style.coerceIn(0, 9)) }
 
+    fun setDonateAvatar(path: String?) = update { it.copy(donateAvatar = path) }
+
     /** 0 = 关闭自动收起；其余为秒数（3..60）。 */
     fun setDockAutoHide(seconds: Int) = update { it.copy(dockAutoHide = seconds.coerceIn(0, 60)) }
 
@@ -418,6 +447,7 @@ private const val KEY_DOCK_STYLE = "dock_style"
             putInt(KEY_DOCK_BUTTON, next.dockButton)
             putInt(KEY_DOCK_AUTOHIDE, next.dockAutoHide)
             putBoolean(KEY_CLASSIC_DOCK, next.classicDock)
+            putString(KEY_DONATE_AVATAR, next.donateAvatar)
         }
         current = next
     }

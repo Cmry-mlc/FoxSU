@@ -118,6 +118,7 @@ fun BottomBar(
     backdrop: Backdrop,
     navigationBadge: NavigationBadgeState,
     modifier: Modifier = Modifier,
+    onOpenDonate: () -> Unit = {},
 ) {
     // 传统底栏开关优先：开 = 通栏传统底栏，关 = 胶囊（默认关）
     if (CustomizationStore.current.classicDock) {
@@ -140,7 +141,7 @@ fun BottomBar(
     // 胶囊配色统一走 Redesign 的晨曦玻璃：胶囊是「全局样式」，跨皮肤只该换内容，
     // 不该换底色。之前按皮肤取色会让 Nocturne 拿到近黑的 OLED 胶囊，
     // 切到浅色版面时就是一条突兀的黑条（用户报的「胶囊底色是黑的」）。
-    ThemeDockBar(AgDockThemes.redesign(), navigationBadge, modifier)
+    ThemeDockBar(AgDockThemes.redesign(), navigationBadge, modifier, onOpenDonate)
 }
 
 @Composable

@@ -47,6 +47,11 @@ sealed interface Route : NavKey, Parcelable {
     @Serializable
     data object Author : Route
 
+    /** 支持 FoxSu：捐赠档位、用途说明与鸣谢（支付通道接入中）。 */
+    @Parcelize
+    @Serializable
+    data object Donate : Route
+
     @Parcelize
     @Serializable
     data object Sulog : Route

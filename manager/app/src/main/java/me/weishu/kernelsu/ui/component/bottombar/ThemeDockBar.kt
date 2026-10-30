@@ -84,7 +84,7 @@ data class DockTheme(
  * （editorial 纸面墨线 / pages 白色药丸 / glass 液态药丸 / nocturne 暗夜霓虹）。
  * 全部皮肤共用这一套选择器，样式全局生效。
  */
-enum class DockStyle { D0, V1, V5, V6, V7, V8, V9, V10, V11, EDITORIAL, PAGES, GLASS, NOCTURNE;
+enum class DockStyle { D0, V1, V5, V6, V7, V8, V9, V10, V11, CENTER, EDITORIAL, PAGES, GLASS, NOCTURNE;
 
     /** 是否为「复刻自其他皮肤」的样式（这些不参与 V 系列的项宽/指示器逻辑） */
     val isPort: Boolean get() = this == EDITORIAL || this == PAGES || this == GLASS || this == NOCTURNE
@@ -92,7 +92,7 @@ enum class DockStyle { D0, V1, V5, V6, V7, V8, V9, V10, V11, EDITORIAL, PAGES, G
     companion object {
         fun fromRaw(raw: String): DockStyle = when (raw) {
             "v1" -> V1; "v5" -> V5; "v6" -> V6; "v7" -> V7; "v8" -> V8
-            "v9" -> V9; "v10" -> V10; "v11" -> V11
+            "v9" -> V9; "v10" -> V10; "v11" -> V11; "center" -> CENTER
             "editorial" -> EDITORIAL; "pages" -> PAGES
             "glass" -> GLASS; "nocturne" -> NOCTURNE
             else -> D0
@@ -133,6 +133,7 @@ fun ThemeDockBar(
     theme: DockTheme,
     navigationBadge: NavigationBadgeState,
     modifier: Modifier = Modifier,
+    onOpenDonate: () -> Unit = {},
 ) {
     val mainState = LocalMainPagerState.current
     val items = BottomBarDestination.entries.toList()
@@ -202,6 +203,17 @@ fun ThemeDockBar(
     val sinkModifier = Modifier.graphicsLayer {
         translationY = sinkY.toPx()
         alpha = sinkAlpha
+    }
+
+    // ── CENTER：宽胶囊 + 中间凸起头像（点击进捐赠页，长按换图）──
+    if (style == DockStyle.CENTER) {
+        CenterDockBar(
+            theme = theme,
+            navigationBadge = navigationBadge,
+            modifier = modifier,
+            onOpenDonate = onOpenDonate,
+        )
+        return
     }
 
     // ── V5：侧边抽屉（左右停靠由「胶囊停靠」决定）──
@@ -366,7 +378,7 @@ fun ThemeDockBar(
  * - 只依赖 drawRoundRect，任何 GPU / 软件渲染都能画，不像 BlurMaskFilter 在硬件
  *   加速下会被直接忽略；而且只在底栏自身重绘时执行，静止时零开销。
  */
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawDockHalo(
+internal fun androidx.compose.ui.graphics.drawscope.DrawScope.drawDockHalo(
     radiusPx: Float,
     primary: Color,
     secondary: Color,
@@ -405,7 +417,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawDockHalo(
  * - 两者都不可用（GPU 不支持 / 没有 backdrop）时退回静态磨砂，保证不会变成全透明。
  */
 @Composable
-private fun DockMaterial(
+internal fun DockMaterial(
     shape: Shape,
     tint: Color,
     liquid: Boolean,
@@ -662,7 +674,7 @@ private fun DockItem(
 }
 
 private fun showLabel(style: DockStyle, selected: Boolean): Boolean = when (style) {
-    DockStyle.D0, DockStyle.GLASS, DockStyle.NOCTURNE -> true
+    DockStyle.D0, DockStyle.GLASS, DockStyle.NOCTURNE, DockStyle.CENTER -> true
     DockStyle.V1, DockStyle.PAGES -> selected
     else -> false
 }

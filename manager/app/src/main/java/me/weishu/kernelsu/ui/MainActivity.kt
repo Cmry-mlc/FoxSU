@@ -261,6 +261,12 @@ class MainActivity : ComponentActivity() {
                             entry<Route.Main>(swipeDismiss = swipeDismiss) { mainScreenEntry() }
                             entry<Route.About>(swipeDismiss = swipeDismiss) { AboutScreen() }
                             entry<Route.Author>(swipeDismiss = swipeDismiss) { AuthorScreen() }
+                            entry<Route.Donate>(swipeDismiss = swipeDismiss) {
+                                me.weishu.kernelsu.ui.screen.ag.AgDonate(
+                                    onBack = dropUnlessResumed { navigator.pop() },
+                                    onOpenAuthor = dropUnlessResumed { navigator.push(Route.Author) },
+                                )
+                            }
                             entry<Route.Sulog>(swipeDismiss = swipeDismiss) { SulogScreen() }
                             entry<Route.ColorPalette>(swipeDismiss = swipeDismiss) { ColorPaletteScreen() }
                             entry<Route.MetaModule>(swipeDismiss = swipeDismiss) {
@@ -302,6 +308,7 @@ class MainActivity : ComponentActivity() {
                                             onSetModuleDescriptionMaxLines = settingsVm::setModuleDescriptionMaxLines,
                                         ),
                                         onOpenBuiltin = dropUnlessResumed { navigator.push(Route.MetaModule) },
+                                        onOpenDonate = dropUnlessResumed { navigator.push(Route.Donate) },
                                     )
                                 }
                             }
@@ -691,6 +698,7 @@ fun MainScreen(
                         backdrop = backdrop,
                         navigationBadge = navigationBadge,
                         modifier = Modifier.align(Alignment.BottomCenter),
+                        onOpenDonate = { navController.push(Route.Donate) },
                     )
                 }
             }
@@ -722,6 +730,7 @@ fun MainScreen(
                                 blurBackdrop = blurBackdrop,
                                 backdrop = backdrop,
                                 navigationBadge = navigationBadge,
+                                onOpenDonate = { navController.push(Route.Donate) },
                             )
                         }
                     }

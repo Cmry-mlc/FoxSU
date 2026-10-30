@@ -32,6 +32,7 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Construction
+import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FormatSize
 import androidx.compose.material.icons.rounded.Gesture
 import androidx.compose.material.icons.rounded.Layers
@@ -97,6 +98,7 @@ private val dockStyles = listOf(
     "d0" to "原有胶囊", "v1" to "展开药丸", "v5" to "侧边抽屉",
     "v6" to "流光光标", "v7" to "描边霓虹", "v8" to "方块卡片",
     "v9" to "渐变实底", "v10" to "顶指示条", "v11" to "浮起圆片",
+    "center" to "中央头像",
     "editorial" to "纸面墨线", "pages" to "白色药丸",
     "glass" to "液态药丸", "nocturne" to "暗夜霓虹",
 )
@@ -110,6 +112,7 @@ internal fun AgCustomization(
     onBack: () -> Unit,
     settingsActions: SettingsScreenActions? = null,
     onOpenBuiltin: (() -> Unit)? = null,
+    onOpenDonate: (() -> Unit)? = null,
 ) {
     val custom = CustomizationStore.current
     val repo = remember { SettingsRepositoryImpl() }
@@ -258,6 +261,45 @@ internal fun AgCustomization(
                             Spacer(Modifier.height(3.dp))
                             Text(
                                 "内置元模块 · 接管系统分区的挂载层",
+                                fontSize = 11.sp,
+                                color = Ag.Tx3,
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                            )
+                        }
+                        Text("›", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Ag.Chev)
+                    }
+                }
+            }
+
+            // ══════════ 支持 FoxSu ══════════
+            if (onOpenDonate != null) {
+                AgGHead("支持 FoxSu")
+                AgCard(contentPadding = androidx.compose.foundation.layout.PaddingValues(14.dp)) {
+                    Row(
+                        Modifier.fillMaxWidth().agClick(onClick = onOpenDonate),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box(
+                            Modifier
+                                .size(44.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(Ag.Grad),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                Icons.Rounded.Favorite,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(21.dp),
+                            )
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text("捐赠与鸣谢", fontSize = 14.5.sp, fontWeight = FontWeight.Bold, color = Ag.Tx)
+                            Spacer(Modifier.height(3.dp))
+                            Text(
+                                "免费开源 · 支付通道接入中",
                                 fontSize = 11.sp,
                                 color = Ag.Tx3,
                                 maxLines = 1,
@@ -642,6 +684,15 @@ internal fun AgCustomization(
                     }
                     Spacer(Modifier.height(10.dp))
                 }
+                if (custom.dockStyle == "center") {
+                    Text(
+                        "这个样式不用按钮形状：中间那颗头像是捐赠入口，点一下打开，长按换图。",
+                        fontSize = 11.sp,
+                        lineHeight = 16.sp,
+                        color = Ag.Tx3,
+                        modifier = Modifier.padding(start = 2.dp, bottom = 12.dp),
+                    )
+                }
                 AgRow(
                     "胶囊停靠", "侧边抽屉样式下，胶囊停靠在屏幕左侧还是右侧",
                     Ag.Vio, AgSettingsIcons.FloatingBar,
@@ -912,7 +963,7 @@ private fun AgTitleColorRow(selected: Int, onPick: (Int) -> Unit) {
 /** 自定义取色器：色相 / 饱和度 / 明度三轨，任何时候拖动都即时回调 */
 @Composable
 private fun AgTitlePicker(initial: Int, onPick: (Int) -> Unit) {
-    val start = if (initial == 0) 0xFF6C5CE7.toInt() else initial
+    val start = if (initial == 0) me.weishu.kernelsu.ui.theme.currentAccent.primary.toArgb() else initial
     // 只在「打开取色器」时取一次初值：若跟着每次回调重建，拖动时滑块会被重置成跳动
     val hsv0 = remember { FloatArray(3).also { android.graphics.Color.colorToHSV(start, it) } }
     var h by remember { mutableStateOf(hsv0[0]) }
@@ -1060,6 +1111,7 @@ private fun DockStylePreview(code: String) {
         "pages" -> if (dark) Color(0xFF1B1C1E) else Color.White
         "glass" -> if (dark) Color(0xFF14141E) else Color(0xF2FFFFFF)
         "nocturne" -> Color(0xFF0F1018)
+        "center" -> if (dark) Color(0xFF22213A) else Color.White
         "v7", "v10" -> Color.Transparent
         else -> if (dark) Color(0xFF1F1E32) else Color.White
     }
@@ -1131,6 +1183,19 @@ private fun DockStylePreview(code: String) {
                             }
                     )
                     "v11" -> Box(Modifier.size(14.dp).clip(CircleShape).background(grad))
+                    // 中央头像：选中项是圆角方块底衬（图标 + 文字纵向）
+                    "center" -> Box(
+                        Modifier.size(width = 20.dp, height = 16.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(ac.primary.copy(alpha = 0.14f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Box(Modifier.size(6.dp).clip(CircleShape).background(ac.primary))
+                            Spacer(Modifier.height(1.5.dp))
+                            Box(Modifier.size(width = 9.dp, height = 1.5.dp).clip(pill).background(ac.primary))
+                        }
+                    }
                     // 侧边抽屉：同样的胶囊里放一枚竖向小条，暗示竖排
                     "v5" -> Box(
                         Modifier.size(width = 9.dp, height = 15.dp)
@@ -1178,8 +1243,18 @@ private fun DockStylePreview(code: String) {
                     )
                 }
             }
-            repeat(3) {
-                Box(Modifier.size(7.dp).clip(CircleShape).background(dotColor))
+            repeat(3) { i ->
+                if (code == "center" && i == 1) {
+                    Box(
+                        Modifier
+                            .size(12.dp)
+                            .clip(CircleShape)
+                            .background(grad)
+                            .border(1.5.dp, if (dark) Color(0xFF22213A) else Color.White, CircleShape)
+                    )
+                } else {
+                    Box(Modifier.size(7.dp).clip(CircleShape).background(dotColor))
+                }
             }
         }
     }
