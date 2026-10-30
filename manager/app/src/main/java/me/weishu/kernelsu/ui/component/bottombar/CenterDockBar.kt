@@ -150,9 +150,9 @@ internal fun CenterDockBar(
     // 所以不管以后怎么调 DockMetrics，这里永远和默认胶囊同宽同高。
     val barW = DockMetrics.itemW * 4 + DockMetrics.gap * 3 + DockMetrics.pad * 2
     val barH = DockMetrics.itemH + DockMetrics.pad * 2
-    // 头像和胶囊同高（76dp）：再大会顶出胶囊、也压到相邻 tab。
-    // 半径 38，距离相邻 tab 中心 65.6dp，文字（半宽约 21dp）碰不到。
-    val avatarD = barH
+    // 参考图的比例：头像直径 ≈ 胶囊高 × 1.16，上下各凸出 6dp；里面的图案只占头像 72%，
+    // 剩下全靠白环和留白撑出「小图装在大圆里」的呼吸感。
+    val avatarD = barH + 12.dp
     val shape = RoundedCornerShape(barH / 2)
 
     val sinkModifier = Modifier.graphicsLayer {
@@ -247,8 +247,9 @@ internal fun CenterDockBar(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 items.forEachIndexed { index, item ->
-                    // 正中留出卡位：头像画在外层（不被胶囊裁切），这里只占一格宽度
-                    if (index == 2) Spacer(Modifier.weight(1f))
+                    // 正中留出卡位：头像画在外层（不被胶囊裁切），这里只占一格宽度。
+                    // 权重 1.15，把两侧 tab 各推开约 3dp，文字不会贴到头像的白环
+                    if (index == 2) Spacer(Modifier.weight(1.15f))
                     CenterDockTab(
                         item = item,
                         index = index,
@@ -263,7 +264,7 @@ internal fun CenterDockBar(
             }
         }
 
-        // 头像单独一层：居中对齐胶囊中线，尺寸与胶囊等高，不顶出、不裁切。
+        // 头像单独一层：居中对齐胶囊中线，requiredSize 让它合法顶出胶囊上下各 6dp。
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -441,15 +442,18 @@ private fun CenterAvatar(
                     .clip(CircleShape),
             )
         } else {
-            // 默认狐狸标：原图内容（彩色圆）只占画布 76%，按 1:1 铺进来，
-            // 四周自然留出约 12% 的边，狐狸和彩环都是完整的，不会被圆环切到。
+            // 默认狐狸标：原图内容占画布 90.8%，这里再缩到 85%，
+            // 内容直径约为头像的 72%，四周留出约 12dp 白 —— 与参考图一致。
             Image(
                 painter = painterResource(R.drawable.foxsu_mark),
                 contentDescription = "支持 FoxSu",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxSize()
-                    .clip(CircleShape),
+                    .graphicsLayer {
+                        scaleX = 0.85f
+                        scaleY = 0.85f
+                    },
             )
         }
     }
