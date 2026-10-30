@@ -61,6 +61,11 @@ sealed interface Route : NavKey, Parcelable {
     @Serializable
     data object SusFs : Route
 
+    /** KPM 模块管理：加载 / 卸载 / 控制内核补丁模块（内置 kpatch，需 CONFIG_KPM=y 内核）。 */
+    @Parcelize
+    @Serializable
+    data object Kpm : Route
+
     @Parcelize
     @Serializable
     data object ColorPalette : Route

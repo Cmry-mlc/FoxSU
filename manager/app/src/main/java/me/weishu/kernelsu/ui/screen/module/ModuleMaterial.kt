@@ -304,12 +304,12 @@ fun ModulePagerMaterial(
                             text = titleText,
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.SemiBold,
-                            color = me.weishu.kernelsu.ui.theme.TitleInk.solid(MaterialTheme.colorScheme.onSurface),
+                            color = me.weishu.kernelsu.ui.theme.TitleInk.solid(me.weishu.kernelsu.ui.theme.currentAccent.primary),
                         )
                     } else {
                         Text(
                             text = titleText,
-                            color = me.weishu.kernelsu.ui.theme.TitleInk.solid(MaterialTheme.colorScheme.onSurface),
+                            color = me.weishu.kernelsu.ui.theme.TitleInk.solid(me.weishu.kernelsu.ui.theme.currentAccent.primary),
                         )
                     }
                 },

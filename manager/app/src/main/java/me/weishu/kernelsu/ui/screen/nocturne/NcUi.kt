@@ -161,7 +161,7 @@ fun NcHeader(
                 letterSpacing = (-1).sp,
                 lineHeight = 32.sp,
                 // 没设自定义色时跟随全局强调色（原来固定 t.tx，跟配色完全脱节）
-                color = titleColor ?: me.weishu.kernelsu.ui.theme.TitleInk.solid(t.tx),
+                color = titleColor ?: me.weishu.kernelsu.ui.theme.TitleInk.solid(me.weishu.kernelsu.ui.theme.currentAccent.primary),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )

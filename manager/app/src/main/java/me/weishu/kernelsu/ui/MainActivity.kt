@@ -267,6 +267,11 @@ class MainActivity : ComponentActivity() {
                                     onOpenAuthor = dropUnlessResumed { navigator.push(Route.Author) },
                                 )
                             }
+                            entry<Route.Kpm>(swipeDismiss = swipeDismiss) {
+                                me.weishu.kernelsu.ui.screen.ag.AgKpm(
+                                    onBack = dropUnlessResumed { navigator.pop() },
+                                )
+                            }
                             entry<Route.SusFs>(swipeDismiss = swipeDismiss) {
                                 me.weishu.kernelsu.ui.screen.ag.AgSusFs(
                                     onBack = dropUnlessResumed { navigator.pop() },

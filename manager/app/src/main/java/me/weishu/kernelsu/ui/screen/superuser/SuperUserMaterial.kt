@@ -120,14 +120,14 @@ fun SuperUserPagerMaterial(
                             lineHeight = 32.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = me.weishu.kernelsu.ui.theme.TitleInk.solid(
-                                androidx.compose.material3.MaterialTheme.colorScheme.onSurface
+                                me.weishu.kernelsu.ui.theme.currentAccent.primary
                             ),
                         )
                     } else {
                         Text(
                             text = titleText,
                             color = me.weishu.kernelsu.ui.theme.TitleInk.solid(
-                                androidx.compose.material3.MaterialTheme.colorScheme.onSurface
+                                me.weishu.kernelsu.ui.theme.currentAccent.primary
                             ),
                         )
                     }
