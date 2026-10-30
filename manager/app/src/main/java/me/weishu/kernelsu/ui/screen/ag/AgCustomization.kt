@@ -691,7 +691,22 @@ internal fun AgCustomization(
                         }, small = true)
                     },
                 )
-                // ② 读秒自动收起
+                // ② 水滴指示器（默认关）
+                AgToggleRow(
+                    "水滴流动指示器",
+                    if (custom.dockWaterDrop) {
+                        "切 Tab 时色块前缘先行、后缘慢半拍，拉长压扁后带回弹停稳（约 400ms）"
+                    } else {
+                        "开启后选中色块像水滴流到新的 Tab，图标先缩后弹、页面沿点击方向轻推淡入"
+                    },
+                    Ag.Mag, AgSettingsIcons.WaterDrop,
+                    trailing = {
+                        AgToggle(checked = custom.dockWaterDrop, onCheckedChange = {
+                            CustomizationStore.setDockWaterDrop(!custom.dockWaterDrop)
+                        }, small = true)
+                    },
+                )
+                // ③ 读秒自动收起
                 AgToggleRow(
                     "读秒自动收起",
                     if (custom.dockAutoHide > 0) {

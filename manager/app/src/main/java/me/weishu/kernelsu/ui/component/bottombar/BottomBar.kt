@@ -32,6 +32,15 @@ class MainPagerState(
     var selectedPage by mutableIntStateOf(pagerState.currentPage)
         private set
 
+    /**
+     * 最近一次切换的方向：+1 = 往右（点右边那格），-1 = 往左。
+     *
+     * 只有「水滴」动效需要它——页面内容要沿着手指点击的方向轻推出去再淡入，
+     * 反向推会让人觉得页面在跟自己作对。0 表示还没切换过。
+     */
+    var lastDirection by mutableIntStateOf(0)
+        private set
+
     var isNavigating by mutableStateOf(false)
         private set
 
@@ -42,6 +51,7 @@ class MainPagerState(
 
         navJob?.cancel()
 
+        lastDirection = if (targetIndex > selectedPage) 1 else -1
         selectedPage = targetIndex
         isNavigating = true
 

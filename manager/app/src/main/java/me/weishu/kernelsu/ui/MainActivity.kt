@@ -9,6 +9,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -79,6 +81,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import me.weishu.kernelsu.Natives
+import kotlinx.coroutines.launch
 import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.component.LocalAppBackdrop
 import me.weishu.kernelsu.ui.component.WallpaperBackground
@@ -565,10 +568,34 @@ fun MainScreen(
         LocalAppBackdrop provides backdrop,
     ) {
         val contentReady = rememberContentReady()
+        // 页面沿点击方向「轻推 + 淡入」：只在胶囊水滴开关打开时挂上，
+        // 关闭时返回恒等 Modifier，这条链路上没有任何额外状态读取。
+        val pushOn = CustomizationStore.current.dockWaterDrop
+        val pushDir = mainPagerState.lastDirection
+        val pushAlpha = remember { Animatable(1f) }
+        val pushX = remember { Animatable(0f) }
+        LaunchedEffect(mainPagerState.selectedPage) {
+            if (!pushOn || pushDir == 0) return@LaunchedEffect
+            pushX.snapTo(14f * pushDir)
+            pushAlpha.snapTo(0.35f)
+            // 位移与淡入同步走完：stiffness 260 / 无回弹 ≈ 400ms 到位，
+            // 和水滴指示器「前缘到站」是同一拍，两层动效不会各走各的。
+            launch { pushAlpha.animateTo(1f, spring(dampingRatio = 1f, stiffness = 260f)) }
+            pushX.animateTo(0f, spring(dampingRatio = 1f, stiffness = 260f))
+        }
+        val pushModifier = if (pushOn) {
+            Modifier.graphicsLayer {
+                translationX = pushX.value.dp.toPx()
+                alpha = pushAlpha.value
+            }
+        } else {
+            Modifier
+        }
         val pagerContent = @Composable { bottomInnerPadding: Dp ->
             Box(
                 modifier = (if (blurBackdrop != null) Modifier.layerBackdrop(blurBackdrop) else Modifier)
                     .dockRevealOnTouch(dockReveal)
+                    .then(pushModifier)
             ) {
                 HorizontalPager(
                     modifier = Modifier

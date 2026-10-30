@@ -452,6 +452,15 @@ object AgSettingsIcons {
         ),
     )
 
+    /** 水滴流动指示器：水滴 + 落地涟漪 */
+    val WaterDrop = svgIcon(
+        "AgWaterDrop",
+        listOf(
+            SvgBlock("M12 3.5c3.2 3.6 5.3 6.4 5.3 9a5.3 5.3 0 0 1-10.6 0c0-2.6 2.1-5.4 5.3-9z"),
+            SvgBlock("M8.6 12.6a3.4 3.4 0 0 0 3.4 3.4", alpha = 0.55f),
+        ),
+    )
+
     /** 导航栏角标：计数框 */
     val Badge = svgIcon(
         "AgBadgeIcon",

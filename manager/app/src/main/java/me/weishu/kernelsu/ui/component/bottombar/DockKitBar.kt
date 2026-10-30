@@ -419,29 +419,50 @@ internal fun DockKitBar(
                         }
                 )
             }
-            Row(
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = padH, vertical = padV),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(gap),
             ) {
-                items.forEachIndexed { index, item ->
-                    if (index == 2 && style.hasCenter) Spacer(Modifier.width(centerD))
-                    KitTab(
-                        style = style,
-                        item = item,
-                        index = index,
-                        selected = mainState.selectedPage == index,
-                        navigationBadge = navigationBadge,
-                        dark = dark,
-                        unselected = unselected,
+                // 水滴指示器垫在整排之下：它跨格流动，只能由父级统一持有位置，
+                // 不能每格各画一枚（那样中间的空隙里会断开）。
+                // 有中央狐狸的变体是「左 2 + 缺口 + 右 2」两段，水滴无法跨越缺口，
+                // 所以只在无缺口（单点聚焦 / 滑轨）或缺口为 0 时启用。
+                if (!style.hasCenter || centerD == 0.dp) {
+                    val active = mainState.selectedPage
+                    DockWaterDrop(
+                        selectedIndex = active,
+                        count = items.size,
                         itemW = itemW,
                         itemH = itemH,
-                        focusExpanded = focusExpanded,
-                        modifier = if (focus) Modifier else Modifier.weight(1f),
-                        onClick = { mainState.animateToPage(index) },
+                        gap = gap,
+                        accent = accent.primary,
+                        dark = dark,
+                        modifier = Modifier.offset(y = (itemH - itemH * 0.86f) / 2),
                     )
+                }
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(gap),
+                ) {
+                    items.forEachIndexed { index, item ->
+                        if (index == 2 && style.hasCenter) Spacer(Modifier.width(centerD))
+                        KitTab(
+                            style = style,
+                            item = item,
+                            index = index,
+                            selected = mainState.selectedPage == index,
+                            navigationBadge = navigationBadge,
+                            dark = dark,
+                            unselected = unselected,
+                            itemW = itemW,
+                            itemH = itemH,
+                            focusExpanded = focusExpanded,
+                            modifier = if (focus) Modifier else Modifier.weight(1f),
+                            onClick = { mainState.animateToPage(index) },
+                        )
+                    }
                 }
             }
         }
@@ -516,16 +537,28 @@ private fun KitTab(
         label = "kit-press-$index",
     )
     // 内阴影已移除：48dp 圆片上那是一块发黑的脏灰，改由图标点击特效表达按压
+    // 水滴开启时，选中项的放大交给「落点回弹」那条线，这里只负责按压
+    val waterDrop = CustomizationStore.current.dockWaterDrop
+    val dropScale = rememberDropIconScale(selected)
     val iconScale by animateFloatAsState(
-        targetValue = if (pressed) 0.82f else if (selected) 1.06f else 1f,
+        targetValue = when {
+            pressed -> 0.82f
+            waterDrop -> 1f
+            selected -> 1.06f
+            else -> 1f
+        },
         animationSpec = spring(dampingRatio = 0.45f, stiffness = 620f),
         label = "kit-icon-$index",
     )
+    val iconScaleFinal = iconScale * dropScale
 
     // 选中底衬：每套一套「实底 / 描边 / 无底」的处理
+    // 水滴开启时整体交给流动指示器，这里全部透明——
+    // 否则会多出一枚原地淡入的小色块，跟着水滴走像拖了个尾巴。
     val plate by animateColorAsState(
         targetValue = when {
             !selected -> Color.Transparent
+            waterDrop && style != DockKitStyle.BUBBLE && style != DockKitStyle.NEON -> Color.Transparent
             style == DockKitStyle.STICKER -> if (dark) Color(0xFF3A2A32) else Color(0xFFFFE7DF)
             style == DockKitStyle.FOCUS -> if (dark) accent.softDark else accent.soft
             style == DockKitStyle.FROST -> if (dark) Color(0xFF3A3448) else Color.White
@@ -535,9 +568,13 @@ private fun KitTab(
         animationSpec = tween(220),
         label = "kit-plate-$index",
     )
+    // 水滴开启时选中项的底衬是由整排统一绘制的强调色实底，
+    // 前景必须反色，否则「白色胶囊 + 同色图标」会糊成一片
+    val dropInk = dropSelectedInk(dark)
     val fg by animateColorAsState(
         targetValue = when {
             !selected -> unselected
+            dropInk != null -> dropInk
             style == DockKitStyle.FILM -> if (dark) Color(0xFFFFD84D) else accent.primary
             style == DockKitStyle.NEON -> if (dark) accent.secondary else accent.primary
             style == DockKitStyle.BUBBLE -> Color.White
@@ -668,8 +705,8 @@ private fun KitTab(
                         modifier = Modifier
                             .size(if (style == DockKitStyle.TRACK) 20.dp else 21.dp)
                             .graphicsLayer {
-                                scaleX = iconScale
-                                scaleY = iconScale
+                                scaleX = iconScaleFinal
+                                scaleY = iconScaleFinal
                                 // 贴纸变体的图标反向转回来，图案本身始终是正的
                                 rotationZ = if (style == DockKitStyle.STICKER) -rotation * 0.85f else 0f
                             },
