@@ -367,6 +367,34 @@ fun ThemeDockBar(
                             },
                     )
                 }
+                // 滑动指示器：胶囊 / 正圆 / 超椭圆 / 切角这四种的选中态就是「一块渐变实底」，
+                // 换成整排统一绘制的滑动色块是无损替换。
+                // 描边、双层、立体键、浮片、玻璃、光晕各有额外装饰（环、发光、厚度），
+                // 跳过它们自己的填充会丢掉这些装饰，所以保持原来的原地淡入。
+                val slideable = button in setOf(
+                    DockButton.PILL, DockButton.CIRCLE, DockButton.SQUIRCLE, DockButton.CUT,
+                )
+                val square = button.isSquare
+                val plateW = if (square) 54.dp else itemW
+                val plateH = if (square) 54.dp else itemH
+                if (slideable) {
+                    DockSlideIndicator(
+                        pagerState = mainState.pagerState,
+                        count = items.size,
+                        slotW = itemW,
+                        slotH = itemH,
+                        gap = gap,
+                        plateW = plateW,
+                        plateH = plateH,
+                        shape = button.shape(plateW, plateH),
+                        brush = Brush.linearGradient(
+                            listOf(accent.primary, accent.mid, accent.secondary),
+                        ),
+                        highlight = Color.White,
+                        // Row 自带 pad 内衬，指示器要跟着让开同样的边
+                        modifier = Modifier.padding(start = pad, top = pad),
+                    )
+                }
                 Row(
                     modifier = Modifier.padding(pad),
                     verticalAlignment = Alignment.CenterVertically,
@@ -384,6 +412,7 @@ fun ThemeDockBar(
                             theme = theme,
                             dark = dark,
                             tint = null,
+                            slidePlate = slideable,
                             onClick = { mainState.animateToPage(index) },
                         )
                     }
@@ -536,6 +565,8 @@ private fun DockItem(
     forceShape: Shape? = null,
     itemW: Dp = DockMetrics.itemW,
     itemH: Dp = DockMetrics.itemH,
+    /** 指示器已由整排统一绘制（滑动色块），本格不再自己画选中底 */
+    slidePlate: Boolean = false,
     onClick: () -> Unit,
 ) {
     val accent = me.weishu.kernelsu.ui.screen.ag.Ag.accent
@@ -550,7 +581,9 @@ private fun DockItem(
     val gradFill = selected && button in setOf(
         DockButton.PILL, DockButton.CIRCLE, DockButton.SQUIRCLE, DockButton.CUT, DockButton.GLOW, DockButton.DOUBLE,
     )
+    // 滑动指示器盖在本格时，前景必须反色，否则「强调色圆 + 同色图标」会糊成一片
     val fgTint = when {
+        slidePlate && selected -> slidePlateInk(dark)
         gradFill -> Color.White
         style == DockStyle.EDITORIAL && selected -> theme.selected
         selected -> theme.selected
@@ -576,6 +609,7 @@ private fun DockItem(
         animationSpec = spring(dampingRatio = 0.5f, stiffness = 800f),
         label = "dock-sink-$index",
     )
+    val dropScale = rememberDropIconScale(selected)
     val iconScale by animateFloatAsState(
         targetValue = if (selected) 1.08f else 1f,
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
@@ -607,19 +641,22 @@ private fun DockItem(
             ),
         contentAlignment = Alignment.Center,
     ) {
-        Box(
-            Modifier
-                .size(fillW, fillH)
+        // 滑动的色块由整排统一画，这里只画未选中态（选中的图形已经在滑动层上了）
+        if (!(slidePlate && selected)) {
+            Box(
+                Modifier
+                    .size(fillW, fillH)
             ) {
-            DockButtonFill(
-                style = button,
-                selected = selected,
-                shape = shape,
-                accent = accent.primary,
-                accentMid = accent.mid,
-                accentSecond = accent.secondary,
-                dark = dark,
-            )
+                DockButtonFill(
+                    style = button,
+                    selected = selected,
+                    shape = shape,
+                    accent = accent.primary,
+                    accentMid = accent.mid,
+                    accentSecond = accent.secondary,
+                    dark = dark,
+                )
+            }
         }
 
         // V11 浮起圆片：选中时按钮下面再垫一枚更小的实底圆
@@ -643,7 +680,7 @@ private fun DockItem(
                 item, index, selected, navigationBadge, rainbow,
                 tint = fgTint,
                 badgeTintOverride = if (fgTint == Color.White) Color.White else null,
-                scale = iconScale,
+                scale = iconScale * dropScale,
                 glow = style == DockStyle.V6 && selected,
                 big = false,
                 pressed = pressed,

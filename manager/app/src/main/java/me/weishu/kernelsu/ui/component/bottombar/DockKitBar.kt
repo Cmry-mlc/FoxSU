@@ -427,21 +427,34 @@ internal fun DockKitBar(
                     .fillMaxSize()
                     .padding(horizontal = padH, vertical = padV),
             ) {
-                // 水滴指示器垫在整排之下：它跨格流动，只能由父级统一持有位置，
+                // 滑动指示器垫在整排之下：它跨格移动，只能由父级统一持有位置，
                 // 不能每格各画一枚（那样中间的空隙里会断开）。
-                // 有中央狐狸的变体是「左 2 + 缺口 + 右 2」两段，水滴无法跨越缺口，
-                // 所以只在无缺口（单点聚焦 / 滑轨）或缺口为 0 时启用。
-                if (!style.hasCenter || centerD == 0.dp) {
-                    val active = mainState.selectedPage
-                    DockWaterDrop(
-                        selectedIndex = active,
+                // 有中央狐狸的变体是「左 2 + 缺口 + 右 2」两段，色块跨不过缺口，
+                // 所以只在无缺口（单点聚焦 / 滑轨）时启用。
+                // 只有滑轨卡片启用：它的四格等宽且不展开，色块能严丝合缝地停在格子里。
+                // 单点聚焦的选中项会从 44 撑到 96，固定宽度的色块跟不上，保持原样。
+                if (style == DockKitStyle.TRACK) {
+                    val plateShape = when (style) {
+                        DockKitStyle.TRACK -> RoundedCornerShape(12.dp)
+                        DockKitStyle.STICKER -> RoundedCornerShape(14.dp)
+                        else -> CircleShape
+                    }
+                    DockSlideIndicator(
+                        pagerState = mainState.pagerState,
                         count = items.size,
-                        itemW = itemW,
-                        itemH = itemH,
+                        slotW = itemW,
+                        slotH = itemH,
                         gap = gap,
-                        accent = accent.primary,
-                        dark = dark,
-                        modifier = Modifier.offset(y = (itemH - itemH * 0.86f) / 2),
+                        plateW = 62.dp,
+                        plateH = 54.dp,
+                        shape = plateShape,
+                        brush = Brush.verticalGradient(
+                            listOf(
+                                accent.primary.copy(alpha = if (dark) 0.95f else 0.92f),
+                                accent.primary.copy(alpha = if (dark) 0.78f else 0.70f),
+                            ),
+                        ),
+                        highlight = Color.White,
                     )
                 }
                 Row(
@@ -540,9 +553,11 @@ private fun KitTab(
         label = "kit-press-$index",
     )
     // 内阴影已移除：48dp 圆片上那是一块发黑的脏灰，改由图标点击特效表达按压
-    // 水滴开启时，选中项的放大交给「落点回弹」那条线，这里只负责按压
+    // 选中项放大交给「落点回弹」那条线（水滴关时它恒为 1），这里只负责按压
     val waterDrop = CustomizationStore.current.dockWaterDrop
     val dropScale = rememberDropIconScale(selected)
+    // 滑轨卡片的选中底由整排的滑动指示器统一绘制
+    val hasSlide = style == DockKitStyle.TRACK
     val iconScale by animateFloatAsState(
         targetValue = when {
             pressed -> 0.82f
@@ -555,13 +570,13 @@ private fun KitTab(
     )
     val iconScaleFinal = iconScale * dropScale
 
-    // 选中底衬：每套一套「实底 / 描边 / 无底」的处理
-    // 水滴开启时整体交给流动指示器，这里全部透明——
-    // 否则会多出一枚原地淡入的小色块，跟着水滴走像拖了个尾巴。
+    // 选中底衬：每套一套「实底 / 描边 / 无底」的处理。
+    // 有滑动指示器时这里全部透明——否则会多出一枚原地淡入的小色块，
+    // 色块滑走之后原地还留着一个"尾巴"。
     val plate by animateColorAsState(
         targetValue = when {
             !selected -> Color.Transparent
-            waterDrop && style != DockKitStyle.BUBBLE && style != DockKitStyle.NEON -> Color.Transparent
+            hasSlide -> Color.Transparent
             style == DockKitStyle.STICKER -> if (dark) Color(0xFF3A2A32) else Color(0xFFFFE7DF)
             style == DockKitStyle.FOCUS -> if (dark) accent.softDark else accent.soft
             style == DockKitStyle.FROST -> if (dark) Color(0xFF3A3448) else Color.White
@@ -571,9 +586,9 @@ private fun KitTab(
         animationSpec = tween(220),
         label = "kit-plate-$index",
     )
-    // 水滴开启时选中项的底衬是由整排统一绘制的强调色实底，
-    // 前景必须反色，否则「白色胶囊 + 同色图标」会糊成一片
-    val dropInk = dropSelectedInk(dark)
+    // 选中项底衬由整排统一绘制的强调色实底，前景必须反色，
+    // 否则「强调色圆 + 同色图标」会糊成一片
+    val dropInk = if (hasSlide) slidePlateInk(dark) else null
     val fg by animateColorAsState(
         targetValue = when {
             !selected -> unselected
