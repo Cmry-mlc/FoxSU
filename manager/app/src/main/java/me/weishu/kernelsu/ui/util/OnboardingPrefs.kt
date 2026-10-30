@@ -9,7 +9,7 @@ import me.weishu.kernelsu.ksuApp
  */
 object OnboardingPrefs {
     private const val PREFS = "foxsu_onboarding"
-    private const val KEY_SEEN = "seen_v2"
+    private const val KEY_SEEN = "seen_v3"
 
     private fun prefs(context: Context) =
         context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
