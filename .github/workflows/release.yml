@@ -25,6 +25,9 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
       - name: Download artifacts
         uses: actions/download-artifact@v8
         continue-on-error: true
@@ -53,14 +56,14 @@ jobs:
             TAG="${{ github.event.inputs.tag }}"
           elif [ "${{ github.ref_type }}" = "tag" ]; then
             TAG="${GITHUB_REF_NAME}"
+          elif [ -f VERSION ]; then
+            # 版本号只认 VERSION 文件，和 commit 数 / 克隆深度无关。
+            # 之前用 APK 名里的 versionCode 反推，本地浅克隆是 43 个提交、
+            # CI 是 2977 个，同一个 commit 反推出两个不同的版本号。
+            TAG="v$(tr -d '[:space:]' < VERSION)"
           else
-            APK=$(ls manager/*.apk | head -n 1)
-            VC=$(echo "$APK" | sed -E 's/.*_([0-9]+)-release\.apk$/\1/')
-            if ! echo "$VC" | grep -qE '^[0-9]+$'; then
-              echo "::error::无法从 $APK 解析 versionCode，请在触发时手动填写 tag"
-              exit 1
-            fi
-            TAG="v3.0.$((VC - 30000))"
+            echo "::error::仓库根没有 VERSION 文件，请在触发时手动填写 tag"
+            exit 1
           fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "发布版本号：$TAG"
