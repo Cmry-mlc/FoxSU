@@ -66,6 +66,11 @@ sealed interface Route : NavKey, Parcelable {
     @Serializable
     data object Kpm : Route
 
+    /** 去广告：systemless hosts（开源规则源 → KSU 模块 → 开机挂载）。 */
+    @Parcelize
+    @Serializable
+    data object AdBlock : Route
+
     @Parcelize
     @Serializable
     data object ColorPalette : Route

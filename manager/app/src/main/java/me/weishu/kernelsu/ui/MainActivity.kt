@@ -267,6 +267,11 @@ class MainActivity : ComponentActivity() {
                                     onOpenAuthor = dropUnlessResumed { navigator.push(Route.Author) },
                                 )
                             }
+                            entry<Route.AdBlock>(swipeDismiss = swipeDismiss) {
+                                me.weishu.kernelsu.ui.screen.ag.AgAdBlock(
+                                    onBack = dropUnlessResumed { navigator.pop() },
+                                )
+                            }
                             entry<Route.Kpm>(swipeDismiss = swipeDismiss) {
                                 me.weishu.kernelsu.ui.screen.ag.AgKpm(
                                     onBack = dropUnlessResumed { navigator.pop() },

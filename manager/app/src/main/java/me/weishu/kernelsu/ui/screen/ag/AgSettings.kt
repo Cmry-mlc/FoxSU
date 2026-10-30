@@ -180,6 +180,11 @@ fun AgSettings(
                         Ag.Amber, AgSettingsIcons.Puzzle, showChev = true,
                         onClick = { nav.push(me.weishu.kernelsu.ui.navigation3.Route.Kpm) },
                     )
+                    AgRow(
+                        "去广告", "系统级 hosts 屏蔽：无 VPN、无后台、零耗电",
+                        Ag.Mag, AgSettingsIcons.EyeOff, showChev = true,
+                        onClick = { nav.push(me.weishu.kernelsu.ui.navigation3.Route.AdBlock) },
+                    )
                     // 恢复上游设置项：安装/更新/开关模块后用的重启方式。
                     // 面板里的「重启 / Recovery / EDL」入口仍在主页电源键里，设置页只保留这个开关。
                     AgToggleRow(
