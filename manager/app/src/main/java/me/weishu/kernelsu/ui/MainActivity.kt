@@ -274,6 +274,11 @@ class MainActivity : ComponentActivity() {
                                     onBack = dropUnlessResumed { navigator.pop() },
                                 )
                             }
+                            entry<Route.BgFx>(swipeDismiss = swipeDismiss) {
+                                me.weishu.kernelsu.ui.screen.ag.AgBgFx(
+                                    onBack = dropUnlessResumed { navigator.pop() },
+                                )
+                            }
                             entry<Route.Credits>(swipeDismiss = swipeDismiss) {
                                 val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
                                 me.weishu.kernelsu.ui.screen.ag.AgCredits(

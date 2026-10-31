@@ -23,7 +23,7 @@
 
 ## What is FoxSu
 
-FoxSu is a fork of [KernelSU](https://github.com/tiann/KernelSU). Root stays in the kernel — `su`, the allowlist, app profiles, module mounting and sucompat all come from the kernel module and `ksud`. What changed is the manager: new package name (`com.foxsu.manager`), rewritten screens and install flow, plus five skins, 21 dock styles, 40 dock effects and 20 dock icon sets on top.
+FoxSu is a fork of [KernelSU](https://github.com/tiann/KernelSU). Root stays in the kernel — `su`, the allowlist, app profiles, module mounting and sucompat all come from the kernel module and `ksud`. What changed is the manager: new package name (`com.foxsu.manager`), rewritten screens and install flow, plus five skins, 21 dock styles, 40 dock effects, 20 dock icon sets and 21 home background effects on top.
 
 > Root in the kernel, experience in the manager.
 
@@ -35,7 +35,7 @@ FoxSu is a fork of [KernelSU](https://github.com/tiann/KernelSU). Root stays in 
 | Dock | 21 capsule styles, 10 button shapes, decoupled from the skin |
 | Dock effects | 20 inside the dock + 20 on its outline, each optional and stackable |
 | Dock icons | 20 shape sets, recoloured by the theme instead of hard-coded |
-| Ambience | Floating paws / hearts / sparkles, own switch, three places |
+| Background | Paw ambience + 20 full-screen effects, pick one of 21, own master switch |
 | Customisation | Wallpaper, card artwork, card colours, fonts, title, launcher icon |
 | Root | Allowlist, app profiles, templates, classic SU, kernel umount, SELinux hide, SU log |
 | Modules | Local zip, online repo, metamodule detection, action scripts, undo uninstall, shortcuts |
@@ -95,7 +95,9 @@ Only the shape changes; colouring still follows the accent colour and selection 
 
 ### Ambience and motion
 
-- **Floating paws**: cat paws, small hearts and four-point stars drift up from the bottom of the screen on the home screen, the donate page and the customisation header card. Its own switch, unaffected by the motion level; drawn above content but it never takes pointer events, so taps pass through
+- **21 background effects**: `Paw ambience` plus 20 full-screen effects, mutually exclusive, one master switch. Drawn above content but never taking pointer events, so taps pass through
+- **The 20**: breathing glows · drifting dust · aurora bands · ripples · soft grid · diagonal sweep · atmospheric fog · constellation · liquid gradient · rain · sparkles · orbit rings · colour drift · sonar · falling petals · slow stripes · parallax glows · vertical breathing · particle vortex · dawn glow
+- **Paw ambience**: cat paws, small hearts and four-point stars drift up from the bottom of the screen on the home screen, the donate page and the customisation header card; it sits first in the same picker
 - **Motion level**: `Off` / `Restrained` / `Full`, controlling card particle edges, 3D touch tilt and dock tap ripples together
 - **Page swipe gesture**: `Default` / `Cross-axis` / `iOS style` / `Off`; choosing Off also disables swiping the dock
 - Predictive back and edge swipe-back can be toggled separately

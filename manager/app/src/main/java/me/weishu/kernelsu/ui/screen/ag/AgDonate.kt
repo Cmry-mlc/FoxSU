@@ -78,7 +78,7 @@ fun AgDonate(
     onBack: () -> Unit,
     onOpenAuthor: () -> Unit = {},
 ) {
-    val ambientOn = CustomizationStore.current.homeAmbient
+    val ambientOn = CustomizationStore.current.bgFxOn
     Box(Modifier.fillMaxSize()) {
         AgDonateContent(onBack = onBack, onOpenAuthor = onOpenAuthor)
         AmbientPawsLayer(

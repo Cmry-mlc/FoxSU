@@ -236,7 +236,7 @@ internal fun AgCustomization(
                 // 头卡里的氛围层：画在狐狸图下面，否则爪印会糊在脸上。
                 // 卡片底色是紫粉渐变，粒子压到 0.8 才不会显脏
                 AmbientPawsLayer(
-                    enabled = custom.homeAmbient,
+                    enabled = custom.bgFxOn,
                     count = 7,
                     alphaScale = 0.8f,
                 )
@@ -369,26 +369,46 @@ internal fun AgCustomization(
                 Spacer(Modifier.height(9.dp))
                 Text(
                     when (custom.fxLevel) {
-                        0 -> "全部动效关闭：卡片不再流动粒子、不再 3D 倾斜。最省电，老机型建议选它。下面的漂浮爪印与底栏特效各有独立开关，不受这里影响。"
+                        0 -> "全部动效关闭：卡片不再流动粒子、不再 3D 倾斜。最省电，老机型建议选它。下面的背景特效与底栏特效各有独立开关，不受这里影响。"
                         1 -> "克制档：粒子颗粒减半、流速放慢，3D 倾斜角度限制在 ±6°，日常够看又不打扰。"
                         else -> "全开：卡片外轮廓彩色粒子边 + 触摸 3D 透视倾斜，全部启用。底栏特效在下面的入口里单独选。"
                     },
                     fontSize = 11.5.sp, lineHeight = 17.sp, color = Ag.Tx2,
                 )
                 Spacer(Modifier.height(12.dp))
+                // 背景特效：一个总开关 + 一个 21 套的选择器。
+                // 猫爪也进了这个选择器（第 1 项），因为它和 20 套背景特效抢的是同一个槽位——
+                // 同一时刻主页只需要一种氛围，分成两个开关只会让人以为「我关了一个怎么还有」。
                 AgToggleRow(
-                    "漂浮爪印氛围",
-                    if (custom.homeAmbient) {
-                        "猫爪、小爱心和四角星从底部缓缓升起，主页、捐赠页、这张头卡三处同时生效；独立开关，不受上面动效强度影响"
+                    "背景特效",
+                    if (custom.bgFxOn) {
+                        "当前：" + if (custom.bgFxStyle == 0) {
+                            "猫爪氛围（主页、捐赠页与这张头卡同时生效）"
+                        } else {
+                            "第 ${custom.bgFxStyle} 套 · ${me.weishu.kernelsu.ui.component.ambient.FX_NAMES[custom.bgFxStyle - 1]}"
+                        } + "，点下面一行可以换"
                     } else {
-                        "开启后主页、捐赠页与这张头卡会有猫爪、爱心和星星上浮，不挡点击；关掉只停这三处"
+                        "已关闭。选择仍会记住，重新打开立刻恢复；关闭后主页不再逐帧重绘这一层，最省电"
                     },
                     Ag.Mag, AgSettingsIcons.Paw,
                     trailing = {
-                        AgToggle(checked = custom.homeAmbient, onCheckedChange = {
-                            CustomizationStore.setHomeAmbient(!custom.homeAmbient)
+                        AgToggle(checked = custom.bgFxOn, onCheckedChange = {
+                            CustomizationStore.setBgFxOn(!custom.bgFxOn)
                         }, small = true)
                     },
+                    divider = true,
+                )
+                AgRow(
+                    "背景特效 · 21 套",
+                    if (custom.bgFxStyle == 0) {
+                        "猫爪氛围 + 20 套整屏特效：呼吸光斑 / 极光流带 / 雨滴下落 / 粒子涡旋… 每套都有实时预览"
+                    } else {
+                        "第 ${custom.bgFxStyle} 套 · ${me.weishu.kernelsu.ui.component.ambient.FX_NAMES[custom.bgFxStyle - 1]}，点进去可以换"
+                    },
+                    Ag.Mag, AgSettingsIcons.Style,
+                    showChev = true,
+                    divider = false,
+                    onClick = { navigator.push(Route.BgFx) },
                 )
                 AgToggleRow(
                     "卡片 3D 触摸倾斜",

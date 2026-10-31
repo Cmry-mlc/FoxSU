@@ -135,12 +135,21 @@ data class Customization(
     val dockPagePush: Boolean = true,
 
     /**
-     * 主页氛围层：狐狸爪印与小爱心从底部缓缓升起。
+     * 主页装饰层总开关：控制「背景特效」选择器是否生效。
      *
-     * 只在主页显示，且受 [fxLevel] 的「关闭」档抑制——那里是全局特效总闸，
-     * 老机型把它关掉时，这一层也不该继续每帧重绘。
+     * 关掉后主页、捐赠页、定制页头卡三处的浮层一起停，选择器里选了什么仍会记住。
+     * 老字段 `homeAmbient` 已并入这里——原来只有一个「漂浮爪印」开关，
+     * 加了 20 套背景特效之后两者共用一个槽位，分成两个开关只会让用户对不上账。
      */
-    val homeAmbient: Boolean = true,
+    val bgFxOn: Boolean = true,
+
+    /**
+     * 背景特效选择：0 = 猫爪（原氛围层），1..20 对应 [me.weishu.kernelsu.ui.component.ambient.FX_NAMES]。
+     *
+     * 猫爪放在 0 位而不是额外开一个布尔，是因为它们互斥——同一时刻主页只需要一种氛围，
+     * 选背景特效时再叠一层猫爪会互相抢注意力。
+     */
+    val bgFxStyle: Int = 0,
 
     /**
      * 全场特效档位（0 关闭 / 1 克制 / 2 全开）。
@@ -270,7 +279,10 @@ private const val KEY_DOCK_STYLE = "dock_style"
     private const val KEY_CLASSIC_DOCK_STYLE = "classic_dock_style"
     private const val KEY_DOCK_WATER_DROP = "dock_water_drop"
     private const val KEY_DOCK_PAGE_PUSH = "dock_page_push"
+    /** 已废弃：旧版「漂浮爪印氛围」开关，仅用于一次性迁移到 [KEY_BG_FX_ON]。 */
     private const val KEY_HOME_AMBIENT = "home_ambient"
+    private const val KEY_BG_FX_ON = "bg_fx_on"
+    private const val KEY_BG_FX_STYLE = "bg_fx_style"
     private const val KEY_DOCK_FX_ON = "dock_fx_on"
     private const val KEY_DOCK_FX_INNER = "dock_fx_inner"
     private const val KEY_DOCK_FX_RING = "dock_fx_ring"
@@ -376,7 +388,13 @@ private const val KEY_DOCK_STYLE = "dock_style"
             classicDockStyle = getInt(KEY_CLASSIC_DOCK_STYLE, 0),
             dockWaterDrop = getBoolean(KEY_DOCK_WATER_DROP, false),
             dockPagePush = getBoolean(KEY_DOCK_PAGE_PUSH, true),
-            homeAmbient = getBoolean(KEY_HOME_AMBIENT, true),
+            // 旧版本只有一个「漂浮爪印」开关，升级上来时继承它的值，避免用户关掉的浮层又自动打开
+            bgFxOn = if (contains(KEY_BG_FX_ON)) {
+                getBoolean(KEY_BG_FX_ON, true)
+            } else {
+                getBoolean(KEY_HOME_AMBIENT, true)
+            },
+            bgFxStyle = getInt(KEY_BG_FX_STYLE, 0).coerceIn(0, 20),
             dockFxOn = getBoolean(KEY_DOCK_FX_ON, true),
             dockFxInner = getInt(KEY_DOCK_FX_INNER, 0).coerceIn(0, 20),
             dockFxRing = getInt(KEY_DOCK_FX_RING, 0).coerceIn(0, 20),
@@ -473,7 +491,10 @@ private const val KEY_DOCK_STYLE = "dock_style"
 
     fun setDockPagePush(enabled: Boolean) = update { it.copy(dockPagePush = enabled) }
 
-    fun setHomeAmbient(enabled: Boolean) = update { it.copy(homeAmbient = enabled) }
+    fun setBgFxOn(enabled: Boolean) = update { it.copy(bgFxOn = enabled) }
+
+    /** 0 = 猫爪，1..20 = 背景特效套号。 */
+    fun setBgFxStyle(style: Int) = update { it.copy(bgFxStyle = style.coerceIn(0, 20)) }
 
     fun setDockFxOn(enabled: Boolean) = update { it.copy(dockFxOn = enabled) }
 
@@ -554,7 +575,8 @@ private const val KEY_DOCK_STYLE = "dock_style"
             putInt(KEY_CLASSIC_DOCK_STYLE, next.classicDockStyle)
             putBoolean(KEY_DOCK_WATER_DROP, next.dockWaterDrop)
             putBoolean(KEY_DOCK_PAGE_PUSH, next.dockPagePush)
-            putBoolean(KEY_HOME_AMBIENT, next.homeAmbient)
+            putBoolean(KEY_BG_FX_ON, next.bgFxOn)
+            putInt(KEY_BG_FX_STYLE, next.bgFxStyle)
             putBoolean(KEY_DOCK_FX_ON, next.dockFxOn)
             putInt(KEY_DOCK_FX_INNER, next.dockFxInner)
             putInt(KEY_DOCK_FX_RING, next.dockFxRing)

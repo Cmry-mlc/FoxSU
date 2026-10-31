@@ -32,6 +32,7 @@ import me.weishu.kernelsu.ui.LocalMainPagerState
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.UiMode
 import me.weishu.kernelsu.ui.component.ambient.AmbientPawsLayer
+import me.weishu.kernelsu.ui.component.ambient.BackgroundFxLayer
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
 import me.weishu.kernelsu.ui.component.dialog.rememberConfirmDialog
 import me.weishu.kernelsu.ui.component.dialog.rememberLoadingDialog
@@ -139,10 +140,10 @@ fun HomePager(
 
     val mainPagerState = LocalMainPagerState.current
 
-    // 主页氛围：独立开关 + 受特效总闸约束 + 只在主页这一页跑。
+    // 主页装饰层：总开关 + 选择器（0 = 猫爪，1..20 = 背景特效）。
     // 切到别的 Tab 时 HomePager 仍在组合树里，不判 isCurrentPage 会白白每帧重绘。
     val custom = CustomizationStore.current
-    val ambientOn = custom.homeAmbient && isCurrentPage
+    val fxOn = custom.bgFxOn && isCurrentPage
     val inset = if (bottomInnerPadding == Dp.Unspecified) 0.dp else bottomInnerPadding
 
     Box(Modifier.fillMaxSize()) {
@@ -191,11 +192,17 @@ fun HomePager(
             )
         }
 
-        // 氛围层压在内容之上：五套皮肤的主页各自铺了不透明底色（agPageBg / Fresh 渐变 /
-        // Glass 衬底），任何垫在下面的东西都看不见。它不接指针事件，所以不挡点击。
-        AmbientPawsLayer(
-            enabled = ambientOn,
-            bottomInset = inset,
-        )
+        // 装饰层压在内容之上：五套皮肤的主页各自铺了不透明底色（agPageBg / Fresh 渐变 /
+        // Glass 衬底），任何垫在下面的东西都看不见。两层都不接指针事件，所以不挡点击。
+        //
+        // 猫爪与 20 套背景特效共用一个槽位（互斥）：cat 位 = 0 时跑原来的爪印氛围，
+        // 其余走背景特效。两者画法不同但语义一致——「这一页的氛围长什么样」。
+        if (fxOn) {
+            if (custom.bgFxStyle == 0) {
+                AmbientPawsLayer(enabled = true, bottomInset = inset)
+            } else {
+                BackgroundFxLayer(style = custom.bgFxStyle, enabled = true)
+            }
+        }
     }
 }
