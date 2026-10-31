@@ -151,17 +151,40 @@ $(warning -- KernelSU: Git not detected, make sure git is installed in your PATH
 endif
 
 
-# Calculate version if git version is available
+# 版本号必须与管理器同源，否则「刷写成功却依旧提示需要更新」永远消不掉。
+#
+# 管理器侧 versionCode = major*10000 + minor*100 + patch，直接读仓库根的 VERSION
+# 文件（见 manager/build.gradle.kts 的 readVersionFile 注释）；内核侧原来算的是
+# 30000 + git 提交数，两套算法一起步就对不上：3.0.52 的 APK 是 30052，同一份代码
+# 编译出来的 .ko 却是 30049。管理器拿内核上报的 30049 和自己 30052 一比，永远
+# 认为内核落后，于是刷写多少次都还在提示更新。
+#
+# 现在内核也读同一个 VERSION 文件，两边由同一个数派生。git 提交数只作为
+# 脱离仓库独立编译时的兜底，不再参与正式版本号。
+KSU_VERSION_FILE := $(wildcard $(MDIR)/../VERSION)
+ifneq ($(strip $(KSU_VERSION_FILE)),)
+KSU_VERSION_TEXT := $(shell tr -d ' \t\r\n' < $(KSU_VERSION_FILE))
+KSU_VERSION_PARTS := $(subst ., ,$(KSU_VERSION_TEXT))
+KSU_VERSION := $(shell expr \( $(word 1,$(KSU_VERSION_PARTS)) \* 10000 \) + \( $(word 2,$(KSU_VERSION_PARTS)) \* 100 \) + $(word 3,$(KSU_VERSION_PARTS)) 2>/dev/null)
+ifeq ($(shell echo "$(KSU_VERSION)" | grep -E '^[0-9]+$$'),)
+$(warning -- KernelSU: VERSION file '$(KSU_VERSION_TEXT)' is not x.y.z, falling back)
+KSU_VERSION :=
+endif
+endif
+
+ifeq ($(strip $(KSU_VERSION)),)
 ifdef KSU_GIT_VERSION_VALID
-# ksu_version: major * 10000 + git version + 200 for historical reasons
-$(eval KSU_VERSION=$(shell expr 30000 + $(KSU_GIT_VERSION)))
+# No VERSION file: keep the old 30000 + commit-count rule for standalone builds.
+KSU_VERSION := $(shell expr 30000 + $(KSU_GIT_VERSION))
+$(warning -- KernelSU: VERSION not found, derived $(KSU_VERSION) from git history)
+else
+KSU_VERSION := 16
+$(warning -- KernelSU: neither VERSION nor git available, using legacy version 16)
+endif
+endif
+
 $(info -- KernelSU version: $(KSU_VERSION))
 ccflags-y += -DKSU_VERSION=$(KSU_VERSION)
-else
-# If there is no .git directory, use default version
-$(warning "KSU_GIT_VERSION not defined! It is better to make KernelSU a git repository!")
-ccflags-y += -DKSU_VERSION=16
-endif
 
 KSU_NEW_DCACHE_FLUSH := $(shell grep -q __flush_dcache_area $(srctree)/arch/arm64/include/asm/cacheflush.h ; echo $$?)
 $(info -- KSU_NEW_DCACHE_FLUSH: $(KSU_NEW_DCACHE_FLUSH))

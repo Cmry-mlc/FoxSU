@@ -33,6 +33,27 @@ fn get_git_version() -> Result<(u32, String), std::io::Error> {
     Ok((version_code, version_name))
 }
 
+/// 版本号与管理器、内核同源：都从仓库根的 `VERSION` 文件（形如 `3.0.52`）派生，
+/// 规则是 major*10000 + minor*100 + patch。
+///
+/// 原来的 30000 + git 提交数在同一份代码的浅克隆和完整克隆里能差几千，而且与管理器
+/// versionCode 永远对不上——凡是拿两边版本号做比较的地方（最典型的是"内核是否需要
+/// 更新"）都会一直误报。现在统一成一个来源，git 只在没有 VERSION 文件时兜底。
+fn get_version_file() -> Option<(u32, String)> {
+    let manifest = PathBuf::from(env::var("CARGO_MANIFEST_DIR").ok()?);
+    let text = fs::read_to_string(manifest.join("../../VERSION")).ok()?;
+    let text = text.trim().trim_start_matches('v').to_string();
+    let parts = text
+        .split('.')
+        .map(|part| part.trim().parse::<u32>())
+        .collect::<Result<Vec<_>, _>>()
+        .ok()?;
+    if parts.len() != 3 {
+        return None;
+    }
+    Some((parts[0] * 10000 + parts[1] * 100 + parts[2], text))
+}
+
 fn configure_bindgen() {
     // The bindgen::Builder is the main entry point
     // to bindgen, and lets you build up options for
@@ -225,13 +246,16 @@ fn assemble_bootstrap() {
 fn main() {
     assemble_bootstrap();
 
-    let (code, name) = match get_git_version() {
-        Ok((code, name)) => (code, name),
-        Err(_) => {
-            // show warning if git is not installed
-            println!("cargo:warning=Failed to get git version, using 0.0.0");
-            (0, "0.0.0".to_string())
-        }
+    let (code, name) = match get_version_file() {
+        Some(version) => version,
+        None => match get_git_version() {
+            Ok(version) => version,
+            Err(_) => {
+                // show warning if git is not installed
+                println!("cargo:warning=Failed to get version, using 0.0.0");
+                (0, "0.0.0".to_string())
+            }
+        },
     };
     if env::var("KSU_PACKAGE_NAME").is_err() {
         println!("cargo:rustc-env=KSU_PACKAGE_NAME=com.foxsu.manager");

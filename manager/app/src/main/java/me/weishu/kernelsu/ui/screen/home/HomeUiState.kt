@@ -31,11 +31,21 @@ data class HomeUiState(
     val showGkiWarning: Boolean
         get() = ksuVersion != null && lkmMode == false
 
+    /**
+     * 「内核模块需要更新」只在运行中的模块比管理器旧时成立。
+     *
+     * 原来写的是 `!=`，把「内核比管理器新」也算成需要更新——用户刷了更新的 LKM、
+     * 管理器还没升级时也会被催着刷写，越刷越乱。真正常见的误报原因在版本号本身：
+     * 内核侧是 30000+git 提交数、管理器侧是 VERSION 文件的 3.0.52→30052，两边
+     * 永远不相等，于是怎么样都显示「需要更新」。版本号已在 kernel/Kbuild 里统一，
+     * 这里再把判断收紧成「只认落后」。
+     */
     val showLkmUpdate: Boolean
         get() = isManager &&
                 lkmMode == true &&
                 isLkmBundled &&
-                ksuVersion?.toLong() != currentManagerVersionCode &&
+                ksuVersion != null &&
+                ksuVersion.toLong() < currentManagerVersionCode &&
                 !requiresNewKernel &&
                 !requiresNewManager
 
