@@ -105,12 +105,6 @@ fun EditorialSettings(
                     onClick = onOpenCustomization,
                 ),
                 EdSettingItem(
-                    "H", stringResource(R.string.settings_theme),
-                    stringResource(R.string.settings_theme_summary),
-                    chevron = true,
-                    onClick = actions.onOpenTheme,
-                ),
-                EdSettingItem(
                     "I", stringResource(R.string.settings_profile_template),
                     stringResource(R.string.settings_profile_template_summary),
                     chevron = true,

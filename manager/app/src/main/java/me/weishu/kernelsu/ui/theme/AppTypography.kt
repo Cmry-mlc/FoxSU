@@ -16,9 +16,16 @@ import me.weishu.kernelsu.R
  * 除系统默认外，其余都基于同一套 Typography 只替换 fontFamily，字号行高不变。
  */
 fun resolveFontFamily(style: Int, fontPath: String? = null): FontFamily? = when {
-    style == 4 && fontPath != null -> runCatching {
-        FontFamily(Font(File(fontPath)))
-    }.getOrNull()
+    // 文件被删、被清缓存清掉、或只写了一半时，Font() 不会立刻报错，
+    // 而是拖到排版期才炸/静默回退——先做存在性与大小校验，退回系统字族。
+    style == 4 && fontPath != null -> {
+        val f = File(fontPath)
+        if (f.isFile && f.length() > 1024L) {
+            runCatching { FontFamily(Font(f)) }.getOrNull()
+        } else {
+            null
+        }
+    }
     style == 1 -> FontFamily(Font(R.font.noto_serif_sc))
     style == 2 -> FontFamily(Font(R.font.jetbrains_mono))
     style == 3 -> FontFamily(Font(R.font.lxgw_wenkai))

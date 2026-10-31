@@ -107,6 +107,14 @@ data class Customization(
     /** 传统底栏：false = 胶囊（默认），true = 通栏传统底栏。 */
     val classicDock: Boolean = false,
     /**
+     * 传统底栏的结构：0 = 经典（发丝线 + 顶部短条），1..20 对应
+     * [me.weishu.kernelsu.ui.component.bottombar.ClassicDockStyle] 的 Dock Kit 结构。
+     *
+     * 和 [dockButton]（胶囊按钮造型）是两条正交的轴：那边管浮岛形态下的按钮，
+     * 这边管贴底通栏这条栏本身。配色全部跟随全局强调色，不写死。
+     */
+    val classicDockStyle: Int = 0,
+    /**
      * 胶囊底栏「水滴」流动指示器。
      *
      * 开启后选中项背后的胶囊色块不再原地淡入淡出，而是从前一格「流」到后一格：
@@ -259,6 +267,7 @@ private const val KEY_DOCK_STYLE = "dock_style"
     private const val KEY_DOCK_AUTOHIDE = "dock_auto_hide"
     private const val KEY_FX_LEVEL = "fx_level"
     private const val KEY_CLASSIC_DOCK = "classic_dock"
+    private const val KEY_CLASSIC_DOCK_STYLE = "classic_dock_style"
     private const val KEY_DOCK_WATER_DROP = "dock_water_drop"
     private const val KEY_DOCK_PAGE_PUSH = "dock_page_push"
     private const val KEY_HOME_AMBIENT = "home_ambient"
@@ -364,6 +373,7 @@ private const val KEY_DOCK_STYLE = "dock_style"
             dockAutoHide = getInt(KEY_DOCK_AUTOHIDE, 0).coerceIn(0, 60),
             fxLevel = getInt(KEY_FX_LEVEL, 2).coerceIn(0, 2),
             classicDock = getBoolean(KEY_CLASSIC_DOCK, false),
+            classicDockStyle = getInt(KEY_CLASSIC_DOCK_STYLE, 0),
             dockWaterDrop = getBoolean(KEY_DOCK_WATER_DROP, false),
             dockPagePush = getBoolean(KEY_DOCK_PAGE_PUSH, true),
             homeAmbient = getBoolean(KEY_HOME_AMBIENT, true),
@@ -457,6 +467,8 @@ private const val KEY_DOCK_STYLE = "dock_style"
 
     fun setClassicDock(enabled: Boolean) = update { it.copy(classicDock = enabled) }
 
+    fun setClassicDockStyle(style: Int) = update { it.copy(classicDockStyle = style.coerceIn(0, 20)) }
+
     fun setDockWaterDrop(enabled: Boolean) = update { it.copy(dockWaterDrop = enabled) }
 
     fun setDockPagePush(enabled: Boolean) = update { it.copy(dockPagePush = enabled) }
@@ -539,6 +551,7 @@ private const val KEY_DOCK_STYLE = "dock_style"
             putInt(KEY_DOCK_AUTOHIDE, next.dockAutoHide)
             putInt(KEY_FX_LEVEL, next.fxLevel)
             putBoolean(KEY_CLASSIC_DOCK, next.classicDock)
+            putInt(KEY_CLASSIC_DOCK_STYLE, next.classicDockStyle)
             putBoolean(KEY_DOCK_WATER_DROP, next.dockWaterDrop)
             putBoolean(KEY_DOCK_PAGE_PUSH, next.dockPagePush)
             putBoolean(KEY_HOME_AMBIENT, next.homeAmbient)

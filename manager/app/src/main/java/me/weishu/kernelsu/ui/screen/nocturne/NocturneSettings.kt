@@ -40,7 +40,6 @@ fun NocturneSettingsScreen(
 ) {
     val t = ncTokens()
     var showStylePicker by remember { mutableStateOf(false) }
-    var showThemeSheet by remember { mutableStateOf(false) }
 
     Box(Modifier.fillMaxSize()) {
         NcGlowBackground(t)
@@ -48,7 +47,7 @@ fun NocturneSettingsScreen(
             Box(Modifier.padding(start = if (useSideDock()) 96.dp else 18.dp, end = 18.dp)) {
                 NcHeader(kicker = "PREFERENCES", title = "设置") {
                     NcIconButton(iconRes = R.drawable.nc_user, onClick = actions.onOpenAbout)
-                    NcIconButton(iconRes = R.drawable.nc_palette, onClick = { showThemeSheet = true })
+                    NcIconButton(iconRes = R.drawable.nc_palette, onClick = onOpenCustomization)
                 }
             }
             Column(
@@ -88,26 +87,6 @@ fun NocturneSettingsScreen(
                         trailing = {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text("Nocturne", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = t.tx2)
-                                Spacer(Modifier.width(6.dp))
-                                NcChevron()
-                            }
-                        },
-                    )
-                    NcRow(
-                        iconRes = R.drawable.nc_palette,
-                        title = "主题设置",
-                        subtitle = "暗夜 / 亮色模式、强调色与光晕强度",
-                        accent = NcAccentTone.Violet,
-                        showDivider = true,
-                        onClick = { showThemeSheet = true },
-                        trailing = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    NcAccents[NcAppearance.accentIndex].name,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = t.vio,
-                                )
                                 Spacer(Modifier.width(6.dp))
                                 NcChevron()
                             }
@@ -210,9 +189,6 @@ fun NocturneSettingsScreen(
             }
         }
 
-        if (showThemeSheet) {
-            NcThemeSheet(onDismiss = { showThemeSheet = false })
-        }
     }
 
     if (showStylePicker) {

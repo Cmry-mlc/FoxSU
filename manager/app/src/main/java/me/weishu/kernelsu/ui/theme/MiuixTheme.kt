@@ -54,6 +54,10 @@ fun MiuixKernelSUTheme(
             MonetColorsProvider.UpdateCss()
             CompositionLocalProvider(
                 LocalContentColor provides MiuixTheme.colorScheme.onBackground,
+                // Miuix 皮肤里仍散落着 Material3 的 Text/TextField（安装日志、搜索框等），
+                // 它们读的是 LocalTextStyle 而不是 Miuix 的 textStyles。不同时提供的话，
+                // 会出现「一半界面换了字、一半没换」。
+                androidx.compose.material3.LocalTextStyle provides textStyles.main,
             ) {
                 content()
             }

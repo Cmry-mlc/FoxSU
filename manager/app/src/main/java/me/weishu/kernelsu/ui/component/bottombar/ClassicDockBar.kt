@@ -62,6 +62,20 @@ fun ClassicDockBar(
     navigationBadge: NavigationBadgeState,
     modifier: Modifier = Modifier,
 ) {
+    val style = currentClassicStyle()
+    if (style != ClassicDockStyle.CLASSIC) {
+        ClassicStructureBar(style, theme, navigationBadge, modifier)
+        return
+    }
+    ClassicFlatBar(theme, navigationBadge, modifier)
+}
+
+@Composable
+private fun ClassicFlatBar(
+    theme: DockTheme,
+    navigationBadge: NavigationBadgeState,
+    modifier: Modifier = Modifier,
+) {
     val mainState = LocalMainPagerState.current
     val items = BottomBarDestination.entries.toList()
     val custom = CustomizationStore.current

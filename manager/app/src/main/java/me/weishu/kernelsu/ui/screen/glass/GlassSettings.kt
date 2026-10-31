@@ -217,14 +217,6 @@ fun GlassSettingsList(
                         onClick = onOpenCustomization,
                     ),
                     GlassSettingRow(
-                        iconRes = R.drawable.ic_d_tool,
-                        title = stringResource(R.string.settings_theme),
-                        subtitle = stringResource(R.string.settings_theme_summary),
-                        accent = t.lemon,
-                        showChevron = true,
-                        onClick = actions.onOpenTheme,
-                    ),
-                    GlassSettingRow(
                         iconRes = R.drawable.ic_d_grid,
                         title = stringResource(R.string.settings_profile_template),
                         subtitle = stringResource(R.string.settings_profile_template_summary),

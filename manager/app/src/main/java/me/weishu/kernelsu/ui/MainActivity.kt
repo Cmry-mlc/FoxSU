@@ -350,6 +350,7 @@ class MainActivity : ComponentActivity() {
                                             onSetCheckModuleUpdate = settingsVm::setCheckModuleUpdate,
                                             onOpenTheme = {},
                                             onSetUiModeIndex = {},
+                                            onSetThemeMode = settingsVm::setThemeMode,
                                             onOpenProfileTemplate = {},
                                             onSetSuCompatMode = settingsVm::setSuCompatMode,
                                             onSetKernelUmountEnabled = settingsVm::setKernelUmountEnabled,

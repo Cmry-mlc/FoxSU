@@ -176,19 +176,6 @@ fun SettingPagerMiuix(
                             onSelectedIndexChange = actions.onSetUiModeIndex
                         )
                         ArrowPreference(
-                            title = stringResource(id = R.string.settings_theme),
-                            summary = stringResource(id = R.string.settings_theme_summary),
-                            startAction = {
-                                Icon(
-                                    Icons.Rounded.Palette,
-                                    modifier = Modifier.padding(end = 6.dp),
-                                    contentDescription = stringResource(id = R.string.settings_theme),
-                                    tint = colorScheme.onBackground
-                                )
-                            },
-                            onClick = actions.onOpenTheme
-                        )
-                        ArrowPreference(
                             title = stringResource(id = R.string.customization_title),
                             summary = stringResource(id = R.string.customization_entry_summary),
                             startAction = {

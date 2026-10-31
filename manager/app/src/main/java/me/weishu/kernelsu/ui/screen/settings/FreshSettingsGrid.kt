@@ -69,7 +69,6 @@ fun FreshSettingsGrid(
 ) {
     val actions = listOf(
         GridAction(Icons.Filled.Wallpaper, R.string.settings_grid_ui_mode, onOpenUiMode),
-        GridAction(Icons.Filled.Palette, R.string.settings_grid_theme, onOpenTheme),
         GridAction(Icons.Filled.ColorLens, R.string.settings_grid_custom, onOpenCustomization),
         GridAction(Icons.Filled.Description, R.string.settings_grid_profile, onOpenProfile),
         GridAction(Icons.Filled.Extension, R.string.settings_grid_repo, onOpenRepo),

@@ -163,12 +163,6 @@ fun FreshSettingsPage(
                         caption = stringResource(R.string.customization_entry_summary),
                         onClick = onOpenCustomization,
                     ),
-                    linkTile(
-                        icon = R.drawable.ic_d_palette,
-                        title = stringResource(R.string.settings_theme),
-                        caption = stringResource(R.string.settings_theme_summary),
-                        onClick = actions.onOpenTheme,
-                    ),
                 )
             )
         }

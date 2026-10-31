@@ -433,6 +433,60 @@ internal fun AgCustomization(
             }
 
             // ══════════ 全局强调色 ══════════
+            // ══════════ 外观模式 ══════════
+            // 原「主题设置」页（ColorPalette）只做两件事：明暗模式 + 强调色。
+            // 强调色这里已经有了，模式补进来之后那个入口就能整体去掉——
+            // 各皮肤不必再各留一个只能换深浅色的旧页面。
+            AgGHead("外观模式")
+            AgCard {
+                val modes = listOf(
+                    0 to "跟随系统",
+                    1 to "浅色",
+                    2 to "深色",
+                    6 to "深色 OLED",
+                )
+                // Monet 档（3/4/5）按明暗归一到对应 chip 上，避免四个都不亮
+                val raw = repo.themeMode
+                val normalized = when (raw) {
+                    3 -> 0
+                    4 -> 1
+                    5 -> 2
+                    else -> raw
+                }
+                var picked by remember(raw) { mutableStateOf(normalized) }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    modes.forEach { (mode, label) ->
+                        val on = picked == mode
+                        Box(
+                            Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (on) Ag.Vio.copy(alpha = 0.10f) else Ag.Line.copy(alpha = 0.35f))
+                                .border(
+                                    1.dp,
+                                    if (on) Ag.Vio.copy(alpha = 0.42f) else Ag.Line,
+                                    RoundedCornerShape(12.dp),
+                                )
+                                .agClick {
+                                    picked = mode
+                                    settingsActions?.onSetThemeMode?.invoke(mode)
+                                }
+                                .padding(vertical = 10.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                label,
+                                fontSize = 11.5.sp,
+                                fontWeight = if (on) FontWeight.ExtraBold else FontWeight.Bold,
+                                color = if (on) Ag.Vio else Ag.Tx2,
+                                maxLines = 1,
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(4.dp))
+            }
+
             AgGHead("全局强调色")
             AgCard {
                 AgSubLabel("配色（取自 FoxSu logo 的七彩）")
@@ -751,6 +805,42 @@ internal fun AgCustomization(
                         }, small = true)
                     },
                 )
+                // ①b 传统底栏的结构：只在通栏形态下有意义，胶囊形态下藏起来，
+                // 免得出现「选了结构却看不到任何变化」。
+                if (custom.classicDock) {
+                    Spacer(Modifier.height(10.dp))
+                    val classicStyles = me.weishu.kernelsu.ui.component.bottombar.ClassicDockStyle.entries
+                    AgSubLabel("结构 · ${classicStyles.size} 套")
+                    val classicScreenW = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp.dp
+                    val classicCardW = ((classicScreenW - 36.dp - 16.dp - 18.dp) / 4).coerceAtLeast(62.dp)
+                    val classicListState = androidx.compose.foundation.lazy.rememberLazyListState()
+                    androidx.compose.runtime.LaunchedEffect(custom.classicDockStyle) {
+                        val target = (custom.classicDockStyle - 1).coerceIn(0, (classicStyles.size - 4).coerceAtLeast(0))
+                        classicListState.animateScrollToItem(target)
+                    }
+                    androidx.compose.foundation.lazy.LazyRow(
+                        state = classicListState,
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 2.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        items(classicStyles.size) { i ->
+                            val s = classicStyles[i]
+                            AgClassicStyleCard(
+                                style = s,
+                                selected = custom.classicDockStyle == s.id,
+                                modifier = Modifier.width(classicCardW),
+                            ) { CustomizationStore.setClassicDockStyle(s.id) }
+                        }
+                    }
+                    Spacer(Modifier.height(7.dp))
+                    Text(
+                        me.weishu.kernelsu.ui.component.bottombar.ClassicDockStyle
+                            .fromId(custom.classicDockStyle).hint,
+                        fontSize = 11.sp, lineHeight = 16.sp, color = Ag.Tx2,
+                        modifier = Modifier.padding(start = 2.dp, bottom = 14.dp),
+                    )
+                }
                 // ② 水滴指示器（默认关）
                 AgToggleRow(
                     "水滴流动指示器",
@@ -1825,5 +1915,250 @@ private fun AgButtonShapeCard(
             color = if (selected) Ag.Vio else Ag.Tx2,
             maxLines = 1,
         )
+    }
+}
+
+/** 传统底栏结构卡：上方一条缩略栏，下方套名。 */
+@Composable
+private fun AgClassicStyleCard(
+    style: me.weishu.kernelsu.ui.component.bottombar.ClassicDockStyle,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    val ac = Ag.accent
+    Column(
+        modifier
+            .agClick(onClick = onClick)
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (selected) Ag.Vio.copy(alpha = 0.059f) else Color(0x8CFFFFFF))
+            .border(
+                1.4.dp,
+                if (selected) Ag.Vio.copy(alpha = 0.502f) else Ag.Line,
+                RoundedCornerShape(12.dp),
+            )
+            .padding(vertical = 8.dp, horizontal = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        ClassicStyleSwatch(
+            style = style,
+            accent = ac.primary,
+            accent2 = ac.secondary,
+            dark = Ag.isDark,
+            modifier = Modifier.fillMaxWidth().height(34.dp),
+        )
+        Text(
+            style.title,
+            fontSize = 9.5.sp,
+            fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Bold,
+            color = if (selected) Ag.Vio else Ag.Tx2,
+            maxLines = 1,
+        )
+    }
+}
+
+/** 缩略图：把每套结构的「辨识特征」画出来，不做完整复刻。 */
+@Composable
+private fun ClassicStyleSwatch(
+    style: me.weishu.kernelsu.ui.component.bottombar.ClassicDockStyle,
+    accent: Color,
+    accent2: Color,
+    dark: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val surface = if (dark) Color(0xFF2A283D) else Color(0xFFF1EFF8)
+    androidx.compose.foundation.Canvas(modifier) {
+        val w = size.width
+        val h = size.height
+        val barTop = h * 0.18f
+        val barH = h * 0.66f
+        val slot = w / 4f
+
+        // 底板
+        when (style) {
+            me.weishu.kernelsu.ui.component.bottombar.ClassicDockStyle.SAW,
+            me.weishu.kernelsu.ui.component.bottombar.ClassicDockStyle.TOOTH -> {
+                val teeth = if (style.id == 1) 6 else 8
+                val p = w / teeth
+                val d = h * 0.16f
+                val path = androidx.compose.ui.graphics.Path().apply {
+                    moveTo(0f, barTop + d)
+                    var x = 0f
+                    while (x < w) {
+                        lineTo(x + p / 2f, barTop)
+                        lineTo(x + p, barTop + d)
+                        x += p
+                    }
+                    lineTo(w, barTop + barH)
+                    lineTo(0f, barTop + barH)
+                    close()
+                }
+                drawPath(path, surface)
+            }
+            me.weishu.kernelsu.ui.component.bottombar.ClassicDockStyle.HONEY -> {
+                for (i in 0 until 4) {
+                    val cut = slot * 0.12f
+                    val x0 = i * slot + 1f
+                    val x1 = (i + 1) * slot - 1f
+                    val cy = barTop + barH / 2f
+                    val path = androidx.compose.ui.graphics.Path().apply {
+                        moveTo(x0 + cut, barTop)
+                        lineTo(x1 - cut, barTop)
+                        lineTo(x1, cy)
+                        lineTo(x1 - cut, barTop + barH)
+                        lineTo(x0 + cut, barTop + barH)
+                        lineTo(x0, cy)
+                        close()
+                    }
+                    drawPath(path, if (i == 0) accent else surface)
+                }
+            }
+            me.weishu.kernelsu.ui.component.bottombar.ClassicDockStyle.CAPSULE -> {
+                for (i in 0 until 4) {
+                    val pad = if (i == 0) 1f else slot * 0.16f
+                    drawRoundRect(
+                        color = if (i == 0) accent else surface,
+                        topLeft = androidx.compose.ui.geometry.Offset(i * slot + pad, barTop + barH * 0.18f),
+                        size = androidx.compose.ui.geometry.Size(slot - pad * 2, barH * 0.64f),
+                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(barH),
+                    )
+                }
+            }
+            me.weishu.kernelsu.ui.component.bottombar.ClassicDockStyle.ARC -> {
+                drawRoundRect(
+                    color = surface,
+                    topLeft = androidx.compose.ui.geometry.Offset(0f, barTop),
+                    size = androidx.compose.ui.geometry.Size(w, barH * 1.15f),
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(w * 0.18f, barH * 0.36f),
+                )
+            }
+            me.weishu.kernelsu.ui.component.bottombar.ClassicDockStyle.RELIEF -> {
+                drawRoundRect(
+                    color = surface,
+                    topLeft = androidx.compose.ui.geometry.Offset(0f, barTop),
+                    size = androidx.compose.ui.geometry.Size(w, barH),
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(w * 0.22f, barH * 0.5f),
+                )
+            }
+            me.weishu.kernelsu.ui.component.bottombar.ClassicDockStyle.STACK -> {
+                for (i in 0 until 4) {
+                    val top = if (i == 0) barTop else barTop + barH * 0.14f
+                    val hh = if (i == 0) barH else barH * 0.86f
+                    drawRoundRect(
+                        color = if (i == 0) accent else surface,
+                        topLeft = androidx.compose.ui.geometry.Offset(i * slot + 1f, top),
+                        size = androidx.compose.ui.geometry.Size(slot - 2f, hh),
+                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(4f),
+                    )
+                }
+            }
+            me.weishu.kernelsu.ui.component.bottombar.ClassicDockStyle.ASYM -> {
+                drawRoundRect(
+                    color = surface,
+                    topLeft = androidx.compose.ui.geometry.Offset(0f, barTop),
+                    size = androidx.compose.ui.geometry.Size(w, barH),
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(w * 0.22f, barH * 0.55f),
+                )
+            }
+            else -> {
+                val r = when (style) {
+                    me.weishu.kernelsu.ui.component.bottombar.ClassicDockStyle.CLASSIC -> 0f
+                    else -> barH * 0.26f
+                }
+                drawRoundRect(
+                    color = surface,
+                    topLeft = androidx.compose.ui.geometry.Offset(0f, barTop),
+                    size = androidx.compose.ui.geometry.Size(w, barH),
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(r, r),
+                )
+            }
+        }
+
+        // 四个 tab 的点 + 第一个高亮
+        val cy = barTop + barH * 0.5f
+        for (i in 0 until 4) {
+            val x = slot * (i + 0.5f)
+            if (i == 0) {
+                when (style) {
+                    me.weishu.kernelsu.ui.component.bottombar.ClassicDockStyle.STAR -> {
+                        val r = slot * 0.26f
+                        val inner = r * 0.382f
+                        val path = androidx.compose.ui.graphics.Path().apply {
+                            for (k in 0 until 16) {
+                                val a = Math.PI / 8.0 * k - Math.PI / 2.0
+                                val rad = if (k % 2 == 0) r else inner
+                                val px = x + (rad * Math.cos(a)).toFloat()
+                                val py = cy + (rad * Math.sin(a)).toFloat()
+                                if (k == 0) moveTo(px, py) else lineTo(px, py)
+                            }
+                            close()
+                        }
+                        drawPath(path, accent.copy(alpha = 0.35f))
+                    }
+                    me.weishu.kernelsu.ui.component.bottombar.ClassicDockStyle.HALO -> {
+                        drawCircle(color = accent.copy(alpha = 0.3f), radius = slot * 0.3f, center = androidx.compose.ui.geometry.Offset(x, cy))
+                        drawCircle(color = accent, radius = slot * 0.1f, center = androidx.compose.ui.geometry.Offset(x, cy))
+                    }
+                    else -> Unit
+                }
+            }
+            drawCircle(
+                color = if (i == 0) accent else accent.copy(alpha = 0.28f),
+                radius = slot * 0.09f,
+                center = androidx.compose.ui.geometry.Offset(x, cy),
+            )
+        }
+
+        // 右侧竖槽（温度计）
+        if (style == me.weishu.kernelsu.ui.component.bottombar.ClassicDockStyle.THERMO) {
+            drawRoundRect(
+                color = accent.copy(alpha = 0.18f),
+                topLeft = androidx.compose.ui.geometry.Offset(w - 4f, barTop + 2f),
+                size = androidx.compose.ui.geometry.Size(2.5f, barH - 4f),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(2f),
+            )
+            drawRoundRect(
+                color = accent,
+                topLeft = androidx.compose.ui.geometry.Offset(w - 4f, barTop + barH * 0.55f),
+                size = androidx.compose.ui.geometry.Size(2.5f, barH * 0.45f - 2f),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(2f),
+            )
+        }
+        // 顶部横轨（信号灯）
+        if (style == me.weishu.kernelsu.ui.component.bottombar.ClassicDockStyle.RAIL) {
+            drawRoundRect(
+                color = accent.copy(alpha = 0.18f),
+                topLeft = androidx.compose.ui.geometry.Offset(3f, barTop + 2f),
+                size = androidx.compose.ui.geometry.Size(w - 6f, 1.6f),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(1f),
+            )
+            drawCircle(color = accent, radius = 2.6f, center = androidx.compose.ui.geometry.Offset(slot * 0.5f, barTop + 2.8f))
+        }
+        // 中央竖缝（折叠屏）
+        if (style == me.weishu.kernelsu.ui.component.bottombar.ClassicDockStyle.FOLD) {
+            drawRect(
+                color = accent.copy(alpha = 0.25f),
+                topLeft = androidx.compose.ui.geometry.Offset(w / 2f, barTop + 2f),
+                size = androidx.compose.ui.geometry.Size(1.2f, barH - 4f),
+            )
+        }
+        // 顶部冲孔（穿孔带）
+        if (style == me.weishu.kernelsu.ui.component.bottombar.ClassicDockStyle.PERF) {
+            var x = 3f
+            while (x < w - 2f) {
+                drawCircle(color = accent.copy(alpha = 0.3f), radius = 1.1f, center = androidx.compose.ui.geometry.Offset(x, barTop + 2f))
+                x += 5f
+            }
+        }
+        // 左侧锚点（侧锚）
+        if (style == me.weishu.kernelsu.ui.component.bottombar.ClassicDockStyle.ANCHOR) {
+            drawCircle(color = accent, radius = 2.4f, center = androidx.compose.ui.geometry.Offset(0.5f, cy))
+            drawRect(
+                color = accent.copy(alpha = 0.4f),
+                topLeft = androidx.compose.ui.geometry.Offset(1.5f, cy - 0.8f),
+                size = androidx.compose.ui.geometry.Size(slot * 0.44f, 1.6f),
+            )
+        }
     }
 }

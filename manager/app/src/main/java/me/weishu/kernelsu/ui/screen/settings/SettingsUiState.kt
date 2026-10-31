@@ -70,6 +70,8 @@ data class SettingsScreenActions(
     val onSetCheckModuleUpdate: (Boolean) -> Unit,
     val onOpenTheme: () -> Unit,
     val onSetUiModeIndex: (Int) -> Unit,
+    /** 明暗模式（0 跟随系统 / 1 浅色 / 2 深色 / 6 深色 OLED）。 */
+    val onSetThemeMode: (Int) -> Unit = {},
     val onOpenProfileTemplate: () -> Unit,
     val onSetSuCompatMode: (Int) -> Unit,
     val onSetKernelUmountEnabled: (Boolean) -> Unit,
