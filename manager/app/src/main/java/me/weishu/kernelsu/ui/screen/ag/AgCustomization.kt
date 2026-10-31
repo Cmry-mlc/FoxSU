@@ -1,5 +1,6 @@
 package me.weishu.kernelsu.ui.screen.ag
 
+import me.weishu.kernelsu.ui.navigation3.Route
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -122,6 +123,7 @@ internal fun AgCustomization(
     onOpenDonate: (() -> Unit)? = null,
 ) {
     val custom = CustomizationStore.current
+    val navigator = LocalNavigator.current
     val repo = remember { SettingsRepositoryImpl() }
     val context = androidx.compose.ui.platform.LocalContext.current
     val scope = rememberCoroutineScope()
@@ -367,9 +369,9 @@ internal fun AgCustomization(
                 Spacer(Modifier.height(9.dp))
                 Text(
                     when (custom.fxLevel) {
-                        0 -> "全部动效关闭：卡片不再流动粒子、不再 3D 倾斜，底栏点击也没有涟漪。最省电，老机型建议选它。下面的漂浮爪印由它自己的开关控制，不受这里影响。"
+                        0 -> "全部动效关闭：卡片不再流动粒子、不再 3D 倾斜。最省电，老机型建议选它。下面的漂浮爪印与底栏特效各有独立开关，不受这里影响。"
                         1 -> "克制档：粒子颗粒减半、流速放慢，3D 倾斜角度限制在 ±6°，日常够看又不打扰。"
-                        else -> "全开：卡片外轮廓彩色粒子边 + 触摸 3D 透视倾斜 + 底栏图标点击涟漪，全部启用。"
+                        else -> "全开：卡片外轮廓彩色粒子边 + 触摸 3D 透视倾斜，全部启用。底栏特效在下面的入口里单独选。"
                     },
                     fontSize = 11.5.sp, lineHeight = 17.sp, color = Ag.Tx2,
                 )
@@ -401,7 +403,20 @@ internal fun AgCustomization(
                             small = true,
                         )
                     },
+                    divider = true,
+                )
+                // 40 套选择器：栏内与外圈各自单选、可叠加，所以单独开一页
+                AgRow(
+                    "底栏特效 · 40 套",
+                    if (custom.dockFxInner == 0 && custom.dockFxRing == 0) {
+                        "当前未启用。栏内 20 套管图标，外圈 20 套管边框，每套都有实时预览"
+                    } else {
+                        "栏内第 ${custom.dockFxInner} 套 · 外圈第 ${custom.dockFxRing} 套，点进去可以换"
+                    },
+                    Ag.Mag, AgSettingsIcons.Paw,
+                    showChev = true,
                     divider = false,
+                    onClick = { navigator.push(Route.DockFx) },
                 )
             }
 

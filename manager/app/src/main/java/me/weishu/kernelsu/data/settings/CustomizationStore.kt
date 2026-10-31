@@ -142,6 +142,20 @@ data class Customization(
      * 因为之前这些特效本来就一直在跑。
      */
     val fxLevel: Int = 2,
+
+    /**
+     * 底栏特效总开关。关掉后栏内与边框两套都不播，只留系统点击反馈。
+     *
+     * 和 [fxLevel] 分开是有意的：[fxLevel] 管的是全局性能档（卡片粒子、3D 倾斜），
+     * 有人只嫌底栏花，不该被迫把卡片动效一起关掉。
+     */
+    val dockFxOn: Boolean = true,
+
+    /** 栏内特效：0 = 关闭，1..20 对应 [me.weishu.kernelsu.ui.component.dockfx.DockFx.inners]。 */
+    val dockFxInner: Int = 0,
+
+    /** 外圈特效：0 = 关闭，1..20 对应同文件的 rings。 */
+    val dockFxRing: Int = 0,
     /**
      * 「凸起中间」底栏中央那颗头像的本地图片路径（长按可换）。
      * 只存路径不存 Uri：GET_CONTENT 的读权限是临时的，重启后 Uri 就打不开了。
@@ -239,6 +253,9 @@ private const val KEY_DOCK_STYLE = "dock_style"
     private const val KEY_DOCK_WATER_DROP = "dock_water_drop"
     private const val KEY_DOCK_PAGE_PUSH = "dock_page_push"
     private const val KEY_HOME_AMBIENT = "home_ambient"
+    private const val KEY_DOCK_FX_ON = "dock_fx_on"
+    private const val KEY_DOCK_FX_INNER = "dock_fx_inner"
+    private const val KEY_DOCK_FX_RING = "dock_fx_ring"
     private const val KEY_DONATE_AVATAR = "donate_avatar"
     private const val KEY_BRAND_DEFAULTS = "brand_defaults_v1"
 
@@ -340,6 +357,9 @@ private const val KEY_DOCK_STYLE = "dock_style"
             dockWaterDrop = getBoolean(KEY_DOCK_WATER_DROP, false),
             dockPagePush = getBoolean(KEY_DOCK_PAGE_PUSH, true),
             homeAmbient = getBoolean(KEY_HOME_AMBIENT, true),
+            dockFxOn = getBoolean(KEY_DOCK_FX_ON, true),
+            dockFxInner = getInt(KEY_DOCK_FX_INNER, 0).coerceIn(0, 20),
+            dockFxRing = getInt(KEY_DOCK_FX_RING, 0).coerceIn(0, 20),
             donateAvatar = getString(KEY_DONATE_AVATAR, null),
         )
     }
@@ -432,6 +452,12 @@ private const val KEY_DOCK_STYLE = "dock_style"
 
     fun setHomeAmbient(enabled: Boolean) = update { it.copy(homeAmbient = enabled) }
 
+    fun setDockFxOn(enabled: Boolean) = update { it.copy(dockFxOn = enabled) }
+
+    fun setDockFxInner(index: Int) = update { it.copy(dockFxInner = index.coerceIn(0, 20)) }
+
+    fun setDockFxRing(index: Int) = update { it.copy(dockFxRing = index.coerceIn(0, 20)) }
+
     /**
      * 恢复默认：直接把整份 SharedPreferences 清空再读回默认值。
      *
@@ -503,6 +529,9 @@ private const val KEY_DOCK_STYLE = "dock_style"
             putBoolean(KEY_DOCK_WATER_DROP, next.dockWaterDrop)
             putBoolean(KEY_DOCK_PAGE_PUSH, next.dockPagePush)
             putBoolean(KEY_HOME_AMBIENT, next.homeAmbient)
+            putBoolean(KEY_DOCK_FX_ON, next.dockFxOn)
+            putInt(KEY_DOCK_FX_INNER, next.dockFxInner)
+            putInt(KEY_DOCK_FX_RING, next.dockFxRing)
             putString(KEY_DONATE_AVATAR, next.donateAvatar)
         }
         current = next

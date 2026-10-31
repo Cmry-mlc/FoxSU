@@ -1,5 +1,6 @@
 package me.weishu.kernelsu.ui.component.bottombar
 
+import me.weishu.kernelsu.ui.component.dockfx.dockRingFx
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -88,7 +89,16 @@ fun ClassicDockBar(
                     size = androidx.compose.ui.geometry.Size(size.width, 1.dp.toPx()),
                 )
             }
-            .padding(bottom = navInset),
+            .padding(bottom = navInset)
+            // 外圈特效：通栏底栏是直角，capsule=false 让描边落在真正的拐角上
+            .dockRingFx(
+                accent = accent.primary,
+                accent2 = accent.secondary,
+                trigger = mainState.selectedPage,
+                anchor = ((mainState.selectedPage + 0.5f) /
+                    mainState.pagerState.pageCount.coerceAtLeast(1)),
+                capsule = false,
+            ),
     ) {
         Row(
             modifier = Modifier
@@ -194,14 +204,17 @@ private fun ClassicDockItem(
                         .clip(RoundedCornerShape(percent = 50))
                         .background(accentTint.copy(alpha = if (dark) 0.20f else 0.11f)),
                 )
-                Icon(
-                    imageVector = item.filledIcon,
-                    contentDescription = stringResource(item.label),
-                    tint = tint,
-                    modifier = Modifier
-                        .size(22.dp)
-                        .graphicsLayer { translationY = lift.toPx() },
-                )
+                // 栏内特效：通栏底栏此前漏挂了，切过来就没有点击动效
+                DockIconTapFx(pressed = pressed, accent = accentTint, iconSize = 22.dp) {
+                    Icon(
+                        imageVector = item.filledIcon,
+                        contentDescription = stringResource(item.label),
+                        tint = tint,
+                        modifier = Modifier
+                            .size(22.dp)
+                            .graphicsLayer { translationY = lift.toPx() },
+                    )
+                }
                 // 角标：小圆点 + 数字
                 val badge = badgeFor(index, navigationBadge)
                 if (badge != null) {

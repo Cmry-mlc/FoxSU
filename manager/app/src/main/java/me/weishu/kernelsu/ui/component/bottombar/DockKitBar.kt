@@ -1,5 +1,6 @@
 package me.weishu.kernelsu.ui.component.bottombar
 
+import me.weishu.kernelsu.ui.component.dockfx.dockRingFx
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.widget.Toast
@@ -396,7 +397,15 @@ internal fun DockKitBar(
                             size = Size(size.width * left, h),
                         )
                     }
-                },
+                }
+                .dockRingFx(
+                    accent = accent.primary,
+                    accent2 = accent.secondary,
+                    trigger = mainState.selectedPage,
+                    anchor = ((mainState.selectedPage + 0.5f) /
+                        mainState.pagerState.pageCount.coerceAtLeast(1)),
+                    capsule = true,
+                ),
         ) {
             if (materialOn) {
                 DockMaterial(

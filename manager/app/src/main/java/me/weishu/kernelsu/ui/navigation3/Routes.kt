@@ -57,6 +57,11 @@ sealed interface Route : NavKey, Parcelable {
     @Serializable
     data object Credits : Route
 
+    /** 底栏特效选择器：栏内 20 套 + 外圈 20 套，可叠加。 */
+    @Parcelize
+    @Serializable
+    data object DockFx : Route
+
     @Parcelize
     @Serializable
     data object Sulog : Route

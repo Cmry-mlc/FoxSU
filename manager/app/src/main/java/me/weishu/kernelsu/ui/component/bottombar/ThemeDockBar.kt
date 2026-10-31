@@ -1,5 +1,6 @@
 package me.weishu.kernelsu.ui.component.bottombar
 
+import me.weishu.kernelsu.ui.component.dockfx.dockRingFx
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
@@ -343,7 +344,15 @@ fun ThemeDockBar(
                             size = Size(size.width * left, h),
                         )
                     }
-                },
+                }
+                .dockRingFx(
+                    accent = accent.primary,
+                    accent2 = accent.secondary,
+                    trigger = mainState.selectedPage,
+                    anchor = ((mainState.selectedPage + 0.5f) /
+                        mainState.pagerState.pageCount.coerceAtLeast(1)),
+                    capsule = true,
+                ),
         ) {
             DockMaterial(
                     shape = shape,
