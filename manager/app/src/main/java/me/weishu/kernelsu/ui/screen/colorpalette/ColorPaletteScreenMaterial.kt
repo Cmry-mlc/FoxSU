@@ -327,8 +327,9 @@ fun ColorPaletteScreenMaterial(
                                     stringResource(id = R.string.settings_pager_gesture_native),
                                     stringResource(id = R.string.settings_pager_gesture_cross_axis),
                                     stringResource(id = R.string.settings_pager_gesture_ios_like),
+                                    stringResource(id = R.string.settings_pager_gesture_off),
                                 ),
-                                selectedIndex = uiState.pagerInterceptionMode.coerceIn(0, 2),
+                                selectedIndex = uiState.pagerInterceptionMode.coerceIn(0, 3),
                                 onItemSelected = actions.onSetPagerInterceptionMode,
                             )
                         },

@@ -187,7 +187,10 @@ internal fun CenterDockBar(
     }
 
     Box(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth()
+            // 居中头像这个形态以前漏挂了：切到它以后底栏横滑就失灵，
+            // 页面又因为列表抢手势滑不动，用户会觉得「整个 App 只能点图标」
+            .dockSwipeToPager(mainState.pagerState, LocalDockSwipeEnabled.current, scope),
         contentAlignment = Alignment.BottomCenter,
     ) {
         Box(

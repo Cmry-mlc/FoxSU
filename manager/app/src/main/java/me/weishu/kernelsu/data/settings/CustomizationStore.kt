@@ -117,6 +117,16 @@ data class Customization(
     val dockWaterDrop: Boolean = false,
 
     /**
+     * 切 Tab 时页面「沿方向轻推 + 淡入」。
+     *
+     * 从 [dockWaterDrop] 里拆出来的：色块拉长是给眼睛看的形变，
+     * 页面轻推是给空间感看的位移，两者审美取向不同——
+     * 有人只想让色块不动、页面照常滑入，所以必须能单独关。
+     * 默认 true，保持原本「打开水滴就整套动效」的观感。
+     */
+    val dockPagePush: Boolean = true,
+
+    /**
      * 全场特效档位（0 关闭 / 1 克制 / 2 全开）。
      *
      * 统一管三类动效：卡片外轮廓粒子边、按压内阴影、3D 触摸倾斜。
@@ -219,6 +229,7 @@ private const val KEY_DOCK_STYLE = "dock_style"
     private const val KEY_FX_LEVEL = "fx_level"
     private const val KEY_CLASSIC_DOCK = "classic_dock"
     private const val KEY_DOCK_WATER_DROP = "dock_water_drop"
+    private const val KEY_DOCK_PAGE_PUSH = "dock_page_push"
     private const val KEY_DONATE_AVATAR = "donate_avatar"
     private const val KEY_BRAND_DEFAULTS = "brand_defaults_v1"
 
@@ -318,6 +329,7 @@ private const val KEY_DOCK_STYLE = "dock_style"
             fxLevel = getInt(KEY_FX_LEVEL, 2).coerceIn(0, 2),
             classicDock = getBoolean(KEY_CLASSIC_DOCK, false),
             dockWaterDrop = getBoolean(KEY_DOCK_WATER_DROP, false),
+            dockPagePush = getBoolean(KEY_DOCK_PAGE_PUSH, true),
             donateAvatar = getString(KEY_DONATE_AVATAR, null),
         )
     }
@@ -406,6 +418,8 @@ private const val KEY_DOCK_STYLE = "dock_style"
 
     fun setDockWaterDrop(enabled: Boolean) = update { it.copy(dockWaterDrop = enabled) }
 
+    fun setDockPagePush(enabled: Boolean) = update { it.copy(dockPagePush = enabled) }
+
     /**
      * 恢复默认：直接把整份 SharedPreferences 清空再读回默认值。
      *
@@ -475,6 +489,7 @@ private const val KEY_DOCK_STYLE = "dock_style"
             putInt(KEY_FX_LEVEL, next.fxLevel)
             putBoolean(KEY_CLASSIC_DOCK, next.classicDock)
             putBoolean(KEY_DOCK_WATER_DROP, next.dockWaterDrop)
+            putBoolean(KEY_DOCK_PAGE_PUSH, next.dockPagePush)
             putString(KEY_DONATE_AVATAR, next.donateAvatar)
         }
         current = next

@@ -173,6 +173,7 @@
     <string name="settings_pager_gesture_native">Bawaan</string>
     <string name="settings_pager_gesture_cross_axis">Sumbu silang</string>
     <string name="settings_pager_gesture_ios_like">Gaya iOS</string>
+    <string name="settings_pager_gesture_off">Mati</string>
     <string name="settings_module_check_update">Periksa pembaruan modul</string>
     <string name="grant_root_failed">Gagal memberikan akses root!</string>
     <string name="home_pr_build_warning">Ini adalah build PR debug untuk permintaan perubahan. JANGAN gunakan di lingkungan produksi!</string>

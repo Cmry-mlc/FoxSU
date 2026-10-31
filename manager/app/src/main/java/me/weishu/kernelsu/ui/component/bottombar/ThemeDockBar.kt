@@ -297,11 +297,13 @@ fun ThemeDockBar(
     }
 
     // ── 横向胶囊：所有样式共用一个外壳（同宽同高）──
-    // 底栏这一圈没有滚动容器，横滑在这里能被稳定识别（页面里的列表不会抢），
-    // 所以「在底栏上横滑切页」始终可用，和「页面切换手势」的三档无关。
+    // 底栏这一圈没有滚动容器，横滑在这里能被稳定识别（页面里的列表不会抢）。
+    // 但它仍然受「滑动切换 Tab」总开关约束：关档时底栏也不该翻页，
+    // 否则设置里写着「关」，手指在胶囊上照样能切——这是之前的一个真 bug。
     val swipeScope = androidx.compose.runtime.rememberCoroutineScope()
+    val swipeOn = LocalDockSwipeEnabled.current
     Box(
-        modifier = modifier.fillMaxWidth().dockSwipeToPager(mainState.pagerState, true, swipeScope),
+        modifier = modifier.fillMaxWidth().dockSwipeToPager(mainState.pagerState, swipeOn, swipeScope),
         contentAlignment = Alignment.BottomCenter,
     ) {
         Box(

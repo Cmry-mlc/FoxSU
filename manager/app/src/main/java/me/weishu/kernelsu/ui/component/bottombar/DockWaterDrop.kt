@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import me.weishu.kernelsu.data.settings.CustomizationStore
 import kotlin.math.abs
 import kotlin.math.max
@@ -133,28 +134,53 @@ internal fun DockSlideIndicator(
         var lastT = withFrameNanos { it }
         var vel = 0f
         while (true) {
-            withFrameNanos { now ->
-                val dt = ((now - lastT) / 1_000_000_000f).coerceIn(1f / 240f, 1f / 20f)
-                lastT = now
-                val cur = x.value
-                val speed = (cur - lastX) / dt
-                lastX = cur
+            // 活跃段：逐帧采样位移求速度。
+            // 一旦连续 3 帧「没有位移、形变和速度都归零」，就跳出到下面的挂起点——
+            // 之前这里是死循环，静止时也每帧醒一次白跑，水滴开关常年开着会持续占一帧。
+            var calm = 0
+            while (calm < 3) {
+                withFrameNanos { now ->
+                    val dt = ((now - lastT) / 1_000_000_000f).coerceIn(1f / 240f, 1f / 20f)
+                    lastT = now
+                    val cur = x.value
+                    val speed = (cur - lastX) / dt
+                    lastX = cur
 
-                // 方向单独维护：幅度归零时速度的正负噪声不该让色块抖一下
-                if (abs(speed) > 60f) flowDir.floatValue = sign(speed)
+                    // 方向单独维护：幅度归零时速度的正负噪声不该让色块抖一下
+                    if (abs(speed) > 60f) flowDir.floatValue = sign(speed)
 
-                // 320dp/s ≈ 一格切换中段的速度，取它当满幅参考。
-                // 定得太高（420+）会导致普通的一格切换只拉到四成，看不出「水流」。
-                // 减去 25dp/s 的死区：弹簧尾巴上那几个 dp/s 的残余速度会让色块
-                // 一直维持 1%~4% 的拉伸，肉眼是一阵几乎察觉不到的「呼吸」。
-                val target = ((abs(speed) - 25f) / 320f).coerceIn(0f, 1f)
-                val k = 1500f
-                val c = 2f * sqrt(k) * 0.62f
-                val acc = k * (target - stretch.floatValue) - c * vel
-                vel += acc * dt
-                // 上限 1.15 留给起步超调；下限 -0.10 让落位时「吸回」一下
-                stretch.floatValue = (stretch.floatValue + vel * dt).coerceIn(-0.10f, 1.15f)
+                    // 320dp/s ≈ 一格切换中段的速度，取它当满幅参考。
+                    // 定得太高（420+）会导致普通的一格切换只拉到四成，看不出「水流」。
+                    // 减去 25dp/s 的死区：弹簧尾巴上那几个 dp/s 的残余速度会让色块
+                    // 一直维持 1%~4% 的拉伸，肉眼是一阵几乎察觉不到的「呼吸」。
+                    val target = ((abs(speed) - 25f) / 320f).coerceIn(0f, 1f)
+                    val k = 1500f
+                    val c = 2f * sqrt(k) * 0.62f
+                    val acc = k * (target - stretch.floatValue) - c * vel
+                    vel += acc * dt
+                    // 上限 1.15 留给起步超调；下限 -0.10 让落位时「吸回」一下
+                    stretch.floatValue = (stretch.floatValue + vel * dt).coerceIn(-0.10f, 1.15f)
+
+                    calm = if (
+                        abs(speed) < 2f &&
+                        abs(stretch.floatValue) < 0.004f &&
+                        abs(vel) < 2f
+                    ) {
+                        calm + 1
+                    } else {
+                        0
+                    }
+                }
             }
+
+            // 静止段：把形变彻底收干净，然后等指示器真的动起来再唤醒。
+            // snapshotFlow 只在 x 变化时发射，挂起期间不占任何帧。
+            stretch.floatValue = 0f
+            vel = 0f
+            val rest = x.value
+            snapshotFlow { x.value }.first { it != rest }
+            lastX = x.value
+            lastT = withFrameNanos { it }
         }
     }
 

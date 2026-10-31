@@ -545,27 +545,28 @@ internal fun AgCustomization(
                         }, small = true)
                     },
                 )
-                // 左右滑动切换四个 Tab 的总开关。
-                // 「无拦截」让 HorizontalPager 直接接管横滑，列表横滑永远优先；
-                // 「跨轴拦截」会接管竖直列表上的横滑（列表带 verticalScroll 时它更灵，
-                // 但也更容易和列表自己的回弹打架）——默认用后者。
+                // 左右滑动切换 Tab 的总开关。
+                // 前三档是 miuix 的三套拦截策略，没有一档能真正关掉横滑；
+                // 所以第 4 档「关」是自己加的：页面与底栏同时不再响应横滑。
+                // 顺序固定为 0/1/2/3，不能重排——老用户存的是 0/1/2 的旧语义。
                 AgToggleRow(
                     "滑动切换 Tab",
                     when (repo.pagerInterceptionMode) {
-                        0 -> "关 · 只能点底栏图标切换（横滑交给页面里的列表）"
-                        1 -> "开 · 横滑按系统最顺的方式处理，长列表里也跟手（默认）"
-                        else -> "开 · 横滑只在页面边缘响应，中间留给页面自己"
+                        0 -> "原生 · 横滑交给系统判断，最轻，但长列表里偶尔要先停一下"
+                        1 -> "跨轴拦截 · 接管列表上的横滑，长列表也跟手（推荐）"
+                        2 -> "点击暂停 · 惯性滚动时点一下屏幕立刻停住，翻页走系统默认"
+                        else -> "关 · 页面和底栏都不响应横滑，只能点图标切换"
                     },
                     Ag.Teal, AgSettingsIcons.PagerGesture,
                     trailing = {
                         var mode by remember { mutableStateOf(repo.pagerInterceptionMode) }
                         AgPick(
                             text = when (mode) {
-                                0 -> "关"; 1 -> "开"; else -> "仅边缘"
+                                0 -> "原生"; 1 -> "跨轴拦截"; 2 -> "点击暂停"; else -> "关"
                             } + " ⇅",
                             onClick = {
-                                // 0 → 1（开）→ 2（仅边缘）→ 0（关）
-                                val next = (mode + 1) % 3
+                                // 0 → 1（跨轴，默认）→ 2（点击暂停）→ 3（关）→ 0
+                                val next = (mode + 1) % 4
                                 mode = next
                                 settingsActions?.onSetPagerInterceptionMode?.invoke(next)
                             },
@@ -707,12 +708,27 @@ internal fun AgCustomization(
                     if (custom.dockWaterDrop) {
                         "切 Tab 时色块前缘先行、后缘慢半拍，拉长压扁后带回弹停稳（约 400ms）"
                     } else {
-                        "开启后选中色块像水滴流到新的 Tab，图标先缩后弹、页面沿点击方向轻推淡入"
+                        "开启后选中色块像水滴流到新的 Tab，带拉长、压扁与回弹（约 400ms）"
                     },
                     Ag.Mag, AgSettingsIcons.WaterDrop,
                     trailing = {
                         AgToggle(checked = custom.dockWaterDrop, onCheckedChange = {
                             CustomizationStore.setDockWaterDrop(!custom.dockWaterDrop)
+                        }, small = true)
+                    },
+                )
+                // ②b 页面轻推（独立开关，默认开）
+                AgToggleRow(
+                    "页面轻推动效",
+                    if (custom.dockPagePush) {
+                        "切 Tab 时新页面沿切换方向推入并淡入，与色块到位同一拍"
+                    } else {
+                        "开启后切 Tab 时页面从切换方向滑进来，给切换一点空间感"
+                    },
+                    Ag.Vio, AgSettingsIcons.PagerGesture,
+                    trailing = {
+                        AgToggle(checked = custom.dockPagePush, onCheckedChange = {
+                            CustomizationStore.setDockPagePush(!custom.dockPagePush)
                         }, small = true)
                     },
                 )

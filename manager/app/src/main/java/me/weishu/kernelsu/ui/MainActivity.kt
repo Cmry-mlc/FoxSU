@@ -444,6 +444,9 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+/** 「滑动切换 Tab」的第 4 档：真正关闭。0/1/2 是 miuix 的三种拦截策略，都不能关。 */
+private const val PAGER_MODE_OFF = 3
+
 val LocalMainPagerState = staticCompositionLocalOf<MainPagerState> { error("LocalMainPagerState not provided") }
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -464,12 +467,16 @@ fun MainScreen(
         animatePageChanges = !useNavigationRail,
     )
     val isFullFeatured = Natives.isFullFeatured()
+    // 第 4 档是真正的「关」。前 3 档对应 miuix 自己的拦截策略（原生 / 跨轴 / 点击暂停），
+    // 没有一档是"不能滑"——所以关单独占一个 ordinal，不走 PagerInterceptionMode。
+    val pagerOff = pagerInterceptionMode == PAGER_MODE_OFF
     val pagerMode = PagerInterceptionMode.entries.getOrElse(pagerInterceptionMode) {
         PagerInterceptionMode.Native
     }
-    val interceptPagerGestures = pagerMode == PagerInterceptionMode.CrossAxisInterceptor
+    val interceptPagerGestures = !pagerOff && pagerMode == PagerInterceptionMode.CrossAxisInterceptor
     // Swiping between tabs works on every device, not only on full-featured kernels.
-    var userScrollEnabled by remember { mutableStateOf(true) }
+    // 关档时这里才是真的 false：之前是恒 true，所以「关」档形同虚设。
+    val userScrollEnabled = !pagerOff
 
     val enableNavigationBadge = LocalEnableNavigationBadge.current
     val badgeEnabled = enableNavigationBadge && isFullFeatured
@@ -573,11 +580,13 @@ fun MainScreen(
         // 底栏的液态玻璃需要采样这个 backdrop（Fresh 模式默认不启用 Miuix 的浮动底栏模糊，
         // 所以这里始终记录一份页面内容，开关打开就能立刻用）
         LocalAppBackdrop provides backdrop,
+        // 底栏横滑跟着「滑动切换 Tab」走：关档时底栏也不再接管横滑
+        me.weishu.kernelsu.ui.component.bottombar.LocalDockSwipeEnabled provides !pagerOff,
     ) {
         val contentReady = rememberContentReady()
-        // 页面沿点击方向「轻推 + 淡入」：只在胶囊水滴开关打开时挂上，
-        // 关闭时返回恒等 Modifier，这条链路上没有任何额外状态读取。
-        val pushOn = CustomizationStore.current.dockWaterDrop
+        // 页面沿点击方向「轻推 + 淡入」：由独立开关控制，不再依附水滴形变。
+        // 两者审美取向不同——有人只想要色块不动、页面照常滑入。
+        val pushOn = CustomizationStore.current.dockPagePush
         val pushDir = mainPagerState.lastDirection
         val pushAlpha = remember { Animatable(1f) }
         val pushX = remember { Animatable(0f) }

@@ -231,7 +231,7 @@ class SettingsViewModel(
 
     fun setPagerInterceptionMode(mode: Int) {
         repo.pagerInterceptionMode = mode
-        _uiState.update { it.copy(pagerInterceptionMode = mode.coerceIn(0, 2)) }
+        _uiState.update { it.copy(pagerInterceptionMode = mode.coerceIn(0, 3)) }
     }
 
     fun setEnableBlur(enabled: Boolean) {

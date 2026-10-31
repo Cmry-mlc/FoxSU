@@ -80,7 +80,8 @@ class SettingsRepositoryImpl : SettingsRepository {
 
     override var pagerInterceptionMode: Int
         get() = prefs.getInt("pager_interception_mode", 1)
-        set(value) = prefs.edit { putInt("pager_interception_mode", value.coerceIn(0, 2)) }
+        // 0/1/2 是 miuix 的三套拦截策略，3 是「关」——之前截到 2，第 4 档根本存不进去
+        set(value) = prefs.edit { putInt("pager_interception_mode", value.coerceIn(0, 3)) }
 
     override var enableBlur: Boolean
         get() = prefs.getBoolean("enable_blur", false)

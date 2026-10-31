@@ -24,6 +24,15 @@ import top.yukonga.miuix.kmp.blur.Backdrop
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
 import top.yukonga.miuix.kmp.utils.springAnimateToPage
 
+/**
+ * 底栏横滑是否放行。
+ *
+ * 底栏从 ThemeDockBar 一路嵌到 DockKitBar，三层回调签名里都没有这个位子；
+ * 而它是「滑动切换 Tab」总开关的一部分——总开关选「关」时底栏也必须跟着哑掉，
+ * 否则设置写着关、手指在胶囊上照样能翻页。用 CompositionLocal 直达最内层。
+ */
+val LocalDockSwipeEnabled = androidx.compose.runtime.compositionLocalOf { true }
+
 class MainPagerState(
     val pagerState: PagerState,
     private val coroutineScope: CoroutineScope,

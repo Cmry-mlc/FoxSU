@@ -75,10 +75,11 @@ fun ClassicDockBar(
 
     // 通栏传统底栏同样支持横滑切页：这一条也是纯按钮区，没有滚动容器
     val swipeScope = androidx.compose.runtime.rememberCoroutineScope()
+    val swipeOn = LocalDockSwipeEnabled.current
     Column(
         modifier
             .fillMaxWidth()
-            .dockSwipeToPager(mainState.pagerState, true, swipeScope)
+            .dockSwipeToPager(mainState.pagerState, swipeOn, swipeScope)
             .background(barBg)
             // 顶部 1px 发丝线（画在底色之上、内容之下）
             .drawBehind {

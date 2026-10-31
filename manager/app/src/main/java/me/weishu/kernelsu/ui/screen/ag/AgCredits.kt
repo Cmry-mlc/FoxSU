@@ -356,7 +356,7 @@ private fun creditGroups(): List<CreditGroup> = listOf(
     ),
     CreditGroup(
         title = "能力组件",
-        caption = "root、网络与解包",
+        caption = "root、网络与数据底座",
         tint = Ag.Amber,
         items = listOf(
             Credit(
@@ -372,6 +372,27 @@ private fun creditGroups(): List<CreditGroup> = listOf(
                 "Apache-2.0",
                 "https://github.com/square/okhttp",
                 AgSettingsIcons.CheckUpdate,
+            ),
+            Credit(
+                "kotlinx.coroutines",
+                "协程调度，整套异步与动效的时间线",
+                "Apache-2.0",
+                "https://github.com/Kotlin/kotlinx.coroutines",
+                AgSettingsIcons.Puzzle,
+            ),
+            Credit(
+                "Protocol Buffers",
+                "模块信息与应用列表的二进制序列化",
+                "BSD-3-Clause",
+                "https://github.com/protocolbuffers/protobuf",
+                AgSettingsIcons.Modules,
+            ),
+            Credit(
+                "RikkaX ParcelableList",
+                "跨进程传递已安装应用列表",
+                "Apache-2.0",
+                "https://github.com/RikkaApps/ParcelableList",
+                AgSettingsIcons.LocalTemplate,
             ),
             Credit(
                 "commonmark-java",
