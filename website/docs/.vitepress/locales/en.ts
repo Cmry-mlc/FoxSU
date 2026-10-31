@@ -6,7 +6,7 @@ const pkg = require('vitepress/package.json')
 
 export default defineConfig({
   lang: 'en-US',
-  description: 'A kernel-based root solution for Android GKI devices.',
+  description: 'A kernel-based root solution for Android. KernelSU underneath, a manager rebuilt from scratch.',
 
   themeConfig: {
     nav: nav(),
@@ -18,16 +18,16 @@ export default defineConfig({
     },
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/tiann/KernelSU' }
+      { icon: 'github', link: 'https://github.com/Cmry-mlc/FoxSu' }
     ],
 
     footer: {
-        message: 'Released under the GPL3 License.',
-        copyright: 'Copyright © 2022-present KernelSU developers.'
+        message: 'Released under the GPL-3.0 License. Kernel capabilities come from KernelSU and its community.',
+        copyright: 'Copyright © 2026 FoxSu developers.'
     },
 
     editLink: {
-        pattern: 'https://github.com/tiann/KernelSU/edit/main/website/docs/:path',
+        pattern: 'https://github.com/Cmry-mlc/FoxSu/edit/main/website/docs/:path',
         text: 'Edit this page on GitHub'
     }
   }
@@ -36,6 +36,8 @@ export default defineConfig({
 function nav() {
   return [
     { text: 'Guide', link: '/guide/what-is-kernelsu' },
+    { text: 'Interface', link: '/features' },
+    { text: 'Download', link: 'https://github.com/Cmry-mlc/FoxSu/releases' },
   ]
 }
 

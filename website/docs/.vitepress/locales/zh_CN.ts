@@ -6,7 +6,7 @@ const pkg = require('vitepress/package.json')
 
 export default defineConfig({
   lang: 'zh-CN',
-  description: '一个基于内核，为安卓 GKI 准备的 root 方案。',
+  description: '安卓上基于内核的 root 方案。内核沿用 KernelSU，管理器整套重写。',
 
   themeConfig: {
     nav: nav(),
@@ -18,16 +18,16 @@ export default defineConfig({
     },
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/tiann/KernelSU' }
+      { icon: 'github', link: 'https://github.com/Cmry-mlc/FoxSu' }
     ],
 
     footer: {
-        message: '在 GPL3 许可证下发布。',
-        copyright: 'Copyright © 2022-现在 KernelSU 开发者。'
+        message: '在 GPL-3.0 许可证下发布。内核能力来自 KernelSU 及其社区。',
+        copyright: 'Copyright © 2026 FoxSu 开发者'
     },
 
     editLink: {
-        pattern: 'https://github.com/tiann/KernelSU/edit/main/website/docs/:path',
+        pattern: 'https://github.com/Cmry-mlc/FoxSu/edit/main/website/docs/:path',
         text: '在 GitHub 中编辑本页'
     }
   }
@@ -36,6 +36,8 @@ export default defineConfig({
 function nav() {
   return [
     { text: '指南', link: '/zh_CN/guide/what-is-kernelsu' },
+    { text: '外观', link: '/zh_CN/features' },
+    { text: '下载', link: 'https://github.com/Cmry-mlc/FoxSu/releases' },
   ]
 }
 
