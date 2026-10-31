@@ -82,6 +82,7 @@ import me.weishu.kernelsu.R
 import me.weishu.kernelsu.data.repository.SettingsRepositoryImpl
 import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.component.ambient.AmbientPawsLayer
+import me.weishu.kernelsu.ui.component.ambient.BackgroundFxLayer
 import me.weishu.kernelsu.ui.component.ImageCropDialog
 import me.weishu.kernelsu.ui.component.bottombar.DockButton
 import me.weishu.kernelsu.ui.component.bottombar.DockButtonSwatch
@@ -234,12 +235,22 @@ internal fun AgCustomization(
                 contentAlignment = Alignment.Center,
             ) {
                 // 头卡里的氛围层：画在狐狸图下面，否则爪印会糊在脸上。
-                // 卡片底色是紫粉渐变，粒子压到 0.8 才不会显脏
-                AmbientPawsLayer(
-                    enabled = custom.bgFxOn,
-                    count = 7,
-                    alphaScale = 0.8f,
-                )
+                // 卡片底色是紫粉渐变，粒子压到 0.8 才不会显脏。
+                // 选的是背景特效时这里也换过去——头卡是「我这套氛围长什么样」的第一眼，
+                // 只放猫爪会让选了极光的人以为自己没选上。
+                if (custom.bgFxStyle == 0) {
+                    AmbientPawsLayer(
+                        enabled = custom.bgFxOn,
+                        count = 7,
+                        alphaScale = 0.8f,
+                    )
+                } else {
+                    BackgroundFxLayer(
+                        style = custom.bgFxStyle,
+                        enabled = custom.bgFxOn,
+                        alphaScale = 0.6f,
+                    )
+                }
                 Image(
                     painter = painterResource(R.drawable.fox_hero),
                     contentDescription = "FoxSu",
@@ -249,216 +260,45 @@ internal fun AgCustomization(
                 )
             }
 
-            // ══════════ 内核元模块入口 ══════════
-            if (onOpenBuiltin != null) {
-                AgGHead("内核元模块")
-                AgCard(contentPadding = androidx.compose.foundation.layout.PaddingValues(14.dp)) {
-                    Row(
-                        Modifier.fillMaxWidth().agClick(onClick = onOpenBuiltin),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Box(
-                            Modifier
-                                .size(44.dp)
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(Ag.Grad),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                AgEngineIcons.Mount,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(22.dp),
-                            )
-                        }
-                        Spacer(Modifier.width(12.dp))
-                        Column(Modifier.weight(1f)) {
-                            Text("内置模块", fontSize = 14.5.sp, fontWeight = FontWeight.Bold, color = Ag.Tx)
-                            Spacer(Modifier.height(3.dp))
-                            Text(
-                                "三颗随包模块 · 安装、启停、打开模块界面",
-                                fontSize = 11.sp,
-                                color = Ag.Tx3,
-                                maxLines = 1,
-                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                            )
-                        }
-                        Text("›", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Ag.Chev)
-                    }
-                }
-            }
-
-            // ══════════ 支持 FoxSu ══════════
-            if (onOpenDonate != null) {
-                AgGHead("支持 FoxSu")
-                AgCard(contentPadding = androidx.compose.foundation.layout.PaddingValues(14.dp)) {
-                    Row(
-                        Modifier.fillMaxWidth().agClick(onClick = onOpenDonate),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Box(
-                            Modifier
-                                .size(44.dp)
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(Ag.Grad),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                Icons.Rounded.Favorite,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(21.dp),
-                            )
-                        }
-                        Spacer(Modifier.width(12.dp))
-                        Column(Modifier.weight(1f)) {
-                            Text("捐赠与鸣谢", fontSize = 14.5.sp, fontWeight = FontWeight.Bold, color = Ag.Tx)
-                            Spacer(Modifier.height(3.dp))
-                            Text(
-                                "免费开源 · 支付通道接入中",
-                                fontSize = 11.sp,
-                                color = Ag.Tx3,
-                                maxLines = 1,
-                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                            )
-                        }
-                        Text("›", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Ag.Chev)
-                    }
-                }
-            }
-
-            // ══════════ 特效 ══════════
-            AgGHead("特效")
-            AgCard {
-                AgSubLabel("动效强度")
-                // 三档：关 / 克制 / 全开。统一管粒子边、3D 触摸倾斜、底栏点击涟漪
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Ag.Vio.copy(alpha = 0.06f))
-                        .border(1.dp, Ag.Line, RoundedCornerShape(12.dp))
-                        .padding(3.dp),
-                    horizontalArrangement = Arrangement.spacedBy(3.dp),
-                ) {
-                    listOf("关闭", "克制", "全开").forEachIndexed { i, label ->
-                        val on = custom.fxLevel == i
-                        Box(
-                            Modifier
-                                .weight(1f)
-                                .height(34.dp)
-                                .clip(RoundedCornerShape(9.dp))
-                                .then(
-                                    if (on) Modifier.background(Ag.Grad)
-                                    else Modifier
-                                )
-                                .agClick(onClick = {
-                                    CustomizationStore.setFxLevel(i)
-                                }),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text(
-                                label,
-                                fontSize = 12.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (on) Color.White else Ag.Tx2,
-                            )
-                        }
-                    }
-                }
-                Spacer(Modifier.height(9.dp))
-                Text(
-                    when (custom.fxLevel) {
-                        0 -> "全部动效关闭：卡片不再流动粒子、不再 3D 倾斜。最省电，老机型建议选它。下面的背景特效与底栏特效各有独立开关，不受这里影响。"
-                        1 -> "克制档：粒子颗粒减半、流速放慢，3D 倾斜角度限制在 ±6°，日常够看又不打扰。"
-                        else -> "全开：卡片外轮廓彩色粒子边 + 触摸 3D 透视倾斜，全部启用。底栏特效在下面的入口里单独选。"
-                    },
-                    fontSize = 11.5.sp, lineHeight = 17.sp, color = Ag.Tx2,
-                )
-                Spacer(Modifier.height(12.dp))
-                // 背景特效：一个总开关 + 一个 21 套的选择器。
-                // 猫爪也进了这个选择器（第 1 项），因为它和 20 套背景特效抢的是同一个槽位——
-                // 同一时刻主页只需要一种氛围，分成两个开关只会让人以为「我关了一个怎么还有」。
-                AgToggleRow(
-                    "背景特效",
-                    if (custom.bgFxOn) {
-                        "当前：" + if (custom.bgFxStyle == 0) {
-                            "猫爪氛围（主页、捐赠页与这张头卡同时生效）"
-                        } else {
-                            "第 ${custom.bgFxStyle} 套 · ${me.weishu.kernelsu.ui.component.ambient.FX_NAMES[custom.bgFxStyle - 1]}"
-                        } + "，点下面一行可以换"
-                    } else {
-                        "已关闭。选择仍会记住，重新打开立刻恢复；关闭后主页不再逐帧重绘这一层，最省电"
-                    },
-                    Ag.Mag, AgSettingsIcons.Paw,
-                    trailing = {
-                        AgToggle(checked = custom.bgFxOn, onCheckedChange = {
-                            CustomizationStore.setBgFxOn(!custom.bgFxOn)
-                        }, small = true)
-                    },
-                    divider = true,
-                )
-                AgRow(
-                    "背景特效 · 21 套",
-                    if (custom.bgFxStyle == 0) {
-                        "猫爪氛围 + 20 套整屏特效：呼吸光斑 / 极光流带 / 雨滴下落 / 粒子涡旋… 每套都有实时预览"
-                    } else {
-                        "第 ${custom.bgFxStyle} 套 · ${me.weishu.kernelsu.ui.component.ambient.FX_NAMES[custom.bgFxStyle - 1]}，点进去可以换"
-                    },
-                    Ag.Mag, AgSettingsIcons.Style,
-                    showChev = true,
-                    divider = false,
-                    onClick = { navigator.push(Route.BgFx) },
-                )
-                AgToggleRow(
-                    "卡片 3D 触摸倾斜",
-                    "手指按住大卡片时跟着触摸点做透视倾斜，松手弹回",
-                    Ag.Mag, AgSettingsIcons.Blur,
-                    trailing = {
-                        AgToggle(
-                            checked = custom.fxLevel > 0,
-                            onCheckedChange = {
-                                CustomizationStore.setFxLevel(if (custom.fxLevel > 0) 0 else 2)
-                            },
-                            small = true,
+            // ══════════ 快捷入口 ══════════
+            // 两件事都不是「定制项」，是同一条走道尽头的两扇门，合并成一张卡就够。
+            if (onOpenBuiltin != null || onOpenDonate != null) {
+                AgGHead("快捷入口")
+                AgCard(contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 2.dp)) {
+                    if (onOpenBuiltin != null) {
+                        AgRow(
+                            "内置模块",
+                            "三颗随包模块 · 安装、启停、打开模块界面",
+                            Ag.Vio, AgEngineIcons.Mount,
+                            showChev = true,
+                            divider = onOpenDonate != null,
+                            onClick = onOpenBuiltin,
                         )
-                    },
-                    divider = true,
-                )
-                // 40 套选择器：栏内与外圈各自单选、可叠加，所以单独开一页
-                AgRow(
-                    "底栏特效 · 40 套",
-                    if (custom.dockFxInner == 0 && custom.dockFxRing == 0) {
-                        "当前未启用。栏内 20 套管图标，外圈 20 套管边框，每套都有实时预览"
-                    } else {
-                        "栏内第 ${custom.dockFxInner} 套 · 外圈第 ${custom.dockFxRing} 套，点进去可以换"
-                    },
-                    Ag.Mag, AgSettingsIcons.Paw,
-                    showChev = true,
-                    divider = false,
-                    onClick = { navigator.push(Route.DockFx) },
-                )
-                AgRow(
-                    "底栏图标 · 20 套",
-                    if (custom.dockIconPack == 0) {
-                        "当前为原生图标。20 套造型语言：建筑剖面 / 折纸 / 像素 / 印章 / 星轨…"
-                    } else {
-                        "第 ${custom.dockIconPack} 套 · ${me.weishu.kernelsu.ui.component.bottombar.DockIconPacks.packs[custom.dockIconPack - 1].name}，点进去可以换"
-                    },
-                    Ag.Mag, AgSettingsIcons.Style,
-                    showChev = true,
-                    divider = false,
-                    onClick = { navigator.push(Route.DockIcons) },
-                )
+                    }
+                    if (onOpenDonate != null) {
+                        AgRow(
+                            "捐赠与鸣谢",
+                            "免费开源 · 支付通道接入中",
+                            Ag.Mag, Icons.Rounded.Favorite,
+                            showChev = true,
+                            divider = false,
+                            onClick = onOpenDonate,
+                        )
+                    }
+                }
             }
 
-            // ══════════ 全局强调色 ══════════
-            // ══════════ 外观模式 ══════════
+            // ══════════ 主题 ══════════
+            // 明暗、底色、强调色是同一件事的三个旋钮：都只改「界面长什么样」，
+            // 而且互相有约束——底色决定取哪一版明暗，强调色不能被底色顺手改掉。
+            // 放在一个标题下，用户才看得懂这三张卡是一条链上的。
+            AgGHead("主题")
+
             // 原「主题设置」页（ColorPalette）只做两件事：明暗模式 + 强调色。
             // 强调色这里已经有了，模式补进来之后那个入口就能整体去掉——
             // 各皮肤不必再各留一个只能换深浅色的旧页面。
-            AgGHead("外观模式")
             AgCard {
+                AgSubLabel("明暗模式")
                 val modes = listOf(
                     0 to "跟随系统",
                     1 to "浅色",
@@ -507,9 +347,31 @@ internal fun AgCustomization(
                 Spacer(Modifier.height(4.dp))
             }
 
-            AgGHead("全局强调色")
+            // 20 套 Theme Kit 配色，每套自带亮 / 暗两版。选择器就摆在这张卡里，
+            // 一张卡左亮右暗并排——两版差别常常是「暖棕 vs 冷灰」而不是反色，
+            // 只画当前模式那一版，用户切到深色会以为换了一套主题。
             AgCard {
-                AgSubLabel("配色（取自 FoxSu logo 的七彩）")
+                AgSubLabel("背景色 · 20 套，每套自带亮色与暗色两版")
+                AgBgColorPicker(
+                    style = custom.bgColorTheme,
+                    onPick = { index ->
+                        if (index != CustomizationStore.current.bgColorTheme) {
+                            CustomizationStore.setBgColorTheme(index)
+                        }
+                    },
+                )
+                Spacer(Modifier.height(9.dp))
+                Text(
+                    "用哪一版由上面的外观模式决定：选深色就取这套的暗色版，选浅色取亮色版，" +
+                        "跟随系统时随系统走。只换画布、卡片、描边与正文，强调色仍归下面那七套——" +
+                        "两条选择器各管一半，换底色不会顺手把按钮颜色也改掉。\n" +
+                        "目前作用于默认皮肤（晨曦玻璃）与它的底栏；Fresh、玻璃、暗夜、杂志四套各有整套配色语言，暂不跟随。",
+                    fontSize = 11.sp, lineHeight = 16.sp, color = Ag.Tx3,
+                )
+            }
+
+            AgCard {
+                AgSubLabel("强调色 · 取自 FoxSu logo 的七彩")
                 var accentPicker by remember { mutableStateOf(false) }
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     repeat(AccentPalettes.size) { i ->
@@ -548,8 +410,59 @@ internal fun AgCustomization(
                 Spacer(Modifier.height(12.dp))
             }
 
-            // ══════════ 标题栏 ══════════
-            AgGHead("标题栏")
+            // ══════════ 文字与图标 ══════════
+            // 字体、标题、桌面图标：都只换「长相」不换行为，且互相独立，
+            // 放在一起是因为用户调完字体往往接着想改图标，来回翻页没必要。
+            AgGHead("文字与图标")
+
+            AgCard {
+                AgSubLabel("字体 · 系统默认 / 四套内置 / 可导入")
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                    item {
+                        // 系统默认：fontFamily = null 即回到平台字体（选了别的字体后靠它退回）
+                        AgFontChip("系统默认", "字A", null, custom.fontStyle == 0) {
+                            CustomizationStore.setFontStyle(0)
+                        }
+                    }
+                    item {
+                        AgFontChip("思源宋体", "字A", FontFamily(Font(R.font.noto_serif_sc)), custom.fontStyle == 1) {
+                            CustomizationStore.setFontStyle(1)
+                        }
+                    }
+                    item {
+                        AgFontChip("等宽字体", "字A", FontFamily(Font(R.font.jetbrains_mono)), custom.fontStyle == 2) {
+                            CustomizationStore.setFontStyle(2)
+                        }
+                    }
+                    item {
+                        AgFontChip("霞鹜文楷", "字A", FontFamily(Font(R.font.lxgw_wenkai)), custom.fontStyle == 3) {
+                            CustomizationStore.setFontStyle(3)
+                        }
+                    }
+                    if (custom.fontPath != null) {
+                        item {
+                            AgFontChip(
+                                "自定义", File(custom.fontPath).name.take(2),
+                                runCatching { FontFamily(Font(File(custom.fontPath))) }.getOrNull(),
+                                custom.fontStyle == 4,
+                            ) { CustomizationStore.setFontStyle(4) }
+                        }
+                    }
+                }
+                Spacer(Modifier.height(14.dp))
+                AgButton(
+                    primary = true,
+                    text = "导入字体文件",
+                    onClick = {
+                        fontPicker.launch(
+                            arrayOf("font/ttf", "font/otf", "application/x-font-ttf", "application/octet-stream")
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(6.dp))
+            }
+
             AgCard {
                 AgSubLabel("标题文字")
                 AgTitleField(
@@ -612,95 +525,41 @@ internal fun AgCustomization(
                 Spacer(Modifier.height(10.dp))
             }
 
-            // ══════════ 显示与效果 ══════════
-            AgGHead("显示与效果")
-            AgCard(contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 4.dp)) {
-                AgToggleRow(
-                    "模糊", "底栏实时采样身后内容做高斯模糊；其它皮肤的顶栏/底栏模糊也由它控制",
-                    Ag.Vio, AgSettingsIcons.Blur,
-                    trailing = {
-                        var on by remember { mutableStateOf(repo.enableBlur) }
-                        AgToggle(checked = on, onCheckedChange = {
-                            on = !on; settingsActions?.onSetEnableBlur?.invoke(on)
-                        }, small = true)
-                    },
+            AgCard {
+                AgSubLabel("启动器图标")
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                    LauncherIconManager.styles.forEach { style ->
+                        item {
+                            AgLauncherIconCard(
+                                style = style,
+                                selected = custom.launcherIcon == style.id,
+                            ) {
+                                CustomizationStore.setLauncherIcon(style.id)
+                                val ok = LauncherIconManager.apply(style.id)
+                                Toast.makeText(
+                                    context,
+                                    if (ok) "已切换到「${style.label}」，桌面若没变请回桌面再返回" else "桌面图标切换失败，请稍后重试",
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            }
+                        }
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "切换后桌面可能还显示旧图标，回桌面再进来即可刷新。",
+                    fontSize = 11.sp, lineHeight = 16.sp, color = Ag.Tx2,
                 )
-                AgToggleRow(
-                    "导航栏角标", "在导航栏显示已授权应用和已启用模块数量",
-                    Ag.Amber, AgSettingsIcons.Badge,
-                    trailing = {
-                        var on by remember { mutableStateOf(repo.enableNavigationBadge) }
-                        AgToggle(checked = on, onCheckedChange = {
-                            on = !on; settingsActions?.onSetEnableNavigationBadge?.invoke(on)
-                        }, small = true)
-                    },
-                )
-                AgSliderRow(
-                    label = "界面缩放",
-                    sub = "调整全局显示比例",
-                    value = repo.pageScale,
-                    range = 0.7f..1.3f,
-                    display = "${(repo.pageScale * 100).toInt()}%",
-                    onChange = { settingsActions?.onSetPageScale?.invoke(it) },
-                )
+                Spacer(Modifier.height(4.dp))
             }
 
-            // ══════════ 手势操作 ══════════
-            AgGHead("手势操作")
-            AgCard(contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 4.dp)) {
-                AgToggleRow(
-                    "预测性返回手势", "启用对预测性返回手势的支持",
-                    Ag.Vio, AgSettingsIcons.PredictiveBack,
-                    trailing = {
-                        var on by remember { mutableStateOf(repo.enablePredictiveBack) }
-                        AgToggle(checked = on, onCheckedChange = {
-                            on = !on; settingsActions?.onSetEnablePredictiveBack?.invoke(on)
-                        }, small = true)
-                    },
-                )
-                AgToggleRow(
-                    "横移返回手势", "从屏幕边缘横移返回上一页",
-                    Ag.Mag, AgSettingsIcons.SwipeBack,
-                    trailing = {
-                        var on by remember { mutableStateOf(repo.enableSwipeDismiss) }
-                        AgToggle(checked = on, onCheckedChange = {
-                            on = !on; settingsActions?.onSetEnableSwipeDismiss?.invoke(on)
-                        }, small = true)
-                    },
-                )
-                // 左右滑动切换 Tab 的总开关。
-                // 前三档是 miuix 的三套拦截策略，没有一档能真正关掉横滑；
-                // 所以第 4 档「关」是自己加的：页面与底栏同时不再响应横滑。
-                // 顺序固定为 0/1/2/3，不能重排——老用户存的是 0/1/2 的旧语义。
-                AgToggleRow(
-                    "滑动切换 Tab",
-                    when (repo.pagerInterceptionMode) {
-                        0 -> "原生 · 横滑交给系统判断，最轻，但长列表里偶尔要先停一下"
-                        1 -> "跨轴拦截 · 接管列表上的横滑，长列表也跟手（推荐）"
-                        2 -> "点击暂停 · 惯性滚动时点一下屏幕立刻停住，翻页走系统默认"
-                        else -> "关 · 页面和底栏都不响应横滑，只能点图标切换"
-                    },
-                    Ag.Teal, AgSettingsIcons.PagerGesture,
-                    trailing = {
-                        var mode by remember { mutableStateOf(repo.pagerInterceptionMode) }
-                        AgPick(
-                            text = when (mode) {
-                                0 -> "原生"; 1 -> "跨轴拦截"; 2 -> "点击暂停"; else -> "关"
-                            } + " ⇅",
-                            onClick = {
-                                // 0 → 1（跨轴，默认）→ 2（点击暂停）→ 3（关）→ 0
-                                val next = (mode + 1) % 4
-                                mode = next
-                                settingsActions?.onSetPagerInterceptionMode?.invoke(next)
-                            },
-                        )
-                    },
-                )
-            }
+            // ══════════ 主页 ══════════
+            // 壁纸铺底、特效浮在上面：一张卡管「底」，一张卡管「动」，
+            // 两者可以同时开，所以分成两张卡而不是硬塞成一张。
+            AgGHead("主页")
 
-            // ══════════ 背景壁纸 ══════════
-            AgGHead("背景壁纸")
             AgCard(contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 4.dp)) {
+                AgSubLabel("壁纸")
                 AgRow(
                     stringResource(R.string.customization_wallpaper_enable),
                     stringResource(R.string.customization_wallpaper_enable_sum),
@@ -732,89 +591,110 @@ internal fun AgCustomization(
                 }
             }
 
-            // ══════════ 字体 ══════════
-            AgGHead("字体")
             AgCard {
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-                    item {
-                        // 系统默认：fontFamily = null 即回到平台字体（选了别的字体后靠它退回）
-                        AgFontChip("系统默认", "字A", null, custom.fontStyle == 0) {
-                            CustomizationStore.setFontStyle(0)
-                        }
-                    }
-                    item {
-                        AgFontChip("思源宋体", "字A", FontFamily(Font(R.font.noto_serif_sc)), custom.fontStyle == 1) {
-                            CustomizationStore.setFontStyle(1)
-                        }
-                    }
-                    item {
-                        AgFontChip("等宽字体", "字A", FontFamily(Font(R.font.jetbrains_mono)), custom.fontStyle == 2) {
-                            CustomizationStore.setFontStyle(2)
-                        }
-                    }
-                    item {
-                        AgFontChip("霞鹜文楷", "字A", FontFamily(Font(R.font.lxgw_wenkai)), custom.fontStyle == 3) {
-                            CustomizationStore.setFontStyle(3)
-                        }
-                    }
-                    if (custom.fontPath != null) {
-                        item {
-                            AgFontChip(
-                                "自定义", File(custom.fontPath).name.take(2),
-                                runCatching { FontFamily(Font(File(custom.fontPath))) }.getOrNull(),
-                                custom.fontStyle == 4,
-                            ) { CustomizationStore.setFontStyle(4) }
-                        }
-                    }
-                }
-                Spacer(Modifier.height(14.dp))
-                AgButton(
-                    primary = true,
-                    text = "导入字体文件",
-                    onClick = {
-                        fontPicker.launch(
-                            arrayOf("font/ttf", "font/otf", "application/x-font-ttf", "application/octet-stream")
-                        )
+                // 背景特效：一个总开关 + 就地左右滑动的 21 套选择器。
+                // 猫爪也进了这个选择器（第 1 项），因为它和 20 套背景特效抢的是同一个槽位——
+                // 同一时刻主页只需要一种氛围，分成两个开关只会让人以为「我关了一个怎么还有」。
+                // 选择器不再进二级页：21 张缩略图排两列时，用户得先记住「第 7 套长什么样」
+                // 再退回主页比对；滑动的每一页就是整屏真实比例，滑一下就换一套。
+                AgToggleRow(
+                    "背景特效",
+                    if (custom.bgFxOn) {
+                        "整屏铺满：主页、捐赠页与上面这张头卡同时显示选中的那一套，下面左右滑动即可更换"
+                    } else {
+                        "已关闭。选择仍会记住，重新打开立刻恢复；关闭后主页不再逐帧重绘这一层，最省电"
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    Ag.Mag, AgSettingsIcons.Paw,
+                    trailing = {
+                        AgToggle(checked = custom.bgFxOn, onCheckedChange = {
+                            CustomizationStore.setBgFxOn(!custom.bgFxOn)
+                        }, small = true)
+                    },
+                    divider = true,
                 )
+                Spacer(Modifier.height(14.dp))
+                AgSubLabel("特效展示 · 左右滑动切换")
+                AgBgFxPicker(
+                    style = custom.bgFxStyle,
+                    onPick = { index ->
+                        // Pager 落定即写：滑到哪套就是哪套，不必再点一次确认。
+                        // 总开关关着时只改选择、不强行打开——用户可能只是在挑，还没决定用。
+                        if (index != CustomizationStore.current.bgFxStyle) {
+                            CustomizationStore.setBgFxStyle(index)
+                        }
+                    },
+                )
+                if (!custom.bgFxOn) {
+                    Spacer(Modifier.height(9.dp))
+                    Text(
+                        "背景特效已关闭，上面只是预览。打开开关后这一套才会铺到主页上。",
+                        fontSize = 11.sp, lineHeight = 16.sp, color = Ag.Tx3,
+                    )
+                }
                 Spacer(Modifier.height(6.dp))
+
             }
 
-            // ══════════ 应用图标 ══════════
-            AgGHead("应用图标")
+            // ══════════ 动效 ══════════
+            // 三档统一控制「粒子多少 + 3D 倾斜角度」，不再为 3D 单开一个开关——
+            // 同一个值挂两个控件，关掉一个另一个还亮着，最容易让人以为设置没生效。
+            AgGHead("动效")
+
             AgCard {
-                AgSubLabel("启动器图标")
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-                    LauncherIconManager.styles.forEach { style ->
-                        item {
-                            AgLauncherIconCard(
-                                style = style,
-                                selected = custom.launcherIcon == style.id,
-                            ) {
-                                CustomizationStore.setLauncherIcon(style.id)
-                                val ok = LauncherIconManager.apply(style.id)
-                                Toast.makeText(
-                                    context,
-                                    if (ok) "已切换到「${style.label}」，桌面若没变请回桌面再返回" else "桌面图标切换失败，请稍后重试",
-                                    Toast.LENGTH_SHORT,
-                                ).show()
-                            }
+                AgSubLabel("动效强度")
+                // 三档：关 / 克制 / 全开。统一管粒子边、3D 触摸倾斜、底栏点击涟漪
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Ag.Vio.copy(alpha = 0.06f))
+                        .border(1.dp, Ag.Line, RoundedCornerShape(12.dp))
+                        .padding(3.dp),
+                    horizontalArrangement = Arrangement.spacedBy(3.dp),
+                ) {
+                    listOf("关闭", "克制", "全开").forEachIndexed { i, label ->
+                        val on = custom.fxLevel == i
+                        Box(
+                            Modifier
+                                .weight(1f)
+                                .height(34.dp)
+                                .clip(RoundedCornerShape(9.dp))
+                                .then(
+                                    if (on) Modifier.background(Ag.Grad)
+                                    else Modifier
+                                )
+                                .agClick(onClick = {
+                                    CustomizationStore.setFxLevel(i)
+                                }),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                label,
+                                fontSize = 12.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (on) Color.White else Ag.Tx2,
+                            )
                         }
                     }
                 }
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(9.dp))
                 Text(
-                    "切换后桌面可能还显示旧图标，回桌面再进来即可刷新。",
-                    fontSize = 11.sp, lineHeight = 16.sp, color = Ag.Tx2,
+                    when (custom.fxLevel) {
+                        0 -> "全部动效关闭：卡片不再流动粒子、触摸也不再 3D 倾斜。最省电，老机型建议选它。主页背景与底栏特效各有独立开关，不受这里影响。"
+                        1 -> "克制档：粒子颗粒减半、流速放慢，3D 倾斜角度限制在 ±6°，日常够看又不打扰。"
+                        else -> "全开：卡片外轮廓彩色粒子边 + 触摸 3D 透视倾斜，全部启用。3D 倾斜也归这一档管，不另设开关。"
+                    },
+                    fontSize = 11.5.sp, lineHeight = 17.sp, color = Ag.Tx2,
                 )
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(12.dp))
+
             }
 
             // ══════════ 底部导航栏 ══════════
             AgGHead("底部导航栏")
             AgCard {
-                // ① 形态：胶囊 / 传统底栏
+                // ── 形态：悬浮胶囊还是贴底通栏 ──
+                AgSubLabel("形态")
                 AgToggleRow(
                     "传统底栏",
                     "关：悬浮胶囊（默认）　开：贴底通栏传统底栏",
@@ -825,7 +705,7 @@ internal fun AgCustomization(
                         }, small = true)
                     },
                 )
-                // ①b 传统底栏的结构：只在通栏形态下有意义，胶囊形态下藏起来，
+                // 结构只在通栏形态下有意义，胶囊形态下藏起来，
                 // 免得出现「选了结构却看不到任何变化」。
                 if (custom.classicDock) {
                     Spacer(Modifier.height(10.dp))
@@ -861,96 +741,6 @@ internal fun AgCustomization(
                         modifier = Modifier.padding(start = 2.dp, bottom = 14.dp),
                     )
                 }
-                // ② 水滴指示器（默认关）
-                AgToggleRow(
-                    "水滴流动指示器",
-                    if (custom.dockWaterDrop) {
-                        "切 Tab 时色块前缘先行、后缘慢半拍，拉长压扁后带回弹停稳（约 400ms）"
-                    } else {
-                        "开启后选中色块像水滴流到新的 Tab，带拉长、压扁与回弹（约 400ms）"
-                    },
-                    Ag.Mag, AgSettingsIcons.WaterDrop,
-                    trailing = {
-                        AgToggle(checked = custom.dockWaterDrop, onCheckedChange = {
-                            CustomizationStore.setDockWaterDrop(!custom.dockWaterDrop)
-                        }, small = true)
-                    },
-                )
-                // ②b 页面轻推（独立开关，默认开）
-                AgToggleRow(
-                    "页面轻推动效",
-                    if (custom.dockPagePush) {
-                        "切 Tab 时新页面沿切换方向推入并淡入，与色块到位同一拍"
-                    } else {
-                        "开启后切 Tab 时页面从切换方向滑进来，给切换一点空间感"
-                    },
-                    Ag.Vio, AgSettingsIcons.PagerGesture,
-                    trailing = {
-                        AgToggle(checked = custom.dockPagePush, onCheckedChange = {
-                            CustomizationStore.setDockPagePush(!custom.dockPagePush)
-                        }, small = true)
-                    },
-                )
-                // ③ 读秒自动收起
-                AgToggleRow(
-                    "读秒自动收起",
-                    if (custom.dockAutoHide > 0) {
-                        "${custom.dockAutoHide} 秒无操作后胶囊沉到屏幕下方，点一下屏幕滑回来"
-                    } else {
-                        "开启后倒计时结束，胶囊自动收到屏幕下方；点任意位置带弹跳滑回"
-                    },
-                    Ag.Teal, AgSettingsIcons.Blur,
-                    trailing = {
-                        // 注意：AgToggle 不回传新值，这里必须自己取反（之前写成 >0 → 8 / 0，
-                        // 关闭态点它永远算出 0，于是「读秒自动收起」根本打不开）
-                        AgToggle(checked = custom.dockAutoHide > 0, onCheckedChange = {
-                            CustomizationStore.setDockAutoHide(if (custom.dockAutoHide > 0) 0 else 8)
-                        }, small = true)
-                    },
-                )
-                if (custom.dockAutoHide > 0) {
-                    AgSliderRow(
-                        label = "收起秒数",
-                        sub = "3–30 秒；任何触摸或切换页面都会把读秒重置",
-                        value = custom.dockAutoHide.toFloat(),
-                        range = 3f..30f,
-                        display = "${custom.dockAutoHide} 秒",
-                        steps = 26,
-                        onChange = { CustomizationStore.setDockAutoHide(it.toInt()) },
-                    )
-                }
-                Spacer(Modifier.height(16.dp))
-                AgSubLabel("按钮形状 · ${DockButton.all.size} 套")
-                // 横向滑动选择器：和下方胶囊样式选择器同一套交互——一屏 4 张、
-                // 其余手指滑出来，选中项自动滚到可见位置，不再铺成两行 5 列
-                val shapeScreenW = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp.dp
-                val shapeCardW = ((shapeScreenW - 36.dp - 16.dp - 18.dp) / 4).coerceAtLeast(62.dp)
-                val shapeListState = androidx.compose.foundation.lazy.rememberLazyListState()
-                androidx.compose.runtime.LaunchedEffect(custom.dockButton) {
-                    val target = (custom.dockButton - 1).coerceIn(0, (DockButton.all.size - 4).coerceAtLeast(0))
-                    shapeListState.animateScrollToItem(target)
-                }
-                androidx.compose.foundation.lazy.LazyRow(
-                    state = shapeListState,
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 2.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    items(DockButton.all.size) { i ->
-                        val btn = DockButton.all[i]
-                        AgButtonShapeCard(
-                            button = btn,
-                            selected = custom.dockButton == btn.ordinal,
-                            modifier = Modifier.width(shapeCardW),
-                        ) { CustomizationStore.setDockButton(btn.ordinal) }
-                    }
-                }
-                Spacer(Modifier.height(7.dp))
-                Text(
-                    DockButton.of(custom.dockButton).hint + "　·　左右滑动查看全部",
-                    fontSize = 11.sp, color = Ag.Tx2,
-                    modifier = Modifier.padding(start = 2.dp, bottom = 14.dp),
-                )
                 AgSubLabel("胶囊样式 · ${dockStyles.size} 套")
                 // 横向滑动选择器：一屏 4 张小卡，其余的手指滑出来
                 val screenW = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp.dp
@@ -1036,16 +826,125 @@ internal fun AgCustomization(
                         modifier = Modifier.padding(start = 2.dp, bottom = 12.dp),
                     )
                 }
+                Spacer(Modifier.height(16.dp))
+                AgSubLabel("按钮形状 · ${DockButton.all.size} 套")
+                // 横向滑动选择器：和下方胶囊样式选择器同一套交互——一屏 4 张、
+                // 其余手指滑出来，选中项自动滚到可见位置，不再铺成两行 5 列
+                val shapeScreenW = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp.dp
+                val shapeCardW = ((shapeScreenW - 36.dp - 16.dp - 18.dp) / 4).coerceAtLeast(62.dp)
+                val shapeListState = androidx.compose.foundation.lazy.rememberLazyListState()
+                androidx.compose.runtime.LaunchedEffect(custom.dockButton) {
+                    val target = (custom.dockButton - 1).coerceIn(0, (DockButton.all.size - 4).coerceAtLeast(0))
+                    shapeListState.animateScrollToItem(target)
+                }
+                androidx.compose.foundation.lazy.LazyRow(
+                    state = shapeListState,
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    items(DockButton.all.size) { i ->
+                        val btn = DockButton.all[i]
+                        AgButtonShapeCard(
+                            button = btn,
+                            selected = custom.dockButton == btn.ordinal,
+                            modifier = Modifier.width(shapeCardW),
+                        ) { CustomizationStore.setDockButton(btn.ordinal) }
+                    }
+                }
+                Spacer(Modifier.height(7.dp))
+                Text(
+                    DockButton.of(custom.dockButton).hint + "　·　左右滑动查看全部",
+                    fontSize = 11.sp, color = Ag.Tx2,
+                    modifier = Modifier.padding(start = 2.dp, bottom = 14.dp),
+                )
+                AgSubLabel("切换动效")
+                // 水滴指示器（默认关）
                 AgToggleRow(
-                    "Editorial 使用胶囊底栏",
-                    "关闭时 Editorial 主题保留原生纸面底栏（推荐：胶囊会打乱杂志版式）",
-                    Ag.Amber, AgSettingsIcons.FloatingBar,
+                    "水滴流动指示器",
+                    if (custom.dockWaterDrop) {
+                        "切 Tab 时色块前缘先行、后缘慢半拍，拉长压扁后带回弹停稳（约 400ms）"
+                    } else {
+                        "开启后选中色块像水滴流到新的 Tab，带拉长、压扁与回弹（约 400ms）"
+                    },
+                    Ag.Mag, AgSettingsIcons.WaterDrop,
                     trailing = {
-                        AgToggle(checked = custom.dockOnEditorial, onCheckedChange = {
-                            CustomizationStore.setDockOnEditorial(!custom.dockOnEditorial)
+                        AgToggle(checked = custom.dockWaterDrop, onCheckedChange = {
+                            CustomizationStore.setDockWaterDrop(!custom.dockWaterDrop)
                         }, small = true)
                     },
                 )
+                // 页面轻推（独立开关，默认开）
+                AgToggleRow(
+                    "页面轻推动效",
+                    if (custom.dockPagePush) {
+                        "切 Tab 时新页面沿切换方向推入并淡入，与色块到位同一拍"
+                    } else {
+                        "开启后切 Tab 时页面从切换方向滑进来，给切换一点空间感"
+                    },
+                    Ag.Vio, AgSettingsIcons.PagerGesture,
+                    trailing = {
+                        AgToggle(checked = custom.dockPagePush, onCheckedChange = {
+                            CustomizationStore.setDockPagePush(!custom.dockPagePush)
+                        }, small = true)
+                    },
+                )
+                // 读秒自动收起
+                AgToggleRow(
+                    "读秒自动收起",
+                    if (custom.dockAutoHide > 0) {
+                        "${custom.dockAutoHide} 秒无操作后胶囊沉到屏幕下方，点一下屏幕滑回来"
+                    } else {
+                        "开启后倒计时结束，胶囊自动收到屏幕下方；点任意位置带弹跳滑回"
+                    },
+                    Ag.Teal, AgSettingsIcons.Blur,
+                    trailing = {
+                        // 注意：AgToggle 不回传新值，这里必须自己取反（之前写成 >0 → 8 / 0，
+                        // 关闭态点它永远算出 0，于是「读秒自动收起」根本打不开）
+                        AgToggle(checked = custom.dockAutoHide > 0, onCheckedChange = {
+                            CustomizationStore.setDockAutoHide(if (custom.dockAutoHide > 0) 0 else 8)
+                        }, small = true)
+                    },
+                )
+                if (custom.dockAutoHide > 0) {
+                    AgSliderRow(
+                        label = "收起秒数",
+                        sub = "3–30 秒；任何触摸或切换页面都会把读秒重置",
+                        value = custom.dockAutoHide.toFloat(),
+                        range = 3f..30f,
+                        display = "${custom.dockAutoHide} 秒",
+                        steps = 26,
+                        onChange = { CustomizationStore.setDockAutoHide(it.toInt()) },
+                    )
+                }
+                AgSubLabel("栏上特效 · 栏内 / 外圈可叠加")
+                // 40 套选择器：栏内与外圈各自单选、可叠加，所以单独开一页
+                AgRow(
+                    "底栏特效 · 40 套",
+                    if (custom.dockFxInner == 0 && custom.dockFxRing == 0) {
+                        "当前未启用。栏内 20 套管图标，外圈 20 套管边框，每套都有实时预览"
+                    } else {
+                        "栏内第 ${custom.dockFxInner} 套 · 外圈第 ${custom.dockFxRing} 套，点进去可以换"
+                    },
+                    Ag.Mag, AgSettingsIcons.Paw,
+                    showChev = true,
+                    divider = true,
+                    onClick = { navigator.push(Route.DockFx) },
+                )
+                AgRow(
+                    "底栏图标 · 20 套",
+                    if (custom.dockIconPack == 0) {
+                        "当前为原生图标。20 套造型语言：建筑剖面 / 折纸 / 像素 / 印章 / 星轨…"
+                    } else {
+                        "第 ${custom.dockIconPack} 套 · ${me.weishu.kernelsu.ui.component.bottombar.DockIconPacks.packs[custom.dockIconPack - 1].name}，点进去可以换"
+                    },
+                    Ag.Mag, AgSettingsIcons.Style,
+                    showChev = true,
+                    divider = false,
+                    onClick = { navigator.push(Route.DockIcons) },
+                )
+                Spacer(Modifier.height(2.dp))
+                AgSubLabel("材质与尺寸")
                 AgToggleRow(
                     "沉浸浅感", "通透半透明底：更透彻并带玻璃质感高光",
                     Ag.Teal, AgSettingsIcons.FloatingBar,
@@ -1064,15 +963,6 @@ internal fun AgCustomization(
                         }, small = true)
                     },
                 )
-                AgToggleRow(
-                    "七彩底栏图标", "给底栏每个图标一套随机彩色",
-                    Ag.Mag, Icons.Rounded.Palette,
-                    trailing = {
-                        AgToggle(checked = custom.navRainbow, onCheckedChange = {
-                            CustomizationStore.setNavRainbow(!custom.navRainbow)
-                        }, small = true)
-                    },
-                )
                 AgSliderRow(
                     label = "底栏不透明度",
                     value = custom.bottomBarAlpha,
@@ -1087,11 +977,118 @@ internal fun AgCustomization(
                     display = "${custom.bottomBarRadius.toInt()}px",
                     onChange = CustomizationStore::setBottomBarRadius,
                 )
+                AgSubLabel("其它")
+                AgToggleRow(
+                    "Editorial 使用胶囊底栏",
+                    "关闭时 Editorial 主题保留原生纸面底栏（推荐：胶囊会打乱杂志版式）",
+                    Ag.Amber, AgSettingsIcons.FloatingBar,
+                    trailing = {
+                        AgToggle(checked = custom.dockOnEditorial, onCheckedChange = {
+                            CustomizationStore.setDockOnEditorial(!custom.dockOnEditorial)
+                        }, small = true)
+                    },
+                )
+                AgToggleRow(
+                    "七彩底栏图标", "给底栏每个图标一套随机彩色",
+                    Ag.Mag, Icons.Rounded.Palette,
+                    trailing = {
+                        AgToggle(checked = custom.navRainbow, onCheckedChange = {
+                            CustomizationStore.setNavRainbow(!custom.navRainbow)
+                        }, small = true)
+                    },
+                )
             }
 
-            // ══════════ 内容显示 ══════════
-            AgGHead("内容显示")
+            // ══════════ 显示与交互 ══════════
+            // 三张卡都属于「不只是好看、会改变手感」的设置：显示比例、手势、列表密度。
+            AgGHead("显示与交互")
+
             AgCard(contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 4.dp)) {
+                AgSubLabel("显示")
+                AgToggleRow(
+                    "模糊", "底栏实时采样身后内容做高斯模糊；其它皮肤的顶栏/底栏模糊也由它控制",
+                    Ag.Vio, AgSettingsIcons.Blur,
+                    trailing = {
+                        var on by remember { mutableStateOf(repo.enableBlur) }
+                        AgToggle(checked = on, onCheckedChange = {
+                            on = !on; settingsActions?.onSetEnableBlur?.invoke(on)
+                        }, small = true)
+                    },
+                )
+                AgToggleRow(
+                    "导航栏角标", "在导航栏显示已授权应用和已启用模块数量",
+                    Ag.Amber, AgSettingsIcons.Badge,
+                    trailing = {
+                        var on by remember { mutableStateOf(repo.enableNavigationBadge) }
+                        AgToggle(checked = on, onCheckedChange = {
+                            on = !on; settingsActions?.onSetEnableNavigationBadge?.invoke(on)
+                        }, small = true)
+                    },
+                )
+                AgSliderRow(
+                    label = "界面缩放",
+                    sub = "调整全局显示比例",
+                    value = repo.pageScale,
+                    range = 0.7f..1.3f,
+                    display = "${(repo.pageScale * 100).toInt()}%",
+                    onChange = { settingsActions?.onSetPageScale?.invoke(it) },
+                )
+            }
+
+            AgCard(contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 4.dp)) {
+                AgSubLabel("手势")
+                AgToggleRow(
+                    "预测性返回手势", "启用对预测性返回手势的支持",
+                    Ag.Vio, AgSettingsIcons.PredictiveBack,
+                    trailing = {
+                        var on by remember { mutableStateOf(repo.enablePredictiveBack) }
+                        AgToggle(checked = on, onCheckedChange = {
+                            on = !on; settingsActions?.onSetEnablePredictiveBack?.invoke(on)
+                        }, small = true)
+                    },
+                )
+                AgToggleRow(
+                    "横移返回手势", "从屏幕边缘横移返回上一页",
+                    Ag.Mag, AgSettingsIcons.SwipeBack,
+                    trailing = {
+                        var on by remember { mutableStateOf(repo.enableSwipeDismiss) }
+                        AgToggle(checked = on, onCheckedChange = {
+                            on = !on; settingsActions?.onSetEnableSwipeDismiss?.invoke(on)
+                        }, small = true)
+                    },
+                )
+                // 左右滑动切换 Tab 的总开关。
+                // 前三档是 miuix 的三套拦截策略，没有一档能真正关掉横滑；
+                // 所以第 4 档「关」是自己加的：页面与底栏同时不再响应横滑。
+                // 顺序固定为 0/1/2/3，不能重排——老用户存的是 0/1/2 的旧语义。
+                AgToggleRow(
+                    "滑动切换 Tab",
+                    when (repo.pagerInterceptionMode) {
+                        0 -> "原生 · 横滑交给系统判断，最轻，但长列表里偶尔要先停一下"
+                        1 -> "跨轴拦截 · 接管列表上的横滑，长列表也跟手（推荐）"
+                        2 -> "点击暂停 · 惯性滚动时点一下屏幕立刻停住，翻页走系统默认"
+                        else -> "关 · 页面和底栏都不响应横滑，只能点图标切换"
+                    },
+                    Ag.Teal, AgSettingsIcons.PagerGesture,
+                    trailing = {
+                        var mode by remember { mutableStateOf(repo.pagerInterceptionMode) }
+                        AgPick(
+                            text = when (mode) {
+                                0 -> "原生"; 1 -> "跨轴拦截"; 2 -> "点击暂停"; else -> "关"
+                            } + " ⇅",
+                            onClick = {
+                                // 0 → 1（跨轴，默认）→ 2（点击暂停）→ 3（关）→ 0
+                                val next = (mode + 1) % 4
+                                mode = next
+                                settingsActions?.onSetPagerInterceptionMode?.invoke(next)
+                            },
+                        )
+                    },
+                )
+            }
+
+            AgCard(contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 4.dp)) {
+                AgSubLabel("模块列表")
                 AgSliderRow(
                     label = "模块描述最大行数",
                     sub = "超过此行数的模块介绍将自动折叠，点击卡片可展开全文",
@@ -1214,6 +1211,7 @@ internal fun AgCustomization(
                     },
                 )
             }
+
             Spacer(Modifier.height(140.dp))
             }
         }

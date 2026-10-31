@@ -23,7 +23,7 @@
 
 ## What is FoxSu
 
-FoxSu is a fork of [KernelSU](https://github.com/tiann/KernelSU). Root stays in the kernel — `su`, the allowlist, app profiles, module mounting and sucompat all come from the kernel module and `ksud`. What changed is the manager: new package name (`com.foxsu.manager`), rewritten screens and install flow, plus five skins, 21 dock styles, 40 dock effects, 20 dock icon sets and 21 home background effects on top.
+FoxSu is a fork of [KernelSU](https://github.com/tiann/KernelSU). Root stays in the kernel — `su`, the allowlist, app profiles, module mounting and sucompat all come from the kernel module and `ksud`. What changed is the manager: new package name (`com.foxsu.manager`), rewritten screens and install flow, plus five skins, 21 dock styles, 40 dock effects, 20 dock icon sets, 21 home background effects and 20 background colourways on top.
 
 > Root in the kernel, experience in the manager.
 
@@ -95,7 +95,7 @@ Only the shape changes; colouring still follows the accent colour and selection 
 
 ### Ambience and motion
 
-- **21 background effects**: `Paw ambience` plus 20 full-screen effects, mutually exclusive, one master switch. Drawn above content but never taking pointer events, so taps pass through
+- **21 background effects**: `Paw ambience` plus 20 full-screen effects, mutually exclusive, one master switch. Drawn full-screen above content (same coverage as the paws) but never taking pointer events, so taps pass through. The picker sits right under the switch — swipe left and right to change, no second-level page
 - **The 20**: breathing glows · drifting dust · aurora bands · ripples · soft grid · diagonal sweep · atmospheric fog · constellation · liquid gradient · rain · sparkles · orbit rings · colour drift · sonar · falling petals · slow stripes · parallax glows · vertical breathing · particle vortex · dawn glow
 - **Paw ambience**: cat paws, small hearts and four-point stars drift up from the bottom of the screen on the home screen, the donate page and the customisation header card; it sits first in the same picker
 - **Motion level**: `Off` / `Restrained` / `Full`, controlling card particle edges, 3D touch tilt and dock tap ripples together
@@ -109,6 +109,7 @@ Every option is wired to real settings and applies immediately, no restart:
 - **Wallpaper**: pick, crop, zoom, dim; the global background can be disabled
 - **Card artwork**: separate pictures for the hero card, the stat cards and each module card, with per-item opacity
 - **Card colours**: a global tint plus per-card overrides, independent opacity, one-tap rainbow cards
+- **Background colour**: 20 colourways, each with its own light and dark version (the dark one is re-graded, not inverted). The picker sits inline — swipe left and right, every card shows light and dark side by side. Only canvas, cards, outlines and body text change; the accent colour stays with the seven palettes below
 - **Fonts**: system default, Noto Serif SC, JetBrains Mono, LXGW WenKai, or your own font file
 - **Title**: custom home title text and colour
 - **Launcher icon**: five fox faces plus the original KernelSU icon, following light/dark mode

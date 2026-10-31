@@ -67,11 +67,6 @@ sealed interface Route : NavKey, Parcelable {
     @Serializable
     data object DockIcons : Route
 
-    /** 主页背景特效选择器：猫爪 + 20 套整屏特效，互斥单选。 */
-    @Parcelize
-    @Serializable
-    data object BgFx : Route
-
     @Parcelize
     @Serializable
     data object Sulog : Route

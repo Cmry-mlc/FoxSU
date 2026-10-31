@@ -184,9 +184,11 @@ private fun AgModuleCard(
             )
         )
     } else {
-        // 停用卡要比页面底(Ag.Bg1)深一档：去掉黑色蒙版之后，同色会让卡片边界消失
+        // 停用卡要比页面底(Ag.Bg1)深一档：去掉黑色蒙版之后，同色会让卡片边界消失。
+        // 选了背景色主题时取那套的次级面板色，否则暖米底上会嵌一块冷灰
         androidx.compose.ui.graphics.SolidColor(
-            if (dark) Color(0xFF1E1D30) else Color(0xFFF1F0F6)
+            me.weishu.kernelsu.ui.theme.currentBgPalette(dark)?.surface2
+                ?: if (dark) Color(0xFF1E1D30) else Color(0xFFF1F0F6)
         )
     }
 

@@ -95,6 +95,15 @@ data class Customization(
     val accentPalette: Int = 2,
     /** 自定义强调色（ARGB）；非 0 时覆盖 [accentPalette]。 */
     val accentCustom: Int = 0,
+    /**
+     * 背景色主题：0 = 皮肤自带配色，1..20 对应
+     * [me.weishu.kernelsu.ui.theme.BgThemes]（Theme Kit v1.0 的 20 套，每套自带亮暗两版）。
+     *
+     * 和 [accentPalette] 是两条正交的轴：这里只换画布、卡片、描边、正文与柔光，
+     * 强调色仍由 [accentPalette] / [accentCustom] 决定。用哪一版（亮/暗）
+     * 取决于外观模式，不单独存。
+     */
+    val bgColorTheme: Int = 0,
     /** 侧边胶囊停靠：0 = 左侧（默认），1 = 右侧。 */
     val dockSide: Int = 0,
     /**
@@ -271,6 +280,7 @@ private const val KEY_DOCK_STYLE = "dock_style"
     private const val KEY_LAUNCHER_ICON = "launcher_icon"
     private const val KEY_ACCENT_PALETTE = "accent_palette"
     private const val KEY_ACCENT_CUSTOM = "accent_custom"
+    private const val KEY_BG_COLOR_THEME = "bg_color_theme"
     private const val KEY_DOCK_SIDE = "dock_side"
     private const val KEY_DOCK_BUTTON = "dock_button_style"
     private const val KEY_DOCK_AUTOHIDE = "dock_auto_hide"
@@ -380,6 +390,7 @@ private const val KEY_DOCK_STYLE = "dock_style"
             },
             accentPalette = getInt(KEY_ACCENT_PALETTE, 2),
             accentCustom = getInt(KEY_ACCENT_CUSTOM, 0),
+            bgColorTheme = getInt(KEY_BG_COLOR_THEME, 0).coerceIn(0, 20),
             dockSide = getInt(KEY_DOCK_SIDE, 0),
             dockButton = getInt(KEY_DOCK_BUTTON, 1).coerceIn(0, 9),
             dockAutoHide = getInt(KEY_DOCK_AUTOHIDE, 0).coerceIn(0, 60),
@@ -472,6 +483,9 @@ private const val KEY_DOCK_STYLE = "dock_style"
 
     /** 自定义强调色；传 0 表示回到当前预设配色。 */
     fun setAccentCustom(argb: Int) = update { it.copy(accentCustom = argb) }
+
+    /** 0 = 皮肤自带配色，1..20 = 背景色主题套号。 */
+    fun setBgColorTheme(index: Int) = update { it.copy(bgColorTheme = index.coerceIn(0, 20)) }
     /** 0 关闭 / 1 克制 / 2 全开 */
     fun setFxLevel(level: Int) = update { it.copy(fxLevel = level.coerceIn(0, 2)) }
     fun setDockSide(side: Int) = update { it.copy(dockSide = side.coerceIn(0, 1)) }
@@ -567,6 +581,7 @@ private const val KEY_DOCK_STYLE = "dock_style"
             putInt(KEY_LAUNCHER_ICON, next.launcherIcon)
             putInt(KEY_ACCENT_PALETTE, next.accentPalette)
             putInt(KEY_ACCENT_CUSTOM, next.accentCustom)
+            putInt(KEY_BG_COLOR_THEME, next.bgColorTheme)
             putInt(KEY_DOCK_SIDE, next.dockSide)
             putInt(KEY_DOCK_BUTTON, next.dockButton)
             putInt(KEY_DOCK_AUTOHIDE, next.dockAutoHide)

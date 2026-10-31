@@ -329,22 +329,6 @@ fun ThemeDockBar(
                 }
                 .clip(shape)
                 .border(1.dp, effBorder, shape)
-                // 底缘读秒条：走完即收起（贴着胶囊底部，不占布局）
-                .drawWithContent {
-                    drawContent()
-                    val left = countdown.value
-                    if (hideSec > 0 && left > 0.001f && left < 0.999f) {
-                        val h = 2.dp.toPx()
-                        // 左端固定、向右逐秒缩回：读秒走完正好从右往左收干净
-                        drawRect(
-                            brush = Brush.horizontalGradient(
-                                listOf(accent.primary, accent.mid, accent.secondary)
-                            ),
-                            topLeft = Offset(0f, size.height - h),
-                            size = Size(size.width * left, h),
-                        )
-                    }
-                }
                 .dockRingFx(
                     accent = accent.primary,
                     accent2 = accent.secondary,
@@ -850,16 +834,23 @@ object AgDockThemes {
     fun redesign(): DockTheme {
         val dark = me.weishu.kernelsu.ui.screen.ag.Ag.isDark
         val ac = me.weishu.kernelsu.ui.screen.ag.Ag.accent
+        // 选了背景色主题时，胶囊与衬底跟着那一套走：底栏悬在页面底部，
+        // 页面换了暖米色它还留一层冷白，会显得像另一块贴上去的板子
+        val pal = me.weishu.kernelsu.ui.theme.currentBgPalette(dark)
         return if (dark) DockTheme(
-            bg = Color(0xCC1C1B2E), border = Color(0x1FFFFFFF), shadow = Color(0x66000000),
-            selected = ac.primary, unselected = Color(0xFF8C89A6),
+            bg = pal?.surface?.copy(alpha = 0.90f) ?: Color(0xCC1C1B2E),
+            border = Color(0x1FFFFFFF), shadow = Color(0x66000000),
+            selected = ac.primary,
+            unselected = pal?.text2?.copy(alpha = 0.80f) ?: Color(0xFF8C89A6),
             selectedBg = ac.softDark, badge = ac.secondary, glass = false,
-            backdrop = Color(0xFF1A192E),
+            backdrop = pal?.bg ?: Color(0xFF1A192E),
         ) else DockTheme(
-            bg = Color(0xF2FFFFFF), border = Color(0x66FFFFFF), shadow = Color(0x2432286E),
-            selected = ac.primary, unselected = Color(0xFF8E8AA3),
+            bg = pal?.surface?.copy(alpha = 0.94f) ?: Color(0xF2FFFFFF),
+            border = Color(0x66FFFFFF), shadow = Color(0x2432286E),
+            selected = ac.primary,
+            unselected = pal?.text2?.copy(alpha = 0.80f) ?: Color(0xFF8E8AA3),
             selectedBg = ac.soft, badge = ac.secondary, glass = false,
-            backdrop = Color(0xFFF2F4FA),
+            backdrop = pal?.bg ?: Color(0xFFF2F4FA),
         )
     }
 

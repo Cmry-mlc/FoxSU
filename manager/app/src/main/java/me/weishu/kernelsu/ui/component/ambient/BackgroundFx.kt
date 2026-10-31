@@ -1,6 +1,7 @@
 package me.weishu.kernelsu.ui.component.ambient
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableLongStateOf
@@ -38,9 +39,13 @@ import kotlin.math.sin
  * - 猫爪那层是「前景浮尘」——十几枚小图标从底部升起，画在内容之上也看不出违和；
  * - 这一层是「整屏氛围」——光斑、极光、雨滴、涡旋，铺满后把整页染色。
  *
- * 所以两者的透明度策略不同：这里所有颜色都乘 [alphaScale]（默认 0.62），
+ * 所以两者的透明度策略不同：这里所有颜色都乘 [alphaScale]（默认 0.72），
  * 因为设计稿原本是垫在内容**下面**的，而在 FoxSu 里五套皮肤各自铺了不透明底色，
  * 垫在下面根本看不见，只能压在内容之上——那就必须让到「能看见但不干扰阅读」的强度。
+ *
+ * 铺满的方式和 [AmbientPawsLayer] 一致：画布自己 `fillMaxSize()`。
+ * 早先版本直接 `Canvas(modifier)`，调用方不传 modifier 时画布被量成 0×0，
+ * 主页上等于什么都没画——「背景特效只在缩略图里可见」就是这么来的。
  *
  * 时间线沿用 [AmbientPawsLayer] 的做法：一个 `withFrameNanos` 循环推进帧号，
  * 粒子数据全是普通对象、只有帧号是 State，每帧只失效 draw 阶段，不触发重组。
@@ -51,7 +56,7 @@ fun BackgroundFxLayer(
     style: Int,
     enabled: Boolean,
     modifier: Modifier = Modifier,
-    alphaScale: Float = 0.62f,
+    alphaScale: Float = 0.72f,
     playing: Boolean = true,
 ) {
     if (!enabled || style !in 1..FX_NAMES.size) return
@@ -73,7 +78,7 @@ fun BackgroundFxLayer(
         }
     }
 
-    Canvas(modifier) {
+    Canvas(modifier.fillMaxSize()) {
         frame.longValue
         // 静态预览取一个「画面已经铺开」的时刻，否则多数套系的第一帧是全透明的
         val t = if (playing) frame.longValue / 1000f else 3.4f

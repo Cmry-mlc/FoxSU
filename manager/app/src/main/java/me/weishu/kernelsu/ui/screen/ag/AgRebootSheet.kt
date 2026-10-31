@@ -106,8 +106,8 @@ fun AgRebootSheet(
     val panelLine = if (dark) Color(0x1FFFFFFF) else Color(0xB3FFFFFF)
     val iconBg = Ag.Vio.copy(alpha = 0.102f)
     val mask = Color(0x4719143C)
-    val tx = if (dark) Color(0xFFF2F1FA) else Color(0xFF191826)
-    val tx3 = if (dark) Color(0xFF7C7A98) else Color(0xFF9C9AAE)
+    val tx = Ag.Tx
+    val tx3 = Ag.Tx3
 
     androidx.compose.ui.window.Dialog(
         onDismissRequest = { requestDismiss() },

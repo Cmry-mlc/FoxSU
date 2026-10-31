@@ -43,6 +43,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -63,23 +64,58 @@ object Ag {
         else -> androidx.compose.foundation.isSystemInDarkTheme() // 跟随系统
     }
 
+    // ---- 背景色主题（定制 → 背景色，20 套 × 亮暗；0 = 用回下面的皮肤自带配色）----
+    /**
+     * 当前主题的底色令牌；null 表示用户没选主题（第 1 项「默认」）。
+     *
+     * 只覆盖「底」这一层：画布、卡片、描边、正文与柔光。强调色 [accent] 不动——
+     * 两条选择器各管一半，换背景色不会顺手把按钮颜色也改掉。
+     * 亮暗版本由外观模式决定（见 [isDark]），而不是跟随系统。
+     */
+    private val pal: me.weishu.kernelsu.ui.theme.BgPalette? @Composable
+        get() = me.weishu.kernelsu.ui.theme.currentBgPalette(isDark)
+
     // ---- 背景与画布 ----
-    val Bg1: Color @Composable get() = if (isDark) Color(0xFF131221) else Color(0xFFF7F6FB)
-    val Bg2: Color @Composable get() = if (isDark) Color(0xFF1A192E) else Color(0xFFF2F4FA)
+    val Bg1: Color @Composable get() = pal?.bg ?: if (isDark) Color(0xFF131221) else Color(0xFFF7F6FB)
+    val Bg2: Color @Composable get() = pal?.bg2 ?: if (isDark) Color(0xFF1A192E) else Color(0xFFF2F4FA)
 
     // ---- 表面（与背景同色系，靠透明度分层；tokens v1.2.0）----
-    val Card: Color @Composable get() = if (isDark) Color(0x8C1A192E) else Color(0x8CF7F6FB)   // rgba(...,.55)
-    val CardSolid: Color @Composable get() = if (isDark) Color(0xFF1E1D30) else Color(0xFFF7F6FB) // 暗色实底提亮一档
+    /** 卡片保留一层透明：主题的 surface 是实底色，原样铺满会把皮肤的玻璃质感抹平。 */
+    val Card: Color @Composable get() =
+        pal?.surface?.copy(alpha = if (isDark) 0.86f else 0.78f)
+            ?: if (isDark) Color(0x8C1A192E) else Color(0x8CF7F6FB)
+
+    val CardSolid: Color @Composable get() =
+        pal?.surface ?: if (isDark) Color(0xFF1E1D30) else Color(0xFFF7F6FB) // 暗色实底提亮一档
 
     // ---- 描边 ----
-    val Line: Color @Composable get() = if (isDark) Color(0x17FFFFFF) else Color(0x121E1946)   // .09 / .07
-    val TintInk: Color @Composable get() = if (isDark) Color(0x12FFFFFF) else Color(0x0D1E1946)
+    val Line: Color @Composable get() =
+        pal?.line ?: if (isDark) Color(0x17FFFFFF) else Color(0x121E1946)
+
+    val TintInk: Color @Composable get() =
+        pal?.text?.copy(alpha = 0.05f) ?: if (isDark) Color(0x12FFFFFF) else Color(0x0D1E1946)
 
     // ---- 文字 ----
-    val Tx: Color @Composable get() = if (isDark) Color(0xFFF2F1FA) else Color(0xFF191826)
-    val Tx2: Color @Composable get() = if (isDark) Color(0xFFB2B0CC) else Color(0xFF66647A)
-    val Tx3: Color @Composable get() = if (isDark) Color(0xFF7C7A98) else Color(0xFF9C9AAE)
-    val Chev: Color @Composable get() = if (isDark) Color(0xFF5E5C7A) else Color(0xFFC6C4D6)
+    val Tx: Color @Composable get() = pal?.text ?: if (isDark) Color(0xFFF2F1FA) else Color(0xFF191826)
+
+    /**
+     * 次文字往主文字混 22%。
+     *
+     * 主题包的 text-2 是给网页「小字说明」配的，放到 12.5sp 正文里，浅色几套
+     * （柠檬黄 / 抹茶 / 燕麦）只有 3.7:1，达不到 AA 的 4.5:1。混这一档不动色相，
+     * 只把最淡的六套抬到 4.9:1，其余本来够的几乎看不出变化。
+     */
+    val Tx2: Color @Composable get() =
+        pal?.let { lerp(it.text2, it.text, 0.22f) } ?: if (isDark) Color(0xFFB2B0CC) else Color(0xFF66647A)
+
+    /** 第三档文字：原皮肤是固定灰阶，主题里没有这一档，按「次文字 → 画布」插值推出来。 */
+    val Tx3: Color @Composable get() =
+        pal?.let { lerp(lerp(it.text2, it.text, 0.22f), it.bg, 0.34f) }
+            ?: if (isDark) Color(0xFF7C7A98) else Color(0xFF9C9AAE)
+
+    val Chev: Color @Composable get() =
+        pal?.let { lerp(lerp(it.text2, it.text, 0.22f), it.bg, 0.58f) }
+            ?: if (isDark) Color(0xFF5E5C7A) else Color(0xFFC6C4D6)
 
     // ---- 品牌（明暗一致；随「定制 → 全局强调色」的 7 套配色切换）----
     val accent: me.weishu.kernelsu.ui.theme.AccentPalette
@@ -115,7 +151,9 @@ object Ag {
 
     /** 搜索框底（.search rgba(30,25,70,.05) / 暗色 rgba(255,255,255,.06)） */
     @Composable
-    fun searchBg(): Color = if (isDark) Color(0x0FFFFFFF) else Color(0x0D1E1946)
+    fun searchBg(): Color =
+        pal?.text?.copy(alpha = if (isDark) 0.06f else 0.05f)
+            ?: if (isDark) Color(0x0FFFFFFF) else Color(0x0D1E1946)
 
     /** 开关 OFF 轨道（明暗一致）*/
     val ToggleOff = Color(0xFFD9D8E6)
@@ -145,6 +183,12 @@ fun Modifier.agPageBg(): Modifier {
     if (me.weishu.kernelsu.ui.component.hasWallpaperBackdrop()) return this
     val b1 = Ag.Bg1
     val b2 = Ag.Bg2
+    // 三团雾彩：默认是品牌紫 / 品红 / 青；选了背景色主题后统一换成该套的 glow，
+    // 否则暖米色底上飘着紫雾，看起来像没擦干净的图层。
+    val themeGlow = me.weishu.kernelsu.ui.theme.currentBgPalette(Ag.isDark)?.glow
+    val fogA = themeGlow ?: Color(0x24A855F7)
+    val fogB = themeGlow?.copy(alpha = themeGlow.alpha * 0.62f) ?: Color(0x17EC4899)
+    val fogC = themeGlow?.copy(alpha = themeGlow.alpha * 0.72f) ?: Color(0x1A14B8A6)
     return this.drawBehind {
         // 底色：160deg 斜向渐变
         drawRect(
@@ -157,9 +201,9 @@ fun Modifier.agPageBg(): Modifier {
         // 紫色雾彩：at 110% -5%，rgba(168,85,247,.14)
         drawRect(
             brush = Brush.radialGradient(
-                0f to Color(0x24A855F7),
-                0.65f to Color(0x00A855F7),
-                1f to Color(0x00A855F7),
+                0f to fogA,
+                0.65f to fogA.copy(alpha = 0f),
+                1f to fogA.copy(alpha = 0f),
                 center = Offset(size.width * 1.10f, -size.height * 0.05f),
                 radius = size.width * 1.08f,
             )
@@ -167,9 +211,9 @@ fun Modifier.agPageBg(): Modifier {
         // 品红雾彩：at -15% 25%，rgba(236,72,153,.09)
         drawRect(
             brush = Brush.radialGradient(
-                0f to Color(0x17EC4899),
-                0.65f to Color(0x00EC4899),
-                1f to Color(0x00EC4899),
+                0f to fogB,
+                0.65f to fogB.copy(alpha = 0f),
+                1f to fogB.copy(alpha = 0f),
                 center = Offset(size.width * -0.15f, size.height * 0.25f),
                 radius = size.width * 0.92f,
             )
@@ -177,9 +221,9 @@ fun Modifier.agPageBg(): Modifier {
         // 青色雾彩：at 50% 110%，rgba(20,184,166,.10)
         drawRect(
             brush = Brush.radialGradient(
-                0f to Color(0x1A14B8A6),
-                0.65f to Color(0x0014B8A6),
-                1f to Color(0x0014B8A6),
+                0f to fogC,
+                0.65f to fogC.copy(alpha = 0f),
+                1f to fogC.copy(alpha = 0f),
                 center = Offset(size.width * 0.50f, size.height * 1.10f),
                 radius = size.width * 1.03f,
             )

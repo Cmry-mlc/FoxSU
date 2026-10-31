@@ -19,7 +19,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
@@ -180,58 +180,80 @@ private fun DrawScope.drawRingFx(
         }
 
         DockFx.RING_RAINBOW -> {
-            val colors = listOf(
-                Color(0xFFFF7A3C), Color(0xFFFFD84D), Color(0xFF7FD896),
-                Color(0xFF7FC0F2), Color(0xFFA88BFF), Color(0xFFF76FB0), Color(0xFFFF7A3C),
-            )
-            withTransform({ rotate(phase * 360f, pivot) }) {
-                drawRoundRect(
-                    brush = Brush.sweepGradient(colors, center = pivot),
-                    topLeft = topLeft,
-                    size = boxSize,
-                    cornerRadius = corner,
-                    style = Stroke(2.2f.dp.toPx()),
-                    alpha = 0.85f,
+            // 沿周界铺色相，而不是把整条胶囊旋转 45° 再描边：
+            // 旋转会让宽高比 8:1 的胶囊转出一个 3 倍大的外接矩形，
+            // 边框直接甩到屏幕上（旧版三个特效同时出这个 bug，都是同一个原因）。
+            // 96 段足够让色相过渡看不出台阶；每段多画 60% 长度，接缝处自然压住。
+            val segments = 96
+            val step = 1f / segments
+            val stroke = 2.4f.dp.toPx()
+            for (i in 0 until segments) {
+                val u = i * step
+                drawLine(
+                    color = rainbowAt(u + phase),
+                    start = pointAt(u),
+                    end = pointAt(u + step * 1.6f),
+                    strokeWidth = stroke,
+                    cap = StrokeCap.Round,
                 )
             }
         }
 
         DockFx.RING_DOTLINE -> {
-            // 虚线整体旋转：PathEffect 没有相位参数，转画布更省事
-            withTransform({ rotate(phase * 360f, pivot) }) {
-                drawRoundRect(
-                    color = accent.copy(alpha = 0.75f),
-                    topLeft = topLeft,
-                    size = boxSize,
-                    cornerRadius = corner,
-                    style = Stroke(
-                        width = 1.8f.dp.toPx(),
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(9.dp.toPx(), 7.dp.toPx())),
-                    ),
-                )
+            // 虚线沿周界一格格前进。PathEffect 没有相位参数，而转画布会把矩形转出边界，
+            // 所以干脆自己按「周长上的一段距离」画：每段虚线再细分成 4 小段，
+            // 走到圆角处会跟着弯，不会被切出一条直线角。
+            val dash = 9.dp.toPx()
+            val gapLen = 7.dp.toPx()
+            val period = dash + gapLen
+            val total = box.perimeter
+            if (total > period) {
+                val count = (total / period).toInt()
+                // 每个循环走 6 个周期：7 秒一圈，肉眼刚好能看出在动又不至于晃
+                val offset = (phase * period * 6f) % period
+                val stroke = 1.8f.dp.toPx()
+                for (i in 0 until count) {
+                    val base = i * period + offset
+                    var prev = pointAt(base / total)
+                    for (k in 1..4) {
+                        val p = pointAt((base + dash * k / 4f) / total)
+                        drawLine(
+                            color = accent.copy(alpha = 0.75f),
+                            start = prev,
+                            end = p,
+                            strokeWidth = stroke,
+                            cap = StrokeCap.Round,
+                        )
+                        prev = p
+                    }
+                }
             }
         }
 
         DockFx.RING_HALOROT -> {
-            // 两段对置的亮弧绕圈走，像有光源在绕着底栏转
-            withTransform({ rotate(phase * 360f, pivot) }) {
-                drawRoundRect(
-                    brush = Brush.sweepGradient(
-                        0.00f to Color.Transparent,
-                        0.12f to accent.copy(alpha = 0.60f),
-                        0.26f to Color.Transparent,
-                        0.50f to Color.Transparent,
-                        0.62f to accent2.copy(alpha = 0.45f),
-                        0.76f to Color.Transparent,
-                        1.00f to Color.Transparent,
-                        center = pivot,
-                    ),
-                    topLeft = topLeft,
-                    size = boxSize,
-                    cornerRadius = corner,
-                    style = Stroke(3.4f.dp.toPx()),
-                )
+            // 两段对置的亮弧沿边框绕行，头部亮、尾部化开，像有光源绕着底栏转。
+            // 同样不旋转几何：只让「起点」在周长上走，形状永远是这条胶囊。
+            val span = 0.17f
+            val steps = 16
+            val stroke = 3.4f.dp.toPx()
+            fun arc(start: Float, color: Color) {
+                for (i in 0 until steps) {
+                    val k0 = i / steps.toFloat()
+                    val k1 = (i + 1) / steps.toFloat()
+                    // 二次曲线收尾：尾巴几乎透明，头部接近实色，接缝才不显断
+                    val a = 0.85f * k0 * k0
+                    if (a < 0.02f) continue
+                    drawLine(
+                        color = color.copy(alpha = a),
+                        start = pointAt(start + span * k0),
+                        end = pointAt(start + span * (k1 + 0.012f)),
+                        strokeWidth = stroke,
+                        cap = StrokeCap.Round,
+                    )
+                }
             }
+            arc(phase, accent)
+            arc(phase + 0.5f, accent2)
         }
 
         DockFx.RING_BREATH -> {
@@ -407,7 +429,7 @@ private class RRLayout(private val w: Float, private val h: Float, private val r
     private val sh = (w - 2f * r).coerceAtLeast(0f)
     private val sv = (h - 2f * r).coerceAtLeast(0f)
     private val arc = (PI.toFloat() / 2f) * r
-    private val perimeter = 2f * sh + 2f * sv + 4f * arc
+    val perimeter = 2f * sh + 2f * sv + 4f * arc
 
     fun point(t: Float): Offset {
         if (perimeter <= 0f) return Offset(w / 2f, h / 2f)
@@ -436,6 +458,20 @@ private class RRLayout(private val w: Float, private val h: Float, private val r
         return Offset(cx + rr * cos(a), cy + rr * sin(a))
     }
 }
+
+
+/** 七色环上取一个颜色：u 任意实数，内部取小数部分，传 phase 即整体推色。 */
+private fun rainbowAt(u: Float): Color {
+    val stops = RAINBOW_STOPS
+    val f = ((u % 1f) + 1f) % 1f * (stops.size - 1)
+    val i = f.toInt().coerceIn(0, stops.size - 2)
+    return lerpColor(stops[i], stops[i + 1], f - i)
+}
+
+private val RAINBOW_STOPS = listOf(
+    Color(0xFFFF7A3C), Color(0xFFFFD84D), Color(0xFF7FD896),
+    Color(0xFF7FC0F2), Color(0xFFA88BFF), Color(0xFFF76FB0), Color(0xFFFF7A3C),
+)
 
 private fun lerpColor(a: Color, b: Color, k: Float): Color {
     val t = k.coerceIn(0f, 1f)

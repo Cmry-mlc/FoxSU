@@ -53,6 +53,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.ui.component.ambient.AmbientPawsLayer
+import me.weishu.kernelsu.ui.component.ambient.BackgroundFxLayer
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import android.widget.Toast
@@ -78,15 +79,27 @@ fun AgDonate(
     onBack: () -> Unit,
     onOpenAuthor: () -> Unit = {},
 ) {
-    val ambientOn = CustomizationStore.current.bgFxOn
+    val custom = CustomizationStore.current
     Box(Modifier.fillMaxSize()) {
         AgDonateContent(onBack = onBack, onOpenAuthor = onOpenAuthor)
-        AmbientPawsLayer(
-            enabled = ambientOn,
-            count = 10,
-            // 捐赠页内容密度高（二维码、金额、按钮），粒子再压淡一点，别抢注意力
-            alphaScale = 0.85f,
-        )
+        // 和主页同一个槽位：选中猫爪就是猫爪，选中某套背景特效就铺那套。
+        // 二维码区域要能扫，所以特效在这里比主页再压淡一档。
+        if (custom.bgFxOn) {
+            if (custom.bgFxStyle == 0) {
+                AmbientPawsLayer(
+                    enabled = true,
+                    count = 10,
+                    // 捐赠页内容密度高（二维码、金额、按钮），粒子再压淡一点，别抢注意力
+                    alphaScale = 0.85f,
+                )
+            } else {
+                BackgroundFxLayer(
+                    style = custom.bgFxStyle,
+                    enabled = true,
+                    alphaScale = 0.55f,
+                )
+            }
+        }
     }
 }
 

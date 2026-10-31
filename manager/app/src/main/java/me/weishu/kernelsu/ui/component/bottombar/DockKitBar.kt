@@ -384,20 +384,6 @@ internal fun DockKitBar(
                     }
                 }
                 .border(if (style == DockKitStyle.TRACK) 0.dp else 1.dp, edge, shape)
-                .drawWithContent {
-                    drawContent()
-                    val left = countdown.value
-                    if (hideSec > 0 && left > 0.001f && left < 0.999f) {
-                        val h = 2.dp.toPx()
-                        drawRect(
-                            brush = Brush.horizontalGradient(
-                                listOf(accent.primary, accent.mid, accent.secondary)
-                            ),
-                            topLeft = Offset(0f, size.height - h),
-                            size = Size(size.width * left, h),
-                        )
-                    }
-                }
                 .dockRingFx(
                     accent = accent.primary,
                     accent2 = accent.secondary,
