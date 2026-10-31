@@ -37,7 +37,9 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
-          node-version: latest
+          # 不能用 latest：上游 vitepress 依赖的 @vitejs/plugin-vue 5.x 引擎声明为
+          # ^18 或 >=20，预发布版 node（27.0.0-alpha）会被 yarn 判为不兼容直接失败
+          node-version: '22'
           cache: yarn # or pnpm / yarn
           cache-dependency-path: website/yarn.lock
       - name: Setup Pages
