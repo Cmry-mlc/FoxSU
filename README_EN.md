@@ -8,7 +8,7 @@
 
 <p align="center">
   A kernel-based root solution for Android<br />
-  <sub>KernelSU inside, a completely rewritten manager on top</sub>
+  <sub>KernelSU underneath, a manager rewritten from scratch</sub>
 </p>
 
 <p align="center">
@@ -23,9 +23,23 @@
 
 ## What is FoxSu
 
-FoxSu is a fork of [KernelSU](https://github.com/tiann/KernelSU). Root stays in the kernel — `su`, the allowlist, app profiles, module mounting and sucompat all come from the kernel module and `ksud`. What changed is the manager: new package name (`com.foxsu.manager`), rewritten screens, a new install flow, five skins and a deeply customisable dock.
+FoxSu is a fork of [KernelSU](https://github.com/tiann/KernelSU). Root stays in the kernel — `su`, the allowlist, app profiles, module mounting and sucompat all come from the kernel module and `ksud`. What changed is the manager: new package name (`com.foxsu.manager`), rewritten screens and install flow, plus five skins, 21 dock styles, 40 dock effects and 20 dock icon sets on top.
 
 > Root in the kernel, experience in the manager.
+
+## At a glance
+
+| Layer | What you get |
+| --- | --- |
+| Skins | 5, applied to every screen at once |
+| Dock | 21 capsule styles, 10 button shapes, decoupled from the skin |
+| Dock effects | 20 inside the dock + 20 on its outline, each optional and stackable |
+| Dock icons | 20 shape sets, recoloured by the theme instead of hard-coded |
+| Ambience | Floating paws / hearts / sparkles, own switch, three places |
+| Customisation | Wallpaper, card artwork, card colours, fonts, title, launcher icon |
+| Root | Allowlist, app profiles, templates, classic SU, kernel umount, SELinux hide, SU log |
+| Modules | Local zip, online repo, metamodule detection, action scripts, undo uninstall, shortcuts |
+| Install | One-screen wizard, direct / inactive slot / local image / download, live output |
 
 ## Manager features
 
@@ -35,30 +49,68 @@ Same features, five layout languages. Switch in Settings → Interface style; ev
 
 | Skin | Style | Notes |
 | --- | --- | --- |
-| **Redesign** (Miuix) | Glass cards + capsule dock | Default. Densest layout: one hero card plus four KPI cards |
+| **Miuix** | Glass cards + capsule dock | Default. Densest layout: one status card plus stats / device / security cards |
 | **Editorial** | Magazine layout | Paper background, ink rules, serif headings, native dock (capsule optional) |
-| **Pages** (Fresh) | Generous whitespace | Large titles and sectioned lists for one-handed use |
+| **Pages** | Generous whitespace | Large titles and sectioned lists for one-handed use |
 | **Glass** | Liquid glass | Translucent surfaces with highlights; pairs well with a wallpaper |
 | **Nocturne** | Dark neon | Dark-first, with glowing accents |
 
-### Dock: 13 capsule styles
+### Dock
 
-The dock is decoupled from the skin and selectable globally. Side-drawer mode reserves left space on every page so content is never covered.
+The dock is decoupled from the skin and selected globally — switching skins no longer changes how you navigate. Metrics stay fixed (78dp items, 60dp tall) so the bar never jumps when you switch styles.
 
-`Original capsule` · `Expanding pill` · `Side drawer` · `Flowing cursor` · `Neon outline` · `Block cards` · `Solid gradient` · `Top indicator` · `Floating disc` · `Editorial ink` · `White pill` · `Liquid pill` · `Nocturne neon`
+**21 capsule styles**
 
-Corner radius, opacity, icon shape (rounded square / circle / squircle / rainbow gradient), immersive glow, liquid glass, rainbow icons and Monet tinting are all adjustable.
+`Coral bubble` · `Film strip` · `Neon tube` · `Glass stack` · `Single focus` · `Cloud sticker` · `Slide track` · `Original capsule` · `Expanding pill` · `Side drawer` · `Flowing cursor` · `Neon outline` · `Block cards` · `Solid gradient` · `Top indicator` · `Floating disc` · `Centre avatar` · `Editorial ink` · `White pill` · `Liquid pill` · `Nocturne neon`
+
+The first seven use a different grid: 48dp square hit areas, 6dp inset, and some variants keep a fox avatar in the middle as the donation entry. `Side drawer` docks left or right and the page content makes room for it.
+
+**10 button shapes**
+
+`Pill` · `Circle` · `Squircle` · `Outline` · `Double` · `Cut` · `Keycap` · `Card` · `Glass` · `Glow`
+
+Selected and unselected are two states of the same shape, so a switch swaps the whole row rather than mixing old and new.
+
+**40 tap effects, two scopes**
+
+The inside of the dock and its outline are two independent pickers. Use one, or stack them — "breathing outline + bouncing icons", for example.
+
+- **20 inner effects** (icons and the selected capsule): jelly slide, bounce landing, jelly shake, spin-in, heartbeat, wave, shine sweep, halo ring, bubbles, stardust, capsule pop, wiggle, 3D flip, gradient flow, label lift, magnet pull, dot trail, ripple, elastic overshoot, mini firework
+- **20 outline effects** (the border of the whole dock): breathing glow, marquee dot, border flow, rainbow stroke, dashed rotation, flowing glow, tap ripple, selection flash, stroke breathing, electric stroke, follow halo, sweep, shockwave, selection spot, selection orbit, glint, elastic frame, shadow lift, edge sparks, soundwave
+
+Outline effects split into two groups: always-on ones loop, interactive ones play once on a page change or press. Inside the dock only `Gradient flow` loops; the rest are one-shot timelines that stop when finished, so nothing keeps burning frames.
+
+**20 dock icon sets**
+
+`Architectural section` · `Origami` · `Map top-down` · `Pixel 8-bit` · `Sticky note` · `Molecular` · `Gauge ticks` · `Overlapping rings` · `Fault slice` · `Crayon doodle` · `Block grid` · `Contour lines` · `Soundwave` · `Building blocks` · `Stamp` · `Document folder` · `Wireframe` · `Folding fan` · `Ripple` · `Star trail`
+
+Only the shape changes; colouring still follows the accent colour and selection state, so swapping icons never breaks the palette.
+
+**Dock behaviour**
+
+- **Water-drop indicator**: the selection stretches, squashes and springs to the new tab; it suspends while idle instead of spinning every frame
+- **Page push**: content follows a page change slightly, independent of the water-drop switch
+- **Auto-hide**: the capsule sinks after N seconds of inactivity and slides back on a tap
+- **Appearance**: corner radius, opacity, immersive glow, liquid glass, rainbow icons, Monet tinting
+
+### Ambience and motion
+
+- **Floating paws**: cat paws, small hearts and four-point stars drift up from the bottom of the screen on the home screen, the donate page and the customisation header card. Its own switch, unaffected by the motion level; drawn above content but it never takes pointer events, so taps pass through
+- **Motion level**: `Off` / `Restrained` / `Full`, controlling card particle edges, 3D touch tilt and dock tap ripples together
+- **Page swipe gesture**: `Default` / `Cross-axis` / `iOS style` / `Off`; choosing Off also disables swiping the dock
+- Predictive back and edge swipe-back can be toggled separately
 
 ### Customisation centre
 
-Every option is wired to real settings and applies immediately:
+Every option is wired to real settings and applies immediately, no restart:
 
 - **Wallpaper**: pick, crop, zoom, dim; the global background can be disabled
-- **Card artwork**: separate pictures for the hero card, the four KPI cards and each module card, with per-item opacity
+- **Card artwork**: separate pictures for the hero card, the stat cards and each module card, with per-item opacity
 - **Card colours**: a global tint plus per-card overrides, independent opacity, one-tap rainbow cards
-- **Fonts**: system default, serif, monospace, rounded handwriting, or your own font file
-- **Title**: custom home title
-- **Launcher icon**: four fox faces that follow light/dark mode
+- **Fonts**: system default, Noto Serif SC, JetBrains Mono, LXGW WenKai, or your own font file
+- **Title**: custom home title text and colour
+- **Launcher icon**: five fox faces plus the original KernelSU icon, following light/dark mode
+- Any of the above can be reset to defaults in one tap
 
 ### Root and permissions
 
@@ -70,28 +122,31 @@ Every option is wired to real settings and applies immediately:
 - **Kernel umount**: modules are unmounted in the kernel, nothing visible from userspace
 - **Hide SELinux modification**
 - **SU Log**: root grants and denials recorded and readable inside the manager
+- **Shell hardening**: optionally allow shell root only when the shell was started by adbd or a KernelSU root process
 
 ### Modules
 
 - Install from a local zip, with module info and conflict warnings before flashing
-- **Module repository**: built-in online index to browse, search, inspect and install
+- **Module repository**: built-in online index to browse, search, inspect and install, with size and SHA-256 verification on download
 - Metamodule detection and highlighting, with a warning before uninstall
 - Run module action scripts in one tap, or run arbitrary shell scripts
 - Update checks, enable / disable, sorting by name, stars or update time
 - Undo an uninstall to bring a module back, and create home-screen shortcuts for modules
+- Module cards are painted from the current theme: an accent rail and an initial badge when enabled, a muted card when disabled
+- Descriptions collapse after a configurable number of lines and expand on tap
 
 ### Install and flash
 
 - One-screen install wizard: kernel and KMI info, install method, partition selection and advanced options without a second page
-- Direct install, a local LKM file, or hand-off to another manager
-- Optional shell access, ADB, and a forced backup before flashing
+- Four methods: direct install, install to the inactive slot (after an OTA), patch a local image, download and patch an image
+- Optional shell access, ADB, and a forced backup before flashing; direct flashing is disabled while in jailbreak mode
 - Dedicated flash and script screens with live output
 
 ### Diagnostics
 
 - **Crash log**: uncaught exceptions go to `files/crash/last-crash.txt` and are mirrored to external storage
 - **Soft reboot** instead of a full reboot when a change needs one
-- Update checks for the manager and the LKM
+- Update checks for the manager and the LKM, with custom LKMs flagged separately
 - Temporary / permanent unroot, restore stock image
 
 ## Compatibility
@@ -107,7 +162,7 @@ The manager requires **Android 12 (API 31)** or newer; it targets API 37 and bui
 1. Download the latest manager APK from [Releases](https://github.com/Cmry-mlc/FoxSu/releases) and install it.
 2. Prepare a kernel with the FoxSu driver: use a GKI kernel matching your device / KMI, or build the kernel or an LKM yourself.
 3. In the manager's Install screen, pick a method and partition, flash, then reboot.
-4. The first launch shows an onboarding tour covering granting, modules, app profiles and logs.
+4. The first launch shows a five-page tour covering granting, modules, app profiles and logs.
 
 The kernel identifies its manager by package name and signing fingerprint, so third-party apps cannot impersonate the FoxSu manager and take over root grants.
 
@@ -124,9 +179,9 @@ cd manager
   -PKEY_PASSWORD=******
 ```
 
-The version code is `30000 + git commit count`; the version name comes from `git describe`.
-Release builds (tag-triggered) and signing-key setup are documented in [RELEASE.md](RELEASE.md).
+The version comes from the `VERSION` file at the repository root (e.g. `3.0.53`): `versionCode = major*10000 + minor*100 + patch`, and `versionName` is the string itself. The manager, `ksud` and the kernel module all read that one file, so the three can never disagree — which is what makes "does the LKM need an update" answerable at all, and what stops local and CI builds from refusing to install over each other.
 
+Release builds (tag-triggered) and signing-key setup are documented in [RELEASE.md](RELEASE.md).
 
 Kernel and userspace:
 
