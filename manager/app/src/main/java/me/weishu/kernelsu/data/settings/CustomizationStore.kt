@@ -127,6 +127,14 @@ data class Customization(
     val dockPagePush: Boolean = true,
 
     /**
+     * 主页氛围层：狐狸爪印与小爱心从底部缓缓升起。
+     *
+     * 只在主页显示，且受 [fxLevel] 的「关闭」档抑制——那里是全局特效总闸，
+     * 老机型把它关掉时，这一层也不该继续每帧重绘。
+     */
+    val homeAmbient: Boolean = true,
+
+    /**
      * 全场特效档位（0 关闭 / 1 克制 / 2 全开）。
      *
      * 统一管三类动效：卡片外轮廓粒子边、按压内阴影、3D 触摸倾斜。
@@ -230,6 +238,7 @@ private const val KEY_DOCK_STYLE = "dock_style"
     private const val KEY_CLASSIC_DOCK = "classic_dock"
     private const val KEY_DOCK_WATER_DROP = "dock_water_drop"
     private const val KEY_DOCK_PAGE_PUSH = "dock_page_push"
+    private const val KEY_HOME_AMBIENT = "home_ambient"
     private const val KEY_DONATE_AVATAR = "donate_avatar"
     private const val KEY_BRAND_DEFAULTS = "brand_defaults_v1"
 
@@ -330,6 +339,7 @@ private const val KEY_DOCK_STYLE = "dock_style"
             classicDock = getBoolean(KEY_CLASSIC_DOCK, false),
             dockWaterDrop = getBoolean(KEY_DOCK_WATER_DROP, false),
             dockPagePush = getBoolean(KEY_DOCK_PAGE_PUSH, true),
+            homeAmbient = getBoolean(KEY_HOME_AMBIENT, true),
             donateAvatar = getString(KEY_DONATE_AVATAR, null),
         )
     }
@@ -420,6 +430,8 @@ private const val KEY_DOCK_STYLE = "dock_style"
 
     fun setDockPagePush(enabled: Boolean) = update { it.copy(dockPagePush = enabled) }
 
+    fun setHomeAmbient(enabled: Boolean) = update { it.copy(homeAmbient = enabled) }
+
     /**
      * 恢复默认：直接把整份 SharedPreferences 清空再读回默认值。
      *
@@ -490,6 +502,7 @@ private const val KEY_DOCK_STYLE = "dock_style"
             putBoolean(KEY_CLASSIC_DOCK, next.classicDock)
             putBoolean(KEY_DOCK_WATER_DROP, next.dockWaterDrop)
             putBoolean(KEY_DOCK_PAGE_PUSH, next.dockPagePush)
+            putBoolean(KEY_HOME_AMBIENT, next.homeAmbient)
             putString(KEY_DONATE_AVATAR, next.donateAvatar)
         }
         current = next

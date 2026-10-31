@@ -80,6 +80,7 @@ import kotlinx.coroutines.withContext
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.data.repository.SettingsRepositoryImpl
 import me.weishu.kernelsu.data.settings.CustomizationStore
+import me.weishu.kernelsu.ui.component.ambient.AmbientPawsLayer
 import me.weishu.kernelsu.ui.component.ImageCropDialog
 import me.weishu.kernelsu.ui.component.bottombar.DockButton
 import me.weishu.kernelsu.ui.component.bottombar.DockButtonSwatch
@@ -230,6 +231,13 @@ internal fun AgCustomization(
                     ),
                 contentAlignment = Alignment.Center,
             ) {
+                // 头卡里的氛围层：画在狐狸图下面，否则爪印会糊在脸上。
+                // 卡片底色是紫粉渐变，粒子压到 0.8 才不会显脏
+                AmbientPawsLayer(
+                    enabled = custom.homeAmbient,
+                    count = 7,
+                    alphaScale = 0.8f,
+                )
                 Image(
                     painter = painterResource(R.drawable.fox_hero),
                     contentDescription = "FoxSu",
@@ -359,13 +367,27 @@ internal fun AgCustomization(
                 Spacer(Modifier.height(9.dp))
                 Text(
                     when (custom.fxLevel) {
-                        0 -> "全部动效关闭：卡片不再流动粒子、不再 3D 倾斜，底栏点击也没有涟漪。最省电，老机型建议选它。"
+                        0 -> "全部动效关闭：卡片不再流动粒子、不再 3D 倾斜，底栏点击也没有涟漪。最省电，老机型建议选它。下面的漂浮爪印由它自己的开关控制，不受这里影响。"
                         1 -> "克制档：粒子颗粒减半、流速放慢，3D 倾斜角度限制在 ±6°，日常够看又不打扰。"
                         else -> "全开：卡片外轮廓彩色粒子边 + 触摸 3D 透视倾斜 + 底栏图标点击涟漪，全部启用。"
                     },
                     fontSize = 11.5.sp, lineHeight = 17.sp, color = Ag.Tx2,
                 )
                 Spacer(Modifier.height(12.dp))
+                AgToggleRow(
+                    "漂浮爪印氛围",
+                    if (custom.homeAmbient) {
+                        "猫爪、小爱心和四角星从底部缓缓升起，主页、捐赠页、这张头卡三处同时生效；独立开关，不受上面动效强度影响"
+                    } else {
+                        "开启后主页、捐赠页与这张头卡会有猫爪、爱心和星星上浮，不挡点击；关掉只停这三处"
+                    },
+                    Ag.Mag, AgSettingsIcons.Paw,
+                    trailing = {
+                        AgToggle(checked = custom.homeAmbient, onCheckedChange = {
+                            CustomizationStore.setHomeAmbient(!custom.homeAmbient)
+                        }, small = true)
+                    },
+                )
                 AgToggleRow(
                     "卡片 3D 触摸倾斜",
                     "手指按住大卡片时跟着触摸点做透视倾斜，松手弹回",

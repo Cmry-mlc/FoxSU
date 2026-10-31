@@ -51,6 +51,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import me.weishu.kernelsu.data.settings.CustomizationStore
+import me.weishu.kernelsu.ui.component.ambient.AmbientPawsLayer
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import android.widget.Toast
@@ -67,9 +69,29 @@ import java.util.Locale
  *
  * 没有金额档位、没有线上支付 SDK：两个大按钮（微信赞赏 / 支付宝收款）各自
  * 打开一张全屏二维码查看器，内含「保存到相册」，扫完即走。
+ *
+ * 外壳内容之上盖一层猫爪／爱心氛围：氛围层必须压在内容上层——本页根布局铺了
+ * `agPageBg()` 不透明底，垫在下面看不见。它不接指针事件，二维码和按钮照常可点。
  */
 @Composable
 fun AgDonate(
+    onBack: () -> Unit,
+    onOpenAuthor: () -> Unit = {},
+) {
+    val ambientOn = CustomizationStore.current.homeAmbient
+    Box(Modifier.fillMaxSize()) {
+        AgDonateContent(onBack = onBack, onOpenAuthor = onOpenAuthor)
+        AmbientPawsLayer(
+            enabled = ambientOn,
+            count = 10,
+            // 捐赠页内容密度高（二维码、金额、按钮），粒子再压淡一点，别抢注意力
+            alphaScale = 0.85f,
+        )
+    }
+}
+
+@Composable
+private fun AgDonateContent(
     onBack: () -> Unit,
     onOpenAuthor: () -> Unit = {},
 ) {

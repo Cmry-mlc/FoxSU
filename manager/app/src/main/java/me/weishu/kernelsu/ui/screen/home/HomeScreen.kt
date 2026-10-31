@@ -2,6 +2,8 @@ package me.weishu.kernelsu.ui.screen.home
 
 import android.content.Intent
 import android.widget.Toast
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -13,6 +15,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -22,10 +26,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.weishu.kernelsu.R
+import me.weishu.kernelsu.data.settings.CustomizationStore
 import me.weishu.kernelsu.magica.MagicaService
 import me.weishu.kernelsu.ui.LocalMainPagerState
 import me.weishu.kernelsu.ui.LocalUiMode
 import me.weishu.kernelsu.ui.UiMode
+import me.weishu.kernelsu.ui.component.ambient.AmbientPawsLayer
 import me.weishu.kernelsu.ui.component.bottombar.NavigationBadgeState
 import me.weishu.kernelsu.ui.component.dialog.rememberConfirmDialog
 import me.weishu.kernelsu.ui.component.dialog.rememberLoadingDialog
@@ -133,48 +139,63 @@ fun HomePager(
 
     val mainPagerState = LocalMainPagerState.current
 
-    when (LocalUiMode.current) {
-        UiMode.Miuix -> me.weishu.kernelsu.ui.screen.ag.AgHome(
-            state = uiState,
-            actions = actions,
-            onOpenTab = { page -> mainPagerState.animateToPage(page) },
-            onOpenAuthor = { navigator.push(Route.Author) },
-            bottomInnerPadding = bottomInnerPadding,
-        )
+    // 主页氛围：独立开关 + 受特效总闸约束 + 只在主页这一页跑。
+    // 切到别的 Tab 时 HomePager 仍在组合树里，不判 isCurrentPage 会白白每帧重绘。
+    val custom = CustomizationStore.current
+    val ambientOn = custom.homeAmbient && isCurrentPage
+    val inset = if (bottomInnerPadding == Dp.Unspecified) 0.dp else bottomInnerPadding
 
-        UiMode.Material -> me.weishu.kernelsu.ui.screen.editorial.EditorialHome(
-            state = uiState,
-            actions = actions,
-            bottomInnerPadding = bottomInnerPadding,
-            navigationBadge = navigationBadge,
-            onOpenTab = { page -> mainPagerState.animateToPage(page) },
-            onOpenAuthor = { navigator.push(Route.Author) },
-        )
+    Box(Modifier.fillMaxSize()) {
+        when (LocalUiMode.current) {
+            UiMode.Miuix -> me.weishu.kernelsu.ui.screen.ag.AgHome(
+                state = uiState,
+                actions = actions,
+                onOpenTab = { page -> mainPagerState.animateToPage(page) },
+                onOpenAuthor = { navigator.push(Route.Author) },
+                bottomInnerPadding = bottomInnerPadding,
+            )
 
-        UiMode.Fresh -> HomePagerFresh(
-            state = uiState,
-            actions = actions,
-            bottomInnerPadding = bottomInnerPadding,
-            navigationBadge = navigationBadge,
-            onOpenTab = { page -> mainPagerState.animateToPage(page) },
-        )
+            UiMode.Material -> me.weishu.kernelsu.ui.screen.editorial.EditorialHome(
+                state = uiState,
+                actions = actions,
+                bottomInnerPadding = bottomInnerPadding,
+                navigationBadge = navigationBadge,
+                onOpenTab = { page -> mainPagerState.animateToPage(page) },
+                onOpenAuthor = { navigator.push(Route.Author) },
+            )
 
-        UiMode.Glass -> me.weishu.kernelsu.ui.screen.glass.GlassHome(
-            state = uiState,
-            actions = actions,
-            bottomInnerPadding = bottomInnerPadding,
-            navigationBadge = navigationBadge,
-            onOpenTab = { page -> mainPagerState.animateToPage(page) },
-            onOpenAuthor = { navigator.push(Route.Author) },
-        )
+            UiMode.Fresh -> HomePagerFresh(
+                state = uiState,
+                actions = actions,
+                bottomInnerPadding = bottomInnerPadding,
+                navigationBadge = navigationBadge,
+                onOpenTab = { page -> mainPagerState.animateToPage(page) },
+            )
 
-        UiMode.Nocturne -> me.weishu.kernelsu.ui.screen.nocturne.NocturneHome(
-            state = uiState,
-            actions = actions,
-            bottomInnerPadding = bottomInnerPadding,
-            navigationBadge = navigationBadge,
-            onOpenTab = { page -> mainPagerState.animateToPage(page) },
-            onOpenAuthor = { navigator.push(Route.Author) },
+            UiMode.Glass -> me.weishu.kernelsu.ui.screen.glass.GlassHome(
+                state = uiState,
+                actions = actions,
+                bottomInnerPadding = bottomInnerPadding,
+                navigationBadge = navigationBadge,
+                onOpenTab = { page -> mainPagerState.animateToPage(page) },
+                onOpenAuthor = { navigator.push(Route.Author) },
+            )
+
+            UiMode.Nocturne -> me.weishu.kernelsu.ui.screen.nocturne.NocturneHome(
+                state = uiState,
+                actions = actions,
+                bottomInnerPadding = bottomInnerPadding,
+                navigationBadge = navigationBadge,
+                onOpenTab = { page -> mainPagerState.animateToPage(page) },
+                onOpenAuthor = { navigator.push(Route.Author) },
+            )
+        }
+
+        // 氛围层压在内容之上：五套皮肤的主页各自铺了不透明底色（agPageBg / Fresh 渐变 /
+        // Glass 衬底），任何垫在下面的东西都看不见。它不接指针事件，所以不挡点击。
+        AmbientPawsLayer(
+            enabled = ambientOn,
+            bottomInset = inset,
         )
     }
 }
