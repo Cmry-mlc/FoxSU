@@ -210,8 +210,62 @@ FoxSu 基于 [KernelSU](https://github.com/tiann/KernelSU)（GPL-3.0），内核
 
 ## 致谢
 
-- [KernelSU](https://github.com/tiann/KernelSU)——内核 root 方案、模块体系与多语言翻译
-- 以及所有提交反馈、测试与建议的朋友
+FoxSu 不是从零长出来的。下面按「这些代码在项目里承担什么」分组，列出全部上游项目——包括直接改编进来的源码、打包进 APK 的二进制，以及跑在设备内核侧的那部分。许可证逐行写明，不做折叠。
+
+### 根与内核
+
+| 项目 | 在 FoxSu 里的位置 | 许可 |
+|---|---|---|
+| [KernelSU](https://github.com/tiann/KernelSU) | 整个项目的源头。内核模块、`ksud`、模块体系、su 与 App Profile 都来自这里，FoxSu 是它的分支 | GPL-3.0 |
+| [KernelPatch](https://github.com/bmax121/KernelPatch) | APK 内置 `libkpatch.so`，KPM 模块的加载、卸载与 `ctl0` 调用走它的 supercall | GPL-2.0 |
+| [susfs4ksu](https://github.com/ShirkNeko/susfs4ksu) | 路径隐藏与挂载伪装的内核补丁约定，管理器的 SusFs 页面按它的接口下发配置。上游 `simonpunk` 仓库已下线，链接指向社区镜像 | GPL-3.0 |
+| [Magic Mount-rs](https://github.com/Tools-cx-app/meta-magic_mount-rs) | APK 内置 `builtin/magic_mount_rs-arm64.zip`，作为元模块接管系统分区挂载 | GPL-3.0 |
+
+### 界面与视觉
+
+| 项目 | 在 FoxSu 里的位置 | 许可 |
+|---|---|---|
+| [Miuix](https://github.com/compose-miuix-ui/miuix) | 多套皮肤的组件底座（`miuix-ui` / `miuix-nav` / `miuix-preference` / `miuix-blur`） | Apache-2.0 |
+| [Jetpack Compose](https://github.com/androidx/androidx) | 声明式 UI、动画与手势系统 | Apache-2.0 |
+| [MaterialKolor](https://github.com/jordond/materialkolor) | 从壁纸取色，生成整套动态主题 | MIT |
+| [AppIconLoader](https://github.com/zhanghai/AppIconLoader) | 以正确尺寸加载已安装应用的图标 | Apache-2.0 |
+| [AndroidLiquidGlass](https://github.com/Kyant0/AndroidLiquidGlass) | `ui/component/liquid/` 下的液体玻璃绘制（`Lens`、`Vibrancy`、`InnerShadow`、`CombinedBackdrop`）改编自该项目 | Apache-2.0 |
+
+### 能力组件
+
+| 项目 | 在 FoxSu 里的位置 | 许可 |
+|---|---|---|
+| [libsu](https://github.com/topjohnwu/libsu) | root shell 与守护进程，所有命令都从这里走 | Apache-2.0 |
+| [OkHttp](https://github.com/lysine-dev/okhttp) | 下载去广告规则、检查更新 | Apache-2.0 |
+| [kotlinx.coroutines](https://github.com/Kotlin/kotlinx.coroutines) | 协程调度，整套异步与动效的时间线 | Apache-2.0 |
+| [Protocol Buffers](https://github.com/protocolbuffers/protobuf) | 模块信息与应用列表的二进制序列化 | BSD-3-Clause |
+| [RikkaX](https://github.com/RikkaApps/RikkaX)（ParcelableList 模块） | 跨进程传递已安装应用列表 | MIT |
+| [commonmark-java](https://github.com/commonmark/commonmark-java) | 模块说明页的 Markdown 渲染 | BSD-2-Clause |
+| [HiddenApiBypass](https://github.com/LSPosed/AndroidHiddenApiBypass) | 绕过隐藏 API 限制，读取系统内部状态 | Apache-2.0 |
+| [Commons Compress](https://github.com/apache/commons-compress) · [XZ for Java](https://github.com/tukaani-project/xz-java) | 模块包与镜像的压缩格式解包 | Apache-2.0 / 0BSD |
+
+### 数据与规则
+
+| 项目 | 在 FoxSu 里的位置 | 许可 |
+|---|---|---|
+| [anti-AD](https://github.com/privacy-protection-tools/anti-AD) | 国内 App 与运营商广告域名规则库，每日更新 | MIT |
+| [AdGuard 中文过滤](https://github.com/AdguardTeam/AdguardFilters) | 补充中文站点与 App 的广告域名 | GPL-3.0 |
+
+### 构建、工具与文档
+
+| 项目 | 在 FoxSu 里的位置 | 许可 |
+|---|---|---|
+| [android_bootimg](https://github.com/5ec1cff/android_bootimg) | `ksud` 解析与重打包 boot 镜像 | GPL-3.0 |
+| [ksu_props](https://github.com/KernelSU2/ksu_props) · [java-properties](https://github.com/KernelSU2/java-properties) | 读写模块 `module.prop` 与系统属性 | 仓库未附许可证 / MIT |
+| [kernlog.rs](https://github.com/kstep/kernlog.rs) | `ksuinit` 的内核日志输出 | MIT |
+| [libc](https://github.com/rust-lang/libc) | 打了补丁的分支，`Cargo.toml` 里按 commit 锁定 | MIT / Apache-2.0 |
+| [Magisk](https://github.com/topjohnwu/Magisk) | `su` 守护进程的语义参考（`userspace/ksud/src/su.rs` 有出处标注） | GPL-3.0 |
+| [VitePress](https://github.com/vuejs/vitepress) | [官网](https://cmry-mlc.github.io/FoxSu/zh_CN/)的构建与主题 | MIT |
+| KernelSU 社区 | 多语言翻译（简繁中、英、日、越、印尼、俄、葡） | — |
+
+> 许可证：FoxSu 整体以 GPL-3.0 分发。上表中来自 KernelSU、susfs4ksu、Magic Mount-rs、KernelPatch、android_bootimg 的部分同为 GPL 授权，其传染性适用于本项目；其余组件按各自许可证保留原条款，未做任何删改。
+
+如果你发现某个项目漏了，欢迎[提 Issue](https://github.com/Cmry-mlc/FoxSu/issues)补上。管理器里也有同一份清单：**设置 → 关于 → FoxSu Manager → 开源致谢**。
 
 ## 许可证
 

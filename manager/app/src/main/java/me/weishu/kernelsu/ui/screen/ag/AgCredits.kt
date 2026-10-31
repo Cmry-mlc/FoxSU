@@ -240,14 +240,14 @@ private fun CreditFooter() {
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            "FoxSu 以 GPL-3.0 分发。其中来自 KernelSU、susfs4ksu、KernelPatch、Magic Mount-rs、anti-AD 的部分同样以 GPL 授权，其传染性适用于本项目；其余组件按各自许可证保留原条款，未做任何删改。",
+            "FoxSu 以 GPL-3.0 分发。其中来自 KernelSU、susfs4ksu、KernelPatch、Magic Mount-rs 的部分同样以 GPL 授权，其传染性适用于本项目；其余组件按各自许可证保留原条款（Apache-2.0、MIT、BSD 等），未做任何删改。",
             fontSize = 11.5.sp,
             lineHeight = 18.sp,
             color = Ag.Tx2,
         )
         Spacer(Modifier.height(12.dp))
         Text(
-            "此外还使用了 RikkaX ParcelableList、Protocol Buffers、kotlinx.coroutines、AndroidX Lifecycle 等基础库，以及 KernelSU 社区的多语言翻译。它们的作者同样应该被写在这里。",
+            "此外还使用了 RikkaX、Protocol Buffers、kotlinx.coroutines、Commons Compress、AndroidX 等基础库，以及 KernelSU 社区的多语言翻译。它们的作者同样应该被写在这里。",
             fontSize = 11.5.sp,
             lineHeight = 18.sp,
             color = Ag.Tx3,
@@ -305,9 +305,9 @@ private fun creditGroups(): List<CreditGroup> = listOf(
             ),
             Credit(
                 "susfs4ksu",
-                "路径隐藏与挂载伪装的内核补丁",
-                "GPL-2.0",
-                "https://github.com/simonpunk/susfs4ksu",
+                "路径隐藏与挂载伪装的内核补丁约定（上游 simonpunk 仓库已下线，此处指向社区镜像）",
+                "GPL-3.0",
+                "https://github.com/ShirkNeko/susfs4ksu",
                 AgSettingsIcons.EyeOff,
             ),
             Credit(
@@ -341,7 +341,7 @@ private fun creditGroups(): List<CreditGroup> = listOf(
             Credit(
                 "MaterialKolor",
                 "从壁纸取色，生成整套动态主题",
-                "Apache-2.0",
+                "MIT",
                 "https://github.com/jordond/materialkolor",
                 AgSettingsIcons.Monet,
             ),
@@ -351,6 +351,13 @@ private fun creditGroups(): List<CreditGroup> = listOf(
                 "Apache-2.0",
                 "https://github.com/zhanghai/AppIconLoader",
                 AgTopIcons.AppGrid,
+            ),
+            Credit(
+                "AndroidLiquidGlass",
+                "液体玻璃绘制：镜头折射、内阴影与背景合成（ui/component/liquid 改编自该项目）",
+                "Apache-2.0",
+                "https://github.com/Kyant0/AndroidLiquidGlass",
+                AgTopIcons.Theme,
             ),
         ),
     ),
@@ -370,7 +377,7 @@ private fun creditGroups(): List<CreditGroup> = listOf(
                 "OkHttp",
                 "下载去广告规则、检查更新",
                 "Apache-2.0",
-                "https://github.com/square/okhttp",
+                "https://github.com/lysine-dev/okhttp",
                 AgSettingsIcons.CheckUpdate,
             ),
             Credit(
@@ -388,10 +395,10 @@ private fun creditGroups(): List<CreditGroup> = listOf(
                 AgSettingsIcons.Modules,
             ),
             Credit(
-                "RikkaX ParcelableList",
-                "跨进程传递已安装应用列表",
-                "Apache-2.0",
-                "https://github.com/RikkaApps/ParcelableList",
+                "RikkaX",
+                "跨进程传递已安装应用列表（ParcelableList 模块）",
+                "MIT",
+                "https://github.com/RikkaApps/RikkaX",
                 AgSettingsIcons.LocalTemplate,
             ),
             Credit(
@@ -425,7 +432,7 @@ private fun creditGroups(): List<CreditGroup> = listOf(
             Credit(
                 "anti-AD",
                 "国内 App 与运营商广告域名规则库，每日更新",
-                "GPL-3.0",
+                "MIT",
                 "https://github.com/privacy-protection-tools/anti-AD",
                 AgHomeIcons.ShieldCheck,
             ),

@@ -210,8 +210,62 @@ FoxSu is based on [KernelSU](https://github.com/tiann/KernelSU) (GPL-3.0). The k
 
 ## Credits
 
-- [KernelSU](https://github.com/tiann/KernelSU) — the kernel root solution, module system and translations
-- Everyone who filed feedback, tested builds or sent suggestions
+FoxSu did not grow from nothing. The tables below group every upstream project by **what its code actually does here** — source we adapted directly, binaries shipped inside the APK, and the parts running on the kernel side. Licences are listed per row, nothing folded away.
+
+### Root and kernel
+
+| Project | Where it sits in FoxSu | Licence |
+|---|---|---|
+| [KernelSU](https://github.com/tiann/KernelSU) | The origin of the whole project. Kernel module, `ksud`, module system, su and App Profile all come from here; FoxSu is a fork | GPL-3.0 |
+| [KernelPatch](https://github.com/bmax121/KernelPatch) | `libkpatch.so` ships in the APK; KPM load, unload and `ctl0` calls go through its supercall | GPL-2.0 |
+| [susfs4ksu](https://github.com/ShirkNeko/susfs4ksu) | The kernel-side contract for path hiding and mount spoofing; the SusFs screen issues config against its interface. Upstream `simonpunk` repo is gone, link points at a community mirror | GPL-3.0 |
+| [Magic Mount-rs](https://github.com/Tools-cx-app/meta-magic_mount-rs) | `builtin/magic_mount_rs-arm64.zip` ships in the APK and takes over system partition mounting as a meta-module | GPL-3.0 |
+
+### Interface and visuals
+
+| Project | Where it sits in FoxSu | Licence |
+|---|---|---|
+| [Miuix](https://github.com/compose-miuix-ui/miuix) | Component foundation for several skins (`miuix-ui` / `miuix-nav` / `miuix-preference` / `miuix-blur`) | Apache-2.0 |
+| [Jetpack Compose](https://github.com/androidx/androidx) | Declarative UI, animation and gesture system | Apache-2.0 |
+| [MaterialKolor](https://github.com/jordond/materialkolor) | Wallpaper colour extraction for the dynamic theme | MIT |
+| [AppIconLoader](https://github.com/zhanghai/AppIconLoader) | Loads installed app icons at the right size | Apache-2.0 |
+| [AndroidLiquidGlass](https://github.com/Kyant0/AndroidLiquidGlass) | The liquid glass drawing under `ui/component/liquid/` (`Lens`, `Vibrancy`, `InnerShadow`, `CombinedBackdrop`) is adapted from this project | Apache-2.0 |
+
+### Capability components
+
+| Project | Where it sits in FoxSu | Licence |
+|---|---|---|
+| [libsu](https://github.com/topjohnwu/libsu) | Root shell and daemon — every command goes through it | Apache-2.0 |
+| [OkHttp](https://github.com/lysine-dev/okhttp) | Downloading ad-block rules, update checks | Apache-2.0 |
+| [kotlinx.coroutines](https://github.com/Kotlin/kotlinx.coroutines) | Coroutine scheduling; the timeline behind all async work and animation | Apache-2.0 |
+| [Protocol Buffers](https://github.com/protocolbuffers/protobuf) | Binary serialisation for module info and app lists | BSD-3-Clause |
+| [RikkaX](https://github.com/RikkaApps/RikkaX) (ParcelableList module) | Passing installed app lists across processes | MIT |
+| [commonmark-java](https://github.com/commonmark/commonmark-java) | Markdown rendering on module description pages | BSD-2-Clause |
+| [HiddenApiBypass](https://github.com/LSPosed/AndroidHiddenApiBypass) | Reading internal system state past the hidden-API block | Apache-2.0 |
+| [Commons Compress](https://github.com/apache/commons-compress) · [XZ for Java](https://github.com/tukaani-project/xz-java) | Unpacking module archives and images | Apache-2.0 / 0BSD |
+
+### Data and rules
+
+| Project | Where it sits in FoxSu | Licence |
+|---|---|---|
+| [anti-AD](https://github.com/privacy-protection-tools/anti-AD) | Ad-domain rules for Chinese apps and carriers, updated daily | MIT |
+| [AdGuard Chinese filters](https://github.com/AdguardTeam/AdguardFilters) | Extra ad domains for Chinese sites and apps | GPL-3.0 |
+
+### Build, tooling and docs
+
+| Project | Where it sits in FoxSu | Licence |
+|---|---|---|
+| [android_bootimg](https://github.com/5ec1cff/android_bootimg) | `ksud` parsing and repacking boot images | GPL-3.0 |
+| [ksu_props](https://github.com/KernelSU2/ksu_props) · [java-properties](https://github.com/KernelSU2/java-properties) | Reading and writing `module.prop` and system properties | no licence file / MIT |
+| [kernlog.rs](https://github.com/kstep/kernlog.rs) | Kernel log output in `ksuinit` | MIT |
+| [libc](https://github.com/rust-lang/libc) | Patched fork, pinned by commit in `Cargo.toml` | MIT / Apache-2.0 |
+| [Magisk](https://github.com/topjohnwu/Magisk) | Reference for `su` daemon semantics (attributed in `userspace/ksud/src/su.rs`) | GPL-3.0 |
+| [VitePress](https://github.com/vuejs/vitepress) | Build and theme for the [website](https://cmry-mlc.github.io/FoxSu/zh_CN/) | MIT |
+| KernelSU community | Translations (zh-CN, zh-TW, en, ja, vi, id, ru, pt-BR) | — |
+
+> Licensing: FoxSu is distributed under GPL-3.0. The parts coming from KernelSU, susfs4ksu, Magic Mount-rs, KernelPatch and android_bootimg are GPL too, and that copyleft applies to this project. Everything else keeps its own licence, unmodified.
+
+Something missing? [Open an issue](https://github.com/Cmry-mlc/FoxSu/issues). The manager carries the same list under **Settings → About → FoxSu Manager → Open-source credits**.
 
 ## License
 
