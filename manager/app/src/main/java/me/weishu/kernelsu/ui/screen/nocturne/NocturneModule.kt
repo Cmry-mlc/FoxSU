@@ -68,7 +68,8 @@ fun NocturneModuleScreen(
         Column(Modifier.fillMaxSize().padding(top = ncStatusTop() + 2.dp)) {
             Box(Modifier.padding(start = if (useSideDock()) 96.dp else 18.dp, end = 18.dp)) {
                 NcHeader(kicker = "MODULES", title = "模块") {
-                    NcIconButton(iconRes = R.drawable.nc_user, onClick = {})
+                    // 原本这里还有一颗 user 图标，但没有任何落点（页面没有作者入口），
+                    // 按下去只会没反应。留下能真正干活的两颗。
                     NcIconButton(iconRes = R.drawable.nc_palette, onClick = { showStylePicker = true })
                     NcIconButton(iconRes = R.drawable.nc_download, onClick = onOpenRepo)
                 }

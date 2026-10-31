@@ -99,6 +99,16 @@ sealed interface Route : NavKey, Parcelable {
     @Serializable
     data object MetaModule : Route
 
+    /** 内置模块总览：随 APK 打包的 Magic Mount-rs / Oh My Keymint / Zygisk Next。 */
+    @Parcelize
+    @Serializable
+    data object Builtins : Route
+
+    /** 单颗内置模块的详情：装卸、启停、打开模块自带界面。 */
+    @Parcelize
+    @Serializable
+    data class BuiltinDetail(val id: String) : Route
+
     @Parcelize
     @Serializable
     data object AppProfileTemplate : Route

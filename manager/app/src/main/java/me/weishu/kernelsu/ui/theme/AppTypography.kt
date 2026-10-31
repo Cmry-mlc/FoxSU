@@ -15,16 +15,18 @@ import me.weishu.kernelsu.R
  * 内置字体随 APK 打包（res/font），中英文都有完整字形；
  * 除系统默认外，其余都基于同一套 Typography 只替换 fontFamily，字号行高不变。
  */
+fun resolveFontFamily(style: Int, fontPath: String? = null): FontFamily? = when {
+    style == 4 && fontPath != null -> runCatching {
+        FontFamily(Font(File(fontPath)))
+    }.getOrNull()
+    style == 1 -> FontFamily(Font(R.font.noto_serif_sc))
+    style == 2 -> FontFamily(Font(R.font.jetbrains_mono))
+    style == 3 -> FontFamily(Font(R.font.lxgw_wenkai))
+    else -> null
+}
+
 fun typographyWithFont(style: Int, fontPath: String? = null): Typography {
-    val family = when {
-        style == 4 && fontPath != null -> runCatching {
-            FontFamily(Font(File(fontPath)))
-        }.getOrNull()
-        style == 1 -> FontFamily(Font(R.font.noto_serif_sc))
-        style == 2 -> FontFamily(Font(R.font.jetbrains_mono))
-        style == 3 -> FontFamily(Font(R.font.lxgw_wenkai))
-        else -> null
-    } ?: return Typography
+    val family = resolveFontFamily(style, fontPath) ?: return Typography
 
     val base = Typography
     return Typography(

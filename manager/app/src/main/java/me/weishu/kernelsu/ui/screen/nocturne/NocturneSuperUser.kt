@@ -58,9 +58,9 @@ fun NocturneSuperUserScreen(
         Column(Modifier.fillMaxSize().padding(top = ncStatusTop() + 2.dp, bottom = bottomInnerPadding)) {
             Box(Modifier.padding(start = if (useSideDock()) 96.dp else 18.dp, end = 18.dp)) {
                 NcHeader(kicker = "ROOT ACCESS", title = "超级用户") {
-                    NcIconButton(iconRes = R.drawable.nc_user, onClick = {})
+                    // user / doc 两颗原本是空实现（点了没有任何反应），
+                    // 与其留假按钮，不如只保留真正可用的主题切换。
                     NcIconButton(iconRes = R.drawable.nc_palette, onClick = { showStylePicker = true })
-                    NcIconButton(iconRes = R.drawable.nc_doc, onClick = {})
                 }
             }
             LazyColumn(

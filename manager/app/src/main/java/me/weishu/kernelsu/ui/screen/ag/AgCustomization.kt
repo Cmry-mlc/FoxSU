@@ -273,10 +273,10 @@ internal fun AgCustomization(
                         }
                         Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f)) {
-                            Text("Magic Mount-rs", fontSize = 14.5.sp, fontWeight = FontWeight.Bold, color = Ag.Tx)
+                            Text("内置模块", fontSize = 14.5.sp, fontWeight = FontWeight.Bold, color = Ag.Tx)
                             Spacer(Modifier.height(3.dp))
                             Text(
-                                "内置元模块 · 接管系统分区的挂载层",
+                                "三颗随包模块 · 安装、启停、打开模块界面",
                                 fontSize = 11.sp,
                                 color = Ag.Tx3,
                                 maxLines = 1,

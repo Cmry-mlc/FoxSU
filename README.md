@@ -128,6 +128,7 @@ FoxSu 是 [KernelSU](https://github.com/tiann/KernelSU) 的衍生分支。root �
 
 - 本地 zip 安装，安装前展示模块信息与冲突提示
 - **模块仓库**：内置在线索引，可浏览、搜索、查看详情并直接安装，下载走大小与 SHA-256 校验
+- **内置模块**：Magic Mount-rs、Zygisk Next、Oh My Keymint 三颗安装包随 APK 打包，不用去 GitHub 找 release；详情页可安装、更新、启停、卸载，自家带 webroot 的模块还能直接打开它的原始界面
 - 元模块（metamodule）识别与高亮，卸载前给出警告
 - 模块 action 脚本一键执行，也支持手动运行 shell 脚本
 - 模块更新检查、启用 / 禁用，可按名称、星标、更新时间排序
@@ -220,6 +221,8 @@ FoxSu 不是从零长出来的。下面按「这些代码在项目里承担什�
 | [KernelPatch](https://github.com/bmax121/KernelPatch) | APK 内置 `libkpatch.so`，KPM 模块的加载、卸载与 `ctl0` 调用走它的 supercall | GPL-2.0 |
 | [susfs4ksu](https://github.com/ShirkNeko/susfs4ksu) | 路径隐藏与挂载伪装的内核补丁约定，管理器的 SusFs 页面按它的接口下发配置。上游 `simonpunk` 仓库已下线，链接指向社区镜像 | GPL-3.0 |
 | [Magic Mount-rs](https://github.com/Tools-cx-app/meta-magic_mount-rs) | APK 内置 `builtin/magic_mount_rs-arm64.zip`，作为元模块接管系统分区挂载 | GPL-3.0 |
+| [Zygisk Next](https://github.com/LSPosed/ZygiskNext) | APK 内置 `builtin/zygisk_next.zip`，不依赖 Magisk 的 Zygisk 实现，为 Zygisk 模块提供注入 | GPL-3.0 |
+| [Oh My Keymint](https://github.com/qwq233/OhMyKeymint) | APK 内置 `builtin/oh_my_keymint-arm64.zip`，用自带 keymint 守护进程替换系统 KeyMint | Apache-2.0 |
 
 ### 界面与视觉
 
@@ -263,7 +266,7 @@ FoxSu 不是从零长出来的。下面按「这些代码在项目里承担什�
 | [VitePress](https://github.com/vuejs/vitepress) | [官网](https://cmry-mlc.github.io/FoxSu/zh_CN/)的构建与主题 | MIT |
 | KernelSU 社区 | 多语言翻译（简繁中、英、日、越、印尼、俄、葡） | — |
 
-> 许可证：FoxSu 整体以 GPL-3.0 分发。上表中来自 KernelSU、susfs4ksu、Magic Mount-rs、KernelPatch、android_bootimg 的部分同为 GPL 授权，其传染性适用于本项目；其余组件按各自许可证保留原条款，未做任何删改。
+> 许可证：FoxSu 整体以 GPL-3.0 分发。上表中来自 KernelSU、susfs4ksu、Magic Mount-rs、Zygisk Next、KernelPatch、android_bootimg 的部分同为 GPL 授权，其传染性适用于本项目；其余组件按各自许可证保留原条款，未做任何删改。
 
 如果你发现某个项目漏了，欢迎[提 Issue](https://github.com/Cmry-mlc/FoxSu/issues)补上。管理器里也有同一份清单：**设置 → 关于 → FoxSu Manager → 开源致谢**。
 

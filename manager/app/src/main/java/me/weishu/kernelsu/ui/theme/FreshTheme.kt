@@ -3,10 +3,12 @@ package me.weishu.kernelsu.ui.theme
 import android.app.Activity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.Shapes
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -127,18 +129,24 @@ fun FreshKernelSUTheme(
         animatedColorScheme
     }
 
+    val typography = rememberTypography(
+        CustomizationStore.current.fontStyle,
+        CustomizationStore.current.fontPath,
+    ).let { if (glassLightText) it.withoutShadow() else it }
+
     MaterialExpressiveTheme(
         colorScheme = textScheme,
         motionScheme = MotionScheme.expressive(),
         // 玻璃模式不再给文字加投影：字要“正常”，靠颜色和卡面明暗保可读
-        typography = rememberTypography(
-            CustomizationStore.current.fontStyle,
-            CustomizationStore.current.fontPath,
-        ).let { if (glassLightText) it.withoutShadow() else it },
+        typography = typography,
         shapes = FreshShapes,
         content = {
             MonetColorsProvider.UpdateCss(animatedColorScheme)
-            content()
+            // 同 MaterialKernelSUTheme：Material3 不提供 LocalTextStyle，
+            // 裸 Text() 会拿平台默认字，导致「定制 → 字体」在这套皮肤下完全没反应。
+            CompositionLocalProvider(LocalTextStyle provides typography.defaultTextStyle) {
+                content()
+            }
         }
     )
 }

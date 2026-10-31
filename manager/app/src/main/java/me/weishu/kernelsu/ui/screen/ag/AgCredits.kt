@@ -240,7 +240,7 @@ private fun CreditFooter() {
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            "FoxSu 以 GPL-3.0 分发。其中来自 KernelSU、susfs4ksu、KernelPatch、Magic Mount-rs 的部分同样以 GPL 授权，其传染性适用于本项目；其余组件按各自许可证保留原条款（Apache-2.0、MIT、BSD 等），未做任何删改。",
+            "FoxSu 以 GPL-3.0 分发。其中来自 KernelSU、susfs4ksu、KernelPatch、Magic Mount-rs、Zygisk Next 的部分同样以 GPL 授权，其传染性适用于本项目；其余组件按各自许可证保留原条款（Apache-2.0、MIT、BSD 等），未做任何删改。",
             fontSize = 11.5.sp,
             lineHeight = 18.sp,
             color = Ag.Tx2,
@@ -316,6 +316,20 @@ private fun creditGroups(): List<CreditGroup> = listOf(
                 "GPL-3.0",
                 "https://github.com/Tools-cx-app/meta-magic_mount-rs",
                 AgEngineIcons.Mount,
+            ),
+            Credit(
+                "Zygisk Next",
+                "随管理器内置的独立 Zygisk 实现，让 Zygisk 模块能跑",
+                "GPL-3.0",
+                "https://github.com/LSPosed/ZygiskNext",
+                AgSettingsIcons.Puzzle,
+            ),
+            Credit(
+                "Oh My Keymint",
+                "随管理器内置的 KeyMint 实现，配合 keybox 提供密钥证明链",
+                "Apache-2.0",
+                "https://github.com/qwq233/OhMyKeymint",
+                AgSettingsIcons.Shield,
             ),
         ),
     ),

@@ -148,7 +148,8 @@ fun GlassSettingsList(
                 trailing = {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         GlassTopButton(iconRes = R.drawable.ic_d_palette, onClick = { showStylePicker = true })
-                        GlassTopButton(iconRes = R.drawable.ic_d_search, onClick = {})
+                        // 这里原来还有一颗搜索图标，但 Glass 设置页没有搜索实现，按下去只会
+                        // 弹不出任何东西。宁可少一颗图标，也不留按不动的按钮。
                     }
                 },
             )

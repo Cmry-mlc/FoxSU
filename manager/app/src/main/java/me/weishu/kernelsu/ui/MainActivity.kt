@@ -309,6 +309,35 @@ class MainActivity : ComponentActivity() {
                                     onBack = dropUnlessResumed { navigator.pop() },
                                 )
                             }
+                            entry<Route.Builtins>(swipeDismiss = swipeDismiss) {
+                                me.weishu.kernelsu.ui.screen.ag.AgBuiltinModules(
+                                    onBack = dropUnlessResumed { navigator.pop() },
+                                    onOpenDetail = { id -> navigator.push(Route.BuiltinDetail(id)) },
+                                    onOpenMetaModule = { navigator.push(Route.MetaModule) },
+                                )
+                            }
+                            entry<Route.BuiltinDetail>(swipeDismiss = swipeDismiss) { key ->
+                                me.weishu.kernelsu.ui.screen.ag.AgBuiltinDetail(
+                                    moduleId = key.id,
+                                    onBack = dropUnlessResumed { navigator.pop() },
+                                    onOpenWebUi = { id ->
+                                        // 模块自带 webroot 时，用与模块列表同一个 WebUI 宿主打开，
+                                        // 不另造一套页面：KSU 的 su 桥、文件选择、返回手势都在那边。
+                                        startActivity(
+                                            Intent(this@MainActivity, me.weishu.kernelsu.ui.webui.WebUIActivity::class.java)
+                                                .setData(
+                                                    me.weishu.kernelsu.ui.util.module.Shortcut.buildShortcutUri(
+                                                        id,
+                                                        me.weishu.kernelsu.ui.screen.module.ShortcutType.WebUI,
+                                                    )
+                                                )
+                                        )
+                                    },
+                                    onRunAction = { id ->
+                                        navigator.push(Route.ExecuteModuleAction(id, fromShortcut = true))
+                                    },
+                                )
+                            }
                             entry<Route.Customization>(swipeDismiss = swipeDismiss) {
                                 // 定制页已统一为 Redesign 的 AgCustomization：五套皮肤共用同一套
                                 // 定制能力（卡片颜色/透明度/胶囊/图标/字体…），不再各皮肤各一套。
@@ -342,7 +371,7 @@ class MainActivity : ComponentActivity() {
                                             onSetPageScale = settingsVm::setPageScale,
                                             onSetModuleDescriptionMaxLines = settingsVm::setModuleDescriptionMaxLines,
                                         ),
-                                        onOpenBuiltin = dropUnlessResumed { navigator.push(Route.MetaModule) },
+                                        onOpenBuiltin = dropUnlessResumed { navigator.push(Route.Builtins) },
                                         onOpenDonate = dropUnlessResumed { navigator.push(Route.Donate) },
                                     )
                                 }

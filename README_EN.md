@@ -128,6 +128,7 @@ Every option is wired to real settings and applies immediately, no restart:
 
 - Install from a local zip, with module info and conflict warnings before flashing
 - **Module repository**: built-in online index to browse, search, inspect and install, with size and SHA-256 verification on download
+- **Bundled modules**: Magic Mount-rs, Zygisk Next and Oh My Keymint ship inside the APK — install, update, toggle and uninstall from a detail page, and open a module's own webroot UI when it has one
 - Metamodule detection and highlighting, with a warning before uninstall
 - Run module action scripts in one tap, or run arbitrary shell scripts
 - Update checks, enable / disable, sorting by name, stars or update time
@@ -220,6 +221,8 @@ FoxSu did not grow from nothing. The tables below group every upstream project b
 | [KernelPatch](https://github.com/bmax121/KernelPatch) | `libkpatch.so` ships in the APK; KPM load, unload and `ctl0` calls go through its supercall | GPL-2.0 |
 | [susfs4ksu](https://github.com/ShirkNeko/susfs4ksu) | The kernel-side contract for path hiding and mount spoofing; the SusFs screen issues config against its interface. Upstream `simonpunk` repo is gone, link points at a community mirror | GPL-3.0 |
 | [Magic Mount-rs](https://github.com/Tools-cx-app/meta-magic_mount-rs) | `builtin/magic_mount_rs-arm64.zip` ships in the APK and takes over system partition mounting as a meta-module | GPL-3.0 |
+| [Zygisk Next](https://github.com/LSPosed/ZygiskNext) | `builtin/zygisk_next.zip` ships in the APK: a standalone Zygisk implementation that lets Zygisk modules run | GPL-3.0 |
+| [Oh My Keymint](https://github.com/qwq233/OhMyKeymint) | `builtin/oh_my_keymint-arm64.zip` ships in the APK: replaces the system KeyMint with its own daemon | Apache-2.0 |
 
 ### Interface and visuals
 
@@ -263,7 +266,7 @@ FoxSu did not grow from nothing. The tables below group every upstream project b
 | [VitePress](https://github.com/vuejs/vitepress) | Build and theme for the [website](https://cmry-mlc.github.io/FoxSu/zh_CN/) | MIT |
 | KernelSU community | Translations (zh-CN, zh-TW, en, ja, vi, id, ru, pt-BR) | — |
 
-> Licensing: FoxSu is distributed under GPL-3.0. The parts coming from KernelSU, susfs4ksu, Magic Mount-rs, KernelPatch and android_bootimg are GPL too, and that copyleft applies to this project. Everything else keeps its own licence, unmodified.
+> Licensing: FoxSu is distributed under GPL-3.0. The parts coming from KernelSU, susfs4ksu, Magic Mount-rs, Zygisk Next, KernelPatch and android_bootimg are GPL too, and that copyleft applies to this project. Everything else keeps its own licence, unmodified.
 
 Something missing? [Open an issue](https://github.com/Cmry-mlc/FoxSu/issues). The manager carries the same list under **Settings → About → FoxSu Manager → Open-source credits**.
 
