@@ -99,7 +99,7 @@ fun BottomBarMiuix(
                     Box(contentAlignment = Alignment.TopCenter) {
                         val iconT = if (selected) AgDock.vio else AgDock.tx3
                         Icon(
-                            imageVector = item.icon,
+                            imageVector = dockIconOverride(item) ?: item.icon,
                             contentDescription = stringResource(item.label),
                             tint = iconT,
                             modifier = Modifier

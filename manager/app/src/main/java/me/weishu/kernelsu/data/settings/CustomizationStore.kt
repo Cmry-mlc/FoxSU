@@ -156,6 +156,15 @@ data class Customization(
 
     /** 外圈特效：0 = 关闭，1..20 对应同文件的 rings。 */
     val dockFxRing: Int = 0,
+
+    /**
+     * 底栏图标风格：0 = 原生（跟随皮肤），1..20 对应
+     * [me.weishu.kernelsu.ui.component.bottombar.DockIconPacks.packs]。
+     *
+     * 只换形状不换颜色——着色仍走 `Icon(tint = ...)` 的 ColorFilter，
+     * 所以强调色、选中态这些既有逻辑一行都不用改。
+     */
+    val dockIconPack: Int = 0,
     /**
      * 「凸起中间」底栏中央那颗头像的本地图片路径（长按可换）。
      * 只存路径不存 Uri：GET_CONTENT 的读权限是临时的，重启后 Uri 就打不开了。
@@ -256,6 +265,7 @@ private const val KEY_DOCK_STYLE = "dock_style"
     private const val KEY_DOCK_FX_ON = "dock_fx_on"
     private const val KEY_DOCK_FX_INNER = "dock_fx_inner"
     private const val KEY_DOCK_FX_RING = "dock_fx_ring"
+    private const val KEY_DOCK_ICON_PACK = "dock_icon_pack"
     private const val KEY_DONATE_AVATAR = "donate_avatar"
     private const val KEY_BRAND_DEFAULTS = "brand_defaults_v1"
 
@@ -360,6 +370,7 @@ private const val KEY_DOCK_STYLE = "dock_style"
             dockFxOn = getBoolean(KEY_DOCK_FX_ON, true),
             dockFxInner = getInt(KEY_DOCK_FX_INNER, 0).coerceIn(0, 20),
             dockFxRing = getInt(KEY_DOCK_FX_RING, 0).coerceIn(0, 20),
+            dockIconPack = getInt(KEY_DOCK_ICON_PACK, 0).coerceIn(0, 20),
             donateAvatar = getString(KEY_DONATE_AVATAR, null),
         )
     }
@@ -458,6 +469,8 @@ private const val KEY_DOCK_STYLE = "dock_style"
 
     fun setDockFxRing(index: Int) = update { it.copy(dockFxRing = index.coerceIn(0, 20)) }
 
+    fun setDockIconPack(index: Int) = update { it.copy(dockIconPack = index.coerceIn(0, 20)) }
+
     /**
      * 恢复默认：直接把整份 SharedPreferences 清空再读回默认值。
      *
@@ -532,6 +545,7 @@ private const val KEY_DOCK_STYLE = "dock_style"
             putBoolean(KEY_DOCK_FX_ON, next.dockFxOn)
             putInt(KEY_DOCK_FX_INNER, next.dockFxInner)
             putInt(KEY_DOCK_FX_RING, next.dockFxRing)
+            putInt(KEY_DOCK_ICON_PACK, next.dockIconPack)
             putString(KEY_DONATE_AVATAR, next.donateAvatar)
         }
         current = next

@@ -726,7 +726,7 @@ private fun KitTab(
                     iconSize = if (style == DockKitStyle.TRACK) 20.dp else 21.dp,
                 ) {
                     Icon(
-                        imageVector = KitGlyphs.of(item),
+                        imageVector = dockIconOverride(item) ?: KitGlyphs.of(item),
                         contentDescription = stringResource(item.label),
                         tint = fg,
                         modifier = Modifier

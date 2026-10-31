@@ -62,6 +62,11 @@ sealed interface Route : NavKey, Parcelable {
     @Serializable
     data object DockFx : Route
 
+    /** 底栏图标风格选择器：20 套造型语言，0 = 原生。 */
+    @Parcelize
+    @Serializable
+    data object DockIcons : Route
+
     @Parcelize
     @Serializable
     data object Sulog : Route

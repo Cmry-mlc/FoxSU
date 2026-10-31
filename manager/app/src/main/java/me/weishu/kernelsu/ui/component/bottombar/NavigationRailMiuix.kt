@@ -26,7 +26,7 @@ fun NavigationRailMiuix(
     val mainState = LocalMainPagerState.current
 
     val items = BottomBarDestination.entries.map { destination ->
-        Pair(stringResource(destination.label), destination.icon)
+        Pair(stringResource(destination.label), dockIconOverride(destination) ?: destination.icon)
     }
     val settingsRepo = remember { SettingsRepositoryImpl() }
     val state = rememberNavigationRailState(

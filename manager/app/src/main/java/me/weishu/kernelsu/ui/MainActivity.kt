@@ -264,6 +264,11 @@ class MainActivity : ComponentActivity() {
                             entry<Route.Main>(swipeDismiss = swipeDismiss) { mainScreenEntry() }
                             entry<Route.About>(swipeDismiss = swipeDismiss) { AboutScreen() }
                             entry<Route.Author>(swipeDismiss = swipeDismiss) { AuthorScreen() }
+                            entry<Route.DockIcons>(swipeDismiss = swipeDismiss) {
+                                me.weishu.kernelsu.ui.screen.ag.AgDockIcons(
+                                    onBack = dropUnlessResumed { navigator.pop() },
+                                )
+                            }
                             entry<Route.DockFx>(swipeDismiss = swipeDismiss) {
                                 me.weishu.kernelsu.ui.screen.ag.AgDockFx(
                                     onBack = dropUnlessResumed { navigator.pop() },

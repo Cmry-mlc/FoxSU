@@ -358,7 +358,7 @@ private fun CenterDockTab(
         Box(contentAlignment = Alignment.Center) {
             DockIconTapFx(pressed = pressed, accent = accent.primary, iconSize = 21.dp) {
                 Icon(
-                    imageVector = item.filledIcon,
+                    imageVector = dockIconOverride(item) ?: item.filledIcon,
                     contentDescription = stringResource(item.label),
                     tint = fg,
                     modifier = Modifier

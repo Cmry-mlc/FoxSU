@@ -207,7 +207,7 @@ private fun ClassicDockItem(
                 // 栏内特效：通栏底栏此前漏挂了，切过来就没有点击动效
                 DockIconTapFx(pressed = pressed, accent = accentTint, iconSize = 22.dp) {
                     Icon(
-                        imageVector = item.filledIcon,
+                        imageVector = dockIconOverride(item) ?: item.filledIcon,
                         contentDescription = stringResource(item.label),
                         tint = tint,
                         modifier = Modifier

@@ -418,6 +418,18 @@ internal fun AgCustomization(
                     divider = false,
                     onClick = { navigator.push(Route.DockFx) },
                 )
+                AgRow(
+                    "底栏图标 · 20 套",
+                    if (custom.dockIconPack == 0) {
+                        "当前为原生图标。20 套造型语言：建筑剖面 / 折纸 / 像素 / 印章 / 星轨…"
+                    } else {
+                        "第 ${custom.dockIconPack} 套 · ${me.weishu.kernelsu.ui.component.bottombar.DockIconPacks.packs[custom.dockIconPack - 1].name}，点进去可以换"
+                    },
+                    Ag.Mag, AgSettingsIcons.Style,
+                    showChev = true,
+                    divider = false,
+                    onClick = { navigator.push(Route.DockIcons) },
+                )
             }
 
             // ══════════ 全局强调色 ══════════

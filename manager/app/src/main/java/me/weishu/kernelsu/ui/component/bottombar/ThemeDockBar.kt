@@ -796,7 +796,7 @@ private fun DockIcon(
             iconSize = iconSize,
         ) {
             Icon(
-                imageVector = item.filledIcon,
+                imageVector = dockIconOverride(item) ?: item.filledIcon,
                 contentDescription = stringResource(item.label),
                 tint = tint,
                 modifier = Modifier
