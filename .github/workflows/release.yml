@@ -34,12 +34,20 @@ jobs:
         with:
           merge-multiple: false
 
-      # download-artifact 会按 artifact 名建子目录（manager-gradle/、ksud-xxx/），
-      # 这里统一摊平，后面就不用猜结构了。
+      # download-artifact 会按 artifact 名建子目录，其中有两个都叫同一个 APK 名：
+      #   manager/        ← repack 过、注入了 ksud、按内核身份重签（21MB）
+      #   manager-gradle/ ← gradle 原始产物，没有内嵌 ksud（12MB）
+      # 把两者摊平到同一层会互相覆盖，覆盖结果取决于 find 的遍历顺序——
+      # 上一版就这么随机拿到了 12MB 那个，发布出去的管理器里没有 libksud.so，
+      # 所有需要 ksud 的功能（模块安装、KPM、susfs 应用）全部失效。
+      # 所以这里只认 manager/，别的目录一律不碰。
       - name: Collect apk
         run: |
           mkdir -p manager
-          find . -maxdepth 3 -type f -name "*.apk" -exec cp -f {} manager/ \;
+          if ! ls manager/*.apk >/dev/null 2>&1; then
+            echo "::warning::没有找到 repack 后的 manager artifact，回退到 gradle 原始包（不含内嵌 ksud）"
+            find . -maxdepth 3 -type f -name "*.apk" -not -path "./manager/*" -exec cp -f {} manager/ \;
+          fi
           ls -l manager/
 
       - name: Verify apk exists
@@ -48,6 +56,18 @@ jobs:
             echo "::error::没有拿到管理器 APK，放弃发布（检查 build-manager 是否成功）"
             exit 1
           fi
+
+      # 发布前的硬校验：管理器必须内嵌 ksud。
+      # 缺了它，安装模块、KPM 加载、susfs 应用这些全都会失败，
+      # 而 APK 照样能装上、界面照样能开——这种残包不拦住，发出去就是事故。
+      - name: Verify apk bundles ksud
+        run: |
+          APK=$(ls manager/*.apk | head -n 1)
+          if ! unzip -l "$APK" | grep -q "lib/arm64-v8a/libksud.so"; then
+            echo "::error::$APK 里没有 lib/arm64-v8a/libksud.so，这是 gradle 原始包而不是 repack 产物，不能发布"
+            exit 1
+          fi
+          echo "✓ $(unzip -l "$APK" | grep 'lib/arm64-v8a/libksud.so' | awk '{print $1}') 字节的 ksud 已内嵌"
 
       - name: Resolve tag
         id: tag
