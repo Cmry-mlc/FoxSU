@@ -18,16 +18,16 @@ export default defineConfig({
     },
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/tiann/KernelSU' }
+      { icon: 'github', link: 'https://github.com/Cmry-mlc/FoxSu' }
     ],
 
     footer: {
         message: 'Phát hành dưới giấy phép GPL3.',
-        copyright: 'Bản Quyền © 2022-nay KernelSU developers.'
+        copyright: 'Bản Quyền © 2026 FoxSu developers.'
     },
 
     editLink: {
-        pattern: 'https://github.com/tiann/KernelSU/edit/main/website/docs/:path',
+        pattern: 'https://github.com/Cmry-mlc/FoxSu/edit/main/website/docs/:path',
         text: 'Chỉnh sửa trang này trên GitHub'
     }
   }

@@ -3,19 +3,19 @@ layout: home
 title: Sebuah solusi root kernel-based untuk Android
 
 hero:
-  name: KernelSU
+  name: FoxSu
   text: Sebuah solusi root kernel-based untuk Android
   tagline: ""
   image:
     src: /logo.png
-    alt: KernelSU
+    alt: FoxSu
   actions:
     - theme: brand
       text: Permulaan
       link: /id_ID/guide/what-is-kernelsu
     - theme: alt
       text: Lihat di GitHub
-      link: https://github.com/tiann/KernelSU
+      link: https://github.com/Cmry-mlc/FoxSu/releases
 
 features:
   - title: Kernel-based

@@ -3,19 +3,19 @@ layout: home
 title: 基於核心的 Android Root 解決方案
 
 hero:
-  name: KernelSU
+  name: FoxSu
   text: 基於核心的 Android root 解決方案
   tagline: ""
   image:
     src: /logo.png
-    alt: KernelSU
+    alt: FoxSu
   actions:
     - theme: brand
       text: 開始瞭解
       link: /zh_TW/guide/what-is-kernelsu
     - theme: alt
       text: 在 GitHub 中檢視
-      link: https://github.com/tiann/KernelSU
+      link: https://github.com/Cmry-mlc/FoxSu/releases
 
 features:
   - title: 以核心為基礎

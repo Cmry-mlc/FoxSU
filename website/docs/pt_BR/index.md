@@ -3,19 +3,19 @@ layout: home
 title: Início
 
 hero:
-  name: KernelSU
+  name: FoxSu
   text: Uma solução root baseada em kernel para Android
   tagline: ""
   image:
     src: /logo.png
-    alt: KernelSU
+    alt: FoxSu
   actions:
     - theme: brand
       text: Iniciar
       link: /pt_BR/guide/what-is-kernelsu
     - theme: alt
       text: Ver no GitHub
-      link: https://github.com/tiann/KernelSU
+      link: https://github.com/Cmry-mlc/FoxSu/releases
 
 features:
   - title: Baseado em kernel

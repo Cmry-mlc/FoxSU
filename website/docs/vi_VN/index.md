@@ -3,19 +3,19 @@ layout: home
 title: Giải pháp root dựa trên kernel dành cho Android
 
 hero:
-  name: KernelSU
+  name: FoxSu
   text: Giải pháp root dựa trên kernel dành cho Android
   tagline: ""
   image:
     src: /logo.png
-    alt: KernelSU
+    alt: FoxSu
   actions:
     - theme: brand
       text: Bắt Đầu
       link: /guide/what-is-kernelsu
     - theme: alt
       text: Xem trên GitHub
-      link: https://github.com/tiann/KernelSU
+      link: https://github.com/Cmry-mlc/FoxSu/releases
 
 features:
   - title: Dựa trên Kernel

@@ -18,16 +18,16 @@ export default defineConfig({
     },
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/tiann/KernelSU' }
+      { icon: 'github', link: 'https://github.com/Cmry-mlc/FoxSu' }
     ],
 
     footer: {
         message: 'Выпускается под лицензией GPL3.',
-        copyright: 'Авторские права © 2022-текущее Разработчики KernelSU.'
+        copyright: '© 2026 Разработчики FoxSu.'
     },
 
     editLink: {
-        pattern: 'https://github.com/tiann/KernelSU/edit/main/website/docs/:path',
+        pattern: 'https://github.com/Cmry-mlc/FoxSu/edit/main/website/docs/:path',
         text: 'Редактировать эту страницу на GitHub'
     }
   }

@@ -3,19 +3,19 @@ layout: home
 title: Android 向けのカーネルベース root ソリューション
 
 hero:
-  name: KernelSU
+  name: FoxSu
   text: Android 向けのカーネルベース root ソリューション
   tagline: ""
   image:
     src: /logo.png
-    alt: KernelSU
+    alt: FoxSu
   actions:
     - theme: brand
       text: はじめる
       link: /ja_JP/guide/what-is-kernelsu
     - theme: alt
       text: GitHub で表示
-      link: https://github.com/tiann/KernelSU
+      link: https://github.com/Cmry-mlc/FoxSu/releases
 
 features:
   - title: カーネルベース

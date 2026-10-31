@@ -3,19 +3,19 @@ layout: home
 title: Основанное на ядре root-решение для Android
 
 hero:
-  name: KernelSU
+  name: FoxSu
   text: Основанное на ядре root-решение для Android
   tagline: ""
   image:
     src: /logo.png
-    alt: KernelSU
+    alt: FoxSu
   actions:
     - theme: brand
       text: Начало работы
       link: /ru_RU/guide/what-is-kernelsu
     - theme: alt
       text: Посмотр на GitHub
-      link: https://github.com/tiann/KernelSU
+      link: https://github.com/Cmry-mlc/FoxSu/releases
 
 features:
   - title: Основанный на ядре

@@ -18,16 +18,16 @@ export default defineConfig({
     },
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/tiann/KernelSU' }
+      { icon: 'github', link: 'https://github.com/Cmry-mlc/FoxSu' }
     ],
 
     footer: {
       message: 'GPL3 ライセンスでリリースされています。',
-      copyright: 'Copyright © 2022-現在 KernelSU 開発者。'
+      copyright: 'Copyright © 2026 FoxSu 開発者。'
     },
 
     editLink: {
-      pattern: 'https://github.com/tiann/KernelSU/edit/main/website/docs/:path',
+      pattern: 'https://github.com/Cmry-mlc/FoxSu/edit/main/website/docs/:path',
       text: 'GitHub でこのページを編集'
     }
   }
