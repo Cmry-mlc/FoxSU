@@ -44,4 +44,18 @@
 -keep class com.yalantis.ucrop** { *; }
 -keep interface com.yalantis.ucrop** { *; }
 
--keep interface org.bakasu.rootService.** { *; }
+-keep interface com.loomsu.manager.rootService.** { *; }
+
+# ---- debug 测试包开启 R8 后的保守 keep ----
+# Compose 已自带上游规则，这里只兜住可能被反射访问的部分。
+-keep class org.koin.** { *; }
+-keep class com.loomsu.manager.ui.navigation.** { *; }
+-keep class com.loomsu.manager.data.** { *; }
+-keepclassmembers class **$$serializer { *; }
+-keepclasseswithmembers class * {
+    kotlinx.serialization.KSerializer serializer(...);
+}
+-dontwarn org.koin.**
+-dontwarn top.yukonga.**
+-keep class top.yukonga.miuix.** { *; }
+-keep class com.github.kr328.** { *; }

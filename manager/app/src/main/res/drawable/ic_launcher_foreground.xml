@@ -1,36 +1,46 @@
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="128dp"
-    android:height="128dp"
-    android:viewportWidth="128"
-    android:viewportHeight="128">
-    <!--
-      Asset: manager/app/src/main/res/drawable/ic_launcher_foreground.xml
-      Author: OukaroMF (GitHub: @OukaroMF / https://github.com/OukaroMF)
-      Description: BakaSU App Launcher Foreground Vector Graphic
-      Copyright (c) 2026 OukaroMF. All Rights Reserved.
-      Unauthorized copying, alteration, or commercial redistribution is strictly prohibited.
-    -->
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Loom SU 应用图标前景（新版）：「织」出来的 L。
+  一根经线垂直落下、一根纬线向右折出，构成 L 的骨架；
+  中部一道半透明纬纱穿过，结点用暖金标出，寓意经纬交织。
+  图形收在 108dp 视口中心安全区内，可被任意形状遮罩裁切。
 
-    <group
-        android:pivotX="64"
-        android:pivotY="64"
-        android:scaleX="0.7"
-        android:scaleY="0.7">
-        <path
-            android:pathData="M27.23,45.96H50.39V62.86C50.39,69.26 45.2,74.44 38.81,74.44V74.44C32.41,74.44 27.23,69.26 27.23,62.86V45.96Z"
-            android:strokeWidth="4"
-            android:fillColor="#00000000"
-            android:strokeColor="@color/ic_launcher_foreground" />
-        <path
-            android:pathData="M77.61,45.96H100.77V62.86C100.77,69.26 95.59,74.44 89.19,74.44V74.44C82.8,74.44 77.61,69.26 77.61,62.86V45.96Z"
-            android:strokeWidth="4"
-            android:fillColor="#00000000"
-            android:strokeColor="@color/ic_launcher_foreground" />
-        <path
-            android:pathData="M53.39,81.43L63.72,91.75C63.87,91.91 64.13,91.91 64.28,91.75L74.61,81.43"
-            android:strokeWidth="4"
-            android:fillColor="#00000000"
-            android:strokeColor="@color/ic_launcher_foreground"
-            android:strokeLineCap="round" />
-    </group>
+  注：Android VectorDrawable 的渐变按路径包围盒计算，
+  直线笔画包围盒宽/高为 0 时渐变会失效，因此这里全部使用实色。
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- 经线（垂直笔画） -->
+    <path
+        android:pathData="M44,34 L44,69"
+        android:strokeColor="#FF8CF0FF"
+        android:strokeWidth="10"
+        android:strokeLineCap="round" />
+
+    <!-- 纬线（水平笔画） -->
+    <path
+        android:pathData="M44,69 L76,69"
+        android:strokeColor="#FF9C86FF"
+        android:strokeWidth="10"
+        android:strokeLineCap="round" />
+
+    <!-- 穿过经线的半透明纬纱，制造编织感 -->
+    <path
+        android:pathData="M33,50 L58,50"
+        android:strokeColor="#8CA9B4FF"
+        android:strokeWidth="3.2"
+        android:strokeLineCap="round" />
+
+    <!-- 经纬结点 -->
+    <path
+        android:pathData="M44,50 m-7.6,0 a7.6,7.6 0 1,0 15.2,0 a7.6,7.6 0 1,0 -15.2,0"
+        android:strokeColor="#66FFD9A0"
+        android:strokeWidth="1.4" />
+    <path
+        android:pathData="M44,50 m-4.8,0 a4.8,4.8 0 1,0 9.6,0 a4.8,4.8 0 1,0 -9.6,0"
+        android:fillColor="#FFFFD9A0" />
 </vector>

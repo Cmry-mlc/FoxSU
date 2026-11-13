@@ -3,4 +3,8 @@
     <color name="white">#FFFFFF</color>
     <color name="ic_launcher_foreground">#0069A8</color>
     <color name="ic_launcher_background">#DFF2FE</color>
+    <!-- Loom SU 品牌色 -->
+    <color name="loom_ink">#181D33</color>
+    <color name="loom_brand">#4F5BE8</color>
+    <color name="loom_canvas">#F4F5F8</color>
 </resources>

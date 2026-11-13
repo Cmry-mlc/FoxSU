@@ -40,10 +40,14 @@ val isReleaseTask =
     project.gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = true) }
 
 android {
-    namespace = "org.bakasu.bakasu"
+    namespace = "com.loomsu.manager"
 
     buildTypes {
         debug {
+            // 测试包关闭 R8 与资源裁剪：开启后每次构建要跑全量混淆，
+            // 单次 5~10 分钟且容易因内存不足卡死。体积靠 arm64 / 语言白名单控制即可。
+            isMinifyEnabled = false
+            isShrinkResources = false
             externalNativeBuild {
                 cmake {
                     arguments += listOf("-DCMAKE_CXX_FLAGS_DEBUG=-Og", "-DCMAKE_C_FLAGS_DEBUG=-Og")
@@ -122,6 +126,10 @@ android {
 
     androidResources {
         generateLocaleConfig = true
+        // 测试包只保留中文（简/繁）与英文，去掉其余数十种翻译。
+        // 注意：这里必须写完整的 locale 目录名（zh-rCN 等），只写 "zh" 不会匹配 values-zh-rCN，
+        // 会把中文资源整体裁掉，导致界面全部回落到英文。
+        localeFilters += listOf("en", "zh-rCN", "zh-rHK", "zh-rTW")
     }
 
     compileSdk = androidCompileSdkVersion
@@ -148,7 +156,8 @@ android {
         }
 
         ndk {
-            abiFilters += listOf("arm64-v8a", "x86_64", "armeabi-v7a", "riscv64")
+            // 测试包只留 arm64：libksud 的 late-load 也只有这一份 so
+            abiFilters += listOf("arm64-v8a")
         }
     }
 
@@ -180,7 +189,7 @@ baselineProfile {
 
 base {
     archivesName.set(
-        "BakaSU_${managerVersionName}_$managerVersionCode",
+        "LoomSU_${managerVersionName}_$managerVersionCode",
     )
 }
 
@@ -222,7 +231,6 @@ dependencies {
 
     implementation(libs.androidx.compose.runtime.tracing)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-    debugImplementation(libs.androidx.compose.ui.tooling)
 
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.runtime.ktx)
