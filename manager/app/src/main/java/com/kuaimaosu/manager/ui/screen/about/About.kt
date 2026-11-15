@@ -226,9 +226,7 @@ fun AboutScreen() {
                     KuaiMaoRow(
                         icon = Icons.TwoTone.Info,
                         title = "图标与视觉",
-                        description = "图标作者 OukaroMF · 点击查看主页",
-                        onClick = { uriHandler.openUri("https://github.com/OukaroMF") },
-                        trailing = { Arrow() },
+                        description = "图标作者 尘梦如烟",
                     )
                     KuaiMaoRowDivider()
                     KuaiMaoRow(
