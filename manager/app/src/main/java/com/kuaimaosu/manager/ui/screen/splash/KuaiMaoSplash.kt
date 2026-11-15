@@ -1,5 +1,11 @@
 package com.kuaimaosu.manager.ui.screen.splash
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.painterResource
+import com.kuaimaosu.manager.R
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -27,9 +33,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.SpanStyle
@@ -148,9 +151,7 @@ fun KuaiMaoSplash(
             KuaiMaoMark(
                 progress = progress.value,
                 modifier = Modifier.size(104.dp),
-                warpColor = if (isInDark) Color(0xFF8CF0FF) else Color(0xFF3E8CE8),
-                weftColor = if (isInDark) Color(0xFFA78BFF) else Color(0xFF6B57E0),
-                knotColor = if (isInDark) Color(0xFFFFD9A0) else Color(0xFFE9A23B),
+                plate = true,
             )
             Spacer(modifier = Modifier.height(22.dp))
             Text(
@@ -187,92 +188,50 @@ fun KuaiMaoSplash(
     }
 }
 
-/** 经纬标记：经线落下 → 纬线折出 → 纬纱穿过 → 结点亮起。 */
+/**
+ * KuaiMaoSU 品牌标记：白色 K 与猫头（与桌面图标同一个图形）。
+ *
+ * 图形取自品牌标志原图，不再是旧的「经纬」示意，所以标题栏、启动页和
+ * 桌面图标看到的是同一个符号。
+ *
+ * @param plate 是否自带黑色圆角底板。标题栏外面已经有深色头像底，
+ *              不需要再叠一层；启动页背景是浅色，需要底板才能看清白 K。
+ * @param progress 0→1 的入场进度，做淡入与轻微放大，替代旧的逐笔绘制。
+ */
+@Suppress("UNUSED_PARAMETER")
 @Composable
 fun KuaiMaoMark(
     progress: Float,
     modifier: Modifier = Modifier,
+    plate: Boolean = false,
     warpColor: Color = Color(0xFF8CF0FF),
     weftColor: Color = Color(0xFFA78BFF),
     knotColor: Color = Color(0xFFFFD9A0),
 ) {
-    Canvas(modifier = modifier) {
-        drawKuaiMaoMark(progress, warpColor, weftColor, knotColor)
-    }
-}
-
-private fun DrawScope.drawKuaiMaoMark(
-    progress: Float,
-    warpColor: Color,
-    weftColor: Color,
-    knotColor: Color,
-) {
-    val unit = size.minDimension / 108f
-    fun p(x: Float, y: Float) = Offset(x * unit, y * unit)
-
-    // 经线：自上而下生长
-    val warpT = (progress / 0.45f).coerceIn(0f, 1f)
-    if (warpT > 0f) {
-        drawLine(
-            brush = Brush.verticalGradient(
-                colors = listOf(warpColor, warpColor.copy(alpha = 0.72f)),
-                startY = 34f * unit,
-                endY = 70f * unit,
+    val t = progress.coerceIn(0f, 1f)
+    val scale = 0.88f + 0.12f * t
+    Box(
+        modifier = modifier
+            .graphicsLayer {
+                alpha = 0.30f + 0.70f * t
+                scaleX = scale
+                scaleY = scale
+            }
+            .then(
+                if (plate) {
+                    Modifier
+                        .clip(RoundedCornerShape(percent = 22))
+                        .background(Color.Black)
+                } else {
+                    Modifier
+                },
             ),
-            start = p(44f, 34f),
-            end = p(44f, 34f + (69f - 34f) * warpT),
-            strokeWidth = 9.5f * unit,
-            cap = StrokeCap.Round,
-        )
-    }
-
-    // 纬线：自左而右折出，构成 L 的横笔
-    val weftT = ((progress - 0.35f) / 0.45f).coerceIn(0f, 1f)
-    if (weftT > 0f) {
-        drawLine(
-            brush = Brush.horizontalGradient(
-                colors = listOf(weftColor, weftColor.copy(alpha = 0.80f)),
-                startX = 44f * unit,
-                endX = 76f * unit,
-            ),
-            start = p(44f, 69f),
-            end = p(44f + (76f - 44f) * weftT, 69f),
-            strokeWidth = 9.5f * unit,
-            cap = StrokeCap.Round,
-        )
-    }
-
-    // 穿过经线的纬纱
-    val yarnT = ((progress - 0.6f) / 0.25f).coerceIn(0f, 1f)
-    if (yarnT > 0f) {
-        drawLine(
-            color = weftColor.copy(alpha = 0.55f),
-            start = p(33f, 50f),
-            end = p(33f + (58f - 33f) * yarnT, 50f),
-            strokeWidth = 3.2f * unit,
-            cap = StrokeCap.Round,
-        )
-    }
-
-    // 结点
-    val knotT = ((progress - 0.72f) / 0.28f).coerceIn(0f, 1f)
-    if (knotT > 0f) {
-        val radius = 5.2f * unit * (0.6f + 0.4f * knotT)
-        drawCircle(
-            color = knotColor.copy(alpha = 0.18f * knotT),
-            radius = radius * 2.6f,
-            center = p(44f, 50f),
-        )
-        drawCircle(
-            color = knotColor.copy(alpha = knotT),
-            radius = radius,
-            center = p(44f, 50f),
-        )
-        drawCircle(
-            color = knotColor.copy(alpha = 0.4f * knotT),
-            radius = radius * 1.7f,
-            center = p(44f, 50f),
-            style = Stroke(width = 1.2f * unit),
+        contentAlignment = Alignment.Center,
+    ) {
+        Image(
+            painter = painterResource(R.drawable.ic_kuaimao_mark),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(if (plate) 0.78f else 1f),
         )
     }
 }
