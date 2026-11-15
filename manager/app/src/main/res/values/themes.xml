@@ -8,14 +8,14 @@
     <style name="Theme.KernelSU.Starting" parent="Theme.SplashScreen">
         <item name="postSplashScreenTheme">@style/Theme.KernelSU</item>
         <!--
-          Loom SU 冷启动：只保留 Compose 的动画首屏。
+          KuaiMaoSU 冷启动：只保留 Compose 的动画首屏。
           系统启动窗口不再画图标（透明图标 + 同色底），
-          这样用户看到的第一个画面就是 LoomSplash，不再是「图标静止页」。
+          这样用户看到的第一个画面就是 KuaiMaoSplash，不再是「图标静止页」。
         -->
-        <item name="windowSplashScreenBackground">@color/loom_ink</item>
+        <item name="windowSplashScreenBackground">@color/kuaimao_ink</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_blank</item>
-        <item name="windowSplashScreenIconBackgroundColor">@color/loom_ink</item>
-        <item name="android:windowBackground">@color/loom_ink</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/kuaimao_ink</item>
+        <item name="android:windowBackground">@color/kuaimao_ink</item>
     </style>
 
     <style name="Theme.KernelSU.WebUI" parent="Theme.KernelSU">

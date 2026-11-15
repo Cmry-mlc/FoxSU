@@ -40,7 +40,7 @@ val isReleaseTask =
     project.gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = true) }
 
 android {
-    namespace = "com.loomsu.manager"
+    namespace = "com.kuaimaosu.manager"
 
     buildTypes {
         debug {
@@ -189,7 +189,7 @@ baselineProfile {
 
 base {
     archivesName.set(
-        "LoomSU_${managerVersionName}_$managerVersionCode",
+        "KuaiMaoSU_${managerVersionName}_$managerVersionCode",
     )
 }
 

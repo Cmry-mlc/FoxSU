@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Loom SU 主题图标（单色）：系统会按壁纸取色重新着色，因此只保留 L 的骨架与结点。 -->
+<!-- KuaiMaoSU 主题图标（单色）：系统会按壁纸取色重新着色，因此只保留 L 的骨架与结点。 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"

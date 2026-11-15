@@ -46,9 +46,9 @@ extra["androidTargetCompatibility"] = JavaVersion.VERSION_21
 extra["managerVersionCode"] = 40000
 extra["managerVersionName"] = "4.0.0"
 extra["isPrBuild"] = project.findProperty("IS_PR_BUILD")?.toString()?.toBoolean() ?: false
-extra["defaultManagerPackageName"] = "com.loomsu.manager"
+extra["defaultManagerPackageName"] = "com.kuaimaosu.manager"
 extra["managerPackageName"] = project.findProperty("KSU_PACKAGE_NAME")?.toString() ?: extra["defaultManagerPackageName"]
-extra["defaultManagerAppName"] = if (extra["isPrBuild"] == true) "LoomSU PR" else "LoomSU"
+extra["defaultManagerAppName"] = if (extra["isPrBuild"] == true) "KuaiMaoSU PR" else "KuaiMaoSU"
 extra["managerName"] = project.findProperty("KSU_NAME")?.toString() ?: extra["defaultManagerAppName"]
 
 val isSpoofedBuild = project.findProperty("IS_SPOOFED_BUILD")?.toString()?.toBoolean() ?: false

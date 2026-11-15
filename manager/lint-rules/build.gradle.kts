@@ -19,6 +19,6 @@ dependencies {
 
 tasks.jar {
     manifest {
-        attributes("Lint-Registry-v2" to "com.loomsu.manager.lint.LoomSUIssueRegistry")
+        attributes("Lint-Registry-v2" to "com.kuaimaosu.manager.lint.KuaiMaoSUIssueRegistry")
     }
 }

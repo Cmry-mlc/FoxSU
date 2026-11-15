@@ -113,7 +113,7 @@ enum Commands {
 
     /// Uninstall KernelSU modules and itself(LKM Only)
     Uninstall {
-        #[arg(long, default_value_t = String::from("com.loomsu.manager"))]
+        #[arg(long, default_value_t = String::from("com.kuaimaosu.manager"))]
         package_name: String,
     },
 

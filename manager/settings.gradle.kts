@@ -19,7 +19,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "LoomSU"
+rootProject.name = "KuaiMaoSU"
 include(":app")
 include(":baselineprofile")
 include(":lint-rules")
