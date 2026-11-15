@@ -1,5 +1,5 @@
-# BakaSU
-<img align='right' src='../BakaSU_Full.svg' width='220px' alt="BakaSU Icon">
+# KuaiMaoSU
+<img align='right' src='../BakaSU_Full.svg' width='220px' alt="KuaiMaoSU Icon">
 
 曾用名：ReSukiSU
 
@@ -20,11 +20,11 @@
 3. [App Profile](https://kernelsu.org/zh_CN/guide/app-profile.html): 把 Root 权限关进笼子里。
 4. 支持 non-GKI 与 GKI 1.0。
 5. 可调整管理器外观，可自定义 susfs 配置。
-6. 多管理器支持，默认支持使用 [官方KernelSU](https://github.com/tiann/KernelSU)/[KOWSU](https://github.com/KOWX712/KernelSU) 作为管理器与 BakaSU 内核共同工作
+6. 多管理器支持，默认支持使用 [官方KernelSU](https://github.com/tiann/KernelSU)/[KOWSU](https://github.com/KOWX712/KernelSU) 作为管理器与 KuaiMaoSU 内核共同工作
 
 ## 兼容状态
 
-- BakaSU 官方支持 GKI 2.0 的设备（内核版本 5.10 以上）。
+- KuaiMaoSU 官方支持 GKI 2.0 的设备（内核版本 5.10 以上）。
 
 - 旧内核也是兼容的（3.4+），不过需要自己编译内核。
 
@@ -57,7 +57,7 @@
 
 ## 本地化
 
-在 Weblate 上对 BakaSU 的翻译做出贡献:
+在 Weblate 上对 KuaiMaoSU 的翻译做出贡献:
 
 https://hosted.weblate.org/engage/bakasu/
 

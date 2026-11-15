@@ -54,7 +54,7 @@ ccflags-y += -I$(src) -I$(src)/include
 
 obj-$(CONFIG_KSU) += kernelsu.o
 
-REPO_NAME := BakaSU
+REPO_NAME := KuaiMaoSU
 
 KDIR := $(KDIR)
 
@@ -101,7 +101,7 @@ ccflags-y += -DKSU_VERSION=$(KSU_VERSION)
 ccflags-y += -DKSU_VERSION_FULL=\"$(KSU_VERSION_FULL)\"
 
 ifdef CONFIG_KSU_MULTI_MANAGER_SUPPORT
-$(info -- Supported Managers: KernelSU Official, KOWSU, BakaSU )
+$(info -- Supported Managers: KernelSU Official, KOWSU, KuaiMaoSU )
 endif
 
 KERNEL_VERSION := $(VERSION).$(PATCHLEVEL)

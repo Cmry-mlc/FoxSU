@@ -54,7 +54,7 @@ Please note:
 
         Signed-off-by: Fred Jones <fred.jones@foo.org>
 ```
->- then Joe Smith would upload the patch for BakaSU as
+>- then Joe Smith would upload the patch for KuaiMaoSU as
 ```
         kernel: patch from upstream (https://github.com/tiann/KernelSU/pull/114514)
 

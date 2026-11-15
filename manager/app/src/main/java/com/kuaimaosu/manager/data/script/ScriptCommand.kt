@@ -42,7 +42,7 @@ object ScriptCommand {
         val env = mutableListOf(
             "ASH_STANDALONE" to "1",
             "KSU" to "true",
-            "BAKASU" to "true",
+            "KUAIMAOSU" to "true",
             "KSU_KERNEL_VER_CODE" to host.kernelVersionCode.toString(),
             "KSU_VER_CODE" to host.ksuVersionCode.toString(),
             "KSU_VER" to host.ksuVersion,

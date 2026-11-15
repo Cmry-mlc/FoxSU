@@ -1,5 +1,5 @@
-# BakaSU
-<img align='right' src='BakaSU_Full.svg' width='220px' alt="BakaSU Icon">
+# KuaiMaoSU
+<img align='right' src='BakaSU_Full.svg' width='220px' alt="KuaiMaoSU Icon">
 
 Formerly known as: ReSukiSU
 
@@ -20,11 +20,11 @@ A [`tiann/KernelSU`](https://github.com/tiann/KernelSU)'s downstream, added some
 3. [App Profile](https://kernelsu.org/guide/app-profile.html): Lock up the root power in a cage
 4. Support non-GKI and GKI 1.0
 5. Tweaks to the manager theme and the built-in susfs management tool.
-6. Multi manager support, for default [Official KernelSU](https://github.com/tiann/KernelSU)/[KOWSU](https://github.com/KOWX712/KernelSU) is supported work as manager with BakaSU's kernel
+6. Multi manager support, for default [Official KernelSU](https://github.com/tiann/KernelSU)/[KOWSU](https://github.com/KOWX712/KernelSU) is supported work as manager with KuaiMaoSU's kernel
 
 ## Compatibility Status
 
-- BakaSU officially supports Android GKI 2.0 devices (kernel 5.10+).
+- KuaiMaoSU officially supports Android GKI 2.0 devices (kernel 5.10+).
 
 - Older kernels (3.4+) are also compatible, but the kernel will have to be built manually.
 
@@ -59,7 +59,7 @@ If you want to submit a translation for the manager, please go to [Weblate](http
 
 ## Localization
 
-Help translate BakaSU on Weblate:
+Help translate KuaiMaoSU on Weblate:
 
 https://hosted.weblate.org/engage/bakasu/
 
