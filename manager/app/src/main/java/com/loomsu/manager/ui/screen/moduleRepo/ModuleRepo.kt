@@ -155,7 +155,7 @@ fun ModuleRepoScreen(repositoryUrl: String? = null) {
     val snackBarHost = LocalSnackbarHost.current
     val topAppBarState = rememberTopAppBarState()
     val scrollBehavior = rememberSearchAppBarScrollBehavior(
-        TopAppBarDefaults.exitUntilCollapsedScrollBehavior(topAppBarState),
+        TopAppBarDefaults.pinnedScrollBehavior(topAppBarState),
     )
     val moduleListState = key(uiState.repositoryUrl, uiState.sortStargazerCountFirst, uiState.search) {
         rememberLazyListState()

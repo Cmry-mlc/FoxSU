@@ -143,7 +143,7 @@ fun FlashScreen(flashIt: FlashIt) {
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
     val scrollBehavior =
-        TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+        TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     val viewModel: ModuleViewModel = koinViewModel()
     val flashViewModel: FlashViewModel = koinViewModel()
     val moduleUiState by viewModel.state.collectAsStateWithLifecycle()

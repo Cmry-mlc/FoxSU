@@ -73,7 +73,7 @@ fun OpenSourceLicenseScreen() {
     val themeConfig: ThemeConfig = koinInject()
     val cardConfig: CardConfig = koinInject()
     val navigator = LocalNavigator.current
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(
         rememberTopAppBarState(
             initialHeightOffset = -154f,
             initialHeightOffsetLimit = -154f, // from debugger

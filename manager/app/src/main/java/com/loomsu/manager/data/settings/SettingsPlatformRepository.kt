@@ -47,6 +47,11 @@ class SettingsPlatformRepository(
             themeConfig.dynamicColorSpec,
         )
         themeConfig.useBuiltinMonoFont = settings.getBoolean("use_builtin_monospace_font", false)
+        themeConfig.useCustomThemeColor = themeRepository.loadUseCustomThemeColor()
+        themeConfig.homeTitle = themeRepository.loadHomeTitle()
+        themeConfig.homeTitleSplit = themeRepository.loadHomeTitleSplit()
+        themeConfig.homeTitleColorPrimary = themeRepository.loadHomeTitleColorPrimary()
+        themeConfig.homeTitleColorAccent = themeRepository.loadHomeTitleColorAccent()
         backgroundManager.loadCustomBackground()
         val systemDpi = application.resources.displayMetrics.densityDpi
         val currentDpi = settings.getInt("app_dpi", systemDpi)
@@ -102,6 +107,9 @@ class SettingsPlatformRepository(
             is AppearanceSetting.SeedColor -> {
                 themeRepository.saveSeedColor(setting.color)
                 themeConfig.seedColor = setting.color
+                // 用户主动选色即视为启用「自选主题色」，全局强调色随之生效
+                themeRepository.saveUseCustomThemeColor(true)
+                themeConfig.useCustomThemeColor = true
             }
 
             is AppearanceSetting.DynamicColor -> {

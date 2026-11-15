@@ -110,7 +110,7 @@ fun AddRepositoryScreen() {
     val viewModel = koinViewModel<RepositorySourcesViewModel>(key = "add-repository")
     val state by viewModel.state.collectAsStateWithLifecycle()
     val customScroll = rememberLazyListState()
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(
         rememberTopAppBarState(
             initialHeightOffset = -154f,
             initialHeightOffsetLimit = -154f, // from debugger

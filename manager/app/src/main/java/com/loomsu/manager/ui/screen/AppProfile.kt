@@ -406,8 +406,6 @@ private fun AppProfileInner(
                         icon = Icons.TwoTone.AccountCircle,
                         title = stringResource(R.string.profile),
                         description = mode.text,
-                        iconTint = LoomColors.brandDeep,
-                        iconContainer = LoomColors.brandSoft,
                     )
                     LoomChips(
                         options = modes.map { it.text },
@@ -436,8 +434,6 @@ private fun AppProfileInner(
                                         icon = Icons.TwoTone.Edit,
                                         title = stringResource(R.string.manage_app_profile),
                                         description = stringResource(R.string.settings_profile_template_summary),
-                                        iconTint = LoomColors.amber,
-                                        iconContainer = LoomColors.amberSoft,
                                         onClick = onManageTemplate,
                                         trailing = {
                                             Icon(
@@ -494,8 +490,6 @@ private fun AppProfileInner(
                                 title = app.label,
                                 description = app.packageName,
                                 enabled = false,
-                                iconTint = LoomColors.textSec,
-                                iconContainer = LoomColors.canvasSubtle,
                             )
                         }
                     }

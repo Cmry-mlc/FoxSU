@@ -142,7 +142,7 @@ private fun SulogScreenContent(
 ) {
     val cardConfig: CardConfig = koinInject()
     val scrollBehavior = rememberSearchAppBarScrollBehavior(
-        TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
+        TopAppBarDefaults.pinnedScrollBehavior(
             rememberTopAppBarState(
                 initialHeightOffset = -154f,
                 initialHeightOffsetLimit = -154f, // from debugger

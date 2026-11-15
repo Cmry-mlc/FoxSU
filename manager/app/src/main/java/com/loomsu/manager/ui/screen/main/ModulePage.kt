@@ -35,6 +35,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -131,6 +132,7 @@ import com.loomsu.manager.ui.component.LoomSwitch
 import com.loomsu.manager.ui.component.LoomGhostButton
 import com.loomsu.manager.ui.component.LoomPrimaryButton
 import com.loomsu.manager.ui.theme.LoomColors
+import com.loomsu.manager.ui.theme.LoomTones
 import com.loomsu.manager.R
 import com.loomsu.manager.data.settings.SettingsPlatformRepository
 import com.loomsu.manager.domain.model.DocumentFormat
@@ -155,6 +157,7 @@ import com.loomsu.manager.ui.component.ZipFileInfo
 import com.loomsu.manager.ui.component.ZipType
 import com.loomsu.manager.ui.component.rememberConfirmDialog
 import com.loomsu.manager.ui.component.rememberLoadingDialog
+import com.loomsu.manager.ui.component.onAccentContent
 import com.loomsu.manager.ui.component.rememberSearchAppBarScrollBehavior
 import com.loomsu.manager.ui.component.settings.SegmentedColumn
 import com.loomsu.manager.ui.component.settings.SettingsBaseWidget
@@ -334,7 +337,32 @@ fun ModulePage(bottomPadding: Dp) {
     val hideInstallButton = isSafeMode || uiState.hasMagisk
 
     Scaffold(
-        topBar = {},
+        // 标题 / 搜索 / 动作按钮固定在顶部，不跟随列表滚动
+        topBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(horizontal = 20.dp),
+            ) {
+                Spacer(modifier = Modifier.height(10.dp))
+                ModuleHeader(
+                    viewModel = viewModel,
+                    uiState = uiState,
+                    showActions = uiState.moduleList.isNotEmpty(),
+                    onInstallClick = {
+                        selectZipLauncher.launch(
+                            Intent(Intent.ACTION_GET_CONTENT).apply {
+                                type = "application/zip"
+                                putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+                            },
+                        )
+                    },
+                    onRepoClick = { navigator.push(Route.ModuleRepo) },
+                )
+                Spacer(modifier = Modifier.height(14.dp))
+            }
+        },
         containerColor = Color.Transparent,
         contentColor = MaterialTheme.colorScheme.onSurface,
         contentWindowInsets = adaptiveScaffoldWindowInsets(includeBottom = false),
@@ -377,24 +405,10 @@ fun ModulePage(bottomPadding: Dp) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
+                        .padding(top = innerPadding.calculateTopPadding())
                         .padding(horizontal = 20.dp),
                 ) {
-                    Spacer(modifier = Modifier.height(innerPadding.calculateTopPadding() + 10.dp))
-                    ModuleHeader(
-                        viewModel = viewModel,
-                        uiState = uiState,
-                        showActions = !searching,
-                        onInstallClick = {
-                            selectZipLauncher.launch(
-                                Intent(Intent.ACTION_GET_CONTENT).apply {
-                                    type = "application/zip"
-                                    putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
-                                },
-                            )
-                        },
-                        onRepoClick = { navigator.push(Route.ModuleRepo) },
-                    )
-                    Spacer(modifier = Modifier.height(18.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
                     LoomCard(
                         contentPadding = PaddingValues(vertical = 34.dp, horizontal = 22.dp),
                     ) {
@@ -406,13 +420,13 @@ fun ModulePage(bottomPadding: Dp) {
                                 modifier = Modifier
                                     .size(64.dp)
                                     .clip(RoundedCornerShape(20.dp))
-                                    .background(LoomColors.canvasSubtle),
+                                    .background(LoomTones.unified.container),
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Icon(
                                     imageVector = Icons.TwoTone.Extension,
                                     contentDescription = null,
-                                    tint = LoomColors.textTer,
+                                    tint = LoomTones.unified.content,
                                     modifier = Modifier.size(28.dp),
                                 )
                             }
@@ -440,6 +454,27 @@ fun ModulePage(bottomPadding: Dp) {
                                 )
                             }
                         }
+                    }
+                    if (!searching) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        LoomPrimaryButton(
+                            text = "安装模块",
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = {
+                                selectZipLauncher.launch(
+                                    Intent(Intent.ACTION_GET_CONTENT).apply {
+                                        type = "application/zip"
+                                        putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+                                    },
+                                )
+                            },
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        LoomGhostButton(
+                            text = "模块仓库",
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = { navigator.push(Route.ModuleRepo) },
+                        )
                     }
                 }
             }
@@ -1014,27 +1049,14 @@ private fun ModuleList(
 
         LazyColumn(
             state = listState,
-            modifier = modifier,
-            contentPadding = remember {
-                PaddingValues(
-                    start = 20.dp,
-                    top = 0.dp,
-                    end = 20.dp,
-                    bottom = 24.dp,
-                )
-            },
+            // 列表自身从顶栏下方开始，滚动内容才会被裁住，不会透到透明顶栏上。
+            modifier = modifier.padding(top = topPadding),
+            contentPadding = PaddingValues(
+                start = 20.dp,
+                end = 20.dp,
+                bottom = 24.dp,
+            ),
         ) {
-            item {
-                Spacer(modifier = Modifier.height(topPadding))
-                ModuleHeader(
-                    viewModel = viewModel,
-                    uiState = uiState,
-                    showActions = true,
-                    onInstallClick = onInstallClick,
-                    onRepoClick = onRepoClick,
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-            }
 
             if (metaModuleWarningText != null) {
                 item(
@@ -1447,7 +1469,7 @@ fun ModuleItem(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             modifier = Modifier.fillMaxWidth(),
         ) {
-            ModuleTag(text = module.dirId, container = LoomColors.ink, content = Color.White)
+            ModuleTag(text = module.dirId, container = LoomColors.brand, content = onAccentContent())
             if (module.metamodule) {
                 ModuleTag(text = "META", container = LoomColors.amberSoft, content = LoomColors.amber)
             }
@@ -1537,11 +1559,12 @@ private fun ModuleIconAction(
     rotate: Boolean = false,
 ) {
     val alpha = if (enabled) 1f else 0.38f
+    val tone = LoomTones.unified
     Box(
         modifier = Modifier
             .size(width = 46.dp, height = 34.dp)
             .clip(RoundedCornerShape(11.dp))
-            .background(LoomColors.canvasSubtle)
+            .background(tone.container.copy(alpha = alpha * tone.container.alpha))
             .combinedClickable(
                 enabled = enabled,
                 onClick = onClick,
@@ -1552,7 +1575,7 @@ private fun ModuleIconAction(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = LoomColors.ink.copy(alpha = alpha),
+            tint = tone.content.copy(alpha = alpha),
             modifier = Modifier
                 .size(17.dp)
                 .then(if (rotate) Modifier.rotate(180f) else Modifier),

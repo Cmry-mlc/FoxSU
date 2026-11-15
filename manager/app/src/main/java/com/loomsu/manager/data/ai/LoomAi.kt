@@ -26,7 +26,8 @@ data class AiSettings(
     val temperature: Float = 0.7f,
     val maxTokens: Int = 2048,
     val systemPrompt: String =
-        "你是 Loom SU 内置助手，负责解答内核、Root 与模块相关问题，回答保持简洁专业。",
+        "你是 Loom SU 内置助手，负责解答内核、Root 与模块相关问题，回答保持简洁专业。" +
+            "你能直接操作 App：切换底栏样式与质感、开关模糊、打开任意页面、搜歌播放与控制播放。",
 ) {
     val isConfigured: Boolean get() = apiKey.isNotBlank() && baseUrl.isNotBlank() && model.isNotBlank()
 }
@@ -115,6 +116,24 @@ data class AiTestReport(
 }
 
 /**
+ * 模型要求执行的一次工具调用。
+ *
+ * [arguments] 是模型原样返回的 JSON 字符串，由执行端自己解析，
+ * 这样新增工具时不用改协议层。
+ */
+data class AiToolCall(
+    val id: String,
+    val name: String,
+    val arguments: String,
+)
+
+/** 一轮模型的返回：要么是一段话，要么是若干个工具调用（也可能两者都有）。 */
+data class AiTurn(
+    val content: String,
+    val toolCalls: List<AiToolCall> = emptyList(),
+)
+
+/**
  * 最小化的 OpenAI 兼容客户端。
  *
  * 只依赖 HttpURLConnection，避免为一次对话引入额外网络库。
@@ -122,7 +141,6 @@ data class AiTestReport(
  */
 object LoomAiClient {
     private const val TIMEOUT_MS = 20_000
-
     suspend fun chat(settings: AiSettings, userMessage: String): Result<String> =
         withContext(Dispatchers.IO) {
             runCatching {
@@ -235,4 +253,74 @@ object LoomAiClient {
                 }
             }
         }
+    /**
+     * 带工具调用的一轮对话。
+     *
+     * 和 [chat] 的区别只有两点：请求里带上 `tools`，响应里除了文本还解析
+     * `tool_calls`。执行工具、把结果回填、再问一轮的流程放在
+     * `LoomAiAgent` 里，这一层只负责协议。
+     */
+    suspend fun chatTurn(
+        settings: AiSettings,
+        messages: JSONArray,
+        tools: JSONArray? = null,
+    ): Result<AiTurn> = withContext(Dispatchers.IO) {
+        runCatching {
+            val payload = JSONObject()
+                .put("model", settings.model)
+                .put("messages", messages)
+                .put("temperature", settings.temperature.toDouble())
+                .put("max_tokens", settings.maxTokens)
+
+            if (tools != null && tools.length() > 0) {
+                payload.put("tools", tools)
+                payload.put("tool_choice", "auto")
+            }
+
+            val connection = (URL("${settings.baseUrl.trimEnd('/')}/chat/completions")
+                .openConnection() as HttpURLConnection).apply {
+                requestMethod = "POST"
+                connectTimeout = TIMEOUT_MS
+                readTimeout = TIMEOUT_MS
+                doOutput = true
+                setRequestProperty("Content-Type", "application/json")
+                setRequestProperty("Authorization", "Bearer ${settings.apiKey}")
+            }
+
+            try {
+                connection.outputStream.use { it.write(payload.toString().toByteArray(Charsets.UTF_8)) }
+                val code = connection.responseCode
+                val stream = if (code in 200..299) connection.inputStream else connection.errorStream
+                val text = stream?.bufferedReader()?.use(BufferedReader::readText).orEmpty()
+                if (code !in 200..299) error("HTTP $code ${text.take(160)}")
+
+                val message = JSONObject(text)
+                    .optJSONArray("choices")
+                    ?.optJSONObject(0)
+                    ?.optJSONObject("message")
+
+                val content = message?.optString("content").orEmpty().trim()
+                val calls = buildList {
+                    val array = message?.optJSONArray("tool_calls")
+                    if (array != null) {
+                        for (i in 0 until array.length()) {
+                            val call = array.optJSONObject(i) ?: continue
+                            val function = call.optJSONObject("function") ?: continue
+                            add(
+                                AiToolCall(
+                                    id = call.optString("id"),
+                                    name = function.optString("name"),
+                                    arguments = function.optString("arguments"),
+                                ),
+                            )
+                        }
+                    }
+                }
+                if (content.isBlank() && calls.isEmpty()) error("空响应")
+                AiTurn(content = content, toolCalls = calls)
+            } finally {
+                connection.disconnect()
+            }
+        }
+    }
 }

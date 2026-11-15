@@ -5,6 +5,12 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -29,11 +35,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.BlurredEdgeTreatment
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.painter.BitmapPainter
@@ -55,14 +65,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
-import kotlin.coroutines.resume
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import com.loomsu.manager.R
 import com.loomsu.manager.domain.model.CatalogModule
 import com.loomsu.manager.domain.model.ModuleReleaseAsset
@@ -71,7 +73,10 @@ import com.loomsu.manager.ui.activity.PermissionRequestInterface
 import com.loomsu.manager.ui.animation.predictiveback.installerNavTransition
 import com.loomsu.manager.ui.component.LocalRepositoryModuleInstall
 import com.loomsu.manager.ui.navigation.IntentDispatcher
+import com.loomsu.manager.ui.assistant.LoomAssistantRuntime
+import com.loomsu.manager.ui.component.MiniPlayerHost
 import com.loomsu.manager.ui.navigation.LocalNavigator
+import com.loomsu.manager.ui.screen.MusicScreen
 import com.loomsu.manager.ui.navigation.Navigator
 import com.loomsu.manager.ui.navigation.Route
 import com.loomsu.manager.ui.overscroll.StretchOverscrollCompensationState
@@ -91,13 +96,13 @@ import com.loomsu.manager.ui.screen.about.AboutScreen
 import com.loomsu.manager.ui.screen.about.OpenSourceLicenseScreen
 import com.loomsu.manager.ui.screen.kernelFlash.KernelFlashScreen
 import com.loomsu.manager.ui.screen.main.MainScreen
+import com.loomsu.manager.ui.screen.main.NotificationsPage
 import com.loomsu.manager.ui.screen.main.SettingsAboutPage
 import com.loomsu.manager.ui.screen.main.SettingsAiPage
 import com.loomsu.manager.ui.screen.main.SettingsProfilePage
 import com.loomsu.manager.ui.screen.main.SettingsRootPage
 import com.loomsu.manager.ui.screen.main.SettingsToolsPage
 import com.loomsu.manager.ui.screen.main.SettingsUpdatePage
-import com.loomsu.manager.ui.screen.main.NotificationsPage
 import com.loomsu.manager.ui.screen.main.SystemInfoPage
 import com.loomsu.manager.ui.screen.moduleRepo.AddRepositoryScreen
 import com.loomsu.manager.ui.screen.moduleRepo.ModuleRepoScreen
@@ -105,7 +110,15 @@ import com.loomsu.manager.ui.screen.moduleRepo.OnlineModuleDetailScreen
 import com.loomsu.manager.ui.screen.susfs.SuSFSConfigScreen
 import com.loomsu.manager.ui.screen.themeSettings.ThemeSettingsScreen
 import com.loomsu.manager.ui.theme.BackgroundRenderState
+import com.loomsu.manager.ui.theme.BackgroundManager
+import com.loomsu.manager.ui.theme.CardConfig
 import com.loomsu.manager.ui.theme.LocalBackgroundRenderState
+import com.loomsu.manager.ui.theme.BackgroundEffect
+import com.loomsu.manager.ui.theme.LocalDarkBackdrop
+import com.loomsu.manager.ui.theme.LocalOnWallpaper
+import com.loomsu.manager.ui.theme.LoomColors
+import com.loomsu.manager.ui.theme.drawLoomEffect
+import com.loomsu.manager.ui.theme.isInDarkTheme
 import com.loomsu.manager.ui.theme.ThemeConfig
 import com.loomsu.manager.ui.util.LocalBackgroundBlurAnchor
 import com.loomsu.manager.ui.util.LocalBlurState
@@ -118,6 +131,14 @@ import com.loomsu.manager.ui.viewmodel.HomeUiAction
 import com.loomsu.manager.ui.viewmodel.HomeViewModel
 import com.loomsu.manager.ui.viewmodel.PredictiveBackAnimation
 import com.loomsu.manager.ui.viewmodel.SettingsViewModel
+import kotlin.coroutines.resume
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
@@ -161,6 +182,17 @@ fun NavContainer(
 
     val backStack = rememberNavBackStack<Route>(Route.Main)
     val navigator = remember(backStack) { Navigator(backStack) }
+    // 助手要能直接改底栏、开页面、放歌：把同一批全局对象交给它的执行端，
+    // 不用另建一套状态，用户改完立刻在界面上生效。
+    val assistantCardConfig: CardConfig = koinInject()
+    val assistantBackgroundManager: BackgroundManager = koinInject()
+    LaunchedEffect(navigator) {
+        LoomAssistantRuntime.navigator = navigator
+        LoomAssistantRuntime.themeConfig = themeConfig
+        LoomAssistantRuntime.cardConfig = assistantCardConfig
+        LoomAssistantRuntime.backgroundManager = assistantBackgroundManager
+        LoomAssistantRuntime.appContext = context.applicationContext
+    }
 
     // 从安装 / 刷写 / 越狱等二级页回到主界面时，重新读取真实内核状态，
     // 保证「安装镜像成功」后主页立即显示工作中（LKM / 内置）而不是旧的未工作。
@@ -352,6 +384,7 @@ fun NavContainer(
         val interceptPredictiveBack =
             settings.predictiveBackAnimation == PredictiveBackAnimation.None && backStack.size > 1
 
+        Box(modifier = Modifier.fillMaxSize()) {
         NavDisplay(
             backStack = backStack,
             onBack = onBack,
@@ -699,6 +732,17 @@ fun NavContainer(
                     DynamicManagerScreen()
                 }
             }
+            entry<Route.Music>(swipeDismiss = swipeBackDirection) {
+                ManagerNavEntry(
+                    interceptPredictiveBack = interceptPredictiveBack,
+                    onBack = onBack,
+                    themeConfig = themeConfig,
+                    backgroundRenderState = backgroundRenderState,
+                    useBlur = useBlur,
+                ) {
+                    MusicScreen(onBack = onBack)
+                }
+            }
             entry<Route.KernelFlash>(swipeDismiss = NavSwipeDirection.None) { key ->
                 ManagerNavEntry(
                     interceptPredictiveBack = interceptPredictiveBack,
@@ -710,6 +754,9 @@ fun NavContainer(
                     KernelFlashScreen(key.kernelUri, key.selectedSlot, key.skipKsud)
                 }
             }
+        }
+        // 迷你播放条浮在所有页面之上，切页不断、歌也不断。
+        MiniPlayerHost()
         }
     }
 }
@@ -741,6 +788,34 @@ private fun ManagerNavEntry(
         }
     }
 
+    // 每个路由页的根节点负责两件事：铺满不透明底色（转场时上下两页不互相透视），
+    // 以及在这块底色上绘制动态背景特效。所有页面内部一律透明，
+    // 所以设置、模块、超级用户这些界面看到的都是同一块底和同一套特效。
+    val rootCanvasColor = LoomColors.canvasApp
+    val bgEffect = themeConfig.backgroundEffect
+    val bgEffectAccent = MaterialTheme.colorScheme.primary
+    val bgEffectDark = isInDarkTheme(themeConfig.forceDarkMode)
+    val bgEffectAmp = if (bgEffectDark) 1.00f else 1.20f
+    val bgEffectClock = rememberInfiniteTransition(label = "bgEffectRoot")
+    val bgEffectTime by bgEffectClock.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 26000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "bgEffectTime",
+    )
+    val bgEffectBeat by bgEffectClock.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3400, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "bgEffectBeat",
+    )
+
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
@@ -755,14 +830,42 @@ private fun ManagerNavEntry(
                     }
                 }
             }
+            // 没设自定义壁纸时铺实色底；设了壁纸就由下面的壁纸层负责铺满。
+            // 两种情况都必须是不透明的，否则上一层路由会从这一页里透出来（整屏发灰、字重影）。
+            // 动态特效不画在这里：它要盖在壁纸之上，见下面的特效层。
             .then(
-                if (backgroundRenderState.imagePainter == null) Modifier.background(MaterialTheme.colorScheme.surfaceContainer) else Modifier,
+                // 用「壁纸是否真的解码成功」来判断，而不是 painter 是否为 null：
+                // 壁纸文件丢了的时候 painter 仍然存在，会把底色和特效一起跳掉，
+                // 看起来就是「一片灰、特效全没」。
+                if (backgroundRenderState.imageBitmap == null) {
+                    Modifier.drawBehind { drawRect(rootCanvasColor) }
+                } else {
+                    Modifier
+                },
             ),
     ) {
         val isPortrait = maxWidth < maxHeight || (maxHeight / maxWidth > 1.4f)
         val surfaceContainer = MaterialTheme.colorScheme.surfaceContainer
 
+        // 画在背景上的文字该用深色还是浅色：
+        // 主题是深色 → 浅字；主题是浅色但壁纸本身很暗 → 也换成浅字，
+        // 否则「设置」「系统动态」这些标题就是黑字压在暗花丛上。
+        val cardConfigState: CardConfig = koinInject()
+        val scrimLuminance = surfaceContainer.luminance()
+        val wallpaperLuminance = if (backgroundRenderState.wallpaperReady) {
+            backgroundRenderState.wallpaperLuminance
+        } else {
+            scrimLuminance
+        }
+        val dimFraction = themeConfig.backgroundDim.coerceIn(0f, 1f)
+        val effectiveBackdropLuminance =
+            wallpaperLuminance * (1f - dimFraction) + scrimLuminance * dimFraction
+        val darkBackdrop = bgEffectDark ||
+            (cardConfigState.isCustomBackgroundEnabled && effectiveBackdropLuminance < 0.46f)
+
         CompositionLocalProvider(
+            LocalDarkBackdrop provides darkBackdrop,
+            LocalOnWallpaper provides cardConfigState.isCustomBackgroundEnabled,
             LocalPortraitState provides isPortrait,
             LocalBlurState provides rememberMaterial3BlurBackdrop(
                 enableBlur = useBlur,
@@ -777,6 +880,10 @@ private fun ManagerNavEntry(
                 val backgroundPainter = remember(backgroundBitmap, painter) {
                     backgroundBitmap?.let { BitmapPainter(it) } ?: painter
                 }
+                // 壁纸整体虚化：这是「自定义背景」最重要的一层。
+                // 不糊的话整张图的花纹会直接顶到字上，卡片再怎么调透明度都看不清；
+                // 糊掉之后它只当底纹用，卡片上的字才立得住。
+                val wallpaperBlurRadius = (themeConfig.backgroundBlur.coerceIn(0f, 1f) * 28f).dp
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -785,6 +892,16 @@ private fun ManagerNavEntry(
                                 it.isAttached
                             }
                         }
+                        .then(
+                            if (themeConfig.backgroundBlur > 0.01f) {
+                                Modifier.blur(
+                                    radius = wallpaperBlurRadius,
+                                    edgeTreatment = BlurredEdgeTreatment.Rectangle,
+                                )
+                            } else {
+                                Modifier
+                            },
+                        )
                         .paint(
                             painter = backgroundPainter,
                             contentScale = ContentScale.Crop,
@@ -795,6 +912,25 @@ private fun ManagerNavEntry(
                                 color = surfaceContainer.copy(
                                     alpha = themeConfig.backgroundDim,
                                 ),
+                            )
+                        },
+                )
+            }
+            // 动态特效层：在壁纸之上、所有页面内容之下。
+            // 以前只有在「没有壁纸」时才画特效，设了壁纸就整条不画了，
+            // 所以用户看到的是「选了特效但什么都没有」。
+            if (bgEffect != BackgroundEffect.NONE) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .drawBehind {
+                            drawLoomEffect(
+                                effect = bgEffect,
+                                accent = bgEffectAccent,
+                                time = bgEffectTime,
+                                beat = bgEffectBeat,
+                                amplitude = bgEffectAmp,
+                                dark = bgEffectDark,
                             )
                         },
                 )

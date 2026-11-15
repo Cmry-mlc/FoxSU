@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -58,6 +59,7 @@ import com.loomsu.manager.BuildConfig
 import com.loomsu.manager.R
 import com.loomsu.manager.domain.model.ManagerUpdateChannel
 import com.loomsu.manager.domain.usecase.CheckManagerUpdateUseCase
+import com.loomsu.manager.ui.component.LoomBackCapsule
 import com.loomsu.manager.ui.component.LoomCard
 import com.loomsu.manager.ui.component.LoomPageTitle
 import com.loomsu.manager.ui.component.LoomPrimaryButton
@@ -101,49 +103,37 @@ fun AboutScreen() {
         contentWindowInsets = adaptiveScaffoldWindowInsets(),
         containerColor = Color.Transparent,
         contentColor = MaterialTheme.colorScheme.onSurface,
-    ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .blurSource(),
-            contentPadding = PaddingValues(
-                start = 20.dp,
-                end = 20.dp,
-                bottom = innerPadding.calculateBottomPadding() + 32.dp,
-            ),
-        ) {
-            item {
-                Spacer(modifier = Modifier.height(innerPadding.calculateTopPadding() + 6.dp))
-            }
-
-            item {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .shadow(6.dp, CircleShape, clip = false, ambientColor = Color(0x1418263C), spotColor = Color(0x1418263C))
-                        .clip(CircleShape)
-                        .background(LoomColors.canvasCard)
-                        .clickable(onClick = { navigator.pop() }),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.TwoTone.KeyboardArrowLeft,
-                        contentDescription = "返回",
-                        tint = LoomColors.textBody,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-            }
-
-            item {
+        // 返回胶囊 + 标题固定在顶部，下面只有卡片滚动
+        topBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(horizontal = 20.dp),
+            ) {
+                Spacer(modifier = Modifier.height(6.dp))
+                LoomBackCapsule(onClick = { navigator.pop() })
                 Spacer(modifier = Modifier.height(14.dp))
                 LoomPageTitle(
                     title = "关于",
                     subtitle = "Loom SU · 织光内核工作台",
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
             }
-
+        },
+    ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = innerPadding.calculateTopPadding())
+                .blurSource(),
+            contentPadding = PaddingValues(
+                start = 20.dp,
+                end = 20.dp,
+                top = 8.dp,
+                bottom = innerPadding.calculateBottomPadding() + 32.dp,
+            ),
+        ) {
             // 应用标识卡
             item {
                 LoomCard(contentPadding = PaddingValues(horizontal = 18.dp, vertical = 18.dp)) {
@@ -208,8 +198,6 @@ fun AboutScreen() {
                         icon = Icons.TwoTone.Code,
                         title = stringResource(R.string.get_source_code),
                         description = stringResource(R.string.get_source_code_detail),
-                        iconTint = LoomColors.brandDeep,
-                        iconContainer = LoomColors.brandSoft,
                         onClick = { uriHandler.openUri("https://github.com/Cmry-mlc/FoxSu") },
                         trailing = { Arrow() },
                     )
@@ -218,8 +206,6 @@ fun AboutScreen() {
                         icon = Icons.TwoTone.Group,
                         title = stringResource(R.string.join_telegram_group),
                         description = stringResource(R.string.join_telegram_group_detail),
-                        iconTint = LoomColors.info,
-                        iconContainer = LoomColors.infoSoft,
                         onClick = { uriHandler.openUri("https://t.me/LoomSU") },
                         trailing = { Arrow() },
                     )
@@ -228,8 +214,6 @@ fun AboutScreen() {
                         icon = Icons.TwoTone.Copyright,
                         title = stringResource(R.string.open_source_license),
                         description = "GPL-3.0 · 依赖组件清单",
-                        iconTint = LoomColors.success,
-                        iconContainer = LoomColors.successSoft,
                         onClick = { navigator.push(Route.OpenSourceLicense) },
                         trailing = { Arrow() },
                     )
@@ -243,8 +227,6 @@ fun AboutScreen() {
                         icon = Icons.TwoTone.Info,
                         title = "图标与视觉",
                         description = "图标作者 OukaroMF · 点击查看主页",
-                        iconTint = LoomColors.amber,
-                        iconContainer = LoomColors.amberSoft,
                         onClick = { uriHandler.openUri("https://github.com/OukaroMF") },
                         trailing = { Arrow() },
                     )
@@ -253,8 +235,6 @@ fun AboutScreen() {
                         icon = Icons.TwoTone.Update,
                         title = "检查更新",
                         description = if (checking) "正在检查…" else "当前版本 V${BuildConfig.VERSION_NAME}",
-                        iconTint = LoomColors.textSec,
-                        iconContainer = LoomColors.canvasSubtle,
                         enabled = !checking,
                         onClick = {
                             checking = true

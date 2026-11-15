@@ -34,6 +34,7 @@ import androidx.compose.material.icons.automirrored.twotone.Send
 import androidx.compose.material.icons.twotone.Mic
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -58,7 +59,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.loomsu.manager.data.ai.AiSettingsStore
 import kotlinx.coroutines.launch
-import com.loomsu.manager.data.ai.LoomAiClient
+import com.loomsu.manager.ui.assistant.AssistantIntentParser
+import com.loomsu.manager.ui.assistant.LoomAiAgent
+import com.loomsu.manager.ui.assistant.LoomAssistantRuntime
+import com.loomsu.manager.ui.navigation.LocalNavigator
+import com.loomsu.manager.ui.navigation.Route
 import com.loomsu.manager.ui.theme.LoomColors
 import com.loomsu.manager.ui.theme.LoomGradients
 import com.loomsu.manager.ui.viewmodel.HomeUiState
@@ -77,7 +82,33 @@ private data class LoomChatMessage(
 private val LOCAL_INTENT_WORDS = listOf(
     "重启", "关机", "恢复", "edl", "recovery", "bootloader", "reboot",
     "模块", "超级用户", "安装", "越狱",
+    "主题", "字体", "通知", "关于", "设置", "日志", "仓库", "打开",
 )
+
+/** 一句话 → 一个页面跳转。命中后助手会直接打开对应界面，而不是回一句「请手动打开」。 */
+private class LoomAction(val reply: String, val route: Route)
+
+private fun loomNavigationIntent(query: String): LoomAction? {
+    val q = query.lowercase()
+    fun has(vararg words: String) = words.any { q.contains(it) }
+    return when {
+        has("主题设置", "换肤", "配色", "主题色", "背景特效", "字体") ->
+            LoomAction("正在打开主题设置…外观、字体、背景特效都在这里。", Route.ThemeSettings)
+        has("通知", "消息", "铃铛") ->
+            LoomAction("正在打开通知页。", Route.Notifications)
+        has("系统信息", "内核信息", "设备信息") ->
+            LoomAction("正在打开系统信息。", Route.SystemInfo)
+        has("模块仓库", "在线模块", "仓库") ->
+            LoomAction("正在打开模块仓库。", Route.ModuleRepo)
+        has("日志", "log") ->
+            LoomAction("正在打开日志。", Route.Sulog)
+        has("关于", "版本", "开源许可") ->
+            LoomAction("正在打开关于页。", Route.About)
+        has("设置") ->
+            LoomAction("正在打开设置。", Route.Settings)
+        else -> null
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -119,12 +150,29 @@ fun LoomAssistantSheet(
     }
 
     val scope = rememberCoroutineScope()
+    val navigator = LocalNavigator.current
+
+    // 助手执行「打开页面 / 搜歌播放」时会往返回栈里推页面。
+    // 这里盯一眼栈深：一旦推了新页就把面板收掉，否则面板会盖在新页面上，
+    // 用户以为「说了半天什么都没打开」。
+    val initialStackSize = remember { navigator.backStack.size }
+    LaunchedEffect(navigator.backStack.size) {
+        if (navigator.backStack.size != initialStackSize) onDismiss()
+    }
 
     fun send(text: String) {
         val trimmed = text.trim()
         if (trimmed.isEmpty()) return
         messages.add(LoomChatMessage(fromUser = true, text = trimmed))
         input = ""
+
+        // 1) 明确的单步指令（换底栏、切质感、开页面、放歌、调音量）本地直接做，
+        //    不走网络：没有配模型的用户也能用，配了的也不会白等一次请求。
+        AssistantIntentParser.parse(trimmed)?.let { action ->
+            val reply = LoomAssistantRuntime.execute(action)
+            messages.add(LoomChatMessage(fromUser = false, text = reply))
+            return
+        }
 
         val localReply = loomReply(
             query = trimmed,
@@ -136,19 +184,32 @@ fun LoomAssistantSheet(
             onReboot = onReboot,
         )
 
-        // 命中本地动作（重启 / 跳转 / 安装）时以本地结果为准；
-        // 其余问答在配置了模型服务后交给远端模型，失败自动回退本地应答。
-        val localIntent = LOCAL_INTENT_WORDS.any { trimmed.lowercase().contains(it) }
-        val aiSettings = AiSettingsStore.load(context)
-        if (localIntent || !aiSettings.isConfigured) {
+        // 2) 破坏性动作（重启 / 安装 / 卸载）始终本地确认，不让模型替用户拍板。
+        val destructive = listOf(
+            "重启", "关机", "recovery", "bootloader", "edl", "安装", "卸载", "刷写", "刷入",
+        ).any { trimmed.lowercase().contains(it) }
+        if (destructive) {
             messages.add(LoomChatMessage(fromUser = false, text = localReply))
             return
         }
 
-        messages.add(LoomChatMessage(fromUser = false, text = "正在思考…"))
+        // 3) 其余交给模型，并且允许它连续调用工具（打开页面、改设置、放歌）。
+        val aiSettings = AiSettingsStore.load(context)
+        if (!aiSettings.isConfigured) {
+            messages.add(LoomChatMessage(fromUser = false, text = localReply))
+            return
+        }
+
+        messages.add(LoomChatMessage(fromUser = false, text = "正在处理…"))
         val placeholderIndex = messages.lastIndex
         scope.launch {
-            val result = LoomAiClient.chat(aiSettings, trimmed)
+            val history = messages
+                .mapIndexedNotNull { index, message ->
+                    if (index == placeholderIndex) null else message.fromUser to message.text
+                }
+            val result = LoomAiAgent.run(aiSettings, history) { step ->
+                messages[placeholderIndex] = LoomChatMessage(fromUser = false, text = step)
+            }
             val answer = result.getOrNull() ?: localReply
             messages[placeholderIndex] = LoomChatMessage(fromUser = false, text = answer)
         }
@@ -188,7 +249,7 @@ fun LoomAssistantSheet(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "查状态 · 管模块 · 执行重启，直接说就行",
+                text = "改设置 · 开页面 · 放音乐，直接说就行",
                 fontSize = 10.5.sp,
                 fontWeight = FontWeight.Bold,
                 color = LoomColors.textMuted,
@@ -216,7 +277,7 @@ fun LoomAssistantSheet(
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                listOf("检查系统状态", "安装模块", "重启到 Recovery").forEach { suggestion ->
+                listOf("换成胶囊底栏", "切到模糊磨砂", "放首歌", "检查系统状态").forEach { suggestion ->
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(100.dp))
@@ -228,7 +289,7 @@ fun LoomAssistantSheet(
                             text = suggestion,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.ExtraBold,
-                            color = LoomColors.brandDeep,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
                         )
                     }
                 }
@@ -292,9 +353,9 @@ fun LoomAssistantSheet(
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                     keyboardActions = KeyboardActions(onSend = { send(input) }),
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = LoomColors.canvasCard,
-                        unfocusedContainerColor = LoomColors.canvasCard,
-                        disabledContainerColor = LoomColors.canvasCard,
+                        focusedContainerColor = LoomColors.canvasCardSolid,
+                        unfocusedContainerColor = LoomColors.canvasCardSolid,
+                        disabledContainerColor = LoomColors.canvasCardSolid,
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
                         disabledIndicatorColor = Color.Transparent,
@@ -428,5 +489,5 @@ private fun loomReply(
         }"
     }
 
-    return "我可以帮你查状态、管模块、执行重启。试试说「检查系统状态」「已安装哪些模块」或「重启到 Recovery」。"
+    return "我可以帮你查状态、管模块、跳页面、执行重启。试试说「打开主题设置」「检查系统状态」「已安装哪些模块」或「重启到 Recovery」。"
 }

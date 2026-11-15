@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -41,7 +42,10 @@ import androidx.compose.material.icons.twotone.ColorLens
 import androidx.compose.material.icons.twotone.Contrast
 import androidx.compose.material.icons.twotone.DarkMode
 import androidx.compose.material.icons.twotone.DesignServices
+import androidx.compose.material.icons.twotone.AutoAwesome
+import androidx.compose.material.icons.twotone.Autorenew
 import androidx.compose.material.icons.twotone.Dock
+import androidx.compose.material.icons.twotone.Layers
 import androidx.compose.material.icons.twotone.Draw
 import androidx.compose.material.icons.twotone.FormatColorFill
 import androidx.compose.material.icons.twotone.FormatSize
@@ -70,6 +74,7 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -133,10 +138,18 @@ import com.loomsu.manager.ui.component.settings.SettingsJumpPageWidget
 import com.loomsu.manager.ui.component.settings.SettingsSwitchWidget
 import com.loomsu.manager.ui.navigation.LocalNavigator
 import com.loomsu.manager.ui.screen.themeSettings.component.LanguageSelectionDialog
+import com.loomsu.manager.data.theme.ThemeRepository
+import com.loomsu.manager.ui.screen.themeSettings.component.BackgroundEffectPicker
+import com.loomsu.manager.ui.screen.themeSettings.component.LoomFontSection
+import com.loomsu.manager.ui.screen.themeSettings.component.HomeKickerDialog
+import com.loomsu.manager.ui.screen.themeSettings.component.HomeTitleDialog
+import com.loomsu.manager.ui.screen.themeSettings.component.LoomColorPickerDialog
+import com.loomsu.manager.ui.screen.themeSettings.component.toHexRgb
 import com.loomsu.manager.ui.screen.themeSettings.component.ThemeSettingsDialogs
 import com.loomsu.manager.ui.screen.themeSettings.crop.BackgroundCropActivity
 import com.loomsu.manager.ui.theme.BackgroundManager
 import com.loomsu.manager.ui.theme.BottomBarStyle
+import com.loomsu.manager.ui.theme.CapsuleEffect
 import com.loomsu.manager.ui.theme.CardConfig
 import com.loomsu.manager.ui.theme.ThemeConfig
 import com.loomsu.manager.ui.theme.blurEffect
@@ -171,7 +184,7 @@ fun ThemeSettingsScreen(
     val cardConfig: CardConfig = koinInject()
     // 顶部滚动行为
     val topAppBarState = rememberTopAppBarState()
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(topAppBarState)
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(topAppBarState)
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     // 创建设置状态管理器
@@ -331,34 +344,38 @@ fun ThemeSettingsScreen(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = Color.Transparent,
         contentColor = MaterialTheme.colorScheme.onSurface,
+        // 返回胶囊 + 标题放进固定 topBar，滚动列表时不再跟着内容一起走
+        topBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(horizontal = 20.dp),
+            ) {
+                Spacer(modifier = Modifier.height(6.dp))
+                LoomBackCapsule(onClick = { navigator.pop() })
+                Spacer(modifier = Modifier.height(14.dp))
+                LoomPageTitle(
+                    title = stringResource(R.string.theme_settings),
+                    subtitle = "外观、背景与交互手势",
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+        },
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(top = paddingValues.calculateTopPadding())
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
                 .blurSource(),
             contentPadding = PaddingValues(
                 start = 20.dp,
                 end = 20.dp,
+                top = 8.dp,
                 bottom = paddingValues.calculateBottomPadding() + 28.dp,
             ),
         ) {
-            item {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = paddingValues.calculateTopPadding() + 6.dp),
-                ) {
-                    LoomBackCapsule(onClick = { navigator.pop() })
-                    Spacer(modifier = Modifier.height(14.dp))
-                    LoomPageTitle(
-                        title = stringResource(R.string.theme_settings),
-                        subtitle = "外观、背景与交互手势",
-                    )
-                    Spacer(modifier = Modifier.height(18.dp))
-                }
-            }
-
             item {
                 LoomAppearanceSection(
                     state = settingsState,
@@ -366,6 +383,14 @@ fun ThemeSettingsScreen(
                     pickImageLauncher = pickImageLauncher,
                     coroutineScope = coroutineScope,
                 )
+            }
+
+            item {
+                LoomFontSection(modifier = Modifier.padding(top = 22.dp))
+            }
+
+            item {
+                LoomHomeTitleSection()
             }
 
             item {
@@ -383,6 +408,157 @@ fun ThemeSettingsScreen(
             }
         }
     }
+}
+
+/**
+ * 主页标题：自定义文案 + 双色。
+ * 两种颜色复用主题色选择器的同一套交互（10 个预设 + 十六进制输入），
+ * 分段位置在标题弹窗里拖动，第二段可以从任意字符开始着色。
+ */
+@Composable
+private fun LoomHomeTitleSection() {
+    val themeConfig: ThemeConfig = koinInject()
+    val themeRepository: ThemeRepository = koinInject()
+
+    var showTitleDialog by remember { mutableStateOf(false) }
+    var showKickerDialog by remember { mutableStateOf(false) }
+    var showPrimaryPicker by remember { mutableStateOf(false) }
+    var showAccentPicker by remember { mutableStateOf(false) }
+
+    Column {
+        LoomGroupTitle(text = stringResource(R.string.home_title_section))
+
+        LoomCard {
+            LoomRow(
+                icon = Icons.TwoTone.AutoAwesome,
+                title = "标题上方小字",
+                description = "支持手填，也可以让 AI 现写一句",
+                onClick = { showKickerDialog = true },
+                trailing = {
+                    Text(
+                        text = themeConfig.homeKicker,
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = LoomColors.textSec,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.widthIn(max = 120.dp),
+                    )
+                },
+            )
+            LoomRowDivider()
+            // 滚动开关：关掉后小字静止显示
+            LoomSwitchRow(
+                icon = Icons.TwoTone.Autorenew,
+                title = "小字滚动",
+                description = "一行小字持续向左流动；关闭后静止显示",
+                checked = themeConfig.kickerTicker,
+                tone = LoomTones.blue,
+                onCheckedChange = { checked ->
+                    themeConfig.kickerTicker = checked
+                    themeRepository.saveKickerTicker(checked)
+                },
+            )
+            LoomRowDivider()
+            LoomRow(
+                icon = Icons.TwoTone.Style,
+                title = stringResource(R.string.home_title_text),
+                description = stringResource(R.string.home_title_split, themeConfig.homeTitleSplit),
+                onClick = { showTitleDialog = true },
+                trailing = {
+                    Text(
+                        text = themeConfig.homeTitle,
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = LoomColors.textSec,
+                        maxLines = 1,
+                    )
+                },
+            )
+            LoomRowDivider()
+            LoomRow(
+                icon = Icons.TwoTone.FormatColorFill,
+                title = stringResource(R.string.home_title_color_primary),
+                description = "#" + themeConfig.homeTitleColorPrimary.toHexRgb(),
+                onClick = { showPrimaryPicker = true },
+                trailing = { LoomColorDot(themeConfig.homeTitleColorPrimary) },
+            )
+            LoomRowDivider()
+            LoomRow(
+                icon = Icons.TwoTone.ColorLens,
+                title = stringResource(R.string.home_title_color_accent),
+                description = "#" + themeConfig.homeTitleColorAccent.toHexRgb(),
+                onClick = { showAccentPicker = true },
+                trailing = { LoomColorDot(themeConfig.homeTitleColorAccent) },
+            )
+        }
+    }
+
+    if (showKickerDialog) {
+        HomeKickerDialog(
+            initialText = themeConfig.homeKicker,
+            onConfirm = { value ->
+                themeConfig.homeKicker = value
+                themeRepository.saveHomeKicker(value)
+                showKickerDialog = false
+            },
+            onDismiss = { showKickerDialog = false },
+        )
+    }
+
+    if (showTitleDialog) {
+        HomeTitleDialog(
+            initialText = themeConfig.homeTitle,
+            initialSplit = themeConfig.homeTitleSplit,
+            colorPrimary = Color(themeConfig.homeTitleColorPrimary),
+            colorAccent = Color(themeConfig.homeTitleColorAccent),
+            onConfirm = { text, split ->
+                themeConfig.homeTitle = text
+                themeConfig.homeTitleSplit = split
+                themeRepository.saveHomeTitle(text)
+                themeRepository.saveHomeTitleSplit(split)
+                showTitleDialog = false
+            },
+            onDismiss = { showTitleDialog = false },
+        )
+    }
+
+    if (showPrimaryPicker) {
+        LoomColorPickerDialog(
+            title = stringResource(R.string.home_title_color_primary),
+            initialColor = themeConfig.homeTitleColorPrimary,
+            onConfirm = { color ->
+                themeConfig.homeTitleColorPrimary = color
+                themeRepository.saveHomeTitleColors(color, themeConfig.homeTitleColorAccent)
+                showPrimaryPicker = false
+            },
+            onDismiss = { showPrimaryPicker = false },
+        )
+    }
+
+    if (showAccentPicker) {
+        LoomColorPickerDialog(
+            title = stringResource(R.string.home_title_color_accent),
+            initialColor = themeConfig.homeTitleColorAccent,
+            onConfirm = { color ->
+                themeConfig.homeTitleColorAccent = color
+                themeRepository.saveHomeTitleColors(themeConfig.homeTitleColorPrimary, color)
+                showAccentPicker = false
+            },
+            onDismiss = { showAccentPicker = false },
+        )
+    }
+}
+
+/** 22dp 圆点色块：设置行右侧展示当前颜色。 */
+@Composable
+private fun LoomColorDot(color: Int) {
+    Box(
+        modifier = Modifier
+            .size(22.dp)
+            .clip(CircleShape)
+            .background(Color(color)),
+    )
 }
 
 /** 分组标题：与二级页一致的小标题样式。 */
@@ -501,8 +677,6 @@ private fun LoomAppearanceSection(
                 icon = Icons.TwoTone.Palette,
                 title = stringResource(R.string.theme_color),
                 description = themeConfig.seedColor.toSeedColorHex(),
-                iconTint = LoomColors.violet,
-                iconContainer = LoomColors.violetSoft,
                 onClick = {
                     viewModel.dispatch(SettingsUiAction.SetThemeColorDialogVisible(true))
                 },
@@ -521,8 +695,6 @@ private fun LoomAppearanceSection(
                 icon = Icons.TwoTone.FormatSize,
                 title = stringResource(R.string.app_dpi_title),
                 description = stringResource(R.string.app_dpi_summary),
-                iconTint = LoomColors.amber,
-                iconContainer = LoomColors.amberSoft,
                 trailing = {
                     Text(
                         text = stringResource(dpiFriendlyNameRes(state.tempDpi)),
@@ -532,20 +704,6 @@ private fun LoomAppearanceSection(
                     )
                 },
             )
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                LoomRowDivider()
-                LoomSwitchRow(
-                    icon = Icons.TwoTone.BlurOn,
-                    title = "启用模糊",
-                    description = "底栏背景做轻微毛玻璃处理，内容保持清晰",
-                    checked = themeConfig.isEnableBlur,
-                    tone = LoomTones.blue,
-                    onCheckedChange = { isChecked ->
-                        backgroundManager.saveEnableBlur(isChecked)
-                    },
-                )
-            }
 
             LoomRowDivider()
             LoomChoiceRow(
@@ -562,6 +720,32 @@ private fun LoomAppearanceSection(
                     backgroundManager.saveBottomBarStyle(style)
                 },
             )
+            LoomRowDivider()
+            LoomSwitchRow(
+                icon = Icons.TwoTone.BlurOn,
+                title = stringResource(id = R.string.settings_config_enable_blur),
+                description = "底栏、弹层对身后的内容做实时模糊；关闭后为不透明实色底",
+                checked = themeConfig.isEnableBlur,
+                tone = LoomTones.blue,
+                onCheckedChange = { enabled ->
+                    backgroundManager.saveEnableBlur(enabled)
+                },
+            )
+            LoomRowDivider()
+            LoomChoiceRow(
+                icon = Icons.TwoTone.Layers,
+                title = "胶囊质感",
+                description = themeConfig.capsuleEffect.summary,
+                options = CapsuleEffect.entries.map { it.label },
+                selectedIndex = themeConfig.capsuleEffect.ordinal,
+                tone = LoomTones.blue,
+                onSelect = { index ->
+                    val effect = CapsuleEffect.entries.getOrElse(index) {
+                        CapsuleEffect.LIQUID_GLASS
+                    }
+                    backgroundManager.saveCapsuleEffect(effect)
+                },
+            )
         }
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -573,6 +757,23 @@ private fun LoomAppearanceSection(
                 coroutineScope = coroutineScope,
             )
         }
+
+        LoomGroupTitle(text = "背景特效")
+
+        Text(
+            text = "全部程序化绘制，颜色跟随主题色，透明度很低、不影响阅读",
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            color = LoomColors.textTer,
+            modifier = Modifier.padding(start = 4.dp, end = 4.dp, bottom = 10.dp),
+        )
+
+        BackgroundEffectPicker(
+            selected = themeConfig.backgroundEffect,
+            onSelect = { backgroundManager.saveBackgroundEffect(it) },
+        )
+
+        Spacer(modifier = Modifier.height(18.dp))
 
         LoomGroupTitle(text = "自定义背景")
 
@@ -614,6 +815,27 @@ private fun LoomAppearanceSection(
                         )
                     }
                     Spacer(modifier = Modifier.height(14.dp))
+                    // 背景模糊：整张壁纸的虚化强度。和原版一样用同一条可拖动的调节条，
+                    // 拉到 0 是原图，拉满是一层底纹。
+                    var blurSlider by remember { mutableFloatStateOf(themeConfig.backgroundBlur) }
+                    LoomSliderRow(
+                        title = "背景模糊",
+                        valueText = "${(blurSlider * 100).roundToInt()}%",
+                    ) {
+                        KeyPointSlider(
+                            value = blurSlider,
+                            onValueChange = { value ->
+                                blurSlider = value
+                                themeConfig.backgroundBlur = value
+                            },
+                            onValueChangeFinished = {
+                                backgroundManager.saveBackgroundBlur(blurSlider)
+                            },
+                            valueRange = 0f..1f,
+                            keyPoints = listOf(0.25f, 0.5f, 0.75f),
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(14.dp))
                     LoomSliderRow(
                         title = stringResource(R.string.settings_background_dim),
                         valueText = "${(state.backgroundDim * 100).roundToInt()}%",
@@ -632,20 +854,6 @@ private fun LoomAppearanceSection(
                             keyPoints = listOf(0.25f, 0.5f, 0.75f),
                         )
                     }
-                }
-
-                if (themeConfig.isEnableBlur) {
-                    LoomRowDivider()
-                    LoomSwitchRow(
-                        icon = Icons.TwoTone.Draw,
-                        title = stringResource(id = R.string.settings_exp_draw_background_to_blur),
-                        description = stringResource(id = R.string.settings_exp_draw_background_to_blur_description),
-                        checked = themeConfig.isEnableBlurExp,
-                        tone = LoomTones.violet,
-                        onCheckedChange = { isChecked ->
-                            backgroundManager.saveEnableBlurExp(isChecked)
-                        },
-                    )
                 }
 
                 if (state.useDynamicColor) {
@@ -1189,8 +1397,6 @@ private fun LanguageSetting(state: SettingsUiState, viewModel: SettingsViewModel
         icon = Icons.TwoTone.Translate,
         title = language,
         description = currentLanguageDisplay,
-        iconTint = LoomColors.info,
-        iconContainer = LoomColors.infoSoft,
         onClick = {
             viewModel.dispatch(SettingsUiAction.SetLanguageDialogVisible(true))
         },

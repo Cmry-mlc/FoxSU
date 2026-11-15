@@ -199,6 +199,11 @@ sealed interface Route :
     @Serializable
     data object DynamicManager : Route
 
+    /** 音乐播放器：在线搜索 + 播放，支持从助手直接拉起。 */
+    @Parcelize
+    @Serializable
+    data object Music : Route
+
     @Parcelize
     @Serializable
     data class KernelFlash(

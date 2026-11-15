@@ -156,7 +156,7 @@ fun ScriptRunScreen(route: Route.ScriptRun) {
     val theme = koinInject<ThemeConfig>()
     val cards = koinInject<CardConfig>()
     val layoutDirection = LocalLayoutDirection.current
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     Scaffold(
         topBar = {
             LargeFlexibleTopAppBar(

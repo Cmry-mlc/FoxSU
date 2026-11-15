@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -228,24 +229,16 @@ fun NotificationsPage() {
         contentWindowInsets = adaptiveScaffoldWindowInsets(),
         containerColor = Color.Transparent,
         contentColor = MaterialTheme.colorScheme.onSurface,
-    ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .blurSource(),
-            contentPadding = PaddingValues(
-                start = 20.dp,
-                end = 20.dp,
-                bottom = innerPadding.calculateBottomPadding() + 32.dp,
-            ),
-        ) {
-            item {
-                Spacer(modifier = Modifier.height(innerPadding.calculateTopPadding() + 6.dp))
-            }
-            item {
+        // 返回胶囊 + 标题固定，列表滚动时保持不动
+        topBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(horizontal = 20.dp),
+            ) {
+                Spacer(modifier = Modifier.height(6.dp))
                 LoomBackCapsule(text = "返回", onClick = { navigator.pop() })
-            }
-            item {
                 Spacer(modifier = Modifier.height(14.dp))
                 LoomPageTitle(
                     title = "通知",
@@ -255,9 +248,22 @@ fun NotificationsPage() {
                         "${notices.size} 条消息 · 版本更新与安全提示"
                     },
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
             }
-
+        },
+    ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = innerPadding.calculateTopPadding())
+                .blurSource(),
+            contentPadding = PaddingValues(
+                start = 20.dp,
+                end = 20.dp,
+                top = 8.dp,
+                bottom = innerPadding.calculateBottomPadding() + 32.dp,
+            ),
+        ) {
             if (notices.isEmpty()) {
                 item {
                     LoomCard(contentPadding = PaddingValues(horizontal = 22.dp, vertical = 40.dp)) {
@@ -269,13 +275,13 @@ fun NotificationsPage() {
                                 modifier = Modifier
                                     .size(56.dp)
                                     .clip(RoundedCornerShape(18.dp))
-                                    .background(LoomColors.canvasSubtle),
+                                    .background(LoomTones.unified.container),
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Icon(
                                     imageVector = Icons.TwoTone.NewReleases,
                                     contentDescription = null,
-                                    tint = LoomColors.textMuted,
+                                    tint = LoomTones.unified.content,
                                     modifier = Modifier.size(24.dp),
                                 )
                             }

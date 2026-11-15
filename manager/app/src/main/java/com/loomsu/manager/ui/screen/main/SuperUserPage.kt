@@ -16,6 +16,7 @@ import com.loomsu.manager.ui.component.LoomMenuItem
 import com.loomsu.manager.ui.component.LoomMenuPanel
 import com.loomsu.manager.ui.component.LoomTextField
 import com.loomsu.manager.ui.theme.LoomColors
+import com.loomsu.manager.ui.theme.LoomTones
 import com.loomsu.manager.ui.theme.LoomType
 import android.content.Context
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -31,6 +32,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -200,6 +202,87 @@ fun SuperUserPage(bottomPadding: Dp) {
     Scaffold(
         containerColor = Color.Transparent,
         contentColor = MaterialTheme.colorScheme.onSurface,
+        // 标题与搜索固定在顶部，不跟随列表滚动
+        topBar = {
+            var showDropdown by remember { mutableStateOf(false) }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(horizontal = 20.dp),
+            ) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(text = "超级用户", style = LoomType.pageTitle)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = if (uiState.appGroupList.isEmpty()) {
+                                "授权与 App Profile"
+                            } else {
+                                "${uiState.appGroupList.size} 个应用 · 点击配置 Profile"
+                            },
+                            style = LoomType.pageSub,
+                        )
+                    }
+                    Box {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(LoomColors.canvasCard)
+                                .clickable { showDropdown = true },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector = Icons.TwoTone.Tune,
+                                contentDescription = stringResource(R.string.settings),
+                                tint = LoomColors.textSec,
+                                modifier = Modifier.size(19.dp),
+                            )
+                        }
+                        SuperUserDropdown(
+                            expanded = showDropdown,
+                            onDismissRequest = { showDropdown = false },
+                            viewModel = viewModel,
+                            uiState = uiState,
+                            onBackupAllowlist = {
+                                backupLauncher.launch(createAllowlistBackupFileName())
+                            },
+                            onRestoreAllowlist = {
+                                restoreLauncher.launch(arrayOf("application/octet-stream"))
+                            },
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(LoomColors.canvasCard)
+                            .clickable { navigator.push(Route.Sulog) },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.TwoTone.Article,
+                            contentDescription = stringResource(R.string.sulog),
+                            tint = LoomColors.textSec,
+                            modifier = Modifier.size(19.dp),
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(14.dp))
+                LoomTextField(
+                    value = uiState.search,
+                    onValueChange = { viewModel.dispatch(SuperUserUiAction.Search(it)) },
+                    placeholder = stringResource(R.string.search_apps),
+                )
+                Spacer(modifier = Modifier.height(14.dp))
+            }
+        },
         snackbarHost = {
             SwipeableSnackbarHost(
                 modifier = Modifier.padding(bottom = bottomPadding),
@@ -278,7 +361,6 @@ private fun SuperUserContent(
 ) {
     val pullRefreshState = rememberPullToRefreshState()
     val listState = rememberLazyListState()
-    var showDropdown by remember { mutableStateOf(false) }
     PullToRefreshBox(
         state = pullRefreshState,
         onRefresh = { viewModel.dispatch(SuperUserUiAction.Refresh) },
@@ -301,92 +383,19 @@ private fun SuperUserContent(
     ) {
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxSize(),
+            // 用 padding 把列表真正挪到顶栏下方，而不是 contentPadding：
+            // contentPadding 只偏移内容，列表本身仍占满全屏，滚动时 item 会画到
+            // 透明顶栏区域里（就是「内容透过去」）。padding 缩小了列表自身边界，
+            // 滚动内容会被裁在顶栏下方。
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = innerPadding.calculateTopPadding()),
             contentPadding = PaddingValues(
                 start = 20.dp,
                 end = 20.dp,
                 bottom = innerPadding.calculateBottomPadding() + bottomPadding + 28.dp,
             ),
         ) {
-            item {
-                Spacer(modifier = Modifier.height(innerPadding.calculateTopPadding() + 10.dp))
-            }
-
-            item {
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(text = "超级用户", style = LoomType.pageTitle)
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = if (uiState.appGroupList.isEmpty()) {
-                                    "授权与 App Profile"
-                                } else {
-                                    "${uiState.appGroupList.size} 个应用 · 点击配置 Profile"
-                                },
-                                style = LoomType.pageSub,
-                            )
-                        }
-                        Box {
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(RoundedCornerShape(14.dp))
-                                    .background(LoomColors.canvasCard)
-                                    .clickable { showDropdown = true },
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Icon(
-                                    imageVector = Icons.TwoTone.Tune,
-                                    contentDescription = stringResource(R.string.settings),
-                                    tint = LoomColors.textSec,
-                                    modifier = Modifier.size(19.dp),
-                                )
-                            }
-                            SuperUserDropdown(
-                                expanded = showDropdown,
-                                onDismissRequest = { showDropdown = false },
-                                viewModel = viewModel,
-                                uiState = uiState,
-                                onBackupAllowlist = onBackupAllowlist,
-                                onRestoreAllowlist = onRestoreAllowlist,
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(LoomColors.canvasCard)
-                                .clickable(onClick = onSulogClick),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.TwoTone.Article,
-                                contentDescription = stringResource(R.string.sulog),
-                                tint = LoomColors.textSec,
-                                modifier = Modifier.size(19.dp),
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    LoomTextField(
-                        value = uiState.search,
-                        onValueChange = { viewModel.dispatch(SuperUserUiAction.Search(it)) },
-                        placeholder = stringResource(R.string.search_apps),
-                    )
-                }
-            }
-
-            item {
-                Spacer(modifier = Modifier.height(14.dp))
-            }
-
             uiState.loadFailure?.let { failure ->
                 item(key = "load-error") {
                     SuperUserLoadError(
@@ -432,7 +441,7 @@ private fun SuperUserContent(
                                     modifier = Modifier
                                         .size(64.dp)
                                         .clip(RoundedCornerShape(20.dp))
-                                        .background(LoomColors.canvasSubtle),
+                                        .background(LoomTones.unified.container),
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     Icon(
@@ -442,7 +451,7 @@ private fun SuperUserContent(
                                             Icons.TwoTone.Person
                                         },
                                         contentDescription = null,
-                                        tint = LoomColors.textTer,
+                                        tint = LoomTones.unified.content,
                                         modifier = Modifier.size(28.dp),
                                     )
                                 }

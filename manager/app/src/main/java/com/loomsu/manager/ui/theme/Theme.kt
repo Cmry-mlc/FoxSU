@@ -18,13 +18,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialExpressiveTheme
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MotionScheme
 import androidx.compose.runtime.Composable
@@ -45,13 +45,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -126,8 +130,16 @@ class ThemeConfig(
 ) {
     var customBackgroundUri by mutableStateOf<Uri?>(null)
     var backgroundDim by mutableFloatStateOf(0f)
+
+    /**
+     * 自定义壁纸的模糊强度（0..1）。
+     *
+     * 0 = 原图，1 = 最糊。默认 0.5：壁纸只当底纹看，卡片上的字才读得清，
+     * 也最接近源码「壁纸整体虚化 + 半透明卡片」的观感。
+     */
+    var backgroundBlur by mutableFloatStateOf(0.5f)
     var forceDarkMode by mutableStateOf<Boolean?>(null)
-    var seedColor by mutableIntStateOf(defaultSeedColor())
+    var seedColor by mutableIntStateOf(0xFF71717A.toInt())
     var useDynamicColor by mutableStateOf(false)
     var useBuiltinMonoFont by mutableStateOf(false)
     var monetCompatSeedColor by mutableIntStateOf(defaultSeedColor())
@@ -137,13 +149,13 @@ class ThemeConfig(
     var backgroundImageLoaded by mutableStateOf(false)
     var isThemeChanging by mutableStateOf(false)
     var isHighContrastMode by mutableStateOf(false)
-    private val _isEnableBlur = mutableStateOf(false)
+    private val _isEnableBlur = mutableStateOf(true)
     var isEnableBlur: Boolean
         get() = _isEnableBlur.value && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
         set(value) {
             _isEnableBlur.value = value
         }
-    private val _isEnableBlurExp = mutableStateOf(false)
+    private val _isEnableBlurExp = mutableStateOf(true)
     var isEnableBlurExp: Boolean
         get() = _isEnableBlurExp.value && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
         set(value) {
@@ -152,6 +164,30 @@ class ThemeConfig(
     var isUseBackgroundSeedColor by mutableStateOf(false)
     var bottomBarStyle by mutableStateOf(BottomBarStyle.TRADITIONAL)
 
+    /** 动态背景特效（全部程序化绘制）。 */
+    var backgroundEffect by mutableStateOf(BackgroundEffect.NONE)
+
+    /** 胶囊底栏的质感：液态玻璃 / 模糊磨砂 / 半透明。 */
+    var capsuleEffect by mutableStateOf(CapsuleEffect.LIQUID_GLASS)
+
+    /** 应用字体：system 为系统默认，其它值为 AppFonts.catalog 里的 id。 */
+    var appFontId by mutableStateOf(AppFonts.SYSTEM_ID)
+
+    /** 首页标题上方的小字（可自定义，也可让 AI 生成）。 */
+    var homeKicker by mutableStateOf(ThemeRepository.DEFAULT_HOME_KICKER)
+
+    /** 小字是否轮播（每 6 秒淡入换一句）。 */
+    var kickerTicker by mutableStateOf(true)
+
+    /** 是否启用用户自选的主题色（未启用时保持设计稿固定品牌色）。 */
+    var useCustomThemeColor by mutableStateOf(true)
+
+    /** 首页问候标题文案，以及「双色标题」的分段位置与两种颜色。 */
+    var homeTitle by mutableStateOf("Loom SU")
+    var homeTitleSplit by mutableIntStateOf(5)
+    var homeTitleColorPrimary by mutableIntStateOf(0xFF101322.toInt())
+    var homeTitleColorAccent by mutableIntStateOf(0xFF71717A.toInt())
+
     fun resetBackgroundState() {
         backgroundImageLoaded = false
         isThemeChanging = true
@@ -159,6 +195,7 @@ class ThemeConfig(
 
     fun reset() {
         customBackgroundUri = null
+        backgroundBlur = 0.5f
         forceDarkMode = null
         seedColor = defaultSeedColor()
         useDynamicColor = false
@@ -167,6 +204,16 @@ class ThemeConfig(
         dynamicPaletteStyle = PaletteStyle.TonalSpot
         backgroundImageLoaded = false
         isThemeChanging = false
+        useCustomThemeColor = false
+        homeTitle = "Loom SU"
+        homeTitleSplit = 5
+        homeTitleColorPrimary = 0xFF101322.toInt()
+        homeTitleColorAccent = 0xFF4F5BE8.toInt()
+        appFontId = AppFonts.SYSTEM_ID
+        homeKicker = ThemeRepository.DEFAULT_HOME_KICKER
+        kickerTicker = true
+        backgroundEffect = BackgroundEffect.NONE
+        capsuleEffect = CapsuleEffect.LIQUID_GLASS
     }
 }
 
@@ -192,6 +239,12 @@ class BackgroundRenderState {
     var blurViewportSize by mutableStateOf(IntSize(0, 0))
     var blurFrameTick by mutableIntStateOf(0)
     var scrollActive by mutableStateOf(false)
+
+    /** 壁纸解码后的平均亮度（0..1），没壁纸时保持 1。 */
+    var wallpaperLuminance by mutableFloatStateOf(1f)
+
+    /** 壁纸是否已经解码完成，用来判断亮度值是否可信。 */
+    var wallpaperReady by mutableStateOf(false)
     private val scrollingPagers = mutableStateMapOf<Any, Unit>()
     val pagerScrollActive: Boolean
         get() = scrollingPagers.isNotEmpty()
@@ -222,6 +275,12 @@ class BackgroundManager(
         settings.putFloat("background_dim", dim)
     }
 
+    fun saveBackgroundBlur(blur: Float) {
+        val value = blur.coerceIn(0f, 1f)
+        config.backgroundBlur = value
+        settings.putFloat("background_blur", value)
+    }
+
     fun saveEnableBlur(enable: Boolean) {
         config.isEnableBlur = enable
         settings.putBoolean("enable_blur", enable)
@@ -235,6 +294,16 @@ class BackgroundManager(
     fun saveBottomBarStyle(style: BottomBarStyle) {
         config.bottomBarStyle = style
         settings.putInt("bottom_bar_style", style.ordinal)
+    }
+
+    fun saveCapsuleEffect(effect: CapsuleEffect) {
+        config.capsuleEffect = effect
+        settings.putString("capsule_effect", effect.id)
+    }
+
+    fun saveBackgroundEffect(effect: BackgroundEffect) {
+        config.backgroundEffect = effect
+        settings.putString("background_effect", effect.id)
     }
 
     fun saveUseBackgroundSeedColor(enable: Boolean) {
@@ -284,6 +353,23 @@ class BackgroundManager(
 
     fun loadCustomBackground() {
         val prefs = settings
+        // 一次性校准：自定义背景的观感定版为「卡片 50% / 模糊 50% / 暗度 0」。
+        // 老版本把这些值存成了 100% / 45% / 其它，升级后卡片整片不透明，
+        // 壁纸等于没开。这里只在第一次升级时抹平一次，之后用户怎么调就怎么存。
+        if (!prefs.getBoolean("custom_bg_defaults_v2", false)) {
+            prefs.putBoolean("custom_bg_defaults_v2", true)
+            prefs.putFloat("background_blur", 0.5f)
+            prefs.putFloat("background_dim", 0f)
+            prefs.putFloat("card_alpha", 0.5f)
+            prefs.putBoolean("is_custom_alpha_set", false)
+            cardConfig.cardAlpha = 0.5f
+        }
+        // 再校准一次暗度：v2 之后这个值又被写成了 30%，壁纸被压暗、
+        // 上面的字反而更糊。暗度归零，模糊仍按 50% 那档走。
+        if (!prefs.getBoolean("custom_bg_defaults_v3", false)) {
+            prefs.putBoolean("custom_bg_defaults_v3", true)
+            prefs.putFloat("background_dim", 0f)
+        }
         val uriString = prefs.getString("custom_background", null)
 
         val newUri = uriString?.toUri()
@@ -296,7 +382,10 @@ class BackgroundManager(
         }
 
         config.backgroundDim = prefs.getFloat("background_dim", 0f).coerceIn(0f, 1f)
-        config.isEnableBlurExp = false
+        config.backgroundBlur = prefs.getFloat("background_blur", 0.5f).coerceIn(0f, 1f)
+        // 卡片磨砂常开：关掉的话卡片只是一层半透明白，壁纸的花纹会直接穿到字上。
+        // 现在由「背景模糊」滑杆统一控制糊的程度，不再单独给一个开关。
+        config.isEnableBlurExp = true
         config.isUseBackgroundSeedColor = prefs.getBoolean("use_background_seed_color", false)
         config.isHighContrastMode = prefs.getBoolean("high_contrast_mode", false)
     }
@@ -374,6 +463,9 @@ fun KernelSUTheme(
         backgroundRenderState,
     )
 
+    // 全局应用字体：字体文件在私有目录，缺失时自动退回系统字体
+    val appFontFamily = rememberAppFontFamily()
+
     SystemBarController(resolvedDarkTheme)
 
     val systemDensity = LocalDensity.current
@@ -387,16 +479,27 @@ fun KernelSUTheme(
         }
     }
 
+    val loomPalette = remember(
+        resolvedDarkTheme,
+        themeConfig.useCustomThemeColor,
+        themeConfig.seedColor,
+    ) {
+        loomPaletteFor(themeConfig, resolvedDarkTheme)
+    }
+
     CompositionLocalProvider(
         LocalDensity provides density,
         LocalBackgroundRenderState provides backgroundRenderState,
-        // 暗夜模式：整棵 UI 树切换到深色调色板
-        LocalLoomPalette provides if (resolvedDarkTheme) LoomDarkPalette else LoomLightPalette,
+        // 暗夜模式：整棵 UI 树切换到深色调色板；自选主题色时 brand 一族跟随 primary
+        LocalLoomPalette provides loomPalette,
+        LocalLoomFontFamily provides appFontFamily,
+        // Text 不写 style 时也会走这一层，保证「换字体」是全 App 生效
+        LocalTextStyle provides LocalTextStyle.current.copy(fontFamily = appFontFamily),
     ) {
         MaterialExpressiveTheme(
             colorScheme = colorScheme,
             motionScheme = MotionScheme.expressive(),
-            typography = generateTypography(themeConfig),
+            typography = generateTypography(themeConfig, appFontFamily),
         ) {
             val backgroundMotionConnection = remember(backgroundRenderState) {
                 object : NestedScrollConnection {
@@ -462,8 +565,11 @@ private fun ThemeInitializer(
         themeConfig.dynamicPaletteStyle = themeRepository.loadDynamicPaletteStyle(
             themeConfig.dynamicColorSpec,
         )
-        themeConfig.isEnableBlur = settings.getBoolean("enable_blur", false)
+        // 「启用模糊」开关持久化，默认开；关掉时底栏退回实色，卡片也不再磨砂。
+        themeConfig.isEnableBlur = settings.getBoolean("enable_blur", true)
         themeConfig.bottomBarStyle = BottomBarStyle.fromOrdinal(settings.getInt("bottom_bar_style", 0))
+        themeConfig.backgroundEffect = BackgroundEffect.fromId(settings.getString("background_effect", null))
+        themeConfig.capsuleEffect = CapsuleEffect.fromId(settings.getString("capsule_effect", null))
         cardConfig.load()
         backgroundManager.loadCustomBackground()
     }
@@ -508,6 +614,8 @@ private fun BackgroundLayer(
             renderState.imageBitmap = null
             renderState.imagePainter = null
             renderState.blurImageBitmap = null
+            renderState.wallpaperReady = false
+            renderState.wallpaperLuminance = 1f
             renderState.seedColor = 0
             settings.remove("cached_seed_color")
         }
@@ -538,6 +646,10 @@ private fun BackgroundLayer(
         }
     }
 
+    // 全局画布层：只铺底色。动态背景特效由每个路由页的根节点绘制（见 NavContainer），
+    // 那里同时也是「不透明兜底」，转场时上下两页不会互相透视。
+    val canvasColor = LoomColors.canvasApp
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -552,12 +664,10 @@ private fun BackgroundLayer(
                     renderState.blurImageBitmap = null
                 }
             }
-            .background(
-                MaterialTheme.colorScheme.surfaceContainer,
-            ),
+            .drawBehind { drawRect(canvasColor) },
     )
 
-    // 自定义背景
+    // 自定义背景图盖在画布之上；没有壁纸时上面的 drawBehind 就是最终底色。
     backgroundUri?.let { uri ->
         BackgroundInitializer(
             uri = uri,
@@ -603,10 +713,18 @@ fun Modifier.blurEffect(
     tintAlphaOverride: Float? = null,
     // 固定着色：导航栏用卡片底色，避免和页面背景色不一致
     tintColorOverride: Color? = null,
+    // 模糊半径：磨砂与液态玻璃用不同强度
+    blurRadius: Float = 25f,
+    // 忽略全局「启用模糊」开关：胶囊底栏的液态玻璃是独立材质，不应被总开关关掉
+    ignoreGlobalToggle: Boolean = false,
+    // 采样区域形状：顶栏 / 传统底栏是矩形，胶囊底栏要裁成胶囊形
+    shape: Shape = RectangleShape,
 ): Modifier {
     val themeConfig = koinInject<ThemeConfig>()
     val cardConfig = koinInject<CardConfig>()
-    if (!themeConfig.isEnableBlur || Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+        (!themeConfig.isEnableBlur && !ignoreGlobalToggle)
+    ) {
         return renderBackgroundFallback(
             compensateHorizontalOverscroll = compensateHorizontalOverscroll,
             compensateVerticalOverscroll = compensateVerticalOverscroll,
@@ -623,15 +741,34 @@ fun Modifier.blurEffect(
     val panelBounds = remember { PanelLayoutBounds() }
 
     return LocalBlurState.current?.let { backdrop ->
-        // 0.8f like haze, for material design without custom background enable
-        val blurTintAlpha = tintAlphaOverride ?: if (cardConfig.isCustomBackgroundEnabled) {
+        // 顶栏 / 传统底栏都经过这里：三档质感必须在这里真的改变模糊半径与膜厚，
+        // 否则「模糊磨砂 / 半透明」选了跟没选一样。
+        val effect = themeConfig.capsuleEffect
+        val material = effect.barMaterial
+        val baseTintAlpha = tintAlphaOverride ?: if (cardConfig.isCustomBackgroundEnabled) {
             cardConfig.cardAlpha
         } else {
             0.8f
         }
+        val blurTintAlpha = when (effect) {
+            // 磨砂要糊成柔光、几乎不透出内容，膜给足厚度。
+            CapsuleEffect.FROSTED -> maxOf(baseTintAlpha, 0.92f)
+            // 半透明只是一层薄膜，背景轮廓要透得上来。
+            CapsuleEffect.TRANSLUCENT -> (baseTintAlpha * material.tintScale)
+                .coerceIn(0.28f, 0.55f)
+            CapsuleEffect.LIQUID_GLASS -> baseTintAlpha
+        }
+        // 0 半径在部分 ROM 上会被 RenderEffect 拒绝，半透明档给 1px 近似「不模糊」。
+        val effectiveBlurRadius = if (material.blurScale <= 0f) {
+            1f
+        } else {
+            blurRadius * material.blurScale
+        }
 
+        // 膜色跟随当前底色的明暗：暗壁纸下顶栏文字是白的，膜必须换成深色，
+        // 否则「白字压白膜」，之前修好的文字对比度会再次失效。
         val blendColor =
-            (tintColorOverride ?: MaterialTheme.colorScheme.surfaceContainer).copy(alpha = blurTintAlpha)
+            (tintColorOverride ?: barSurfaceColor()).copy(alpha = blurTintAlpha)
 
         this.then(
             Modifier
@@ -641,14 +778,14 @@ fun Modifier.blurEffect(
                 }
                 .drawBackdrop(
                     backdrop = backdrop,
-                    shape = { RectangleShape },
+                    shape = { shape },
                     effects = {
                         renderState.blurFrameTick
                         stretchOverscrollState?.version
                         panelBounds.bounds
 
                         textureBlurEffect(
-                            blurRadiusX = 25f,
+                            blurRadiusX = effectiveBlurRadius,
                             colors = BlurColors(
                                 blendColors = listOf(
                                     BlendColorEntry(color = blendColor),
@@ -870,13 +1007,23 @@ private class PanelLayoutBounds {
 @Composable
 fun Modifier.renderBackgroundBlur(
     tintColor: Color? = null,
+    // 膜厚：默认跟随卡片透明度；底栏这类导航控件要更实一点，单独给值。
+    tintAlpha: Float? = null,
 ): Modifier {
     if (LocalBackgroundBlurProvided.current) return this
 
     val themeConfig = koinInject<ThemeConfig>()
     val cardConfig = koinInject<CardConfig>()
     val renderState = LocalBackgroundRenderState.current
-    if (!themeConfig.isEnableBlurExp) return this
+    // 没有背景层（既无自定义壁纸，也无背景特效）时，这一层完全没有意义：
+    // 它仍会拿上一次缓存的模糊位图 + 一层 tint 画在控件上，结果就是白底上
+    // 多出一块方角的白斑（标题栏那颗铃铛按钮上最明显）。
+    // 有背景才需要磨砂，没有就直接返回，保持透明干净的实色控件。
+    val hasBackdrop = cardConfig.isCustomBackgroundEnabled ||
+        themeConfig.backgroundEffect != BackgroundEffect.NONE
+    if (!hasBackdrop) return this
+    // 自定义壁纸下卡片一定要磨砂，否则半透明卡只是把花纹直接透到字上。
+    if (!themeConfig.isEnableBlurExp && !cardConfig.isCustomBackgroundEnabled) return this
 
     var coordinates by remember {
         mutableStateOf<LayoutCoordinates?>(null)
@@ -885,7 +1032,7 @@ fun Modifier.renderBackgroundBlur(
     val panelBounds = remember { PanelLayoutBounds() }
 
     val tintColor = (tintColor ?: MaterialTheme.colorScheme.surfaceBright).copy(
-        alpha = cardConfig.cardAlpha,
+        alpha = (tintAlpha ?: cardConfig.cardAlpha).coerceIn(0f, 1f),
     )
     val backgroundBlurAnchor = LocalBackgroundBlurAnchor.current
     val stretchOverscrollState = LocalStretchOverscrollCompensationState.current
@@ -1933,6 +2080,7 @@ private fun BackgroundInitializer(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val cardConfig: CardConfig = koinInject()
 
     val dynamicColorFromSystem =
         if (Build.VERSION.SDK_INT >= 31) {
@@ -1947,7 +2095,7 @@ private fun BackgroundInitializer(
     LaunchedEffect(themeConfig.isEnableBlurExp, renderState.blurViewportSize) {
         if (
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            themeConfig.isEnableBlurExp &&
+            (themeConfig.isEnableBlurExp || cardConfig.isCustomBackgroundEnabled) &&
             renderState.blurViewportSize.width > 0 &&
             renderState.blurViewportSize.height > 0
         ) {
@@ -1975,18 +2123,22 @@ private fun BackgroundInitializer(
         onError = { error ->
             Log.e("ThemeSystem", "背景加载失败: ${error.result.throwable.message}")
             renderState.imageBitmap = null
+            renderState.wallpaperReady = false
             themeConfig.customBackgroundUri = null
         },
         onSuccess = {
             val bitmap = it.result.drawable.toBitmap()
             renderState.imageBitmap = bitmap.asImageBitmap()
+            // 壁纸整体亮度：决定画在壁纸上的标题该用深字还是浅字。
+            renderState.wallpaperLuminance = bitmap.averageLuminance()
+            renderState.wallpaperReady = true
             Log.d("ThemeSystem", "背景加载成功")
             themeConfig.backgroundImageLoaded = true
             themeConfig.isThemeChanging = false
 
             if (
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                themeConfig.isEnableBlurExp &&
+                (themeConfig.isEnableBlurExp || cardConfig.isCustomBackgroundEnabled) &&
                 renderState.blurViewportSize.width > 0 &&
                 renderState.blurViewportSize.height > 0
             ) {
@@ -2014,7 +2166,10 @@ private fun BackgroundInitializer(
 }
 
 @Composable
-private fun generateTypography(themeConfig: ThemeConfig): androidx.compose.material3.Typography {
+private fun generateTypography(
+    themeConfig: ThemeConfig,
+    fontFamily: androidx.compose.ui.text.font.FontFamily,
+): androidx.compose.material3.Typography {
     val darkMode = isInDarkTheme(themeConfig.forceDarkMode)
 
     fun generateShadow(originalShadow: Shadow?): Shadow? {
@@ -2028,7 +2183,10 @@ private fun generateTypography(themeConfig: ThemeConfig): androidx.compose.mater
         )
     }
 
-    fun TextStyle.applyShadow() = this.copy(shadow = generateShadow(shadow))
+    fun TextStyle.applyShadow() = this.copy(
+        shadow = generateShadow(shadow),
+        fontFamily = fontFamily,
+    )
     val typography = MaterialTheme.typography
 
     return typography.copy(
@@ -2075,7 +2233,10 @@ private fun createColorScheme(
     // Loom SU：默认使用 XDesign 固定色板，保证与设计稿一致；
     // 仅当用户显式开启「动态取色 / 背景取色」时才走 MaterialKolor 生成。
     if (!dynamicColor) {
-        return if (darkTheme) LoomDarkColorScheme else LoomLightColorScheme
+        val base = if (darkTheme) LoomDarkColorScheme else LoomLightColorScheme
+        // 用户自选主题色：只替换主色/辅助色一组，保留设计稿的中性底色。
+        if (!themeConfig.useCustomThemeColor) return base
+        return base.withSeedAccents(Color(themeConfig.seedColor), darkTheme)
     }
 
     val seedColor =
@@ -2098,6 +2259,66 @@ private fun createColorScheme(
         isDark = darkTheme,
         style = themeConfig.dynamicPaletteStyle,
         specVersion = themeConfig.dynamicColorSpec,
+    )
+}
+
+/**
+ * 用用户自选的种子色生成一组强调色，再套回 Loom 固定色板。
+ * 只覆盖 primary / secondary / tertiary 三组，surface 与文字层级保持设计稿不变，
+ * 这样页面底、卡片、正文都不会被染成一片彩色。
+ */
+private fun ColorScheme.withSeedAccents(seed: Color, dark: Boolean): ColorScheme {
+    // 直接用用户选的那颗颜色，不再经 MaterialKolor 的色调映射：
+    // 之前选了 #475C91，生成出来会偏成另一个色相（偏紫/偏灰），
+    // 色板里看到的是一个色、装到界面上是另一个色。
+    val accent = seed.visibleOn(dark)
+    val onAccent = if (accent.luminance() < 0.55f) Color.White else Color(0xFF101318)
+    // 容器色只做明度上的加减，色相保持不变，深浅模式看到的是同一个颜色。
+    val container = if (dark) {
+        lerp(accent, Color(0xFF121214), 0.78f)
+    } else {
+        lerp(accent, Color.White, 0.86f)
+    }
+    val onContainer = if (dark) Color(0xFFF2F2F7) else accent
+    return copy(
+        primary = accent,
+        onPrimary = onAccent,
+        primaryContainer = container,
+        onPrimaryContainer = onContainer,
+        inversePrimary = accent,
+        secondary = accent,
+        onSecondary = onAccent,
+        secondaryContainer = container,
+        onSecondaryContainer = onContainer,
+        tertiary = accent,
+        onTertiary = onAccent,
+        tertiaryContainer = container,
+        onTertiaryContainer = onContainer,
+    )
+}
+
+/** 深色画布上万一压到几乎看不见（亮度 < 0.05），只抬明度、不动色相。 */
+private fun Color.visibleOn(dark: Boolean): Color =
+    if (dark && luminance() < 0.05f) lerp(this, Color.White, 0.18f) else this
+
+/**
+ * Loom 语义色板：把 brand 一族指向自选主题色的 primary，
+ * 让选中态图标、按钮、链接、渐变这些「品牌色元素」一起跟着变色。
+ */
+private fun loomPaletteFor(themeConfig: ThemeConfig, dark: Boolean): LoomPalette {
+    val base = if (dark) LoomDarkPalette else LoomLightPalette
+    if (!themeConfig.useCustomThemeColor) return base
+    // 同样不做色调映射：亮色、夜间都是同一个色值，只在「色板软底」上按明暗调整。
+    val accent = Color(themeConfig.seedColor).visibleOn(dark)
+    val soft = if (dark) {
+        lerp(accent, Color(0xFF121214), 0.78f)
+    } else {
+        lerp(accent, Color.White, 0.88f)
+    }
+    return base.copy(
+        brand = accent,
+        brandSoft = soft,
+        brandDeep = accent,
     )
 }
 
@@ -2134,4 +2355,29 @@ fun isInDarkTheme(themeMode: Boolean?): Boolean = when (themeMode) {
     false -> false
 
     null -> isSystemInDarkTheme() // 跟随系统
+}
+
+
+/**
+ * 壁纸平均亮度（0..1）。
+ *
+ * 缩到 24×24 再取加权平均就够了：这里只是用来判断「这张壁纸够不够暗」，
+ * 不需要精确，也不能在主线程上遍历原图。
+ */
+private fun Bitmap.averageLuminance(): Float {
+    if (width <= 0 || height <= 0) return 1f
+    val side = 24
+    val scaled = runCatching { Bitmap.createScaledBitmap(this, side, side, true) }.getOrNull()
+        ?: return 1f
+    val pixels = IntArray(side * side)
+    scaled.getPixels(pixels, 0, side, 0, 0, side, side)
+    var sum = 0f
+    pixels.forEach { c ->
+        val r = ((c shr 16) and 0xFF) / 255f
+        val g = ((c shr 8) and 0xFF) / 255f
+        val b = (c and 0xFF) / 255f
+        sum += 0.2126f * r + 0.7152f * g + 0.0722f * b
+    }
+    if (scaled !== this) scaled.recycle()
+    return (sum / (side * side)).coerceIn(0f, 1f)
 }

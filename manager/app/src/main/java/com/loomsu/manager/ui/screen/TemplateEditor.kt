@@ -88,7 +88,7 @@ fun TemplateEditorScreen(
     val saveTemplateFailed = stringResource(id = R.string.app_profile_template_save_failed)
 
     val scrollBehavior =
-        TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+        TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
 
     LaunchedEffect(Unit) {
         scrollBehavior.state.heightOffset = scrollBehavior.state.heightOffsetLimit

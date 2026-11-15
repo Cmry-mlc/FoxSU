@@ -88,7 +88,7 @@ fun SuSFSConfigScreen() {
     val coroutineScope = rememberCoroutineScope()
     var isRefreshing by remember { mutableStateOf(false) }
     var configEnabled by remember { mutableStateOf<Boolean?>(null) }
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(topAppBarState)
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(topAppBarState)
     val operationFailedMsg = stringResource(R.string.susfs_operation_failed)
     val pullRefreshState = rememberPullToRefreshState()
     val refreshCoordinator = remember(coroutineScope, configHelper) {

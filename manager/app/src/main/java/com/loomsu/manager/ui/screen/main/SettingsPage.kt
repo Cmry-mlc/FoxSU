@@ -41,6 +41,7 @@ import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -57,6 +58,7 @@ import androidx.compose.material.icons.twotone.Fence
 import androidx.compose.material.icons.twotone.FolderDelete
 import androidx.compose.material.icons.twotone.FolderOff
 import androidx.compose.material.icons.twotone.Info
+import androidx.compose.material.icons.twotone.MusicNote
 import androidx.compose.material.icons.twotone.Policy
 import androidx.compose.material.icons.twotone.RemoveCircle
 import androidx.compose.material.icons.twotone.RemoveModerator
@@ -142,7 +144,8 @@ private val SPACING_LARGE = 16.dp
 private data class LoomCategory(
     val title: String,
     val summary: String,
-    val count: Int,
+    /** 右侧数量胶囊；null 表示这类入口没有「几项」的概念，不画胶囊。 */
+    val count: Int?,
     val icon: ImageVector,
     val tone: LoomTone,
     val route: Route,
@@ -195,6 +198,14 @@ fun SettingsPage(bottomPadding: Dp) {
             route = Route.SettingsUpdate,
         ),
         LoomCategory(
+            title = "音乐",
+            summary = "在线搜索 · 后台播放 · 助手可代放",
+            count = null,
+            icon = Icons.TwoTone.MusicNote,
+            tone = LoomTones.violet,
+            route = Route.Music,
+        ),
+        LoomCategory(
             title = "AI 设置",
             summary = "模型服务 · 密钥 · 生成参数",
             count = 2,
@@ -215,7 +226,7 @@ fun SettingsPage(bottomPadding: Dp) {
             summary = "版本 · 法律信息 · 开源许可",
             count = 4,
             icon = Icons.TwoTone.Info,
-            tone = LoomTone(Color(0xFF333D6E), Color(0xFFEFF1F8)),
+            tone = LoomTones.neutral,
             route = Route.SettingsAbout,
         ),
     )
@@ -237,17 +248,29 @@ fun SettingsPage(bottomPadding: Dp) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .blurSource()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp),
+                .padding(top = innerPadding.calculateTopPadding()),
         ) {
-            Spacer(modifier = Modifier.height(innerPadding.calculateTopPadding() + 10.dp))
-            LoomPageTitle(
-                title = "设置",
-                subtitle = "Loom SU · V${BuildConfig.VERSION_NAME}",
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+            // 标题固定在顶部，下面只有卡片列表滚动
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
+            ) {
+                Spacer(modifier = Modifier.height(10.dp))
+                LoomPageTitle(
+                    title = "设置",
+                    subtitle = "Loom SU · V${BuildConfig.VERSION_NAME}",
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .blurSource()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp),
+            ) {
             LoomCard(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 2.dp)) {
                 categories.forEachIndexed { index, category ->
                     if (index > 0) LoomRowDivider()
@@ -266,6 +289,7 @@ fun SettingsPage(bottomPadding: Dp) {
                 modifier = Modifier.padding(start = 2.dp),
             )
             Spacer(modifier = Modifier.height(bottomPadding + 28.dp))
+            }
         }
     }
 }
@@ -315,18 +339,20 @@ private fun LoomCategoryRow(
             )
         }
         Spacer(modifier = Modifier.width(10.dp))
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(100.dp))
-                .background(LoomColors.canvasSubtle)
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-        ) {
-            Text(
-                text = category.count.toString(),
-                fontSize = 9.5.sp,
-                fontWeight = FontWeight.Black,
-                color = LoomColors.textTer,
-            )
+        if (category.count != null) {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(100.dp))
+                    .background(LoomColors.canvasSubtle)
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+            ) {
+                Text(
+                    text = category.count.toString(),
+                    fontSize = 9.5.sp,
+                    fontWeight = FontWeight.Black,
+                    color = LoomColors.textTer,
+                )
+            }
         }
         Spacer(modifier = Modifier.width(7.dp))
         Icon(

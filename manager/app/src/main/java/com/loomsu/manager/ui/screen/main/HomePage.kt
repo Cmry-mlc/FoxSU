@@ -16,6 +16,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -26,6 +27,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -69,6 +71,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -104,6 +107,7 @@ import com.loomsu.manager.ui.theme.CardConfig
 import com.loomsu.manager.ui.theme.LoomColors
 import com.loomsu.manager.ui.theme.LoomTones
 import com.loomsu.manager.ui.theme.ThemeConfig
+import com.loomsu.manager.ui.theme.barSurfaceColor
 import com.loomsu.manager.ui.theme.blurEffect
 import com.loomsu.manager.ui.theme.blurSource
 import com.loomsu.manager.ui.util.LocalHandlePageChange
@@ -154,7 +158,6 @@ fun HomePage(
 
     ReportDrawnWhen { uiState.isInitialDataLoaded }
 
-    val scrollState = rememberScrollState()
     val navigator = LocalNavigator.current
     val handlePageChange = LocalHandlePageChange.current
     val loadingDialog = rememberLoadingDialog()
@@ -173,8 +176,39 @@ fun HomePage(
         label = "homeAppear",
     )
 
+    // 顶部问候行（头像 / 标题 / 铃铛角标）放到 Scaffold 的 topBar 里，
+    // 跟随页面固定，不再随下面的内容滚动而移动。
+    val notices = loomNotices(
+        uiState = uiState,
+        onOpenUpdate = { navigator.push(Route.SettingsUpdate) },
+        onOpenInstall = onInstall,
+    )
+    val unreadCount = notices.count { it.id !in LoomNotificationStore.readIds }
+
     Scaffold(
-        topBar = {},
+        topBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    // 顶栏不再铺任何膜：自定义壁纸下那一整条色块会把壁纸割成上下两层，
+                    // 用户要的是「跟下面一样、不要有层次」。所有模式统一透明，
+                    // 文字颜色由 LocalDarkBackdrop 自己适配明暗壁纸。
+                    .statusBarsPadding()
+                    .padding(horizontal = 20.dp)
+                    .graphicsLayer {
+                        alpha = appear
+                        translationY = (1f - appear) * 26.dp.toPx()
+                    },
+            ) {
+                Spacer(modifier = Modifier.height(8.dp))
+                LoomGreetingRow(
+                    notificationCount = unreadCount,
+                    onAvatarClick = { navigator.push(Route.About) },
+                    onBellClick = { navigator.push(Route.Notifications) },
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+        },
         containerColor = Color.Transparent,
         contentColor = MaterialTheme.colorScheme.onSurface,
         contentWindowInsets = adaptiveScaffoldWindowInsets(includeBottom = false),
@@ -189,8 +223,11 @@ fun HomePage(
             modifier = Modifier
                 .fillMaxSize()
                 .blurSource()
-                .verticalScroll(scrollState)
-                .padding(top = innerPadding.calculateTopPadding()),
+                // 先让出 topBar 的高度再裁剪：否则列表往上一滚就会画到问候行上
+                .padding(top = innerPadding.calculateTopPadding())
+                .clipToBounds(),
+            // 主页整页定死，不做上下滚动：内容一屏放得下，
+            // 之前挂 verticalScroll 会让底栏的投影随内容上下浮出/消失。
         ) {
             Column(
                 modifier = Modifier
@@ -201,21 +238,6 @@ fun HomePage(
                         translationY = (1f - appear) * 26.dp.toPx()
                     },
             ) {
-                Spacer(modifier = Modifier.height(8.dp))
-
-                val notices = loomNotices(
-                    uiState = uiState,
-                    onOpenUpdate = { navigator.push(Route.SettingsUpdate) },
-                    onOpenInstall = onInstall,
-                )
-                val unreadCount = notices.count { it.id !in LoomNotificationStore.readIds }
-
-                LoomGreetingRow(
-                    notificationCount = unreadCount,
-                    onAvatarClick = { navigator.push(Route.About) },
-                    onBellClick = { navigator.push(Route.Notifications) },
-                )
-
                 Spacer(modifier = Modifier.height(16.dp))
 
                 if (uiState.isCoreDataLoaded) {
@@ -408,7 +430,7 @@ private fun feedItems(uiState: HomeUiState, onOpen: () -> Unit): List<LoomFeedIt
             value = selinuxValue,
             icon = Icons.TwoTone.Security,
             tone = if (permissive) LoomTones.danger else LoomTones.green,
-            valueColor = if (permissive) LoomColors.danger else LoomColors.success,
+            valueColor = if (permissive) LoomColors.danger else LoomColors.brand,
             onClick = onOpen,
         ),
         LoomFeedItem(
@@ -418,7 +440,7 @@ private fun feedItems(uiState: HomeUiState, onOpen: () -> Unit): List<LoomFeedIt
             value = seccomp,
             icon = Icons.TwoTone.Layers,
             tone = LoomTones.violet,
-            valueColor = if (info.seccompStatus > 0) LoomColors.success else LoomColors.textSec,
+            valueColor = if (info.seccompStatus > 0) LoomColors.brand else LoomColors.textSec,
             onClick = onOpen,
         ),
         LoomFeedItem(
@@ -438,7 +460,7 @@ private fun feedItems(uiState: HomeUiState, onOpen: () -> Unit): List<LoomFeedIt
             value = zygisk,
             icon = Icons.TwoTone.Bolt,
             tone = if (zygiskActive) LoomTones.blue else LoomTones.slate,
-            valueColor = if (zygiskActive) LoomColors.info else LoomColors.danger,
+            valueColor = if (zygiskActive) LoomColors.brand else LoomColors.danger,
             onClick = onOpen,
         ),
         LoomFeedItem(
@@ -448,7 +470,7 @@ private fun feedItems(uiState: HomeUiState, onOpen: () -> Unit): List<LoomFeedIt
             value = "正常",
             icon = Icons.TwoTone.Smartphone,
             tone = LoomTones.blue,
-            valueColor = LoomColors.info,
+            valueColor = LoomColors.brand,
             onClick = onOpen,
         ),
     )
@@ -556,7 +578,7 @@ fun SystemInfoPage(bottomPadding: Dp) {
     val viewModel = koinViewModel<HomeViewModel>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigator = LocalNavigator.current
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     val scrollState = rememberScrollState()
 
     Scaffold(

@@ -189,7 +189,7 @@ private fun BackgroundCropScreen(
     var rotationAngle by remember { mutableFloatStateOf(0f) }
     var cropViewReloadToken by remember { mutableIntStateOf(0) }
     val topAppBarState = rememberTopAppBarState()
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(topAppBarState)
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(topAppBarState)
 
     val primaryColor = MaterialTheme.colorScheme.primary.toArgb()
     val onSurfaceColor = MaterialTheme.colorScheme.onSurface.toArgb()

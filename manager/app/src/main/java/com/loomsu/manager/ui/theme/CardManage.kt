@@ -19,16 +19,13 @@ class CardConfig(
     private val settings: AppSettingsRepository,
 ) {
     // 卡片透明度
+    //
+    // 只在「自定义背景 / 背景特效」开着的时候生效（默认 0.5，壁纸透一半）。
+    // 两者都关时卡片恒为实色，不会因为旧配置里存过 0.5 就把整屏卡片弄透。
     private var _cardAlpha by mutableFloatStateOf(1f)
 
     var cardAlpha: Float
-        get() = run {
-            if (isCustomBackgroundEnabled) {
-                _cardAlpha
-            } else {
-                1f
-            }
-        }
+        get() = _cardAlpha
         set(value) {
             _cardAlpha = value.coerceIn(0f, 1f)
         }
@@ -86,9 +83,8 @@ class CardConfig(
     fun updateBackground(enabled: Boolean) {
         isCustomBackgroundEnabled = enabled
         if (enabled) {
-            if (!isCustomAlphaSet) {
-                updateAlpha(0.55f, isCustom = false)
-            }
+            // 源码行为：一开自定义背景，卡片默认 50% 不透明度，壁纸能透过卡片看到
+            if (!isCustomAlphaSet) updateAlpha(0.5f, isCustom = false)
             updateShadow(false)
         }
     }
@@ -111,18 +107,9 @@ class CardConfig(
 
     fun setThemeDefaults(isDarkMode: Boolean) {
         if (!isCustomAlphaSet) {
-            updateAlpha(
-                if (isCustomBackgroundEnabled) {
-                    0.55f
-                } else if (isDarkMode) {
-                    0.88f
-                } else {
-                    1f
-                },
-                isCustom = false,
-            )
+            updateAlpha(if (isCustomBackgroundEnabled) 0.5f else 1f, isCustom = false)
         }
-        // 暗色模式下默认启用轻微阴影
+        // 暗色下没有壁纸时，卡片仍靠阴影区分层级
         if (isDarkMode && !isCustomBackgroundEnabled) {
             updateShadow(true, 2.dp)
         }

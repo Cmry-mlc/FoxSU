@@ -16,16 +16,20 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -53,16 +57,34 @@ import androidx.compose.material3.WideNavigationRailDefaults
 import androidx.compose.material3.WideNavigationRailItem
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
+import com.loomsu.manager.ui.theme.CapsuleEffect
+import com.loomsu.manager.ui.theme.CardConfig
+import kotlin.math.absoluteValue
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -70,7 +92,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -82,6 +103,8 @@ import com.loomsu.manager.ui.theme.LoomColors
 import com.loomsu.manager.ui.theme.LoomDimens
 import com.loomsu.manager.ui.theme.ThemeConfig
 import com.loomsu.manager.ui.theme.blurEffect
+import com.loomsu.manager.ui.theme.renderBackgroundBlur
+import com.loomsu.manager.ui.theme.isInDarkTheme
 import com.loomsu.manager.ui.util.LocalBlurState
 import com.loomsu.manager.ui.util.LocalHandlePageChange
 import com.loomsu.manager.ui.util.LocalPagerState
@@ -133,33 +156,40 @@ fun NavigationBar(
                         Modifier
                     },
                 )
-                // 整框左右拖动即可切换页面
-                .pointerInput(pagerState.currentPage, destinations.size) {
-                    var accumulated = 0f
-                    detectHorizontalDragGestures(
-                        onDragStart = { accumulated = 0f },
-                        onDragCancel = { accumulated = 0f },
-                        onDragEnd = {
-                            val threshold = 40.dp.toPx()
-                            when {
-                                accumulated <= -threshold -> handlePageChange(
-                                    (pagerState.currentPage + 1).coerceAtMost(destinations.size - 1),
-                                )
+                // 传统栏自己不带手势：整框左右拖动切页。
+                // 胶囊栏的拖动由 FloatingBottomBar 内部的 DampedDragAnimation 接管，这里不能再抢事件。
+                .then(
+                    if (style == BottomBarStyle.CAPSULE) {
+                        Modifier
+                    } else {
+                        Modifier.pointerInput(pagerState.currentPage, destinations.size) {
+                            var accumulated = 0f
+                            detectHorizontalDragGestures(
+                                onDragStart = { accumulated = 0f },
+                                onDragCancel = { accumulated = 0f },
+                                onDragEnd = {
+                                    val threshold = 40.dp.toPx()
+                                    when {
+                                        accumulated <= -threshold -> handlePageChange(
+                                            (pagerState.currentPage + 1).coerceAtMost(destinations.size - 1),
+                                        )
 
-                                accumulated >= threshold -> handlePageChange(
-                                    (pagerState.currentPage - 1).coerceAtLeast(0),
-                                )
+                                        accumulated >= threshold -> handlePageChange(
+                                            (pagerState.currentPage - 1).coerceAtLeast(0),
+                                        )
+                                    }
+                                    accumulated = 0f
+                                },
+                            ) { change, dragAmount ->
+                                accumulated += dragAmount
+                                change.consume()
                             }
-                            accumulated = 0f
-                        },
-                    ) { change, dragAmount ->
-                        accumulated += dragAmount
-                        change.consume()
-                    }
-                },
+                        }
+                    },
+                ),
         ) {
             when (style) {
-                BottomBarStyle.CAPSULE -> LoomBottomBar(
+                BottomBarStyle.CAPSULE -> LoomLiquidBottomBar(
                     destinations = destinations,
                     selectedIndex = pagerState.currentPage,
                     onSelected = handlePageChange,
@@ -167,6 +197,9 @@ fun NavigationBar(
                     superuserCount = superuserCount,
                     moduleCount = moduleCount,
                     showBadge = showNavigationBarBadge,
+                    // 质感档位由 FloatingBottomBar 自己读 ThemeConfig 判定，
+                    // 这里只把「全局模糊开关」传下去，别在传参时就把半透明当成关模糊。
+                    isBlurEnabled = themeConfig.isEnableBlur,
                 )
 
                 // 侧边栏在 MainScreen 里走 rail 布局，这里只作为兜底。
@@ -214,7 +247,7 @@ fun NavigationBar(
  * 取 0.92：底栏看起来仍是实心卡片，只透出极淡的一层背景色雾，
  * 图标与文字对比度不受影响（不会出现「看不清」）。
  */
-private const val NAV_BLUR_TINT_ALPHA = 0.92f
+private const val NAV_BLUR_TINT_ALPHA = 0.80f
 
 /** 侧边栏：竖排导航，整条 rail 也支持左右拖动切页。 */
 @Composable
@@ -233,7 +266,7 @@ private fun LoomRailNavigation(
                 WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal),
             ),
         colors = WideNavigationRailColors(
-            containerColor = LoomColors.canvasCard,
+            containerColor = LoomColors.canvasCardSolid,
             contentColor = MaterialTheme.colorScheme.onSurface,
             modalContainerColor = WideNavigationRailDefaults.colors().modalContainerColor,
             modalScrimColor = WideNavigationRailDefaults.colors().modalScrimColor,
@@ -296,6 +329,15 @@ private fun NavigationRailItem(
     )
 }
 
+/**
+ * 强调色底上的前景色：石墨灰底配白字，亮色主题色底配近黑字。
+ * 只看亮度，避免"白底白字"。
+ */
+@Composable
+@ReadOnlyComposable
+private fun onBadgeInk(): Color =
+    if (LoomColors.brand.luminance() < 0.55f) Color.White else Color(0xFF101318)
+
 @Composable
 private fun DestinationBadge(
     dest: BottomBarDestination,
@@ -314,10 +356,25 @@ private fun DestinationBadge(
         enter = fadeIn(),
         exit = fadeOut(),
     ) {
+        // Material3 的 Badge 默认吃 LocalTextStyle（bodyLarge 16sp），一个「7」
+        // 就被撑成 22dp 的大圆，正好糊在 20dp 的图标脸上。这里字号、行高、
+        // 最小尺寸全部写死，做成 13dp 的小角标，再往右上让开图标。
         Badge(
-            containerColor = MaterialTheme.colorScheme.primary,
+            containerColor = LoomColors.brand,
+            contentColor = onBadgeInk(),
+            modifier = Modifier
+                .offset(x = 4.dp, y = (-4).dp)
+                .heightIn(min = 13.dp)
+                .widthIn(min = 13.dp),
         ) {
-            Text(count.toString())
+            Text(
+                text = if (count > 99) "99+" else count.toString(),
+                fontSize = 8.sp,
+                lineHeight = 8.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                softWrap = false,
+            )
         }
     }
 }
@@ -352,13 +409,22 @@ private fun RebootSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = LoomColors.canvasCard,
+        // 面板自己不再填实色：交给内容层按卡片的规则铺（半透明 + 壁纸磨砂），
+        // 否则自定义壁纸下这一整块就是压在壁纸上的实心黑板 / 白板。
+        containerColor = Color.Transparent,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         dragHandle = null,
+        // 系统栏留白改由内容自己吃（在磨砂层之后），否则面板底部会露出一条
+        // 透明的缝，壁纸直接从缝里穿上来。
+        contentWindowInsets = { WindowInsets(0) },
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+                .background(LoomColors.canvasCard)
+                .renderBackgroundBlur(tintColor = LoomColors.canvasCardSolid)
+                .navigationBarsPadding()
                 .padding(start = 20.dp, end = 20.dp, bottom = 30.dp),
         ) {
             // grab 条
@@ -415,7 +481,7 @@ private fun RebootTile(
     onClick: () -> Unit,
 ) {
     val shape = RoundedCornerShape(16.dp)
-    val accent = if (action.danger) LoomColors.danger else MaterialTheme.colorScheme.primary
+    val accent = if (action.danger) LoomColors.danger else LoomColors.brand
     Column(
         modifier = modifier
             .clip(shape)
@@ -465,31 +531,56 @@ private fun LoomTraditionalBottomBar(
     showBadge: Boolean,
 ) {
     val themeConfig: ThemeConfig = koinInject()
-    // 模糊只做在底栏自己的背景层上：底色用卡片色 + 高不透明度，文字始终清晰
+    val cardConfig: CardConfig = koinInject()
+    val wallpaperMode = cardConfig.isCustomBackgroundEnabled
     val blurEnabled = themeConfig.isEnableBlur
+    val effect = themeConfig.capsuleEffect
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .then(
-                if (blurEnabled) {
-                    Modifier.blurEffect(
+                when {
+                    // 有壁纸：磨砂档把膜加厚、液态玻璃档维持原观感；
+                    // 半透明档按定义不做模糊，只留一层半透薄膜。
+                    wallpaperMode && blurEnabled && effect == CapsuleEffect.TRANSLUCENT ->
+                        Modifier.background(
+                            LoomColors.canvasCard.copy(
+                                alpha = (cardConfig.cardAlpha * 0.52f).coerceAtLeast(0.22f),
+                            ),
+                        )
+
+                    wallpaperMode -> Modifier
+                        .background(LoomColors.canvasCard)
+                        .renderBackgroundBlur(
+                            tintColor = LoomColors.canvasCardSolid,
+                            tintAlpha = if (effect == CapsuleEffect.FROSTED) {
+                                0.95f
+                            } else {
+                                cardConfig.cardAlpha
+                            },
+                        )
+
+                    // 没壁纸：底栏自己一层磨砂底；三档的模糊半径与膜厚由 blurEffect 统一处理。
+                    blurEnabled -> Modifier.blurEffect(
                         compensateHorizontalOverscroll = true,
                         compensateVerticalOverscroll = true,
                         useFixedSurfaceBoundsForOverscroll = true,
                         tintAlphaOverride = NAV_BLUR_TINT_ALPHA,
-                        tintColorOverride = LoomColors.canvasCard,
+                        tintColorOverride = LoomColors.canvasCardSolid,
                     )
-                } else {
-                    Modifier
+
+                    else -> Modifier.background(LoomColors.canvasCardSolid)
                 },
-            )
-            .background(if (blurEnabled) Color.Transparent else LoomColors.canvasCard),
+            ),
     ) {
-        HorizontalDivider(
-            color = LoomColors.line,
-            thickness = 1.dp,
-            modifier = Modifier.align(Alignment.TopCenter),
-        )
+        // 自定义壁纸下不要顶边那条线：墙纸是一张图，压一道灰边很突兀
+        if (!cardConfig.isCustomBackgroundEnabled) {
+            HorizontalDivider(
+                color = LoomColors.line,
+                thickness = 1.dp,
+                modifier = Modifier.align(Alignment.TopCenter),
+            )
+        }
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -526,8 +617,20 @@ private fun LoomClassicNavItem(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    val accent = MaterialTheme.colorScheme.primary
-    val color = if (selected) accent else LoomColors.textDisabled
+    // 强调色取 LoomColors.brand（和全站按钮、选中态同一个来源）。
+    // 之前取 MaterialTheme.primary，开了动态取色时这里会拿到种子色（偏蓝），
+    // 于是别的控件已经是石墨灰，只有底栏还是蓝的。
+    val accent = LoomColors.brand
+    // 只改这里的取色：底栏本身仍是半透明磨砂，但未选中项直接用正文墨色
+    // （之前是 #A6ACBC/浅灰，压在花壁纸的磨砂条上根本读不出来）。
+    // 深色主题下品牌色如果本身很暗（比如石板蓝），选中项要提亮才看得见。
+    val darkTheme = LoomColors.text.luminance() > 0.5f
+    val selectedInk = if (darkTheme && accent.luminance() < 0.42f) {
+        lerp(accent, Color.White, 0.62f)
+    } else {
+        accent
+    }
+    val color = if (selected) selectedInk else LoomColors.text
     Column(
         modifier = modifier
             .clickable(onClick = onClick)
@@ -538,7 +641,7 @@ private fun LoomClassicNavItem(
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(10.dp))
-                .background(if (selected) accent.copy(alpha = 0.12f) else Color.Transparent)
+                .background(if (selected) selectedInk.copy(alpha = 0.12f) else Color.Transparent)
                 .padding(horizontal = 13.dp, vertical = 3.dp),
             contentAlignment = Alignment.Center,
         ) {
@@ -563,7 +666,7 @@ private fun LoomClassicNavItem(
         Text(
             text = stringResource(destination.label),
             color = color,
-            fontSize = 8.5.sp,
+            fontSize = 9.5.sp,
             fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Bold,
             maxLines = 1,
             softWrap = false,
@@ -572,22 +675,23 @@ private fun LoomClassicNavItem(
     }
 }
 
-/** 传统栏中央电源键：圆形实心按钮。 */
+/** 传统栏中央电源键：与胶囊栏完全一致的横向圆角块（52×44、16dp 圆角）。 */
 @Composable
 private fun LoomClassicCenterButton(onClick: () -> Unit) {
-    val accent = MaterialTheme.colorScheme.primary
+    val shape = RoundedCornerShape(16.dp)
+    val accent = LoomColors.brand
     Box(
         modifier = Modifier
-            .padding(horizontal = 4.dp)
-            .size(42.dp)
+            .padding(horizontal = 6.dp)
+            .size(width = 52.dp, height = 44.dp)
             .shadow(
-                elevation = 8.dp,
-                shape = CircleShape,
+                elevation = 10.dp,
+                shape = shape,
                 clip = false,
-                ambientColor = accent.copy(alpha = 0.30f),
-                spotColor = accent.copy(alpha = 0.40f),
+                ambientColor = accent.copy(alpha = 0.34f),
+                spotColor = accent.copy(alpha = 0.44f),
             )
-            .clip(CircleShape)
+            .clip(shape)
             .background(accent)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
@@ -595,14 +699,23 @@ private fun LoomClassicCenterButton(onClick: () -> Unit) {
         Icon(
             imageVector = Icons.TwoTone.PowerSettingsNew,
             contentDescription = "电源与重启",
-            tint = MaterialTheme.colorScheme.onPrimary,
-            modifier = Modifier.size(20.dp),
+            tint = onBadgeInk(),
+            modifier = Modifier.size(21.dp),
         )
     }
 }
 
+/** 中间电源键占的格子：0 首页、1 超级用户、2 电源、3 模块、4 设置。 */
+private const val LIQUID_POWER_SLOT = 2
+
+/**
+ * 胶囊底栏：直接用仓库自带的 iOS 液态玻璃实现（miuix blur + lens 折射 + vibrancy + 随重力偏移的高光）。
+ *
+ * 不要再改回 Canvas 手绘：折射率、色散、边缘高光和拖拽时的液体拉伸都在 [FloatingBottomBar] 里，
+ * 手绘版本再怎么调参数都不会是同一个东西。
+ */
 @Composable
-private fun LoomBottomBar(
+private fun LoomLiquidBottomBar(
     destinations: List<BottomBarDestination>,
     selectedIndex: Int,
     onSelected: (Int) -> Unit,
@@ -610,54 +723,97 @@ private fun LoomBottomBar(
     superuserCount: Int,
     moduleCount: Int,
     showBadge: Boolean,
+    isBlurEnabled: Boolean,
 ) {
-    // 设计稿：66 高、22 圆角、左右 14 内边距的浮岛底栏
-    val themeConfig: ThemeConfig = koinInject()
-    val blurEnabled = themeConfig.isEnableBlur
-    val shape = RoundedCornerShape(22.dp)
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(
-                elevation = 16.dp,
-                shape = shape,
-                clip = false,
-                ambientColor = Color(0x2918263C),
-                spotColor = Color(0x2918263C),
-            )
-            .clip(shape)
-            .then(
-                if (blurEnabled) {
-                    Modifier.blurEffect(
-                        compensateHorizontalOverscroll = true,
-                        compensateVerticalOverscroll = true,
-                        useFixedSurfaceBoundsForOverscroll = true,
-                        tintAlphaOverride = NAV_BLUR_TINT_ALPHA,
-                        tintColorOverride = LoomColors.canvasCard,
-                    )
-                } else {
-                    Modifier
-                },
-            )
-            .background(if (blurEnabled) Color.Transparent else LoomColors.canvasCard)
-            .height(66.dp)
-            .padding(horizontal = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        destinations.forEachIndexed { index, destination ->
-            if (index == 2) {
-                LoomCenterButton(onClick = onCenterClick)
+    // page(0..3) → slot：电源插在第 3 格，后面的页面顺延一格
+    fun slotOf(page: Int) = if (page >= LIQUID_POWER_SLOT) page + 1 else page
+
+    FloatingBottomBar(
+        modifier = Modifier.fillMaxWidth(),
+        selectedIndex = slotOf(selectedIndex),
+        onSelected = { slot ->
+            if (slot != LIQUID_POWER_SLOT) {
+                onSelected(if (slot > LIQUID_POWER_SLOT) slot - 1 else slot)
             }
-            LoomNavItem(
-                destination = destination,
+        },
+        tabsCount = destinations.size + 1,
+        isBlurEnabled = isBlurEnabled,
+        isTabSelectable = { it != LIQUID_POWER_SLOT },
+        onTabTap = { slot ->
+            if (slot == LIQUID_POWER_SLOT) {
+                onCenterClick()
+            } else {
+                onSelected(if (slot > LIQUID_POWER_SLOT) slot - 1 else slot)
+            }
+        },
+    ) { activate ->
+        destinations.forEachIndexed { index, destination ->
+            if (index == LIQUID_POWER_SLOT) {
+                // 电源键只是个入口，不参与选中
+                FloatingBottomBarItem(
+                    selected = false,
+                    onClick = onCenterClick,
+                ) {
+                    LoomPowerGlyph()
+                }
+            }
+            FloatingBottomBarItem(
                 selected = index == selectedIndex,
-                superuserCount = superuserCount,
-                moduleCount = moduleCount,
-                showBadge = showBadge,
-                modifier = Modifier.weight(1f),
-                onClick = { onSelected(index) },
-            )
+                onClick = { activate(slotOf(index)) },
+            ) {
+                BadgedBox(
+                    badge = {
+                        DestinationBadge(
+                            dest = destination,
+                            superUser = superuserCount,
+                            module = moduleCount,
+                            show = showBadge,
+                        )
+                    },
+                ) {
+                    Icon(
+                        imageVector = if (index == selectedIndex) {
+                            destination.iconSelected
+                        } else {
+                            destination.iconNotSelected
+                        },
+                        contentDescription = stringResource(destination.label),
+                        tint = LocalContentColor.current,
+                        modifier = Modifier.size(22.dp),
+                    )
+                }
+                Text(
+                    text = stringResource(destination.label),
+                    color = LocalContentColor.current,
+                    fontSize = 9.5.sp,
+                    fontWeight = if (index == selectedIndex) FontWeight.ExtraBold else FontWeight.Medium,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Visible,
+                )
+            }
         }
+    }
+}
+
+/** 胶囊栏中间的电源键：纯主题色的独立小胶囊，比导航项高一档，手指好按。 */
+@Composable
+private fun LoomPowerGlyph() {
+    val accent = LoomColors.brand
+    Box(
+        modifier = Modifier
+            .padding(horizontal = 2.dp)
+            .size(width = 58.dp, height = 40.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(accent),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = Icons.TwoTone.PowerSettingsNew,
+            contentDescription = "电源与重启",
+            tint = onBadgeInk(),
+            modifier = Modifier.size(20.dp),
+        )
     }
 }
 
@@ -671,13 +827,13 @@ private fun LoomNavItem(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    // 与角标（Badge）同源：选中取主题 primary，未选中为设计稿的 textDisabled
-    val accent = MaterialTheme.colorScheme.primary
-    val color = if (selected) accent else LoomColors.textDisabled
+    // 与角标同源：选中取品牌色，未选中用中性深灰（textDisabled 太淡，壁纸上看不见）
+    val accent = LoomColors.brand
+    val color = if (selected) accent else LoomColors.textMuted
     Column(
         modifier = modifier
             .clickable(onClick = onClick)
-            .padding(vertical = 8.dp),
+            .padding(vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(3.dp),
     ) {
@@ -701,7 +857,7 @@ private fun LoomNavItem(
         Text(
             text = stringResource(destination.label),
             color = color,
-            fontSize = 8.5.sp,
+            fontSize = 9.5.sp,
             fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Bold,
             maxLines = 1,
             softWrap = false,
@@ -714,7 +870,7 @@ private fun LoomNavItem(
 @Composable
 private fun LoomCenterButton(onClick: () -> Unit) {
     val shape = RoundedCornerShape(16.dp)
-    val accent = MaterialTheme.colorScheme.primary
+    val accent = LoomColors.brand
     Box(
         modifier = Modifier
             .padding(horizontal = 6.dp)
@@ -734,7 +890,7 @@ private fun LoomCenterButton(onClick: () -> Unit) {
         Icon(
             imageVector = Icons.TwoTone.PowerSettingsNew,
             contentDescription = "电源与重启",
-            tint = MaterialTheme.colorScheme.onPrimary,
+            tint = onBadgeInk(),
             modifier = Modifier.size(21.dp),
         )
     }

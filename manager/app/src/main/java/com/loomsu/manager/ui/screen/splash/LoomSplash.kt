@@ -2,6 +2,10 @@ package com.loomsu.manager.ui.screen.splash
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -13,8 +17,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,24 +30,46 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.material3.Text
+import com.loomsu.manager.ui.theme.BackgroundEffect
+import com.loomsu.manager.ui.theme.BackgroundEffectLayer
+import com.loomsu.manager.ui.theme.ThemeConfig
+import com.loomsu.manager.ui.theme.isInDarkTheme
+import org.koin.compose.koinInject
 
 /**
  * Loom SU 冷启动首屏。
  *
- * 视觉取自设计稿的「深色卡面」基调：深靛渐变 + 双光斑，
- * 中央是经纬交织的品牌符号，线条逐条「织」出来后结点亮起。
+ * 底色跟随明暗主题（浅色纯白 / 深色深靛），标题文字、分色与配色全部读同一份
+ * 「主页标题」设置，所以改标题、改两个颜色，启动页会一起变。
+ * 背景上还会叠当前选中的动态特效，跟主界面保持同一套视觉。
  */
 @Composable
 fun LoomSplash(
     modifier: Modifier = Modifier,
     stateText: String = "",
 ) {
+    val themeConfig: ThemeConfig = koinInject()
+    val isInDark = isInDarkTheme(themeConfig.forceDarkMode)
     val progress = remember { Animatable(0f) }
+    // 光斑缓慢呼吸：即使没开全局特效，启动页也不会是一张死图
+    val breathe by rememberInfiniteTransition(label = "splashGlow").animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 5200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "splashGlowValue",
+    )
 
     LaunchedEffect(Unit) {
         progress.animateTo(
@@ -50,32 +78,65 @@ fun LoomSplash(
         )
     }
 
+    // 与主界面共用同一份标题配置：文字、切分位置、两个颜色都一致
+    val title = themeConfig.homeTitle.ifBlank { "Loom SU" }
+    val split = themeConfig.homeTitleSplit.coerceIn(0, title.length)
+    // 深色启动屏是纯黑，用户按白底挑的深色标题会直接消失，按亮度往白里提一档
+    fun splashInk(argb: Int, lift: Float): Color {
+        val raw = Color(argb)
+        return if (isInDark && raw.luminance() < 0.55f) lerp(raw, Color.White, lift) else raw
+    }
+    val titlePrimary = splashInk(themeConfig.homeTitleColorPrimary, 0.88f)
+    val titleAccent = splashInk(themeConfig.homeTitleColorAccent, 0.55f)
+    val titleText = remember(title, split, titlePrimary, titleAccent) {
+        buildAnnotatedString {
+            withStyle(SpanStyle(color = titlePrimary)) { append(title.take(split)) }
+            withStyle(SpanStyle(color = titleAccent)) { append(title.drop(split)) }
+        }
+    }
+
+    // 与全站画布同色：浅色 #F0F1F3、深色纯黑，冷启动到首屏不会闪一下别的底色
+    val background = if (isInDark) Color(0xFF000000) else Color(0xFFF0F1F3)
+
     Box(
         modifier = modifier
             .fillMaxSize()
-            // 与系统启动窗口同色（res/values/colors.xml · loom_ink），
-            // 冷启动时只有 logo 淡入，不会先看到一块底色再切换。
-            .background(Color(0xFF181D33)),
+            .background(background),
     ) {
-        // 光斑：右上紫、左下绿，与大卡保持同一光源
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(Color(0x806C5CF0), Color.Transparent),
-                    center = Offset(size.width * 0.84f, size.height * 0.06f),
-                    radius = size.minDimension * 0.62f,
-                ),
-                radius = size.minDimension * 0.62f,
-                center = Offset(size.width * 0.84f, size.height * 0.06f),
+        // 动态背景特效：与主界面同一个组件、同一个枚举
+        if (themeConfig.backgroundEffect != BackgroundEffect.NONE) {
+            BackgroundEffectLayer(
+                effect = themeConfig.backgroundEffect,
+                modifier = Modifier.fillMaxSize(),
             )
+        }
+
+        // 光斑：右上紫、左下绿，与大卡同一光源；浅色主题下压到很淡，避免发脏
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val violet = if (isInDark) Color(0x806C5CF0) else Color(0x2E6C5CF0)
+            val jade = if (isInDark) Color(0x571CA672) else Color(0x241CA672)
+            val swell = 0.94f + 0.10f * breathe
+            val topCenter = Offset(size.width * 0.84f, size.height * (0.06f - 0.02f * breathe))
+            val topRadius = size.minDimension * 0.62f * swell
             drawCircle(
                 brush = Brush.radialGradient(
-                    colors = listOf(Color(0x571CA672), Color.Transparent),
-                    center = Offset(size.width * 0.02f, size.height * 0.94f),
-                    radius = size.minDimension * 0.55f,
+                    colors = listOf(violet, Color.Transparent),
+                    center = topCenter,
+                    radius = topRadius,
                 ),
-                radius = size.minDimension * 0.55f,
-                center = Offset(size.width * 0.02f, size.height * 0.94f),
+                radius = topRadius,
+                center = topCenter,
+            )
+            val bottomCenter = Offset(size.width * 0.02f, size.height * (0.94f - 0.03f * breathe))
+            val bottomRadius = size.minDimension * 0.55f * (1.04f - 0.08f * breathe)
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(jade, Color.Transparent),
+                    center = bottomCenter,
+                    radius = bottomRadius,
+                ),
+                radius = bottomRadius,
+                center = bottomCenter,
             )
         }
 
@@ -87,11 +148,13 @@ fun LoomSplash(
             LoomMark(
                 progress = progress.value,
                 modifier = Modifier.size(104.dp),
+                warpColor = if (isInDark) Color(0xFF8CF0FF) else Color(0xFF3E8CE8),
+                weftColor = if (isInDark) Color(0xFFA78BFF) else Color(0xFF6B57E0),
+                knotColor = if (isInDark) Color(0xFFFFD9A0) else Color(0xFFE9A23B),
             )
             Spacer(modifier = Modifier.height(22.dp))
             Text(
-                text = "Loom SU",
-                color = Color(0xFFF4F6FF),
+                text = titleText,
                 fontSize = 27.sp,
                 fontWeight = FontWeight.Black,
                 letterSpacing = 3.sp,
@@ -99,7 +162,7 @@ fun LoomSplash(
             Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = "KERNEL ROOT WORKBENCH",
-                color = Color(0x66BEC8E6),
+                color = titlePrimary.copy(alpha = if (isInDark) 0.40f else 0.52f),
                 fontSize = 9.sp,
                 fontWeight = FontWeight.Black,
                 letterSpacing = 3.2.sp,
@@ -114,7 +177,7 @@ fun LoomSplash(
         ) {
             Text(
                 text = stateText,
-                color = Color(0x59BEC8E6),
+                color = titlePrimary.copy(alpha = if (isInDark) 0.35f else 0.45f),
                 fontSize = 10.5.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 0.6.sp,
@@ -152,7 +215,7 @@ private fun DrawScope.drawLoomMark(
     if (warpT > 0f) {
         drawLine(
             brush = Brush.verticalGradient(
-                colors = listOf(warpColor, Color(0xFF5A87FF)),
+                colors = listOf(warpColor, warpColor.copy(alpha = 0.72f)),
                 startY = 34f * unit,
                 endY = 70f * unit,
             ),
@@ -168,7 +231,7 @@ private fun DrawScope.drawLoomMark(
     if (weftT > 0f) {
         drawLine(
             brush = Brush.horizontalGradient(
-                colors = listOf(weftColor, Color(0xFF6B57E0)),
+                colors = listOf(weftColor, weftColor.copy(alpha = 0.80f)),
                 startX = 44f * unit,
                 endX = 76f * unit,
             ),

@@ -84,7 +84,7 @@ fun UmountManagerScreen() {
     val cardConfig: CardConfig = koinInject()
     val viewModel = koinViewModel<UmountManagerScreenViewModel>()
     val uiState by viewModel.state.collectAsStateWithLifecycle()
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     val snackBarHost = LocalSnackbarHost.current
     val scope = rememberCoroutineScope()
     val confirmDialog = rememberConfirmDialog()

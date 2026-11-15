@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -150,12 +151,115 @@ fun AppProfileTemplateScreen() {
         contentColor = MaterialTheme.colorScheme.onSurface,
         contentWindowInsets = adaptiveScaffoldWindowInsets(),
     ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .blurSource(),
-        ) {
-            PullToRefreshBox(
+        Column(modifier = Modifier.fillMaxSize()) {
+            // 返回、菜单与标题固定在顶部，只有卡片列表滚动
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(horizontal = 20.dp),
+            ) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .shadow(
+                                6.dp,
+                                CircleShape,
+                                clip = false,
+                                ambientColor = Color(0x1418263C),
+                                spotColor = Color(0x1418263C),
+                            )
+                            .clip(CircleShape)
+                            .background(LoomColors.canvasCard)
+                            .clickable(onClick = dropUnlessResumed { navigator.pop() }),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.TwoTone.KeyboardArrowLeft,
+                            contentDescription = "返回",
+                            tint = LoomColors.textBody,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    LoomSquareIconButton(
+                        icon = Icons.TwoTone.Sync,
+                        contentDescription = stringResource(R.string.app_profile_template_sync),
+                        onClick = { viewModel.dispatch(TemplateUiAction.Refresh(synchronize = true)) },
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Box {
+                        LoomSquareIconButton(
+                            icon = Icons.TwoTone.ImportExport,
+                            contentDescription = stringResource(R.string.app_profile_import_export),
+                            onClick = { showImportMenu = true },
+                        )
+                        DropdownMenu(
+                            expanded = showImportMenu,
+                            onDismissRequest = { showImportMenu = false },
+                            containerColor = Color.Transparent,
+                            tonalElevation = 0.dp,
+                            shadowElevation = 0.dp,
+                            shape = RoundedCornerShape(20.dp),
+                            offset = DpOffset(x = 0.dp, y = 6.dp),
+                        ) {
+                            LoomMenuPanel {
+                                LoomMenuItem(
+                                    text = stringResource(R.string.app_profile_import_from_clipboard),
+                                    onClick = {
+                                        showImportMenu = false
+                                        val clipboardText =
+                                            clipboardManager?.primaryClip?.getItemAt(0)?.text?.toString()
+                                        if (clipboardText.isNullOrEmpty()) {
+                                            Toast.makeText(
+                                                context,
+                                                appProfileTemplateImportEmpty,
+                                                Toast.LENGTH_SHORT,
+                                            ).show()
+                                        } else {
+                                            viewModel.dispatch(TemplateUiAction.Import(clipboardText))
+                                        }
+                                    },
+                                )
+                                LoomMenuItem(
+                                    text = stringResource(R.string.app_profile_export_to_clipboard),
+                                    onClick = {
+                                        showImportMenu = false
+                                        viewModel.dispatch(TemplateUiAction.Export)
+                                    },
+                                )
+                            }
+                        }
+                    }
+                }
+            Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(14.dp))
+                LoomPageTitle(
+                    title = stringResource(R.string.settings_profile_template),
+                    subtitle = if (uiState.templateList.isEmpty()) {
+                        "按应用定制 UID / GID / 安全上下文"
+                    } else {
+                        "${uiState.templateList.size} 个模版 · 支持本地与远程"
+                    },
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .blurSource(),
+            ) {
+                PullToRefreshBox(
                 state = pullRefreshState,
                 modifier = Modifier.fillMaxSize(),
                 isRefreshing = isUserRefreshing,
@@ -184,108 +288,10 @@ fun AppProfileTemplateScreen() {
                     contentPadding = PaddingValues(
                         start = 20.dp,
                         end = 20.dp,
+                        top = 8.dp,
                         bottom = innerPadding.calculateBottomPadding() + 108.dp,
                     ),
                 ) {
-                    item {
-                        Spacer(modifier = Modifier.height(innerPadding.calculateTopPadding() + 6.dp))
-                    }
-
-                    item {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .shadow(
-                                        6.dp,
-                                        CircleShape,
-                                        clip = false,
-                                        ambientColor = Color(0x1418263C),
-                                        spotColor = Color(0x1418263C),
-                                    )
-                                    .clip(CircleShape)
-                                    .background(LoomColors.canvasCard)
-                                    .clickable(onClick = dropUnlessResumed { navigator.pop() }),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.TwoTone.KeyboardArrowLeft,
-                                    contentDescription = "返回",
-                                    tint = LoomColors.textBody,
-                                    modifier = Modifier.size(20.dp),
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.weight(1f))
-
-                            LoomSquareIconButton(
-                                icon = Icons.TwoTone.Sync,
-                                contentDescription = stringResource(R.string.app_profile_template_sync),
-                                onClick = { viewModel.dispatch(TemplateUiAction.Refresh(synchronize = true)) },
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Box {
-                                LoomSquareIconButton(
-                                    icon = Icons.TwoTone.ImportExport,
-                                    contentDescription = stringResource(R.string.app_profile_import_export),
-                                    onClick = { showImportMenu = true },
-                                )
-                                DropdownMenu(
-                                    expanded = showImportMenu,
-                                    onDismissRequest = { showImportMenu = false },
-                                    containerColor = Color.Transparent,
-                                    tonalElevation = 0.dp,
-                                    shadowElevation = 0.dp,
-                                    shape = RoundedCornerShape(20.dp),
-                                    offset = DpOffset(x = 0.dp, y = 6.dp),
-                                ) {
-                                    LoomMenuPanel {
-                                        LoomMenuItem(
-                                            text = stringResource(R.string.app_profile_import_from_clipboard),
-                                            onClick = {
-                                                showImportMenu = false
-                                                val clipboardText =
-                                                    clipboardManager?.primaryClip?.getItemAt(0)?.text?.toString()
-                                                if (clipboardText.isNullOrEmpty()) {
-                                                    Toast.makeText(
-                                                        context,
-                                                        appProfileTemplateImportEmpty,
-                                                        Toast.LENGTH_SHORT,
-                                                    ).show()
-                                                } else {
-                                                    viewModel.dispatch(TemplateUiAction.Import(clipboardText))
-                                                }
-                                            },
-                                        )
-                                        LoomMenuItem(
-                                            text = stringResource(R.string.app_profile_export_to_clipboard),
-                                            onClick = {
-                                                showImportMenu = false
-                                                viewModel.dispatch(TemplateUiAction.Export)
-                                            },
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    item {
-                        Spacer(modifier = Modifier.height(14.dp))
-                        LoomPageTitle(
-                            title = stringResource(R.string.settings_profile_template),
-                            subtitle = if (uiState.templateList.isEmpty()) {
-                                "按应用定制 UID / GID / 安全上下文"
-                            } else {
-                                "${uiState.templateList.size} 个模版 · 支持本地与远程"
-                            },
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                    }
-
                     if (uiState.templateList.isEmpty()) {
                         item {
                             NetworkRefreshContent(
@@ -345,15 +351,18 @@ fun AppProfileTemplateScreen() {
                 Icon(
                     imageVector = Icons.TwoTone.Add,
                     contentDescription = null,
-                    tint = LoomColors.brandDeep,
+                    // brandSoft 跟主题色走，灰色主题下它是深灰，深色图标会糊掉，
+                    // 所以前景统一用它的配对色，浅底深字 / 深底白字自动切换。
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.size(17.dp),
                 )
                 Text(
                     text = stringResource(R.string.app_profile_template_create),
                     fontSize = 12.5.sp,
                     fontWeight = FontWeight.Black,
-                    color = LoomColors.brandDeep,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
+            }
             }
         }
     }

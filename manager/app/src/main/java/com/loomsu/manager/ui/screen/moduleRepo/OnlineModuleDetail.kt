@@ -144,7 +144,7 @@ fun OnlineModuleDetailScreen(
         val navigator = LocalNavigator.current
         val theme = koinInject<ThemeConfig>()
         val cards = koinInject<CardConfig>()
-        val scroll = null ?: TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
+        val scroll = null ?: TopAppBarDefaults.pinnedScrollBehavior(
             rememberTopAppBarState(
                 initialHeightOffset = -154f,
                 initialHeightOffsetLimit = -154f, // from debugger
@@ -208,7 +208,7 @@ private fun OnlineModuleDetailContent(module: CatalogModule, viewModel: ModuleDe
     val tabTitles = listOf(stringResource(R.string.readme), stringResource(R.string.release), stringResource(R.string.info))
     val uriHandler = LocalUriHandler.current
     val pagerState = rememberPagerState(pageCount = { tabTitles.size })
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(
         rememberTopAppBarState(
             initialHeightOffset = -154f,
             initialHeightOffsetLimit = -154f, // from debugger
@@ -221,7 +221,7 @@ private fun OnlineModuleDetailContent(module: CatalogModule, viewModel: ModuleDe
     val navigator = LocalNavigator.current
     val theme = koinInject<ThemeConfig>()
     val cards = koinInject<CardConfig>()
-    val scroll = scrollBehavior ?: TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
+    val scroll = scrollBehavior ?: TopAppBarDefaults.pinnedScrollBehavior(
         rememberTopAppBarState(
             initialHeightOffset = -154f,
             initialHeightOffsetLimit = -154f, // from debugger
