@@ -107,7 +107,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.FixedScale
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
@@ -1165,9 +1165,9 @@ private fun ModuleList(
                                 .background(Color.White),
                         )
                         Image(
-                            painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                            painter = painterResource(id = R.drawable.ic_launcher_foreground_alt),
                             contentDescription = null,
-                            contentScale = FixedScale(1.5f),
+                            contentScale = ContentScale.Fit,
                         )
                     }
                 }

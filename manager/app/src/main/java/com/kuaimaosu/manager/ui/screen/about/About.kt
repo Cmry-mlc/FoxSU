@@ -143,7 +143,7 @@ fun AboutScreen() {
                                 .size(56.dp)
                                 .clip(RoundedCornerShape(18.dp)),
                             painter = rememberDrawablePainter(
-                                drawable = ContextCompat.getDrawable(context, R.mipmap.ic_launcher),
+                                drawable = ContextCompat.getDrawable(context, R.drawable.ic_brand_logo),
                             ),
                             contentDescription = stringResource(R.string.app_name),
                         )
@@ -285,7 +285,7 @@ fun AboutScreen() {
             item {
                 Spacer(modifier = Modifier.height(18.dp))
                 Text(
-                    text = "快猫 · KuaiMaoSU · 基于 KernelSU · GPL-3.0",
+                    text = "快猫 · KuaiMaoSU · 基于 BakaSU · GPL-3.0",
                     fontSize = 10.5.sp,
                     fontWeight = FontWeight.Bold,
                     color = KuaiMaoColors.textMuted,

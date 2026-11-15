@@ -1,55 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  KuaiMaoSU 图标底：深靛渐变 + 右上紫光 / 左下青光，
-  与主页状态大卡、启动首屏共用同一套光源，保证品牌连续。
+  KuaiMaoSU 图标底：纯黑。
+  图形（白色 K + 猫头剪影）全部在前景层，底只负责这块黑色。
+  遮罩形状交给启动器：方形即黑方块、圆形即黑圆。
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <path android:pathData="M0,0h108v108h-108z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:type="linear"
-                android:startX="0"
-                android:startY="0"
-                android:endX="108"
-                android:endY="108">
-                <item android:offset="0.0" android:color="#FF161B31" />
-                <item android:offset="0.55" android:color="#FF232C56" />
-                <item android:offset="1.0" android:color="#FF12172B" />
-            </gradient>
-        </aapt:attr>
-    </path>
-
-    <!-- 右上紫光 -->
-    <path android:pathData="M0,0h108v108h-108z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:type="radial"
-                android:centerX="0.86"
-                android:centerY="0.04"
-                android:gradientRadius="72">
-                <item android:offset="0.0" android:color="#7A6C5CF0" />
-                <item android:offset="1.0" android:color="#006C5CF0" />
-            </gradient>
-        </aapt:attr>
-    </path>
-
-    <!-- 左下青光 -->
-    <path android:pathData="M0,0h108v108h-108z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:type="radial"
-                android:centerX="0.06"
-                android:centerY="0.98"
-                android:gradientRadius="64">
-                <item android:offset="0.0" android:color="#4D1CA672" />
-                <item android:offset="1.0" android:color="#001CA672" />
-            </gradient>
-        </aapt:attr>
-    </path>
+    <path
+        android:pathData="M0,0h108v108h-108z"
+        android:fillColor="#FF000000" />
 </vector>

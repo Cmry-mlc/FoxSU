@@ -301,7 +301,7 @@ fun SettingsAboutPage(bottomPadding: Dp = 0.dp) {
 
         item {
             Text(
-                text = "快猫 · KuaiMaoSU · 基于 KernelSU",
+                text = "快猫 · KuaiMaoSU · 基于 BakaSU",
                 fontSize = 10.5.sp,
                 fontWeight = FontWeight.Bold,
                 color = KuaiMaoColors.textMuted,
