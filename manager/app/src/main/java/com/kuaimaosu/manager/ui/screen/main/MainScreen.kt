@@ -38,7 +38,8 @@ import kotlinx.coroutines.launch
 import com.kuaimaosu.manager.ui.activity.component.NavigationBar
 import com.kuaimaosu.manager.ui.component.HorizontalPagerWithInteraction
 import com.kuaimaosu.manager.ui.component.LocalPagerInterceptionMode
-import com.kuaimaosu.manager.ui.component.RebootSheet
+import com.kuaimaosu.manager.ui.component.KuaiMaoRebootPanel
+import com.kuaimaosu.manager.ui.component.RebootPanelState
 import com.kuaimaosu.manager.ui.rememberMaterial3BlurBackdrop
 import com.kuaimaosu.manager.ui.screen.BottomBarDestination
 import com.kuaimaosu.manager.ui.theme.BottomBarStyle
@@ -48,6 +49,7 @@ import com.kuaimaosu.manager.ui.util.LocalBlurState
 import com.kuaimaosu.manager.ui.util.LocalHandlePageChange
 import com.kuaimaosu.manager.ui.util.LocalPagerState
 import com.kuaimaosu.manager.ui.util.LocalPortraitState
+import com.kuaimaosu.manager.ui.component.LocalRebootPanel
 import com.kuaimaosu.manager.ui.util.LocalSelectedPage
 import com.kuaimaosu.manager.ui.util.LocalSnackbarHost
 import com.kuaimaosu.manager.ui.viewmodel.HomeUiAction
@@ -83,9 +85,10 @@ fun MainScreen(
         PagerInterceptionMode.CrossAxisInterceptor
     }
 
-    // 电源面板画在本页最上层，而不是弹一个 ModalBottomSheet：
-    // 弹窗是独立窗口，磨砂对位会失效，面板就只剩一层半透明底。
-    var showRebootSheet by rememberSaveable { mutableStateOf(false) }
+    // 重启面板画在本页最上层，而不是弹窗：
+    // 弹窗是独立窗口，磨砂对位会失效，面板就只剩一层半透明底；
+    // 而且它要贴着标题栏右侧的图标簇，位置只能在主 composition 里算。
+    val rebootPanel = remember { RebootPanelState() }
     val context = LocalContext.current
 
     val handlePageChange: (Int) -> Unit = remember(pagerState, coroutineScope, pages) {
@@ -140,6 +143,8 @@ fun MainScreen(
         LocalHandlePageChange provides handlePageChange,
         LocalSelectedPage provides uiSelectedPage,
         LocalPagerInterceptionMode provides pagerMode,
+        // 重启入口已经统一到各页标题栏的动作条里，面板状态与展开逻辑都在这层。
+        LocalRebootPanel provides rebootPanel,
     ) {
         val content = @Composable { paddingBottom: Dp ->
             HorizontalPagerWithInteraction(
@@ -181,7 +186,6 @@ fun MainScreen(
                     NavigationBar(
                         destinations = pages,
                         isBottomBar = true,
-                        onRequestReboot = { showRebootSheet = true },
                     )
                 },
                 containerColor = Color.Transparent,
@@ -223,16 +227,16 @@ fun MainScreen(
                         },
                     destinations = pages,
                     isBottomBar = false,
-                    onRequestReboot = { showRebootSheet = true },
                 )
             }
         }
 
-            RebootSheet(
-                visible = showRebootSheet,
-                onDismiss = { showRebootSheet = false },
+            // 切换页签就收起，免得切到别的页还挂着上一层页面的面板。
+            LaunchedEffect(pagerState.currentPage) { rebootPanel.dismiss() }
+
+            KuaiMaoRebootPanel(
+                state = rebootPanel,
                 onReboot = { reason ->
-                    showRebootSheet = false
                     if (homeState.systemStatus.isRootAvailable) {
                         homeViewModel.dispatch(HomeUiAction.Reboot(reason))
                     } else {

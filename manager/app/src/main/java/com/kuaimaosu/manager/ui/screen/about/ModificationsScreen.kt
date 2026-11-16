@@ -165,6 +165,12 @@ private val changeGroups = listOf(
                     "不需要再安装额外模块；逐模块的挂载规则也在同一页管理。",
             ),
             Change(
+                title = "内置 Zygisk 引擎",
+                detail = "FolkZygisk 直接编进 ksud，无需安装模块即可使用 Zygisk；" +
+                    "设置里新增「内置引擎」页控制开关与查看注入状态，" +
+                    "检测到外部 provider 时自动让位，避免冲突。",
+            ),
+            Change(
                 title = "免责声明",
                 detail = "首次启动弹出四条风险声明，实色卡片、带应用图标，" +
                     "同意状态按版本记录，条款改版会重新询问。",
@@ -182,7 +188,9 @@ private val changeGroups = listOf(
             Change(
                 title = "协议与署名",
                 detail = "整体以 GPL-3.0 发布，保留上游版权声明；" +
-                    "内核部分与各依赖各自保留 GPL-2.0 / GPL-3.0 / Apache-2.0 原始协议。",
+                    "内核部分与各依赖各自保留 GPL-2.0 / GPL-3.0 / Apache-2.0 原始协议。" +
+                    "内置 Zygisk 引擎（FolkZygisk / ReZygisk / CSOLoader）以 AGPL-3.0 独立嵌入，" +
+                    "PLTI 为 BSD-3-Clause，详见仓库的 THIRD_PARTY_ENGINE_LICENSE.md。",
             ),
         ),
     ),

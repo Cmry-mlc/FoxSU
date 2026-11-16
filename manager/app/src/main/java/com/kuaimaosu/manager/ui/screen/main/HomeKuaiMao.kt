@@ -58,6 +58,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
+import com.kuaimaosu.manager.ui.component.KuaiMaoTopActions
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.twotone.Check
@@ -87,7 +88,6 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -138,16 +138,13 @@ data class KuaiMaoFeedItem(
     val onClick: (() -> Unit)? = null,
 )
 
-/** 顶部问候行：头像 + WELCOME BACK / KuaiMaoSU + 通知铃铛 */
+/** 顶部问候行：头像 + WELCOME BACK / KuaiMaoSU + 右侧「通知 + 重启」动作条 */
 @Composable
 fun KuaiMaoGreetingRow(
     modifier: Modifier = Modifier,
     onAvatarClick: () -> Unit = {},
-    onBellClick: () -> Unit = {},
-    notificationCount: Int = 0,
 ) {
     val themeConfig: ThemeConfig = koinInject()
-    val cardConfig: CardConfig = koinInject()
     val kicker = themeConfig.homeKicker.ifBlank { ThemeRepository.DEFAULT_HOME_KICKER }
     val title = themeConfig.homeTitle.ifBlank { "KuaiMaoSU" }
     val split = themeConfig.homeTitleSplit.coerceIn(0, title.length)
@@ -158,7 +155,13 @@ fun KuaiMaoGreetingRow(
     // 否则「KuaiMaoSU」是深蓝压在暗花丛上，整块标题糊成一团。
     val isDarkCanvas = LocalDarkBackdrop.current
     val titlePrimary = themeConfig.homeTitleColorPrimary.adaptTitleInk(isDarkCanvas, 0.92f)
-    val titleAccent = themeConfig.homeTitleColorAccent.adaptTitleInk(isDarkCanvas, 0.62f)
+    // 两段同色时（默认就是单色标题）必须共用同一档亮度补偿：
+    // 主色提 92%、强调色提 62%，就算进制相同，深色画布上也会一深一浅。
+    val titleAccent = if (themeConfig.homeTitleColorAccent == themeConfig.homeTitleColorPrimary) {
+        titlePrimary
+    } else {
+        themeConfig.homeTitleColorAccent.adaptTitleInk(isDarkCanvas, 0.62f)
+    }
     val titleText = buildAnnotatedString {
         withStyle(SpanStyle(color = titlePrimary)) {
             append(title.take(split))
@@ -185,7 +188,9 @@ fun KuaiMaoGreetingRow(
 
         Spacer(modifier = Modifier.width(12.dp))
 
-        Column {
+        // 占住剩余宽度：标题与上方小字再长也只在自己这段里跑马灯，
+        // 不会把右边的动作条挤出屏幕。
+        Column(modifier = Modifier.weight(1f)) {
             KuaiMaoKickerTicker(
                 text = kicker,
                 animated = themeConfig.kickerTicker,
@@ -195,76 +200,8 @@ fun KuaiMaoGreetingRow(
             Text(text = titleText, style = KuaiMaoType.greeting)
         }
 
-        Spacer(modifier = Modifier.weight(1f))
-
-        // 自定义壁纸下不要再铺 canvasCard：夜间它是 #1C1C1C，压在壁纸上就是
-        // 图标外面套了一个黑方块（截图里那个「黑圈」）。改成极薄的磨砂玻璃，
-        // 只留一层雾气和细边，铃铛本身清清楚楚。
-        val bellOnWallpaper = cardConfig.isCustomBackgroundEnabled
-        val bellShape = RoundedCornerShape(13.dp)
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(bellShape)
-                // 不再用 elevation 阴影：离屏层 + 半透明底在部分 ROM 上会
-                // 连带画出一块方形白底（图标周围那个小白块就是这么来的）。
-                // 层次改由 1dp 描边提供。
-                .background(
-                    if (bellOnWallpaper) {
-                        KuaiMaoColors.canvasCard.copy(alpha = 0.24f)
-                    } else {
-                        KuaiMaoColors.canvasCard
-                    },
-                )
-                .then(
-                    if (bellOnWallpaper) {
-                        Modifier.renderBackgroundBlur(
-                            tintColor = KuaiMaoColors.canvasCardSolid,
-                            tintAlpha = 0.24f,
-                        )
-                    } else {
-                        Modifier
-                    },
-                )
-                .border(
-                    width = 1.dp,
-                    color = KuaiMaoColors.line.copy(alpha = if (bellOnWallpaper) 0.5f else 0.8f),
-                    shape = bellShape,
-                )
-                .clickable(onClick = onBellClick),
-            contentAlignment = Alignment.Center,
-        ) {
-            // 用项目内自绘的单色铃铛：material icon 在部分设备上会把
-            // 矢量填充区域带成白色方底，换成纯 path 后不会有底板。
-            Icon(
-                painter = painterResource(R.drawable.ic_kuaimao_bell),
-                contentDescription = "通知",
-                tint = KuaiMaoColors.textLabel,
-                modifier = Modifier.size(19.dp),
-            )
-            // 未读角标：正圆 13dp，贴在按钮右上角内侧
-            if (notificationCount > 0) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .offset(x = (-5).dp, y = 5.dp)
-                        .size(13.dp)
-                        .clip(CircleShape)
-                        .background(KuaiMaoColors.danger),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = if (notificationCount > 9) "9+" else notificationCount.toString(),
-                        fontSize = 7.5.sp,
-                        lineHeight = 7.5.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        maxLines = 1,
-                        softWrap = false,
-                    )
-                }
-            }
-        }
+        // 通知与重启合成在一个 13dp 圆角的动作条里，四个页签的标题栏都是它。
+        KuaiMaoTopActions()
     }
 }
 

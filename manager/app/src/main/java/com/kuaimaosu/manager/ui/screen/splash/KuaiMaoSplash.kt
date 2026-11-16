@@ -33,6 +33,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
@@ -52,7 +54,7 @@ import com.kuaimaosu.manager.ui.theme.CardConfig
 import com.kuaimaosu.manager.ui.theme.LocalBackgroundRenderState
 import com.kuaimaosu.manager.ui.theme.ThemeConfig
 import com.kuaimaosu.manager.ui.theme.isInDarkTheme
-import kotlin.math.PI
+import kotlin.math.cos
 import kotlin.math.sin
 import org.koin.compose.koinInject
 
@@ -120,7 +122,12 @@ fun KuaiMaoSplash(
         }
     }
     val titlePrimary = splashInk(themeConfig.homeTitleColorPrimary, 0.88f)
-    val titleAccent = splashInk(themeConfig.homeTitleColorAccent, 0.55f)
+    // 单色标题（默认）用同一档亮度，避免开屏上又出现「前面白、后面灰」。
+    val titleAccent = if (themeConfig.homeTitleColorAccent == themeConfig.homeTitleColorPrimary) {
+        titlePrimary
+    } else {
+        splashInk(themeConfig.homeTitleColorAccent, 0.55f)
+    }
     val titleText = remember(title, split, titlePrimary, titleAccent) {
         buildAnnotatedString {
             withStyle(SpanStyle(color = titlePrimary)) { append(title.take(split)) }
@@ -200,7 +207,7 @@ fun KuaiMaoSplash(
         }
 
         // ---- 水墨 -------------------------------------------------------
-        InkStroke(
+        InkBloom(
             progress = { ink.value },
             ink = inkColor,
             modifier = Modifier.fillMaxSize(),
@@ -272,102 +279,165 @@ fun KuaiMaoSplash(
     }
 }
 
-/** 一笔墨从起笔到收笔所占的进度。 */
-private const val INK_SWEEP_END = 0.54f
+private const val TAU = 6.2831855f
 
-/** 0→1 的平滑过渡，比线性更像墨慢慢洇开。 */
+/** 墨滴接触水面的时刻（占整段动画的比例），前后节奏都以它为锚点。 */
+private const val INK_IMPACT = 0.16f
+
+/** 0→1 的平滑过渡。 */
 private fun smoothstep(edge0: Float, edge1: Float, x: Float): Float {
     if (edge1 <= edge0) return if (x < edge0) 0f else 1f
     val t = ((x - edge0) / (edge1 - edge0)).coerceIn(0f, 1f)
     return t * t * (3f - 2f * t)
 }
 
-/** 笔身上采样点的个数：够了就不必再加，多了只是白算。 */
-private const val INK_STEPS = 64
+/**
+ * 一团墨的轮廓：半径按三道低频正弦起伏，再压扁一点。
+ *
+ * 墨在水里、在纸上都不会是正圆，边缘总在几个方向上鼓起、在另几个方向凹进去。
+ * 三道正弦（3 次、5 次谐波）能造出这种不对称；再用中点 + 二次贝塞尔连起来，
+ * 轮廓就是圆滑的，没有多边形折角。
+ */
+private fun inkBlobPath(
+    cx: Float,
+    cy: Float,
+    radius: Float,
+    wobble: Float,
+    phase: Float,
+    squeeze: Float = 0.88f,
+): Path {
+    val n = 12
+    val xs = FloatArray(n)
+    val ys = FloatArray(n)
+    for (i in 0 until n) {
+        val a = TAU * i / n
+        val wob = 0.62f * sin(3f * a + phase) + 0.38f * sin(5f * a + phase * 1.7f)
+        val r = radius * (1f + wobble * wob)
+        xs[i] = cx + cos(a) * r
+        ys[i] = cy + sin(a) * r * squeeze
+    }
+    val path = Path()
+    path.moveTo((xs[n - 1] + xs[0]) / 2f, (ys[n - 1] + ys[0]) / 2f)
+    for (i in 0 until n) {
+        val j = (i + 1) % n
+        path.quadraticBezierTo(
+            xs[i], ys[i],
+            (xs[i] + xs[j]) / 2f, (ys[i] + ys[j]) / 2f,
+        )
+    }
+    path.close()
+    return path
+}
 
 /**
- * 一笔墨。
+ * 一滴墨。
  *
- * 之前那版是「墨团 + 十几根直射线 + 溅点」：直射线看着像光芒，一团光斑加放射线，
- * 怎么调都不像水墨。这一版换成一笔真正的笔触：
+ * 前两版都不对：一版是「墨团 + 直射线」，像光芒；一版是一笔横贯全屏的笔触，
+ * 像一道灰杠。共同的问题是**把墨画成了有明确边界的图形**。
  *
- *  1. **起笔** —— 笔尖从左侧落纸，由细到粗，边缘带一点毛刺（干笔）；
- *  2. **行笔** —— 最厚的一段扫过屏幕中央，中段轻拱，收笔时向上提；
- *  3. **洇** —— 笔身外再套一层更宽、更淡的同形轮廓，模拟墨在宣纸上渗出的那圈；
- *  4. **淡** —— 图标浮起时墨褪成很浅的一层，不跟文字抢。
+ * 这一版画的是「墨滴落进水里」：
  *
- * 笔形是「中线 + 变化的半宽」围成的闭合路径，半宽由压力曲线乘几道低频正弦，
- * 所以边缘是起伏的毛边，而不是一条光滑的椭圆弧。
+ *  1. **落** —— 墨滴从上方坠下，带一条细尾；
+ *  2. **触** —— 接触水面，压出一圈很淡的水纹；
+ *  3. **绽** —— 落点先浓成一小团墨核，再由内向外散成三层越来越淡的墨云，
+ *     每层的轮廓都是不规则闭合曲线，不是圆；
+ *  4. **散** —— 图标浮起时墨被水冲淡，只留一层很浅的雾。
+ *
+ * 刻意不画触须、不画墨丝：一分叉就像水母，墨的意象立刻就没了。
+ *
+ * 所有浓度都压在 0.34 以内：墨是**淡**的才高级，亮了就成了发光的球。
  *
  * [progress] 是读取函数而不是值：在 draw 阶段取，避免整屏每帧重组。
  */
 @Composable
-private fun InkStroke(
+private fun InkBloom(
     progress: () -> Float,
     ink: Color,
     modifier: Modifier = Modifier,
 ) {
     Canvas(modifier = modifier) {
         val p = progress().coerceIn(0f, 1f)
-        val sweep = smoothstep(0f, INK_SWEEP_END, p)
-        if (sweep <= 0.002f) return@Canvas
+        if (p <= 0.001f) return@Canvas
 
-        val baseY = size.height * 0.455f
-        val startX = size.width * 0.075f
-        val endX = size.width * 0.925f
-        val halfMax = size.minDimension * 0.052f
-        // 起笔后最浓，图标浮出时褪到很浅；留一点残余，画面不会突然变空。
-        val inkAlpha = 1f - 0.90f * smoothstep(0.46f, 0.94f, p)
+        val r0 = size.minDimension
+        val cx = size.width / 2f
+        val cy = size.height * 0.455f
+        val fall = (p / INK_IMPACT).coerceIn(0f, 1f)
+        val bloom = smoothstep(INK_IMPACT, 0.64f, p)
+        val life = 1f - 0.90f * smoothstep(0.56f, 1f, p)
 
-        val n = INK_STEPS + 1
-        val xs = FloatArray(n)
-        val ys = FloatArray(n)
-        val hs = FloatArray(n)
-        for (i in 0 until n) {
-            val u = sweep * i / INK_STEPS
-            // 压力曲线：起笔轻 → 行笔厚 → 收笔提起来
-            val head = smoothstep(0f, 0.09f, u)
-            val body = 0.58f + 0.42f * smoothstep(0.08f, 0.32f, u)
-            val tail = 1f - 0.84f * smoothstep(0.70f, 1f, u)
-            // 毛边：几道低频起伏，幅度跟着笔画厚度一起收敛
-            val rough = 1f + 0.075f * sin(u * 19.7f) +
-                0.045f * sin(u * 37.3f + 1.7f) + 0.028f * sin(u * 61.1f + 0.4f)
-            xs[i] = startX + (endX - startX) * u
-            // 中段轻拱、收笔上扬：一笔才不像尺子画出来的横线
-            ys[i] = baseY - size.height * 0.010f * sin(u * PI.toFloat()) -
-                size.height * 0.020f * u * u
-            hs[i] = halfMax * (body * head * tail * rough).coerceAtLeast(0f)
+        // ---- 落墨：墨滴与细尾 -----------------------------------------
+        if (p < INK_IMPACT + 0.04f) {
+            val dropAlpha = 0.55f * smoothstep(0f, 0.35f, fall) *
+                (1f - smoothstep(0.86f, 1f, fall))
+            if (dropAlpha > 0.002f) {
+                val y = cy - r0 * 0.48f + r0 * 0.48f * (fall * fall)
+                val tail = r0 * 0.075f * (1f - fall) * (1f - fall * 0.45f)
+                drawLine(
+                    color = ink.copy(alpha = dropAlpha * 0.18f),
+                    start = Offset(cx, y - tail),
+                    end = Offset(cx, y - 1.dp.toPx()),
+                    strokeWidth = 1.7.dp.toPx(),
+                    cap = StrokeCap.Round,
+                )
+                drawCircle(
+                    color = ink.copy(alpha = dropAlpha),
+                    radius = (2.0f + 0.7f * fall).dp.toPx(),
+                    center = Offset(cx, y),
+                )
+            }
         }
 
-        // 同一个中线，换个半宽就是另一条轮廓：洇边与笔身共用一次采样。
-        fun pathFor(scale: Float): Path {
-            val path = Path()
-            path.moveTo(xs[0], ys[0] - hs[0] * scale)
-            for (i in 1 until n) path.lineTo(xs[i], ys[i] - hs[i] * scale)
-            for (i in n - 1 downTo 0) path.lineTo(xs[i], ys[i] + hs[i] * scale)
-            path.close()
-            return path
-        }
-
-        // 洇边：宽一圈、淡得多，就是墨渗出去的那层
-        drawPath(path = pathFor(1.55f), color = ink.copy(alpha = 0.05f * inkAlpha))
-        drawPath(path = pathFor(1f), color = ink.copy(alpha = 0.24f * inkAlpha))
-
-        // 笔尖：行笔时笔肚停在最前面，带一小团柔光
-        val tipAlpha = 0.15f * inkAlpha * (1f - smoothstep(0.84f, 1f, sweep))
-        if (tipAlpha > 0.002f) {
-            val tip = Offset(xs[n - 1], ys[n - 1])
-            val tipR = halfMax * 2.2f
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(ink.copy(alpha = tipAlpha), Color.Transparent),
-                    center = tip,
-                    radius = tipR,
-                ),
-                radius = tipR,
-                center = tip,
+        // ---- 水纹：接触水面后推开的一圈 --------------------------------
+        val ripple = smoothstep(INK_IMPACT, 0.66f, p)
+        if (ripple > 0.001f && ripple < 0.999f) {
+            val rx = r0 * (0.09f + 0.30f * ripple)
+            val ry = rx * 0.34f
+            drawOval(
+                color = ink.copy(alpha = 0.10f * (1f - ripple) * (1f - ripple)),
+                topLeft = Offset(cx - rx, cy - ry),
+                size = androidx.compose.ui.geometry.Size(rx * 2f, ry * 2f),
+                style = Stroke(width = 1.dp.toPx()),
             )
         }
+
+        // ---- 墨云：三层，由内向外越来越淡 ------------------------------
+        // scale / 浓度 / 起伏 / 相位：外层更大更淡、边缘起伏更夸张
+        val layers = arrayOf(
+            floatArrayOf(0.300f, 0.30f, 0.16f, 0.40f),
+            floatArrayOf(0.400f, 0.13f, 0.22f, 1.90f),
+            floatArrayOf(0.500f, 0.055f, 0.27f, 3.60f),
+        )
+        layers.forEachIndexed { index, layer ->
+            val grow = smoothstep(INK_IMPACT + index * 0.03f, 0.60f + index * 0.05f, p)
+            if (grow <= 0.01f) return@forEachIndexed
+            val radius = r0 * layer[0] * (0.32f + 0.68f * grow)
+            val density = layer[1] * grow * life
+            if (radius <= 0.5f || density <= 0.002f) return@forEachIndexed
+            // 墨团不是静止的：洇的时候轮廓会慢慢变，相位跟着进度走
+            val path = inkBlobPath(
+                cx = cx,
+                cy = cy + r0 * (0.012f * index),
+                radius = radius,
+                wobble = layer[2],
+                phase = layer[3] + p * 0.65f,
+                squeeze = 0.82f,
+            )
+            drawPath(
+                path = path,
+                brush = Brush.radialGradient(
+                    colorStops = arrayOf(
+                        0.00f to ink.copy(alpha = density),
+                        0.42f to ink.copy(alpha = density * 0.80f),
+                        0.74f to ink.copy(alpha = density * 0.32f),
+                        1.00f to Color.Transparent,
+                    ),
+                    center = Offset(cx, cy),
+                    radius = radius,
+                ),
+            )
+        }
+
     }
 }
 

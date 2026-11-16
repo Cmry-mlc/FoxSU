@@ -115,6 +115,24 @@ private val kernelCredits = listOf(
         note = "内核态隐藏与路径屏蔽，网页端检测的克星",
         avatar = R.drawable.credit_simonpunk,
     ),
+    Credit(
+        name = "ReZygisk",
+        author = "PerformanC Organization",
+        repo = "https://github.com/PerformanC/ReZygisk",
+        license = "AGPL-3.0",
+        licenseUrl = "https://www.gnu.org/licenses/agpl-3.0.html",
+        note = "内置 Zygisk 引擎 FolkZygisk 的上游，包含 loader、zygiskd 与注入逻辑",
+        initial = "R",
+    ),
+    Credit(
+        name = "FinaSU",
+        author = "LyraVoid",
+        repo = "https://github.com/LyraVoid/FinaSU",
+        license = "GPL-3.0",
+        licenseUrl = "https://www.gnu.org/licenses/gpl-3.0.html",
+        note = "内置引擎方案的参考实现，ksud 集成与让位策略借鉴自它",
+        initial = "F",
+    ),
 )
 
 private val uiCredits = listOf(

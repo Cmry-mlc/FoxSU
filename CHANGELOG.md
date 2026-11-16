@@ -9,6 +9,7 @@
 ### 新增
 
 - **内置挂载控制器**：OverlayFS / Magic Mount 在设置内直接切换生效，附逐模块规则，无需安装挂载模块
+- **内置 Zygisk 引擎**：FolkZygisk（源自 ReZygisk，AGPL-3.0）编进 ksud，无需装模块即可用 Zygisk；设置新增「内置引擎」页管理开关与状态，检测到外部 provider 自动让位
 - **SUSFS LKM 管理**：守卫内核模块的加载、卸载与开机自启
 - **重启面板**：重启 / 软重启 / Recovery / Bootloader / Download / EDL 六宫格，随模糊开关在磨砂与实色间切换
 - **流光轮廓**：ColorOS 17 风格边缘凝光，作用于主页大卡片与胶囊底栏，可开关

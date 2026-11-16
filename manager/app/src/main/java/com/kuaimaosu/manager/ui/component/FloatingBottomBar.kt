@@ -13,10 +13,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredWidth
@@ -389,8 +389,11 @@ fun FloatingBottomBar(
         }
     }
 
+    // 宽度交给外层（NavigationBar 给的是 fillMaxWidth）：
+    // BakaSU 的胶囊是「一条跨满可用宽度、四格等分」的长条，之前这里按内容
+    // 取最小宽度，四格加起来只有半屏宽，拆掉中央电源键后更短，整条缩成小豆腐块。
     Box(
-        modifier = modifier.width(IntrinsicSize.Min),
+        modifier = modifier.fillMaxWidth(),
         contentAlignment = Alignment.CenterStart,
     ) {
         Row(

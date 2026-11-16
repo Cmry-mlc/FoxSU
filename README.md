@@ -23,6 +23,7 @@ KuaiMaoSU 是在 **BakaSU（原 ReSukiSU）** 的基础上继续开发的 Kernel
 - 基于 metamodules 的模块系统；支持非 GKI 与 GKI 1.0 内核
 - SUSFS 集成：路径屏蔽、内核态隐藏，附带守卫 LKM 的加载 / 卸载 / 开机自启管理
 - **内置挂载控制器**：OverlayFS 与 Magic Mount 在设置里直接切换生效，不需要额外安装挂载模块
+- **内置 Zygisk 引擎**：FolkZygisk 直接编进 `ksud`，无需安装模块即可使用 Zygisk；检测到外部 provider 时自动让位。详见 [内置引擎许可声明](./THIRD_PARTY_ENGINE_LICENSE.md)
 - 沿用上游的三种 Hook 模式：Tracepoint Syscall Redirect / Manual Hook / SUSFS Inline Hook
 
 **管理器**

@@ -177,6 +177,12 @@ enum Commands {
         #[command(subcommand)]
         command: Initrc,
     },
+
+    /// Manage the built-in FolkZygisk provider
+    Zygisk {
+        #[command(subcommand)]
+        command: crate::android::zygisk::Command,
+    },
 }
 
 #[derive(clap::Subcommand, Debug)]
@@ -958,6 +964,7 @@ pub fn run() -> Result<()> {
         Commands::Initrc { command } => match command {
             Initrc::Refresh => regenerate_preinit(),
         },
+        Commands::Zygisk { command } => crate::android::zygisk::run(&command),
     };
 
     if let Err(e) = &result {

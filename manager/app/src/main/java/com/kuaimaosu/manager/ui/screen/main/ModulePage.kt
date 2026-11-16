@@ -153,6 +153,8 @@ import com.kuaimaosu.manager.domain.usecase.TakeModuleUriPermissionUseCase
 import com.kuaimaosu.manager.ui.component.ConfirmResult
 import com.kuaimaosu.manager.ui.component.InstallConfirmationDialog
 import com.kuaimaosu.manager.ui.component.SearchAppBar
+import com.kuaimaosu.manager.ui.component.KuaiMaoTopActionSlot
+import com.kuaimaosu.manager.ui.component.KuaiMaoTopActions
 import com.kuaimaosu.manager.ui.component.SwipeableSnackbarHost
 import com.kuaimaosu.manager.ui.component.WarningCard
 import com.kuaimaosu.manager.ui.component.ZipFileDetector
@@ -651,28 +653,25 @@ private fun ModuleHeader(
                     style = KuaiMaoType.pageSub,
                 )
             }
-            Box {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(KuaiMaoColors.canvasCard)
-                        .clickable { showDropdown = true },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.TwoTone.MoreVert,
-                        contentDescription = stringResource(R.string.settings),
-                        tint = KuaiMaoColors.textSec,
-                        modifier = Modifier.size(19.dp),
+            Spacer(modifier = Modifier.width(10.dp))
+            // 「更多」与「通知 + 重启」共用一条动作条：三枚图标同一套尺寸与间距。
+            KuaiMaoTopActions {
+                Box {
+                    KuaiMaoTopActionSlot(onClick = { showDropdown = true }) {
+                        Icon(
+                            imageVector = Icons.TwoTone.MoreVert,
+                            contentDescription = stringResource(R.string.settings),
+                            tint = KuaiMaoColors.textSec,
+                            modifier = Modifier.size(19.dp),
+                        )
+                    }
+                    ModuleDropdown(
+                        expanded = showDropdown,
+                        onDismissRequest = { showDropdown = false },
+                        viewModel = viewModel,
+                        uiState = uiState,
                     )
                 }
-                ModuleDropdown(
-                    expanded = showDropdown,
-                    onDismissRequest = { showDropdown = false },
-                    viewModel = viewModel,
-                    uiState = uiState,
-                )
             }
         }
 

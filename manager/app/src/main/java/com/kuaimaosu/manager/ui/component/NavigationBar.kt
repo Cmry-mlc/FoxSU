@@ -33,12 +33,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.twotone.DeveloperBoard
-import androidx.compose.material.icons.twotone.PowerSettingsNew
-import androidx.compose.material.icons.twotone.Refresh
-import androidx.compose.material.icons.twotone.RestartAlt
-import androidx.compose.material.icons.twotone.SettingsBackupRestore
-import androidx.compose.material.icons.twotone.Usb
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -55,38 +49,26 @@ import androidx.compose.material3.WideNavigationRailDefaults
 import androidx.compose.material3.WideNavigationRailItem
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInParent
 import com.kuaimaosu.manager.ui.theme.CapsuleEffect
 import com.kuaimaosu.manager.ui.theme.CardConfig
 import kotlin.math.absoluteValue
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -116,7 +98,6 @@ fun NavigationBar(
     modifier: Modifier = Modifier,
     destinations: List<BottomBarDestination>,
     isBottomBar: Boolean,
-    onRequestReboot: () -> Unit = {},
 ) {
     val themeConfig: ThemeConfig = koinInject()
     val homeViewModel = koinViewModel<HomeViewModel>()
@@ -186,7 +167,6 @@ fun NavigationBar(
                     destinations = destinations,
                     selectedIndex = pagerState.currentPage,
                     onSelected = handlePageChange,
-                    onCenterClick = onRequestReboot,
                     superuserCount = superuserCount,
                     moduleCount = moduleCount,
                     showBadge = showNavigationBarBadge,
@@ -203,7 +183,6 @@ fun NavigationBar(
                     destinations = destinations,
                     selectedIndex = pagerState.currentPage,
                     onSelected = handlePageChange,
-                    onCenterClick = onRequestReboot,
                     superuserCount = superuserCount,
                     moduleCount = moduleCount,
                     showBadge = showNavigationBarBadge,
@@ -370,7 +349,6 @@ private fun KuaiMaoTraditionalBottomBar(
     destinations: List<BottomBarDestination>,
     selectedIndex: Int,
     onSelected: (Int) -> Unit,
-    onCenterClick: () -> Unit,
     superuserCount: Int,
     moduleCount: Int,
     showBadge: Boolean,
@@ -435,9 +413,6 @@ private fun KuaiMaoTraditionalBottomBar(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             destinations.forEachIndexed { index, destination ->
-                if (index == 2) {
-                    KuaiMaoClassicCenterButton(onClick = onCenterClick)
-                }
                 KuaiMaoClassicNavItem(
                     destination = destination,
                     selected = index == selectedIndex,
@@ -521,48 +496,6 @@ private fun KuaiMaoClassicNavItem(
 }
 
 /**
- * 传统栏中央的重启入口。
- *
- * 早先这里是一块 52×44 的实色强调色圆角块，压在一排「图标 + 文字」的 tab 中间，
- * 视觉上像另一套控件。现在改成与 [KuaiMaoClassicNavItem] 未选中态同一套排版：
- * 20dp 图标 + 9.5sp 标签，不参与选中，所以永远不带选中胶囊底色。
- */
-@Composable
-private fun KuaiMaoClassicCenterButton(onClick: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .clickable(onClick = onClick)
-            .padding(vertical = 6.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(3.dp),
-    ) {
-        Box(
-            modifier = Modifier.padding(horizontal = 13.dp, vertical = 3.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = Icons.TwoTone.RestartAlt,
-                contentDescription = stringResource(R.string.reboot),
-                tint = KuaiMaoColors.text,
-                modifier = Modifier.size(20.dp),
-            )
-        }
-        Text(
-            text = stringResource(R.string.reboot),
-            color = KuaiMaoColors.text,
-            fontSize = 9.5.sp,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1,
-            softWrap = false,
-            overflow = TextOverflow.Visible,
-        )
-    }
-}
-
-/** 中间电源键占的格子：0 首页、1 超级用户、2 电源、3 模块、4 设置。 */
-private const val LIQUID_POWER_SLOT = 2
-
-/**
  * 胶囊底栏：直接用仓库自带的 iOS 液态玻璃实现（miuix blur + lens 折射 + vibrancy + 随重力偏移的高光）。
  *
  * 不要再改回 Canvas 手绘：折射率、色散、边缘高光和拖拽时的液体拉伸都在 [FloatingBottomBar] 里，
@@ -573,62 +506,22 @@ private fun KuaiMaoLiquidBottomBar(
     destinations: List<BottomBarDestination>,
     selectedIndex: Int,
     onSelected: (Int) -> Unit,
-    onCenterClick: () -> Unit,
     superuserCount: Int,
     moduleCount: Int,
     showBadge: Boolean,
     isBlurEnabled: Boolean,
 ) {
-    // page(0..3) → slot：电源插在第 3 格，后面的页面顺延一格
-    fun slotOf(page: Int) = if (page >= LIQUID_POWER_SLOT) page + 1 else page
-
     FloatingBottomBar(
         modifier = Modifier.fillMaxWidth(),
-        selectedIndex = slotOf(selectedIndex),
-        onSelected = { slot ->
-            if (slot != LIQUID_POWER_SLOT) {
-                onSelected(if (slot > LIQUID_POWER_SLOT) slot - 1 else slot)
-            }
-        },
-        tabsCount = destinations.size + 1,
+        selectedIndex = selectedIndex,
+        onSelected = onSelected,
+        tabsCount = destinations.size,
         isBlurEnabled = isBlurEnabled,
-        isTabSelectable = { it != LIQUID_POWER_SLOT },
-        onTabTap = { slot ->
-            if (slot == LIQUID_POWER_SLOT) {
-                onCenterClick()
-            } else {
-                onSelected(if (slot > LIQUID_POWER_SLOT) slot - 1 else slot)
-            }
-        },
     ) { activate ->
         destinations.forEachIndexed { index, destination ->
-            if (index == LIQUID_POWER_SLOT) {
-                // 电源键只是个入口，不参与选中。图标与字号跟其他 tab 完全一致，
-                // 不再是一块填色的独立胶囊——那种「按钮感」在整条底栏里很跳。
-                FloatingBottomBarItem(
-                    selected = false,
-                    onClick = onCenterClick,
-                ) {
-                    Icon(
-                        imageVector = Icons.TwoTone.RestartAlt,
-                        contentDescription = stringResource(R.string.reboot),
-                        tint = LocalContentColor.current,
-                        modifier = Modifier.size(22.dp),
-                    )
-                    Text(
-                        text = stringResource(R.string.reboot),
-                        color = LocalContentColor.current,
-                        fontSize = 9.5.sp,
-                        fontWeight = FontWeight.Medium,
-                        maxLines = 1,
-                        softWrap = false,
-                        overflow = TextOverflow.Visible,
-                    )
-                }
-            }
             FloatingBottomBarItem(
                 selected = index == selectedIndex,
-                onClick = { activate(slotOf(index)) },
+                onClick = { activate(index) },
             ) {
                 BadgedBox(
                     badge = {
@@ -662,84 +555,5 @@ private fun KuaiMaoLiquidBottomBar(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun KuaiMaoNavItem(
-    destination: BottomBarDestination,
-    selected: Boolean,
-    superuserCount: Int,
-    moduleCount: Int,
-    showBadge: Boolean,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit,
-) {
-    // 与角标同源：选中取品牌色，未选中用中性深灰（textDisabled 太淡，壁纸上看不见）
-    val accent = KuaiMaoColors.brand
-    val color = if (selected) accent else KuaiMaoColors.textMuted
-    Column(
-        modifier = modifier
-            .clickable(onClick = onClick)
-            .padding(vertical = 6.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(3.dp),
-    ) {
-        BadgedBox(
-            badge = {
-                DestinationBadge(
-                    dest = destination,
-                    superUser = superuserCount,
-                    module = moduleCount,
-                    show = showBadge,
-                )
-            },
-        ) {
-            Icon(
-                imageVector = if (selected) destination.iconSelected else destination.iconNotSelected,
-                contentDescription = stringResource(destination.label),
-                tint = color,
-                modifier = Modifier.size(20.dp),
-            )
-        }
-        Text(
-            text = stringResource(destination.label),
-            color = color,
-            fontSize = 9.5.sp,
-            fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Bold,
-            maxLines = 1,
-            softWrap = false,
-            overflow = TextOverflow.Visible,
-        )
-    }
-}
-
-/** 中央电源键：与底栏角标同色（主题 primary）的竖向圆角块。 */
-@Composable
-private fun KuaiMaoCenterButton(onClick: () -> Unit) {
-    val shape = RoundedCornerShape(16.dp)
-    val accent = KuaiMaoColors.brand
-    Box(
-        modifier = Modifier
-            .padding(horizontal = 6.dp)
-            .size(width = 52.dp, height = 44.dp)
-            .shadow(
-                elevation = 10.dp,
-                shape = shape,
-                clip = false,
-                ambientColor = accent.copy(alpha = 0.34f),
-                spotColor = accent.copy(alpha = 0.44f),
-            )
-            .clip(shape)
-            .background(accent)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            imageVector = Icons.TwoTone.PowerSettingsNew,
-            contentDescription = "电源与重启",
-            tint = onBadgeInk(),
-            modifier = Modifier.size(21.dp),
-        )
     }
 }

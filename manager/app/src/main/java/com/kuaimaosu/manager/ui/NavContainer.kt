@@ -93,12 +93,12 @@ import com.kuaimaosu.manager.ui.screen.TemplateEditorScreen
 import com.kuaimaosu.manager.ui.screen.UmountManagerScreen
 import com.kuaimaosu.manager.ui.screen.about.AboutScreen
 import com.kuaimaosu.manager.ui.screen.about.CreditsScreen
+import com.kuaimaosu.manager.ui.screen.about.IconCreditsScreen
 import com.kuaimaosu.manager.ui.screen.about.ModificationsScreen
 import com.kuaimaosu.manager.ui.screen.about.OpenSourceLicenseScreen
 import com.kuaimaosu.manager.ui.screen.kernelFlash.KernelFlashScreen
 import com.kuaimaosu.manager.ui.screen.main.MainScreen
 import com.kuaimaosu.manager.ui.screen.main.NotificationsPage
-import com.kuaimaosu.manager.ui.screen.main.SettingsAboutPage
 import com.kuaimaosu.manager.ui.screen.main.SettingsAiPage
 import com.kuaimaosu.manager.ui.screen.main.SettingsProfilePage
 import com.kuaimaosu.manager.ui.screen.main.SettingsRootPage
@@ -112,6 +112,7 @@ import com.kuaimaosu.manager.ui.screen.mount.MountControllerScreen
 import com.kuaimaosu.manager.ui.screen.susfs.SuSFSConfigScreen
 import com.kuaimaosu.manager.ui.screen.susfs.SuSFSLkmScreen
 import com.kuaimaosu.manager.ui.screen.themeSettings.ThemeSettingsScreen
+import com.kuaimaosu.manager.ui.screen.zygisk.ZygiskScreen
 import com.kuaimaosu.manager.ui.theme.BackgroundRenderState
 import com.kuaimaosu.manager.ui.theme.BackgroundManager
 import com.kuaimaosu.manager.ui.theme.CardConfig
@@ -413,6 +414,17 @@ fun NavContainer(
                     AboutScreen()
                 }
             }
+            entry<Route.IconCredits>(swipeDismiss = swipeBackDirection) {
+                ManagerNavEntry(
+                    interceptPredictiveBack = interceptPredictiveBack,
+                    onBack = onBack,
+                    themeConfig = themeConfig,
+                    backgroundRenderState = backgroundRenderState,
+                    useBlur = useBlur,
+                ) {
+                    IconCreditsScreen()
+                }
+            }
             entry<Route.Credits>(swipeDismiss = swipeBackDirection) {
                 ManagerNavEntry(
                     interceptPredictiveBack = interceptPredictiveBack,
@@ -688,17 +700,6 @@ fun NavContainer(
                     SettingsToolsPage()
                 }
             }
-            entry<Route.SettingsAbout>(swipeDismiss = swipeBackDirection) {
-                ManagerNavEntry(
-                    interceptPredictiveBack = interceptPredictiveBack,
-                    onBack = onBack,
-                    themeConfig = themeConfig,
-                    backgroundRenderState = backgroundRenderState,
-                    useBlur = useBlur,
-                ) {
-                    SettingsAboutPage()
-                }
-            }
             entry<Route.SystemInfo>(swipeDismiss = swipeBackDirection) {
                 ManagerNavEntry(
                     interceptPredictiveBack = interceptPredictiveBack,
@@ -763,6 +764,17 @@ fun NavContainer(
                     useBlur = useBlur,
                 ) {
                     MountControllerScreen()
+                }
+            }
+            entry<Route.ZygiskEngine>(swipeDismiss = swipeBackDirection) {
+                ManagerNavEntry(
+                    interceptPredictiveBack = interceptPredictiveBack,
+                    onBack = onBack,
+                    themeConfig = themeConfig,
+                    backgroundRenderState = backgroundRenderState,
+                    useBlur = useBlur,
+                ) {
+                    ZygiskScreen()
                 }
             }
             entry<Route.UmountManager>(swipeDismiss = swipeBackDirection) {

@@ -145,6 +145,12 @@ pub fn on_post_fs_data() -> Result<()> {
 
     run_stage("post-mount", wait);
 
+    // 内置 FolkZygisk 引擎：在 zygote 启动前完成引擎刷新与 monitor 注入。
+    // 有外部 provider 或安全模式时，zygisk::post_fs_data 内部会自行让位 / 跳过。
+    if let Err(e) = crate::android::zygisk::post_fs_data(safe_mode) {
+        warn!("FolkZygisk startup skipped/failed: {e:#}");
+    }
+
     std::env::set_current_dir("/").with_context(|| "failed to chdir to /")?;
 
     Ok(())
@@ -197,6 +203,9 @@ pub fn on_services() {
     }
 
     info!("on_services triggered!");
+    if let Err(e) = crate::android::zygisk::services() {
+        warn!("FolkZygisk health check failed: {e:#}");
+    }
     run_stage("service", ScriptWait::NoWait);
 }
 
@@ -218,6 +227,9 @@ pub fn on_boot_completed() {
     // Load susfs boot-completed
     if !is_safe_mode() {
         crate::android::susfs::init_event::on_boot_completed();
+    }
+    if let Err(e) = crate::android::zygisk::boot_completed() {
+        warn!("FolkZygisk boot receipt failed: {e:#}");
     }
 }
 

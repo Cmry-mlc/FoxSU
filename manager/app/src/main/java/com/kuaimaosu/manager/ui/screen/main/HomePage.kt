@@ -191,14 +191,8 @@ fun HomePage(
         label = "homeAppear",
     )
 
-    // 顶部问候行（头像 / 标题 / 铃铛角标）放到 Scaffold 的 topBar 里，
+    // 顶部问候行（头像 / 标题 / 通知 + 重启动作条）放到 Scaffold 的 topBar 里，
     // 跟随页面固定，不再随下面的内容滚动而移动。
-    val notices = kuaimaoNotices(
-        uiState = uiState,
-        onOpenUpdate = { navigator.push(Route.SettingsUpdate) },
-        onOpenInstall = onInstall,
-    )
-    val unreadCount = notices.count { it.id !in KuaiMaoNotificationStore.readIds }
 
     Scaffold(
         topBar = {
@@ -216,11 +210,7 @@ fun HomePage(
                     },
             ) {
                 Spacer(modifier = Modifier.height(8.dp))
-                KuaiMaoGreetingRow(
-                    notificationCount = unreadCount,
-                    onAvatarClick = { navigator.push(Route.About) },
-                    onBellClick = { navigator.push(Route.Notifications) },
-                )
+                KuaiMaoGreetingRow(onAvatarClick = { navigator.push(Route.About) })
                 Spacer(modifier = Modifier.height(12.dp))
             }
         },

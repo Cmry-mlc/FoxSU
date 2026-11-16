@@ -76,10 +76,22 @@ class ThemeRepository(
         DEFAULT_HOME_TITLE_COLOR_PRIMARY,
     )
 
-    fun loadHomeTitleColorAccent(): Int = settings.getInt(
-        "home_title_color_accent",
-        DEFAULT_HOME_TITLE_COLOR_ACCENT,
-    )
+    /**
+     * 读强调色。
+     *
+     * 老版本把默认强调色存成了靛蓝：这里做一次性迁移——只在「存的就是旧默认」
+     * 且还没迁过的时候改成单色默认，之后用户自己在设置里选了什么都不会再被覆盖。
+     */
+    fun loadHomeTitleColorAccent(): Int {
+        val stored = settings.getInt("home_title_color_accent", DEFAULT_HOME_TITLE_COLOR_ACCENT)
+        val migrated = settings.getBoolean("home_title_single_color_migrated", false)
+        if (stored == LEGACY_HOME_TITLE_COLOR_ACCENT && !migrated) {
+            settings.putInt("home_title_color_accent", DEFAULT_HOME_TITLE_COLOR_ACCENT)
+            settings.putBoolean("home_title_single_color_migrated", true)
+            return DEFAULT_HOME_TITLE_COLOR_ACCENT
+        }
+        return stored
+    }
 
     /** 标题上方的小字，默认是一句诗句。 */
     fun saveHomeKicker(text: String) {
@@ -123,7 +135,17 @@ class ThemeRepository(
         const val DEFAULT_HOME_TITLE = "KuaiMaoSU"
         const val DEFAULT_HOME_TITLE_SPLIT = 5
         val DEFAULT_HOME_TITLE_COLOR_PRIMARY = 0xFF101322.toInt()
-        val DEFAULT_HOME_TITLE_COLOR_ACCENT = 0xFF4F5BE8.toInt()
+
+        /**
+         * 默认强调色与主色相同：整串「KuaiMaoSU」是一个颜色。
+         *
+         * 以前默认是靛蓝 #4F5BE8，标题看起来是「KuaiMao + 蓝色 SU」两段，
+         * 和其他页面的标题也对不上。想双色的用户仍然可以在主题设置里自己改。
+         */
+        val DEFAULT_HOME_TITLE_COLOR_ACCENT = DEFAULT_HOME_TITLE_COLOR_PRIMARY
+
+        /** 旧版本的默认强调色。老配置里读到这个值就当作「没自定义过」，按单色处理。 */
+        private const val LEGACY_HOME_TITLE_COLOR_ACCENT = 0xFF4F5BE8.toInt()
     }
 
     fun saveDynamicColorState(enabled: Boolean) {

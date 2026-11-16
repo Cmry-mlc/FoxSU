@@ -174,3 +174,9 @@ pub fn get_asset(name: &str) -> Result<std::borrow::Cow<'static, [u8]>> {
     let asset = asset.ok_or_else(|| anyhow::anyhow!("asset not found: {name}"))?;
     Ok(asset.data)
 }
+
+/// 返回内嵌资源的字节借用，供内置 Zygisk 引擎安装使用。
+/// 与 [get_asset] 共用同一套按架构选择的资源集合。
+pub fn get_asset_data(name: &str) -> Result<std::borrow::Cow<'static, [u8]>> {
+    get_asset(name)
+}

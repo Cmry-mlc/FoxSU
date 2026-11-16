@@ -193,7 +193,8 @@ class ThemeConfig(
     var homeTitle by mutableStateOf("KuaiMaoSU")
     var homeTitleSplit by mutableIntStateOf(5)
     var homeTitleColorPrimary by mutableIntStateOf(0xFF101322.toInt())
-    var homeTitleColorAccent by mutableIntStateOf(0xFF71717A.toInt())
+    // 默认与主色同色：标题整串一个颜色
+    var homeTitleColorAccent by mutableIntStateOf(0xFF101322.toInt())
 
     fun resetBackgroundState() {
         backgroundImageLoaded = false
@@ -215,7 +216,7 @@ class ThemeConfig(
         homeTitle = "KuaiMaoSU"
         homeTitleSplit = 5
         homeTitleColorPrimary = 0xFF101322.toInt()
-        homeTitleColorAccent = 0xFF4F5BE8.toInt()
+        homeTitleColorAccent = ThemeRepository.DEFAULT_HOME_TITLE_COLOR_ACCENT
         appFontId = AppFonts.SYSTEM_ID
         homeKicker = ThemeRepository.DEFAULT_HOME_KICKER
         kickerTicker = true

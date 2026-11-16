@@ -21,6 +21,7 @@ import com.kuaimaosu.manager.ui.component.SkeletonSwap
 import com.kuaimaosu.manager.ui.component.rememberSkeletonPhase
 import com.kuaimaosu.manager.ui.component.rememberSkeletonVisible
 import com.kuaimaosu.manager.ui.component.KuaiMaoPageTitle
+import com.kuaimaosu.manager.ui.component.KuaiMaoTopActions
 import com.kuaimaosu.manager.ui.component.KuaiMaoRowDivider
 import com.kuaimaosu.manager.ui.theme.KuaiMaoColors
 import com.kuaimaosu.manager.ui.theme.renderBackgroundBlur
@@ -56,6 +57,7 @@ import androidx.compose.material.icons.automirrored.twotone.Article
 import androidx.compose.material.icons.automirrored.twotone.Undo
 import androidx.compose.material.icons.twotone.Adb
 import androidx.compose.material.icons.twotone.BugReport
+import androidx.compose.material.icons.twotone.Bolt
 import androidx.compose.material.icons.twotone.Delete
 import androidx.compose.material.icons.twotone.DeleteForever
 import androidx.compose.material.icons.twotone.ElectricalServices
@@ -232,6 +234,14 @@ fun SettingsPage(bottomPadding: Dp) {
             route = Route.MountController,
         ),
         KuaiMaoCategory(
+            title = "内置Zygisk",
+            summary = "无需模块的 Zygisk",
+            count = 3,
+            icon = Icons.TwoTone.Bolt,
+            tone = KuaiMaoTones.amber,
+            route = Route.ZygiskEngine,
+        ),
+        KuaiMaoCategory(
             title = "工具",
             summary = "日志 · 动态管理器 · Umount 路径",
             count = 3 + if (status.lkmMode == true && !status.isLateLoadMode) 1 else 0,
@@ -245,7 +255,7 @@ fun SettingsPage(bottomPadding: Dp) {
             count = 4,
             icon = Icons.TwoTone.Info,
             tone = KuaiMaoTones.neutral,
-            route = Route.SettingsAbout,
+            route = Route.About,
         ),
     )
 
@@ -268,19 +278,24 @@ fun SettingsPage(bottomPadding: Dp) {
                 .fillMaxSize()
                 .padding(top = innerPadding.calculateTopPadding()),
         ) {
-            // 标题固定在顶部，下面只有卡片列表滚动
-            Column(
+            // 标题固定在顶部，下面只有卡片列表滚动。
+            // 右侧是全局动作条（通知 + 重启），与其他三个页签同一套位置。
+            Spacer(modifier = Modifier.height(10.dp))
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Spacer(modifier = Modifier.height(10.dp))
                 KuaiMaoPageTitle(
                     title = "设置",
                     subtitle = "KuaiMaoSU · V${BuildConfig.VERSION_NAME}",
+                    modifier = Modifier.weight(1f),
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.width(10.dp))
+                KuaiMaoTopActions()
             }
+            Spacer(modifier = Modifier.height(16.dp))
 
             Column(
                 modifier = Modifier

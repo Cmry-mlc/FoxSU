@@ -98,6 +98,8 @@ import com.kuaimaosu.manager.domain.model.SuperUserLoadFailure
 import com.kuaimaosu.manager.ui.component.ConfirmResult
 import com.kuaimaosu.manager.ui.component.PackageIcon
 import com.kuaimaosu.manager.ui.component.SearchAppBar
+import com.kuaimaosu.manager.ui.component.KuaiMaoTopActionSlot
+import com.kuaimaosu.manager.ui.component.KuaiMaoTopActions
 import com.kuaimaosu.manager.ui.component.SwipeableSnackbarHost
 import com.kuaimaosu.manager.ui.component.WarningCard
 import com.kuaimaosu.manager.ui.component.rememberConfirmDialog
@@ -233,50 +235,40 @@ fun SuperUserPage(bottomPadding: Dp) {
                             style = KuaiMaoType.pageSub,
                         )
                     }
-                    Box {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(KuaiMaoColors.canvasCard)
-                                .clickable { showDropdown = true },
-                            contentAlignment = Alignment.Center,
-                        ) {
+                    Spacer(modifier = Modifier.width(10.dp))
+                    // 页面自己的两个动作与「通知 + 重启」共用一条动作条，
+                    // 四枚图标同高同宽，只留一条圆角底，不再是一排孤立方块。
+                    KuaiMaoTopActions {
+                        Box {
+                            KuaiMaoTopActionSlot(onClick = { showDropdown = true }) {
+                                Icon(
+                                    imageVector = Icons.TwoTone.Tune,
+                                    contentDescription = stringResource(R.string.settings),
+                                    tint = KuaiMaoColors.textSec,
+                                    modifier = Modifier.size(19.dp),
+                                )
+                            }
+                            SuperUserDropdown(
+                                expanded = showDropdown,
+                                onDismissRequest = { showDropdown = false },
+                                viewModel = viewModel,
+                                uiState = uiState,
+                                onBackupAllowlist = {
+                                    backupLauncher.launch(createAllowlistBackupFileName())
+                                },
+                                onRestoreAllowlist = {
+                                    restoreLauncher.launch(arrayOf("application/octet-stream"))
+                                },
+                            )
+                        }
+                        KuaiMaoTopActionSlot(onClick = { navigator.push(Route.Sulog) }) {
                             Icon(
-                                imageVector = Icons.TwoTone.Tune,
-                                contentDescription = stringResource(R.string.settings),
+                                imageVector = Icons.AutoMirrored.TwoTone.Article,
+                                contentDescription = stringResource(R.string.sulog),
                                 tint = KuaiMaoColors.textSec,
                                 modifier = Modifier.size(19.dp),
                             )
                         }
-                        SuperUserDropdown(
-                            expanded = showDropdown,
-                            onDismissRequest = { showDropdown = false },
-                            viewModel = viewModel,
-                            uiState = uiState,
-                            onBackupAllowlist = {
-                                backupLauncher.launch(createAllowlistBackupFileName())
-                            },
-                            onRestoreAllowlist = {
-                                restoreLauncher.launch(arrayOf("application/octet-stream"))
-                            },
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(KuaiMaoColors.canvasCard)
-                            .clickable { navigator.push(Route.Sulog) },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.TwoTone.Article,
-                            contentDescription = stringResource(R.string.sulog),
-                            tint = KuaiMaoColors.textSec,
-                            modifier = Modifier.size(19.dp),
-                        )
                     }
                 }
                 Spacer(modifier = Modifier.height(14.dp))

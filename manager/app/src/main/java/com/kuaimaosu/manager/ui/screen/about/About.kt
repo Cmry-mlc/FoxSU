@@ -24,10 +24,11 @@ import androidx.compose.material.icons.automirrored.twotone.KeyboardArrowLeft
 import androidx.compose.material.icons.twotone.ChevronRight
 import androidx.compose.material.icons.twotone.Code
 import androidx.compose.material.icons.twotone.Copyright
-import androidx.compose.material.icons.twotone.Difference
+import androidx.compose.material.icons.twotone.Description
 import androidx.compose.material.icons.twotone.Favorite
 import androidx.compose.material.icons.twotone.Group
 import androidx.compose.material.icons.twotone.Info
+import androidx.compose.material.icons.twotone.Palette
 import androidx.compose.material.icons.twotone.Update
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -196,6 +197,20 @@ fun AboutScreen() {
 
             item {
                 KuaiMaoCard {
+                    // 版本与法律信息：从旧的「设置 → 关于」页搬过来，两个入口合成一页，
+                    // 不再有两套「关于」。这两行只是信息，没有下级页面，所以不带箭头。
+                    KuaiMaoRow(
+                        icon = Icons.TwoTone.Info,
+                        title = "版本信息",
+                        description = "V${BuildConfig.VERSION_NAME} · ${BuildConfig.VERSION_CODE}",
+                    )
+                    KuaiMaoRowDivider()
+                    KuaiMaoRow(
+                        icon = Icons.TwoTone.Description,
+                        title = "法律信息",
+                        description = "开源协议与免责声明",
+                    )
+                    KuaiMaoRowDivider()
                     KuaiMaoRow(
                         icon = Icons.TwoTone.Code,
                         title = stringResource(R.string.get_source_code),
@@ -223,16 +238,8 @@ fun AboutScreen() {
                     KuaiMaoRow(
                         icon = Icons.TwoTone.Favorite,
                         title = "开源致谢",
-                        description = "上游项目 · 作者头像 · 仓库与协议",
+                        description = "上游项目 · 仓库与协议",
                         onClick = { navigator.push(Route.Credits) },
-                        trailing = { Arrow() },
-                    )
-                    KuaiMaoRowDivider()
-                    KuaiMaoRow(
-                        icon = Icons.TwoTone.Difference,
-                        title = "修改清单",
-                        description = "相对 BakaSU 的全部改动，按模块列出",
-                        onClick = { navigator.push(Route.Modifications) },
                         trailing = { Arrow() },
                     )
                 }
@@ -242,9 +249,11 @@ fun AboutScreen() {
             item {
                 KuaiMaoCard {
                     KuaiMaoRow(
-                        icon = Icons.TwoTone.Info,
+                        icon = Icons.TwoTone.Palette,
                         title = "图标与视觉",
-                        description = "图标作者 尘梦如烟",
+                        description = "应用图标作者 尘梦如烟",
+                        onClick = { navigator.push(Route.IconCredits) },
+                        trailing = { Arrow() },
                     )
                     KuaiMaoRowDivider()
                     KuaiMaoRow(

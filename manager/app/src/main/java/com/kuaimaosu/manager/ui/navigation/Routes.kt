@@ -18,6 +18,11 @@ sealed interface Route :
     @Serializable
     data object About : Route
 
+    /** 图标与视觉：应用图标作者、图标来源声明。 */
+    @Parcelize
+    @Serializable
+    data object IconCredits : Route
+
     @Parcelize
     @Serializable
     data object OpenSourceLicense : Route
@@ -74,10 +79,6 @@ sealed interface Route :
     @Parcelize
     @Serializable
     data object SettingsTools : Route
-
-    @Parcelize
-    @Serializable
-    data object SettingsAbout : Route
 
     @Parcelize
     @Serializable
@@ -205,6 +206,11 @@ sealed interface Route :
     @Parcelize
     @Serializable
     data object MountController : Route
+
+    /** 内置 Zygisk 引擎（FolkZygisk）：状态与开关。 */
+    @Parcelize
+    @Serializable
+    data object ZygiskEngine : Route
 
     @Parcelize
     @Serializable
