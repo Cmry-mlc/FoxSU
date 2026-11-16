@@ -17,7 +17,7 @@ class ManagerUpdateRepository(
     private companion object {
         const val UPDATE_CALL_TIMEOUT_SECONDS = 8L
         const val TAG = "ManagerUpdateRepository"
-        const val REPOSITORY = "Cmry-mlc/FoxSu"
+        const val REPOSITORY = "Cmry-mlc/KuaiMaoSU"
         const val WORKFLOW_FILE = "build-manager.yml"
         const val BRANCH = "main"
         const val RELEASE_ARTIFACT = "Manager-release"

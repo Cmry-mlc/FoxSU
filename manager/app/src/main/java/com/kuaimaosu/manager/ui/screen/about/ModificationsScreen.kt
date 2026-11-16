@@ -333,7 +333,7 @@ fun ModificationsScreen() {
 
             item {
                 Text(
-                    text = "这份清单随版本更新。源码与提交记录：github.com/Cmry-mlc/FoxSu",
+                    text = "这份清单随版本更新。源码与提交记录：github.com/Cmry-mlc/KuaiMaoSU",
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     color = KuaiMaoColors.textMuted,

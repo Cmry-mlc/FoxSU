@@ -309,7 +309,7 @@ fun CreditsScreen() {
                         icon = Icons.TwoTone.Code,
                         title = "本项目的源码",
                         description = "GPL-3.0 · 修改与分发需同样开源",
-                        onClick = { uriHandler.openUri("https://github.com/Cmry-mlc/FoxSu") },
+                        onClick = { uriHandler.openUri("https://github.com/Cmry-mlc/KuaiMaoSU") },
                     )
                     KuaiMaoRowDivider()
                     KuaiMaoRow(
