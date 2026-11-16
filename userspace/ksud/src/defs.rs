@@ -86,6 +86,17 @@ mod android {
     pub const DYNAMIC_MANAGER: &str = concatcp!(WORKING_DIR, ".dynamic_manager");
     pub const SUSFS_CONFIG: &str = concatcp!(WORKING_DIR, ".susfs.json");
 
+    // 内置挂载控制器（OverlayFS + Magic Mount）
+    pub const MOUNT_CONFIG_PATH: &str = concatcp!(WORKING_DIR, "mount_config.json");
+    pub const MOUNT_RUN_DIR: &str = concatcp!(WORKING_DIR, "run/");
+    pub const MOUNT_STATE_PATH: &str = concatcp!(MOUNT_RUN_DIR, "mount_state.json");
+    pub const MOUNT_OVERLAY_JOURNAL: &str = concatcp!(MOUNT_RUN_DIR, "overlay_mounts.json");
+    pub const MOUNT_MAGIC_JOURNAL: &str = concatcp!(MOUNT_RUN_DIR, "magic_mounts.json");
+    pub const MOUNT_BOOT_ATTEMPTS: &str = concatcp!(MOUNT_RUN_DIR, "boot_attempts");
+    pub const MOUNT_DISABLED: &str = concatcp!(MOUNT_RUN_DIR, "mount_disabled");
+    pub const MOUNT_BOOT_MARKER: &str = concatcp!(MOUNT_RUN_DIR, "mount_boot_marker");
+    pub const MOUNT_WORK_DIR: &str = "/dev/kuaimaosu";
+
     #[derive(Serialize)]
     pub struct MountInfo {
         pub path: String,

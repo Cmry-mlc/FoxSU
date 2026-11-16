@@ -13,6 +13,12 @@ import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -47,6 +53,7 @@ import androidx.compose.material.icons.twotone.Autorenew
 import androidx.compose.material.icons.twotone.Dock
 import androidx.compose.material.icons.twotone.Layers
 import androidx.compose.material.icons.twotone.Draw
+import androidx.compose.material.icons.twotone.ExpandMore
 import androidx.compose.material.icons.twotone.FormatColorFill
 import androidx.compose.material.icons.twotone.FormatSize
 import androidx.compose.material.icons.twotone.Info
@@ -60,6 +67,7 @@ import androidx.compose.material.icons.twotone.Swipe
 import androidx.compose.material.icons.twotone.Translate
 import androidx.compose.material.icons.twotone.ViewCarousel
 import androidx.compose.material.icons.twotone.Wallpaper
+import androidx.compose.material.icons.twotone.Waves
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -78,11 +86,13 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalConfiguration
@@ -451,7 +461,7 @@ private fun KuaiMaoHomeTitleSection() {
             KuaiMaoSwitchRow(
                 icon = Icons.TwoTone.Autorenew,
                 title = "小字滚动",
-                description = "一行小字持续向左流动；关闭后静止显示",
+                description = "一行小字持续向左流动；关闭后静止显示，诗句仍会轮换",
                 checked = themeConfig.kickerTicker,
                 tone = KuaiMaoTones.blue,
                 onCheckedChange = { checked ->
@@ -655,6 +665,22 @@ private fun KuaiMaoAppearanceSection(
 ) {
     val themeConfig: ThemeConfig = koinInject()
     val backgroundManager: BackgroundManager = koinInject()
+    // DPI 调节条默认收起：它是一条整宽的滑块，放在页面中间很容易被误触，
+    // 点一下「应用 DPI」这一行才展开。
+    var dpiExpanded by rememberSaveable { mutableStateOf(false) }
+    // 背景特效的预览格也默认收起：十几块 92dp 的格子常驻会把页面拉得很长，
+    // 而且每格都在跑动画。点开才展开、才有动画。
+    var effectExpanded by rememberSaveable { mutableStateOf(false) }
+    val effectChevron by animateFloatAsState(
+        targetValue = if (effectExpanded) 180f else 0f,
+        animationSpec = tween(durationMillis = 200),
+        label = "effectChevron",
+    )
+    val dpiChevron by animateFloatAsState(
+        targetValue = if (dpiExpanded) 180f else 0f,
+        animationSpec = tween(durationMillis = 200),
+        label = "dpiChevron",
+    )
     Column {
         KuaiMaoGroupTitle(text = "外观", top = 0.dp)
 
@@ -695,15 +721,43 @@ private fun KuaiMaoAppearanceSection(
                 icon = Icons.TwoTone.FormatSize,
                 title = stringResource(R.string.app_dpi_title),
                 description = stringResource(R.string.app_dpi_summary),
+                onClick = { dpiExpanded = !dpiExpanded },
                 trailing = {
-                    Text(
-                        text = stringResource(dpiFriendlyNameRes(state.tempDpi)),
-                        fontSize = 11.5.sp,
-                        fontWeight = FontWeight.Black,
-                        color = KuaiMaoColors.brand,
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = stringResource(dpiFriendlyNameRes(state.tempDpi)),
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Black,
+                            color = KuaiMaoColors.brand,
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            imageVector = Icons.TwoTone.ExpandMore,
+                            contentDescription = null,
+                            tint = KuaiMaoColors.chevron,
+                            modifier = Modifier
+                                .size(16.dp)
+                                .rotate(dpiChevron),
+                        )
+                    }
                 },
             )
+
+            AnimatedVisibility(
+                visible = dpiExpanded,
+                enter = expandVertically(animationSpec = tween(220)) + fadeIn(tween(180)),
+                exit = shrinkVertically(animationSpec = tween(180)) + fadeOut(tween(120)),
+            ) {
+                Column(modifier = Modifier.padding(bottom = 6.dp)) {
+                    KuaiMaoRowDivider()
+                    Spacer(modifier = Modifier.height(10.dp))
+                    DpiSliderControls(
+                        state = state,
+                        viewModel = viewModel,
+                        coroutineScope = coroutineScope,
+                    )
+                }
+            }
 
             KuaiMaoRowDivider()
             KuaiMaoChoiceRow(
@@ -732,6 +786,17 @@ private fun KuaiMaoAppearanceSection(
                 },
             )
             KuaiMaoRowDivider()
+            KuaiMaoSwitchRow(
+                icon = Icons.TwoTone.AutoAwesome,
+                title = "流光轮廓",
+                description = "大卡片与胶囊底栏描一圈贴着圆角流动的轮廓光，颜色跟随主题色",
+                checked = themeConfig.isEdgeLight,
+                tone = KuaiMaoTones.violet,
+                onCheckedChange = { enabled ->
+                    backgroundManager.saveEdgeLight(enabled)
+                },
+            )
+            KuaiMaoRowDivider()
             KuaiMaoChoiceRow(
                 icon = Icons.TwoTone.Layers,
                 title = "胶囊质感",
@@ -750,28 +815,50 @@ private fun KuaiMaoAppearanceSection(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        KuaiMaoCard(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)) {
-            DpiSliderControls(
-                state = state,
-                viewModel = viewModel,
-                coroutineScope = coroutineScope,
-            )
-        }
-
         KuaiMaoGroupTitle(text = "背景特效")
 
-        Text(
-            text = "全部程序化绘制，颜色跟随主题色，透明度很低、不影响阅读",
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Medium,
-            color = KuaiMaoColors.textTer,
-            modifier = Modifier.padding(start = 4.dp, end = 4.dp, bottom = 10.dp),
-        )
+        KuaiMaoCard {
+            KuaiMaoRow(
+                icon = Icons.TwoTone.Waves,
+                title = "特效样式",
+                description = "全部程序化绘制，颜色跟随主题色，透明度很低、不影响阅读",
+                onClick = { effectExpanded = !effectExpanded },
+                trailing = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = themeConfig.backgroundEffect.label,
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Black,
+                            color = KuaiMaoColors.brand,
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            imageVector = Icons.TwoTone.ExpandMore,
+                            contentDescription = null,
+                            tint = KuaiMaoColors.chevron,
+                            modifier = Modifier
+                                .size(16.dp)
+                                .rotate(effectChevron),
+                        )
+                    }
+                },
+            )
 
-        BackgroundEffectPicker(
-            selected = themeConfig.backgroundEffect,
-            onSelect = { backgroundManager.saveBackgroundEffect(it) },
-        )
+            AnimatedVisibility(
+                visible = effectExpanded,
+                enter = expandVertically(animationSpec = tween(240)) + fadeIn(tween(200)),
+                exit = shrinkVertically(animationSpec = tween(200)) + fadeOut(tween(120)),
+            ) {
+                Column {
+                    KuaiMaoRowDivider()
+                    BackgroundEffectPicker(
+                        selected = themeConfig.backgroundEffect,
+                        onSelect = { backgroundManager.saveBackgroundEffect(it) },
+                        modifier = Modifier.padding(top = 14.dp, bottom = 14.dp),
+                    )
+                }
+            }
+        }
 
         Spacer(modifier = Modifier.height(18.dp))
 

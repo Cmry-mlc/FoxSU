@@ -105,6 +105,10 @@ pub fn on_post_fs_data() -> Result<()> {
         warn!("init features failed: {e}");
     }
 
+    // 内核没有内建 SUSFS 时，按需加载守卫 LKM。必须在写入 susfs 配置之前，
+    // 否则命令发出去时内核里还没有 supercall 接收者。
+    crate::android::susfs::lkm::load_if_autoload_enabled();
+
     // Load susfs config entries that must capture metadata before mounts/overlays.
     crate::android::susfs::init_event::on_post_fs_data();
 
@@ -131,6 +135,12 @@ pub fn on_post_fs_data() -> Result<()> {
     // Load umount config and apply to kernel
     if let Err(e) = crate::android::umount_config::load_umount_config() {
         warn!("load umount config failed: {e}");
+    }
+
+    // 内置挂载控制器：没有 metamodule 时由 ksud 自己挂载模块。
+    // 必须在 post-mount.d 之前完成，post-mount 脚本会检查挂载结果。
+    if let Err(e) = crate::android::mount::apply(false) {
+        warn!("module mount failed: {e:#}");
     }
 
     run_stage("post-mount", wait);
@@ -200,6 +210,9 @@ pub fn on_boot_completed() {
     info!("on_boot_completed triggered!");
 
     crate::android::preinit::on_boot_completed();
+
+    // 挂载撑到开机完成：清掉失败计数和防砖标记
+    crate::android::mount::on_boot_completed();
 
     run_stage("boot-completed", ScriptWait::NoWait);
     // Load susfs boot-completed

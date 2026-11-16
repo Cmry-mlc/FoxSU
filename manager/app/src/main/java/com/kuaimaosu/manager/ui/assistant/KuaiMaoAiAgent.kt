@@ -12,7 +12,7 @@ import org.json.JSONObject
  * 把模型接成「能动手」的助手。
  *
  * 模型不再只是回一段话：它可以选择调用 open_page / set_capsule_effect /
- * play_music 这些工具，由 [KuaiMaoAssistantRuntime] 真正执行，再把执行结果
+ * set_blur 这些工具，由 [KuaiMaoAssistantRuntime] 真正执行，再把执行结果
  * 回填给模型，让它用一句人话总结。最多四轮，避免模型反复试错卡死。
  */
 object KuaiMaoAiAgent {
@@ -61,33 +61,6 @@ object KuaiMaoAiAgent {
                             .put("enum", JSONArray(listOf("capsule", "traditional", "rail"))),
                     ),
                     required = listOf("style"),
-                ),
-            )
-            put(
-                function(
-                    name = "play_music",
-                    description = "在线搜索并播放音乐。用户说「放首歌」「播放周杰伦」时用；" +
-                        "没给歌名就传空字符串，打开音乐页并播放热门。",
-                    properties = JSONObject().put(
-                        "query",
-                        JSONObject()
-                            .put("type", "string")
-                            .put("description", "歌名 / 歌手，没有就传空字符串"),
-                    ),
-                    required = listOf("query"),
-                ),
-            )
-            put(
-                function(
-                    name = "music_control",
-                    description = "控制正在播放的音乐。",
-                    properties = JSONObject().put(
-                        "command",
-                        JSONObject()
-                            .put("type", "string")
-                            .put("enum", JSONArray(listOf("pause", "resume", "next", "previous", "stop"))),
-                    ),
-                    required = listOf("command"),
                 ),
             )
             put(
@@ -230,8 +203,6 @@ object KuaiMaoAiAgent {
                 else -> null
             }
 
-            "play_music" -> AssistantAction.PlayMusic(args.optString("query").takeIf { it.isNotBlank() })
-            "music_control" -> AssistantAction.MusicControl(args.optString("command"))
             "set_volume" -> AssistantAction.SetVolume(args.optInt("percent", 50))
             "set_blur" -> AssistantAction.SetBlur(args.optBoolean("enabled", true))
             "set_background_dim" -> AssistantAction.SetBackgroundDim(args.optInt("percent", 0))
@@ -242,7 +213,7 @@ object KuaiMaoAiAgent {
 
     private fun systemPrompt(settings: AiSettings): String = buildString {
         append(settings.systemPrompt)
-        append("\n\n你可以直接操作 App：打开页面、切换底栏样式与质感、开关模糊、调暗度、搜歌播放、控制播放与音量。")
+        append("\n\n你可以直接操作 App：打开页面、切换底栏样式与质感、开关模糊、调暗度、调音量。")
         append("用户给出明确指令时，优先调用工具执行，再简短说明结果；不要只回复「请手动打开」。")
         append("\n可打开的页面：")
         append(AppDestinations.all.joinToString("；") { "${it.id}=${it.label}" })

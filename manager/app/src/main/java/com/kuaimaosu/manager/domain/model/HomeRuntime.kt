@@ -27,6 +27,8 @@ data class HomeSystemInfo(
     val susfsVersionSupported: Boolean = false,
     val susfsVersion: String = "",
     val susfsFeatures: String = "",
+    /** susfs_guard_lkm 是否已经加载进内核（区别于内核内建 SUSFS）。 */
+    val susfsLkmLoaded: Boolean = false,
     val superuserCount: Int = 0,
     val moduleCount: Int = 0,
     val managersList: ManagerRuntimeInfo? = null,

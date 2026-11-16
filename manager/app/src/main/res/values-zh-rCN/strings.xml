@@ -293,6 +293,9 @@
     <string name="predictive_back_animation_aosp">AOSP</string>
     <string name="predictive_back_animation_scale">缩放</string>
     <string name="predictive_back_animation_ksu_classic">KernelSU 经典</string>
+    <string name="predictive_back_animation_depth">层叠</string>
+    <string name="predictive_back_animation_slide_up">上浮</string>
+    <string name="predictive_back_animation_cube">立方</string>
     <string name="predictive_back_exit_direction_follow_gesture">跟随手势</string>
     <string name="predictive_back_exit_direction_always_right">始终向右</string>
     <string name="predictive_back_exit_direction_always_left">始终向左</string>

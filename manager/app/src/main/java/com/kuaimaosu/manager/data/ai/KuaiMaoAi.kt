@@ -27,7 +27,7 @@ data class AiSettings(
     val maxTokens: Int = 2048,
     val systemPrompt: String =
         "你是 KuaiMaoSU 内置助手，负责解答内核、Root 与模块相关问题，回答保持简洁专业。" +
-            "你能直接操作 App：切换底栏样式与质感、开关模糊、打开任意页面、搜歌播放与控制播放。",
+            "你能直接操作 App：切换底栏样式与质感、开关模糊、打开任意页面、调音量。",
 ) {
     val isConfigured: Boolean get() = apiKey.isNotBlank() && baseUrl.isNotBlank() && model.isNotBlank()
 }

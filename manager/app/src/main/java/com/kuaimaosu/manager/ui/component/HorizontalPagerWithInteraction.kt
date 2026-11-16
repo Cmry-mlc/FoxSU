@@ -21,8 +21,10 @@ import com.kuaimaosu.manager.ui.theme.LocalBackgroundRenderState
 import com.kuaimaosu.manager.ui.util.LocalPagerPage
 import com.kuaimaosu.manager.ui.util.LocalPagerState
 import top.yukonga.miuix.kmp.nav.core.LocalNavTransitionScope
+import top.yukonga.miuix.kmp.utils.PagerFlingTrackerConnection
 import top.yukonga.miuix.kmp.utils.PagerGestureNestedScrollConnection
-import top.yukonga.miuix.kmp.utils.horizontalPagerSwipeOverride
+import top.yukonga.miuix.kmp.utils.PagerInterceptionMode
+import top.yukonga.miuix.kmp.utils.iosStyleMomentumHalt
 
 @Composable
 fun HorizontalPagerWithInteraction(
@@ -53,20 +55,38 @@ fun HorizontalPagerWithInteraction(
             contentReady = true
         }
     }
+    // 兜底：万一转场状态没回到「结束」，页面会一直不预组合，
+    // 左右滑动时就会翻出一张白页。给个上限，保证邻页一定会被组合出来。
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(700)
+        contentReady = true
+    }
     val nestedConnection = pageNestedScrollConnection ?: PagerDefaults.pageNestedScrollConnection(
         state = state,
         orientation = Orientation.Horizontal,
     )
+
+    // 页面切换手势：三个档位在这里统一分发，主界面和内页走同一套。
+    // 跨轴拦截：pager 自带拖拽关掉，改用我们自己的手势层（能抢在竖向滚动之前接管）。
+    // iOS 风格：保留自带拖拽，只加「按下即刹住子级惯性」。
+    val pagerMode = LocalPagerInterceptionMode.current
+    val crossAxisSwipe = enableGestureOverride && pagerMode == PagerInterceptionMode.CrossAxisInterceptor
+    val haltMomentum = enableGestureOverride && pagerMode == PagerInterceptionMode.TapToHalt
+    val flingTracker = remember { PagerFlingTrackerConnection() }
+
     HorizontalPager(
         state = state,
-        modifier = if (enableGestureOverride) {
-            modifier.horizontalPagerSwipeOverride(state, enabled = userScrollEnabled)
-        } else {
-            modifier
+        modifier = when {
+            crossAxisSwipe -> modifier.crossAxisPagerSwipe(state, enabled = userScrollEnabled)
+            haltMomentum -> modifier.iosStyleMomentumHalt(
+                flingTracker = flingTracker,
+                enabled = userScrollEnabled,
+            )
+            else -> modifier
         },
-        userScrollEnabled = if (enableGestureOverride) false else userScrollEnabled,
+        userScrollEnabled = if (crossAxisSwipe) false else userScrollEnabled,
         beyondViewportPageCount = if (contentReady) state.pageCount else 0,
-        pageNestedScrollConnection = if (enableGestureOverride) {
+        pageNestedScrollConnection = if (crossAxisSwipe) {
             pageNestedScrollConnection ?: PagerGestureNestedScrollConnection
         } else {
             nestedConnection

@@ -15,9 +15,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import com.kuaimaosu.manager.ui.component.KuaiMaoCard
+import com.kuaimaosu.manager.ui.component.SkeletonBone
+import com.kuaimaosu.manager.ui.component.SkeletonLine
+import com.kuaimaosu.manager.ui.component.SkeletonSwap
+import com.kuaimaosu.manager.ui.component.rememberSkeletonPhase
+import com.kuaimaosu.manager.ui.component.rememberSkeletonVisible
 import com.kuaimaosu.manager.ui.component.KuaiMaoPageTitle
 import com.kuaimaosu.manager.ui.component.KuaiMaoRowDivider
 import com.kuaimaosu.manager.ui.theme.KuaiMaoColors
+import com.kuaimaosu.manager.ui.theme.renderBackgroundBlur
 import com.kuaimaosu.manager.ui.theme.KuaiMaoTone
 import com.kuaimaosu.manager.ui.theme.KuaiMaoTones
 import android.annotation.SuppressLint
@@ -58,6 +64,7 @@ import androidx.compose.material.icons.twotone.Fence
 import androidx.compose.material.icons.twotone.FolderDelete
 import androidx.compose.material.icons.twotone.FolderOff
 import androidx.compose.material.icons.twotone.Info
+import androidx.compose.material.icons.twotone.Layers
 import androidx.compose.material.icons.twotone.MusicNote
 import androidx.compose.material.icons.twotone.Policy
 import androidx.compose.material.icons.twotone.RemoveCircle
@@ -163,6 +170,9 @@ fun SettingsPage(bottomPadding: Dp) {
     val homeViewModel = koinViewModel<HomeViewModel>()
     val homeState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val status = homeState.systemStatus
+    // 分类列表本身是静态的，但里面的条数依赖内核运行态（late-load 会多一项），
+    // 首帧统一先铺骨架，等状态回来再换成真实列表，避免条数突然变一条。
+    val skeletonVisible = rememberSkeletonVisible(homeState.isCoreDataLoaded)
 
     val categories = listOf(
         KuaiMaoCategory(
@@ -198,20 +208,28 @@ fun SettingsPage(bottomPadding: Dp) {
             route = Route.SettingsUpdate,
         ),
         KuaiMaoCategory(
-            title = "音乐",
-            summary = "在线搜索 · 后台播放 · 助手可代放",
-            count = null,
-            icon = Icons.TwoTone.MusicNote,
-            tone = KuaiMaoTones.violet,
-            route = Route.Music,
-        ),
-        KuaiMaoCategory(
             title = "AI 设置",
             summary = "模型服务 · 密钥 · 生成参数",
             count = 2,
             icon = Icons.TwoTone.AutoAwesome,
             tone = KuaiMaoTones.rose,
             route = Route.SettingsAi,
+        ),
+        KuaiMaoCategory(
+            title = "SUSFS LKM",
+            summary = "动态加载 · 开机自动加载 · KMI",
+            count = 3,
+            icon = Icons.TwoTone.Security,
+            tone = KuaiMaoTones.violet,
+            route = Route.SuSFSLkm,
+        ),
+        KuaiMaoCategory(
+            title = "挂载控制",
+            summary = "OverlayFS · Magic Mount · 逐模块规则",
+            count = 3,
+            icon = Icons.TwoTone.Layers,
+            tone = KuaiMaoTones.blue,
+            route = Route.MountController,
         ),
         KuaiMaoCategory(
             title = "工具",
@@ -271,26 +289,81 @@ fun SettingsPage(bottomPadding: Dp) {
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp),
             ) {
-            KuaiMaoCard(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 2.dp)) {
-                categories.forEachIndexed { index, category ->
-                    if (index > 0) KuaiMaoRowDivider()
-                    KuaiMaoCategoryRow(category = category) {
-                        navigator.push(category.route)
+            SkeletonSwap(
+                loading = skeletonVisible,
+                skeleton = { SettingsSkeleton() },
+            ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    KuaiMaoCard(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 2.dp)) {
+                        categories.forEachIndexed { index, category ->
+                            if (index > 0) KuaiMaoRowDivider()
+                            KuaiMaoCategoryRow(category = category) {
+                                navigator.push(category.route)
+                            }
+                        }
                     }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = footnote,
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = KuaiMaoColors.textMuted,
+                        modifier = Modifier.padding(start = 2.dp),
+                    )
                 }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = footnote,
-                fontSize = 10.5.sp,
-                fontWeight = FontWeight.Bold,
-                color = KuaiMaoColors.textMuted,
-                modifier = Modifier.padding(start = 2.dp),
-            )
             Spacer(modifier = Modifier.height(bottomPadding + 28.dp))
             }
         }
+    }
+}
+
+/** 设置骨架：九行分类，图标块 + 标题条 + 说明条 + 右侧箭头位，行距与真实行一致。 */
+@Composable
+private fun SettingsSkeleton() {
+    val phase = rememberSkeletonPhase()
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(22.dp))
+                .background(KuaiMaoColors.canvasCard)
+                .renderBackgroundBlur(tintColor = KuaiMaoColors.canvasCardSolid)
+                .padding(horizontal = 16.dp, vertical = 2.dp),
+        ) {
+            repeat(9) { index ->
+                if (index > 0) {
+                    SkeletonLine(widthFraction = 1f, height = 1.dp, phase = phase)
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    SkeletonBone(
+                        modifier = Modifier.size(40.dp),
+                        shape = RoundedCornerShape(13.dp),
+                        phase = phase,
+                    )
+                    Spacer(modifier = Modifier.width(14.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        SkeletonLine(widthFraction = 0.30f, height = 13.dp, phase = phase)
+                        Spacer(modifier = Modifier.height(6.dp))
+                        SkeletonLine(widthFraction = 0.54f, height = 9.dp, phase = phase)
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    SkeletonBone(
+                        modifier = Modifier.size(16.dp),
+                        shape = CircleShape,
+                        phase = phase,
+                    )
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        SkeletonLine(widthFraction = 0.60f, height = 10.dp, phase = phase)
     }
 }
 

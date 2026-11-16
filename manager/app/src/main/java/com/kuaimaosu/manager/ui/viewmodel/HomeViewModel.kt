@@ -20,6 +20,7 @@ import com.kuaimaosu.manager.data.count.CountRepository
 import com.kuaimaosu.manager.data.module.ModuleRepository
 import com.kuaimaosu.manager.data.packageinfo.SuperUserRepository
 import com.kuaimaosu.manager.data.shell.KsuCliRepository
+import com.kuaimaosu.manager.data.susfs.SusfsLkmRepository
 import com.kuaimaosu.manager.data.system.HomeStateRepository
 import com.kuaimaosu.manager.domain.model.HomeDashboardState
 import com.kuaimaosu.manager.domain.model.HomeSystemInfo
@@ -30,6 +31,7 @@ import com.kuaimaosu.manager.domain.usecase.GetHomeBasicInfoUseCase
 import com.kuaimaosu.manager.domain.usecase.GetKernelStatusUseCase
 import com.kuaimaosu.manager.domain.usecase.GetManagerRuntimeInfoUseCase
 import com.kuaimaosu.manager.domain.usecase.GetSuSFSStatusUseCase
+import com.kuaimaosu.manager.domain.usecase.GetSusfsLkmLoadedUseCase
 import com.kuaimaosu.manager.domain.usecase.IsNetworkAvailableUseCase
 import com.kuaimaosu.manager.domain.usecase.RebootUseCase
 import com.kuaimaosu.manager.domain.usecase.SetBooleanPreferenceUseCase
@@ -59,6 +61,8 @@ class HomeViewModel(
     private val getKernelStatus: GetKernelStatusUseCase,
     private val getManagerRuntimeInfo: GetManagerRuntimeInfoUseCase,
     private val getSuSFSStatus: GetSuSFSStatusUseCase,
+    private val getSusfsLkmLoaded: GetSusfsLkmLoadedUseCase,
+    private val susfsLkmRepository: SusfsLkmRepository,
     private val getBasicInfo: GetHomeBasicInfoUseCase,
     private val isNetworkAvailable: IsNetworkAvailableUseCase,
     private val getBooleanPreference: GetBooleanPreferenceUseCase,
@@ -70,7 +74,8 @@ class HomeViewModel(
         superUserRepository.state,
         moduleRepository.installedModules,
         countRepository.state,
-    ) { homeState, superUserState, moduleState, countState ->
+        susfsLkmRepository.loaded,
+    ) { homeState, superUserState, moduleState, countState, susfsLkmLoaded ->
         val superuserCount = if (superUserState.groups.isNotEmpty()) {
             superUserState.groups.filter { it.allowSu }.size
         } else {
@@ -87,6 +92,7 @@ class HomeViewModel(
                 superuserCount = superuserCount,
                 zygiskImplement = ksuCliRepository.getZygiskImplement(),
                 metaModuleImplement = ksuCliRepository.getMetaModuleImplement(),
+                susfsLkmLoaded = susfsLkmLoaded,
             ),
         )
     }.flowOn(Dispatchers.IO).stateIn(
@@ -141,9 +147,16 @@ class HomeViewModel(
                     }
                     val managers = async { getManagerRuntimeInfo() }
                     val susfs = async { getSuSFSStatus() }
+                    // 没激活 KSU 时 ksud 也调不通，直接跳过，别为一个标签去建 root shell。
+                    val susfsLkm = async {
+                        if (kernelStatus.ksuVersion != null) getSusfsLkmLoaded() else false
+                    }
                     val basicInfo = basic.await()
                     val managerInfo = managers.await()
                     val susfsInfo = susfs.await()
+                    // 结果本身不用在这里落地：status() 会顺手刷新 repository.loaded，
+                    // 主页大卡的标签由 combine 直接跟着那个流走。
+                    susfsLkm.await()
                     homeStateRepository.update { current ->
                         current.copy(
                             systemInfo = HomeSystemInfo(

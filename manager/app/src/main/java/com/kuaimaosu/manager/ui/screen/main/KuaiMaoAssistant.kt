@@ -152,7 +152,7 @@ fun KuaiMaoAssistantSheet(
     val scope = rememberCoroutineScope()
     val navigator = LocalNavigator.current
 
-    // 助手执行「打开页面 / 搜歌播放」时会往返回栈里推页面。
+    // 助手执行「打开页面」时会往返回栈里推页面。
     // 这里盯一眼栈深：一旦推了新页就把面板收掉，否则面板会盖在新页面上，
     // 用户以为「说了半天什么都没打开」。
     val initialStackSize = remember { navigator.backStack.size }
@@ -166,7 +166,7 @@ fun KuaiMaoAssistantSheet(
         messages.add(KuaiMaoChatMessage(fromUser = true, text = trimmed))
         input = ""
 
-        // 1) 明确的单步指令（换底栏、切质感、开页面、放歌、调音量）本地直接做，
+        // 1) 明确的单步指令（换底栏、切质感、开页面、调音量）本地直接做，
         //    不走网络：没有配模型的用户也能用，配了的也不会白等一次请求。
         AssistantIntentParser.parse(trimmed)?.let { action ->
             val reply = KuaiMaoAssistantRuntime.execute(action)
@@ -193,7 +193,7 @@ fun KuaiMaoAssistantSheet(
             return
         }
 
-        // 3) 其余交给模型，并且允许它连续调用工具（打开页面、改设置、放歌）。
+        // 3) 其余交给模型，并且允许它连续调用工具（打开页面、改设置）。
         val aiSettings = AiSettingsStore.load(context)
         if (!aiSettings.isConfigured) {
             messages.add(KuaiMaoChatMessage(fromUser = false, text = localReply))
@@ -249,7 +249,7 @@ fun KuaiMaoAssistantSheet(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "改设置 · 开页面 · 放音乐，直接说就行",
+                text = "改设置 · 开页面，直接说就行",
                 fontSize = 10.5.sp,
                 fontWeight = FontWeight.Bold,
                 color = KuaiMaoColors.textMuted,
@@ -277,7 +277,7 @@ fun KuaiMaoAssistantSheet(
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                listOf("换成胶囊底栏", "切到模糊磨砂", "放首歌", "检查系统状态").forEach { suggestion ->
+                listOf("换成胶囊底栏", "切到模糊磨砂", "打开动态管理器", "检查系统状态").forEach { suggestion ->
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(100.dp))

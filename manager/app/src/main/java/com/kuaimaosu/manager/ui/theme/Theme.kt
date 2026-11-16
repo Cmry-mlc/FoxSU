@@ -170,6 +170,13 @@ class ThemeConfig(
     /** 胶囊底栏的质感：液态玻璃 / 模糊磨砂 / 半透明。 */
     var capsuleEffect by mutableStateOf(CapsuleEffect.LIQUID_GLASS)
 
+    /**
+     * ColorOS 17 风格「流光轮廓」：大卡片与胶囊底栏描一圈贴着圆角流动的轮廓光。
+     *
+     * 默认关闭——它是纯装饰，开不开都不影响可读性，交给用户自己选。
+     */
+    var isEdgeLight by mutableStateOf(false)
+
     /** 应用字体：system 为系统默认，其它值为 AppFonts.catalog 里的 id。 */
     var appFontId by mutableStateOf(AppFonts.SYSTEM_ID)
 
@@ -214,6 +221,7 @@ class ThemeConfig(
         kickerTicker = true
         backgroundEffect = BackgroundEffect.NONE
         capsuleEffect = CapsuleEffect.LIQUID_GLASS
+        isEdgeLight = false
     }
 }
 
@@ -299,6 +307,11 @@ class BackgroundManager(
     fun saveCapsuleEffect(effect: CapsuleEffect) {
         config.capsuleEffect = effect
         settings.putString("capsule_effect", effect.id)
+    }
+
+    fun saveEdgeLight(enable: Boolean) {
+        config.isEdgeLight = enable
+        settings.putBoolean("edge_light", enable)
     }
 
     fun saveBackgroundEffect(effect: BackgroundEffect) {
@@ -570,6 +583,7 @@ private fun ThemeInitializer(
         themeConfig.bottomBarStyle = BottomBarStyle.fromOrdinal(settings.getInt("bottom_bar_style", 0))
         themeConfig.backgroundEffect = BackgroundEffect.fromId(settings.getString("background_effect", null))
         themeConfig.capsuleEffect = CapsuleEffect.fromId(settings.getString("capsule_effect", null))
+        themeConfig.isEdgeLight = settings.getBoolean("edge_light", false)
         cardConfig.load()
         backgroundManager.loadCustomBackground()
     }

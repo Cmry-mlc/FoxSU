@@ -37,6 +37,9 @@ enum class PredictiveBackAnimation(val value: String, @param:StringRes val resId
     MIUIX("miuix", R.string.predictive_back_animation_miuix),
     Scale("scale", R.string.predictive_back_animation_scale),
     KernelSUClassic("ksu_classic", R.string.predictive_back_animation_ksu_classic),
+    Depth("depth", R.string.predictive_back_animation_depth),
+    SlideUp("slide_up", R.string.predictive_back_animation_slide_up),
+    Cube("cube", R.string.predictive_back_animation_cube),
     ;
 
     companion object {

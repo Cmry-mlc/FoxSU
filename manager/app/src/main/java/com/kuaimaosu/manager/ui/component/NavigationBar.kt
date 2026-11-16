@@ -1,7 +1,6 @@
 package com.kuaimaosu.manager.ui.activity.component
 
 import android.annotation.SuppressLint
-import android.widget.Toast
 import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -51,16 +50,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.material3.WideNavigationRail
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.WideNavigationRailColors
 import androidx.compose.material3.WideNavigationRailDefaults
 import androidx.compose.material3.WideNavigationRailItem
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.ReadOnlyComposable
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -86,7 +82,6 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -95,6 +90,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kuaimaosu.manager.R
 import com.kuaimaosu.manager.ui.component.FloatingBottomBar
 import com.kuaimaosu.manager.ui.component.FloatingBottomBarItem
 import com.kuaimaosu.manager.ui.screen.BottomBarDestination
@@ -109,7 +105,6 @@ import com.kuaimaosu.manager.ui.util.LocalBlurState
 import com.kuaimaosu.manager.ui.util.LocalHandlePageChange
 import com.kuaimaosu.manager.ui.util.LocalPagerState
 import com.kuaimaosu.manager.ui.util.LocalSelectedPage
-import com.kuaimaosu.manager.ui.viewmodel.HomeUiAction
 import com.kuaimaosu.manager.ui.viewmodel.HomeViewModel
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -121,6 +116,7 @@ fun NavigationBar(
     modifier: Modifier = Modifier,
     destinations: List<BottomBarDestination>,
     isBottomBar: Boolean,
+    onRequestReboot: () -> Unit = {},
 ) {
     val themeConfig: ThemeConfig = koinInject()
     val homeViewModel = koinViewModel<HomeViewModel>()
@@ -131,9 +127,6 @@ fun NavigationBar(
     val page = LocalSelectedPage.current
     val handlePageChange = LocalHandlePageChange.current
     val pagerState = LocalPagerState.current
-
-    var showRebootSheet by remember { mutableStateOf(false) }
-    val context = LocalContext.current
 
     if (isBottomBar) {
         val style = themeConfig.bottomBarStyle
@@ -193,13 +186,14 @@ fun NavigationBar(
                     destinations = destinations,
                     selectedIndex = pagerState.currentPage,
                     onSelected = handlePageChange,
-                    onCenterClick = { showRebootSheet = true },
+                    onCenterClick = onRequestReboot,
                     superuserCount = superuserCount,
                     moduleCount = moduleCount,
                     showBadge = showNavigationBarBadge,
-                    // 质感档位由 FloatingBottomBar 自己读 ThemeConfig 判定，
-                    // 这里只把「全局模糊开关」传下去，别在传参时就把半透明当成关模糊。
-                    isBlurEnabled = themeConfig.isEnableBlur,
+                    // 只有「开关打开」且「真的拿到 backdrop」时才走玻璃。
+                    // 设备不支持 RenderEffect 或 backdrop 为空时退回实心胶囊，
+                    // 否则采样到的是空图层，玻璃会画成一块黑。
+                    isBlurEnabled = themeConfig.isEnableBlur && LocalBlurState.current != null,
                 )
 
                 // 侧边栏在 MainScreen 里走 rail 布局，这里只作为兜底。
@@ -209,26 +203,13 @@ fun NavigationBar(
                     destinations = destinations,
                     selectedIndex = pagerState.currentPage,
                     onSelected = handlePageChange,
-                    onCenterClick = { showRebootSheet = true },
+                    onCenterClick = onRequestReboot,
                     superuserCount = superuserCount,
                     moduleCount = moduleCount,
                     showBadge = showNavigationBarBadge,
                 )
             }
         }
-
-        RebootSheet(
-            visible = showRebootSheet,
-            onDismiss = { showRebootSheet = false },
-            onReboot = { reason ->
-                showRebootSheet = false
-                if (uiState.systemStatus.isRootAvailable) {
-                    homeViewModel.dispatch(HomeUiAction.Reboot(reason))
-                } else {
-                    Toast.makeText(context, "尚未进入工作状态，无法重启", Toast.LENGTH_SHORT).show()
-                }
-            },
-        )
     } else {
         KuaiMaoRailNavigation(
             modifier = modifier,
@@ -379,142 +360,6 @@ private fun DestinationBadge(
     }
 }
 
-
-private data class RebootAction(
-    val label: String,
-    val desc: String,
-    val reason: String,
-    val icon: ImageVector,
-    val danger: Boolean = false,
-)
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun RebootSheet(
-    visible: Boolean,
-    onDismiss: () -> Unit,
-    onReboot: (String) -> Unit,
-) {
-    if (!visible) return
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val actions = listOf(
-        RebootAction("重启", "完整重启设备", "reboot", Icons.TwoTone.RestartAlt),
-        RebootAction("软重启", "仅重启系统界面", "soft_reboot", Icons.TwoTone.Refresh),
-        RebootAction("Recovery", "进入恢复模式", "recovery", Icons.TwoTone.SettingsBackupRestore),
-        RebootAction("Bootloader", "进入引导加载器", "bootloader", Icons.TwoTone.DeveloperBoard),
-        RebootAction("EDL", "进入紧急下载模式", "edl", Icons.TwoTone.Usb, danger = true),
-        RebootAction("关机", "完全关闭设备电源", "poweroff", Icons.TwoTone.PowerSettingsNew, danger = true),
-    )
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        // 面板自己不再填实色：交给内容层按卡片的规则铺（半透明 + 壁纸磨砂），
-        // 否则自定义壁纸下这一整块就是压在壁纸上的实心黑板 / 白板。
-        containerColor = Color.Transparent,
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        dragHandle = null,
-        // 系统栏留白改由内容自己吃（在磨砂层之后），否则面板底部会露出一条
-        // 透明的缝，壁纸直接从缝里穿上来。
-        contentWindowInsets = { WindowInsets(0) },
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
-                .background(KuaiMaoColors.canvasCard)
-                .renderBackgroundBlur(tintColor = KuaiMaoColors.canvasCardSolid)
-                .navigationBarsPadding()
-                .padding(start = 20.dp, end = 20.dp, bottom = 30.dp),
-        ) {
-            // grab 条
-            Box(
-                modifier = Modifier
-                    .padding(top = 10.dp, bottom = 16.dp)
-                    .align(Alignment.CenterHorizontally)
-                    .size(width = 40.dp, height = 4.dp)
-                    .clip(RoundedCornerShape(100.dp))
-                    .background(KuaiMaoColors.lineField),
-            )
-
-            Text(
-                text = "电源与重启",
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Black,
-                letterSpacing = (-0.2).sp,
-                color = KuaiMaoColors.text,
-            )
-            Spacer(modifier = Modifier.height(5.dp))
-            Text(
-                text = "选择一项操作，设备会立即执行",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                color = KuaiMaoColors.textMuted,
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            actions.chunked(2).forEachIndexed { index, row ->
-                if (index > 0) Spacer(modifier = Modifier.height(10.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    row.forEach { action ->
-                        RebootTile(
-                            action = action,
-                            modifier = Modifier.weight(1f),
-                            onClick = { onReboot(action.reason) },
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-/** 设计稿的六宫格 tile：图标在上，标题 13.5/900，描述 9.5，危险项整体转红。 */
-@Composable
-private fun RebootTile(
-    action: RebootAction,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit,
-) {
-    val shape = RoundedCornerShape(16.dp)
-    val accent = if (action.danger) KuaiMaoColors.danger else KuaiMaoColors.brand
-    Column(
-        modifier = modifier
-            .clip(shape)
-            .background(KuaiMaoColors.canvasField)
-            .border(1.5.dp, KuaiMaoColors.line, shape)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 15.dp),
-    ) {
-        Icon(
-            imageVector = action.icon,
-            contentDescription = null,
-            tint = accent,
-            modifier = Modifier.size(18.dp),
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = action.label,
-            fontSize = 13.5.sp,
-            fontWeight = FontWeight.Black,
-            color = if (action.danger) KuaiMaoColors.danger else KuaiMaoColors.textBody,
-            maxLines = 1,
-        )
-        Spacer(modifier = Modifier.height(3.dp))
-        Text(
-            text = action.desc,
-            fontSize = 9.5.sp,
-            fontWeight = FontWeight.Medium,
-            color = KuaiMaoColors.textMuted,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
-}
 
 /**
  * 传统底栏：贴底全宽、顶部一条发丝线，选中项带胶囊底色。
@@ -675,32 +520,41 @@ private fun KuaiMaoClassicNavItem(
     }
 }
 
-/** 传统栏中央电源键：与胶囊栏完全一致的横向圆角块（52×44、16dp 圆角）。 */
+/**
+ * 传统栏中央的重启入口。
+ *
+ * 早先这里是一块 52×44 的实色强调色圆角块，压在一排「图标 + 文字」的 tab 中间，
+ * 视觉上像另一套控件。现在改成与 [KuaiMaoClassicNavItem] 未选中态同一套排版：
+ * 20dp 图标 + 9.5sp 标签，不参与选中，所以永远不带选中胶囊底色。
+ */
 @Composable
 private fun KuaiMaoClassicCenterButton(onClick: () -> Unit) {
-    val shape = RoundedCornerShape(16.dp)
-    val accent = KuaiMaoColors.brand
-    Box(
+    Column(
         modifier = Modifier
-            .padding(horizontal = 6.dp)
-            .size(width = 52.dp, height = 44.dp)
-            .shadow(
-                elevation = 10.dp,
-                shape = shape,
-                clip = false,
-                ambientColor = accent.copy(alpha = 0.34f),
-                spotColor = accent.copy(alpha = 0.44f),
-            )
-            .clip(shape)
-            .background(accent)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
+            .clickable(onClick = onClick)
+            .padding(vertical = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(3.dp),
     ) {
-        Icon(
-            imageVector = Icons.TwoTone.PowerSettingsNew,
-            contentDescription = "电源与重启",
-            tint = onBadgeInk(),
-            modifier = Modifier.size(21.dp),
+        Box(
+            modifier = Modifier.padding(horizontal = 13.dp, vertical = 3.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = Icons.TwoTone.RestartAlt,
+                contentDescription = stringResource(R.string.reboot),
+                tint = KuaiMaoColors.text,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+        Text(
+            text = stringResource(R.string.reboot),
+            color = KuaiMaoColors.text,
+            fontSize = 9.5.sp,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Visible,
         )
     }
 }
@@ -749,12 +603,27 @@ private fun KuaiMaoLiquidBottomBar(
     ) { activate ->
         destinations.forEachIndexed { index, destination ->
             if (index == LIQUID_POWER_SLOT) {
-                // 电源键只是个入口，不参与选中
+                // 电源键只是个入口，不参与选中。图标与字号跟其他 tab 完全一致，
+                // 不再是一块填色的独立胶囊——那种「按钮感」在整条底栏里很跳。
                 FloatingBottomBarItem(
                     selected = false,
                     onClick = onCenterClick,
                 ) {
-                    KuaiMaoPowerGlyph()
+                    Icon(
+                        imageVector = Icons.TwoTone.RestartAlt,
+                        contentDescription = stringResource(R.string.reboot),
+                        tint = LocalContentColor.current,
+                        modifier = Modifier.size(22.dp),
+                    )
+                    Text(
+                        text = stringResource(R.string.reboot),
+                        color = LocalContentColor.current,
+                        fontSize = 9.5.sp,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = TextOverflow.Visible,
+                    )
                 }
             }
             FloatingBottomBarItem(
@@ -793,27 +662,6 @@ private fun KuaiMaoLiquidBottomBar(
                 )
             }
         }
-    }
-}
-
-/** 胶囊栏中间的电源键：纯主题色的独立小胶囊，比导航项高一档，手指好按。 */
-@Composable
-private fun KuaiMaoPowerGlyph() {
-    val accent = KuaiMaoColors.brand
-    Box(
-        modifier = Modifier
-            .padding(horizontal = 2.dp)
-            .size(width = 58.dp, height = 40.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .background(accent),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            imageVector = Icons.TwoTone.PowerSettingsNew,
-            contentDescription = "电源与重启",
-            tint = onBadgeInk(),
-            modifier = Modifier.size(20.dp),
-        )
     }
 }
 

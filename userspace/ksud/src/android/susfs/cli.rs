@@ -221,6 +221,48 @@ pub enum SuSFSSubCommands {
         /// Defaults to /dev/block/by-name/[boot_a|boot_b|boot]
         boot_image: Option<String>,
     },
+
+    /// Manage the SUSFS guard LKM: load, unload, and boot-time auto-load.
+    Lkm {
+        #[command(subcommand)]
+        command: LkmCommand,
+    },
+}
+
+/// SUSFS guard LKM 的子命令。加载的是 ksud 内嵌的 `{kmi}_susfs_guard_lkm.ko`，
+/// 用于内核没有内建 SUSFS 的设备。
+#[derive(Subcommand, Debug)]
+pub enum LkmCommand {
+    /// Load the embedded SUSFS guard LKM for the detected or specified KMI
+    Load {
+        /// Specify kernel KMI instead of auto-detection, e.g. android14-6.1
+        #[arg(long)]
+        kmi: Option<String>,
+    },
+    /// Unload the SUSFS guard LKM
+    Unload,
+    /// Show load state, SUSFS version and auto-load config (key=value lines)
+    Status,
+    /// List the KMI builds bundled in ksud
+    List,
+    /// Configure automatic loading during post-fs-data
+    Autoload {
+        #[command(subcommand)]
+        command: LkmAutoloadCommand,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+pub enum LkmAutoloadCommand {
+    /// Enable auto-load at boot and remember a fallback KMI
+    Enable {
+        #[arg(long)]
+        kmi: Option<String>,
+    },
+    /// Disable auto-load at boot
+    Disable,
+    /// Show whether auto-load is enabled
+    Status,
 }
 
 #[derive(Subcommand, Debug)]
@@ -361,6 +403,26 @@ pub fn run_main(args: SusfsArgs) -> Result<()> {
                 slot_info::show_slot_info_json()?;
             }
         }
+        SuSFSSubCommands::Lkm { command } => match command {
+            LkmCommand::Load { kmi } => crate::android::susfs::lkm::load(kmi.as_deref())?,
+            LkmCommand::Unload => crate::android::susfs::lkm::unload()?,
+            LkmCommand::Status => crate::android::susfs::lkm::status(),
+            LkmCommand::List => {
+                for kmi in crate::android::susfs::lkm::supported_kmi() {
+                    println!("{kmi}");
+                }
+            }
+            LkmCommand::Autoload { command } => match command {
+                LkmAutoloadCommand::Enable { kmi } => {
+                    crate::android::susfs::lkm::set_autoload(true, kmi.as_deref())?
+                }
+                LkmAutoloadCommand::Disable => crate::android::susfs::lkm::set_autoload(false, None)?,
+                LkmAutoloadCommand::Status => println!(
+                    "{}",
+                    if crate::android::susfs::lkm::autoload_enabled() { "enabled" } else { "disabled" }
+                ),
+            },
+        },
     }
 
     Ok(())

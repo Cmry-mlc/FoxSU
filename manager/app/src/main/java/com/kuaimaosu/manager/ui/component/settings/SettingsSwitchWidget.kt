@@ -1,14 +1,6 @@
 package com.kuaimaosu.manager.ui.component.settings
 
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.twotone.Check
-import androidx.compose.material.icons.twotone.Close
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -21,6 +13,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.toggleableState
 import androidx.compose.ui.state.ToggleableState
+import com.kuaimaosu.manager.ui.component.KuaiMaoSwitch
 
 /**
  * A setting widget with a [Switch] trailing content.
@@ -82,24 +75,13 @@ fun SettingsSwitchWidget(
         description = description,
         descriptionColumnContent = descriptionColumnContent,
         containerColor = containerColor,
-    ) { interactionSource ->
-        Switch(
+    ) { _ ->
+        // 全项目统一的手感：灰轨道 + 黑圆盘 K 猫头。
+        // onCheckedChange 传 null，触摸交给外层 BaseWidget，水波位置才对得上。
+        KuaiMaoSwitch(
             modifier = Modifier.clearAndSetSemantics {},
             enabled = enabled,
             checked = checked,
-            interactionSource = interactionSource,
-            colors = SwitchDefaults.colors(
-                checkedIconColor = MaterialTheme.colorScheme.primary,
-                uncheckedIconColor = MaterialTheme.colorScheme.surfaceBright,
-            ),
-            thumbContent = {
-                Icon(
-                    imageVector = if (checked) Icons.TwoTone.Check else Icons.TwoTone.Close,
-                    contentDescription = null,
-                    modifier = Modifier.size(SwitchDefaults.IconSize),
-                )
-            },
-            // Pass null to disable internal touch handling and let BaseWidget calculate the exact ripple coordinates
             onCheckedChange = null,
         )
     }

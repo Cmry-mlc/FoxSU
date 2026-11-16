@@ -16,4 +16,7 @@ fun installerNavTransition(
     PredictiveBackAnimation.AOSP -> AospNavTransition
     PredictiveBackAnimation.Scale -> scaleNavTransition(exitDirection)
     PredictiveBackAnimation.KernelSUClassic -> ClassicNavTransition
+    PredictiveBackAnimation.Depth -> DepthStackNavTransition
+    PredictiveBackAnimation.SlideUp -> SlideUpNavTransition
+    PredictiveBackAnimation.Cube -> CubeNavTransition
 }

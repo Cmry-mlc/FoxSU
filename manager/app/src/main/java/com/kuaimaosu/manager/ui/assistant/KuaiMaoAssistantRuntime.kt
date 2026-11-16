@@ -2,8 +2,6 @@ package com.kuaimaosu.manager.ui.assistant
 
 import android.content.Context
 import android.media.AudioManager
-import com.kuaimaosu.manager.data.music.KuaiMaoMusicApi
-import com.kuaimaosu.manager.data.music.KuaiMaoMusicPlayer
 import com.kuaimaosu.manager.ui.navigation.Navigator
 import com.kuaimaosu.manager.ui.navigation.Route
 import com.kuaimaosu.manager.ui.theme.BackgroundManager
@@ -51,7 +49,6 @@ object AppDestinations {
         AppDestination("log", "日志", listOf("日志", "log", "sulog"), Route.Sulog),
         AppDestination("about", "关于", listOf("关于", "版本", "开源许可"), Route.About),
         AppDestination("ai_settings", "AI 设置", listOf("ai 设置", "模型设置", "api"), Route.SettingsAi),
-        AppDestination("music", "音乐", listOf("音乐", "播放器", "听歌", "歌曲"), Route.Music),
     )
 
     fun find(query: String): AppDestination? {
@@ -75,34 +72,23 @@ sealed interface AssistantAction {
     data class SetBlur(val enabled: Boolean) : AssistantAction
     data class SetBackgroundDim(val percent: Int) : AssistantAction
     data class SetCardAlpha(val percent: Int) : AssistantAction
-    data class PlayMusic(val query: String?) : AssistantAction
-    data class MusicControl(val command: String) : AssistantAction
     data class SetVolume(val percent: Int) : AssistantAction
 }
 
 /**
  * 本地指令解析。
  *
- * 不需要联网就能处理「把底栏换成胶囊」「打开动态管理器」「播放周杰伦」这类
+ * 不需要联网就能处理「把底栏换成胶囊」「打开动态管理器」这类
  * 明确指令——先本地执行，没命中才交给模型。这样即使没配 API Key，
  * 助手也是能干活的状态，而不是一个只会聊天的输入框。
  */
 object AssistantIntentParser {
-    private val playPrefixes = listOf(
-        "帮我播放", "帮我放", "给我播放", "我想听", "我要听", "播放", "放一首", "放首", "听", "来一首",
-        "play", "播放一下",
-    )
-
     fun parse(raw: String): AssistantAction? {
         val text = raw.trim()
         if (text.isEmpty()) return null
         val q = text.lowercase()
 
-        // 1) 音乐播放 / 控制
-        musicControl(q)?.let { return it }
-        parseMusicQuery(text)?.let { return it }
-
-        // 2) 音量
+        // 1) 音量
         if (q.contains("音量")) {
             val value = Regex("(\\d{1,3})").find(q)?.groupValues?.get(1)?.toIntOrNull()
             if (value != null) return AssistantAction.SetVolume(value.coerceIn(0, 100))
@@ -117,35 +103,6 @@ object AssistantIntentParser {
         // 5) 页面跳转
         AppDestinations.find(q)?.let { return AssistantAction.OpenPage(it.id) }
         return null
-    }
-
-    private fun musicControl(q: String): AssistantAction? = when {
-        q.contains("暂停") || q.contains("pause") -> AssistantAction.MusicControl("pause")
-        q.contains("继续播放") || q.contains("恢复播放") || q.contains("继续放") ->
-            AssistantAction.MusicControl("resume")
-        q.contains("下一首") || q.contains("切歌") || q.contains("next") -> AssistantAction.MusicControl("next")
-        q.contains("上一首") || q.contains("previous") -> AssistantAction.MusicControl("previous")
-        q.contains("停止播放") || q.contains("关掉音乐") || q.contains("别放了") ->
-            AssistantAction.MusicControl("stop")
-        q.contains("打开音乐") || q.contains("音乐播放器") || q.contains("打开播放器") ->
-            AssistantAction.OpenPage("music")
-        else -> null
-    }
-
-    private fun parseMusicQuery(text: String): AssistantAction? {
-        val lower = text.lowercase()
-        val prefix = playPrefixes.firstOrNull { lower.startsWith(it) } ?: return null
-        val rest = text.substring(prefix.length)
-            .trim()
-            .removePrefix("：")
-            .removePrefix(":")
-            .removeSuffix("吧")
-            .removeSuffix("。")
-            .trim()
-        // 「放首歌」「播放音乐」这类没有具体歌名的说法，按「打开音乐页放热门」处理，
-        // 不然会拿「歌」「音乐」两个词去搜索，搜出一堆不相关的东西。
-        val generic = setOf("", "歌", "首歌", "一首", "音乐", "点歌", "歌曲", "吧")
-        return AssistantAction.PlayMusic(rest.takeIf { it !in generic })
     }
 
     private fun parseBottomBar(text: String): AssistantAction? {
@@ -244,10 +201,6 @@ object KuaiMaoAssistantRuntime {
             }
             if (result.isSuccess) "媒体音量已调到 ${action.percent}%。" else "调整音量失败。"
         }
-
-        is AssistantAction.PlayMusic -> playMusic(action.query)
-
-        is AssistantAction.MusicControl -> musicControl(action.command)
     }
 
     private fun openPage(pageId: String): String {
@@ -256,67 +209,5 @@ object KuaiMaoAssistantRuntime {
         val nav = navigator ?: return "导航还没准备好，请稍后再试。"
         nav.push(destination.route)
         return "已打开${destination.label}。"
-    }
-
-    private fun musicControl(command: String): String = when (command) {
-        "pause" -> {
-            val state = KuaiMaoMusicPlayer.state.value
-            if (state.playing) KuaiMaoMusicPlayer.toggle()
-            if (state.hasTrack) "已暂停《${state.track?.title}》。" else "当前没有在播放的歌曲。"
-        }
-
-        "resume" -> {
-            val state = KuaiMaoMusicPlayer.state.value
-            if (!state.hasTrack) return "当前没有可继续播放的歌，先告诉我想听什么。"
-            if (!state.playing) KuaiMaoMusicPlayer.toggle()
-            "继续播放《${state.track?.title}》。"
-        }
-
-        "next" -> {
-            if (KuaiMaoMusicPlayer.state.value.queue.isEmpty()) return "播放列表是空的。"
-            KuaiMaoMusicPlayer.next()
-            "已切到下一首。"
-        }
-
-        "previous" -> {
-            if (KuaiMaoMusicPlayer.state.value.queue.isEmpty()) return "播放列表是空的。"
-            KuaiMaoMusicPlayer.previous()
-            "已回到上一首。"
-        }
-
-        "stop" -> {
-            KuaiMaoMusicPlayer.stop()
-            "已停止播放。"
-        }
-
-        else -> "没听懂这个操作。"
-    }
-
-    private fun playMusic(query: String?): String {
-        if (query.isNullOrBlank()) {
-            navigator?.push(Route.Music)
-            scope.launch {
-                runCatching {
-                    KuaiMaoMusicApi.trending(20).getOrNull().orEmpty()
-                }.onSuccess { list ->
-                    if (list.isNotEmpty() && !KuaiMaoMusicPlayer.state.value.hasTrack) {
-                        KuaiMaoMusicPlayer.playQueue(list, 0)
-                    }
-                }
-            }
-            return "已打开音乐页，正在挑几首热门歌曲。"
-        }
-
-        val nav = navigator
-        scope.launch {
-            val result = KuaiMaoMusicApi.search(query, 24)
-            result.onSuccess { list ->
-                if (list.isNotEmpty()) {
-                    KuaiMaoMusicPlayer.playQueue(list, 0)
-                    nav?.push(Route.Music)
-                }
-            }
-        }
-        return "正在搜索并播放「$query」，稍等一下。"
     }
 }

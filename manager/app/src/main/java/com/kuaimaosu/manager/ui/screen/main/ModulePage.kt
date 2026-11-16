@@ -41,6 +41,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.rememberTextFieldState
@@ -80,8 +81,6 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -127,6 +126,10 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.kuaimaosu.manager.ui.component.KuaiMaoCard
+import com.kuaimaosu.manager.ui.component.RevealItem
+import com.kuaimaosu.manager.ui.component.SkeletonBone
+import com.kuaimaosu.manager.ui.component.SkeletonLine
+import com.kuaimaosu.manager.ui.component.rememberSkeletonPhase
 import com.kuaimaosu.manager.ui.component.KuaiMaoRowDivider
 import com.kuaimaosu.manager.ui.component.KuaiMaoSwitch
 import com.kuaimaosu.manager.ui.component.KuaiMaoGhostButton
@@ -1071,10 +1074,18 @@ private fun ModuleList(
                 }
             }
 
-            items(
+            // 首次读取模块列表时先铺骨架：标题条 + 版本条 + 说明条 + 右侧开关位，
+            // 和真实卡片的圆角、内边距、行距完全一致。
+            if (uiState.moduleList.isEmpty() && uiState.isRefreshing) {
+                item(key = "module-skeleton") {
+                    ModuleSkeletonList()
+                }
+            }
+
+            itemsIndexed(
                 items = uiState.moduleList,
-                key = { "module-$it.id" },
-            ) { module ->
+                key = { _, item -> "module-${item.id}" },
+            ) { index, module ->
                 ModuleItem(
                     viewModel = viewModel,
                     module = module,
@@ -1312,6 +1323,43 @@ private fun ModuleList(
                             },
                         )
                     }
+                }
+            }
+        }
+    }
+}
+
+/** 模块列表骨架：与真实模块卡同一套内边距，右侧留出开关的位置。 */
+@Composable
+private fun ModuleSkeletonList(count: Int = 4) {
+    val phase = rememberSkeletonPhase()
+    Column(modifier = Modifier.fillMaxWidth()) {
+        repeat(count) {
+            KuaiMaoCard(
+                modifier = Modifier.padding(bottom = 10.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
+            ) {
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        SkeletonLine(widthFraction = 0.48f, height = 15.dp, phase = phase)
+                        Spacer(modifier = Modifier.height(7.dp))
+                        SkeletonLine(widthFraction = 0.26f, height = 10.dp, phase = phase)
+                        Spacer(modifier = Modifier.height(5.dp))
+                        SkeletonLine(widthFraction = 0.22f, height = 10.dp, phase = phase)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        SkeletonLine(widthFraction = 0.92f, height = 10.dp, phase = phase)
+                        Spacer(modifier = Modifier.height(5.dp))
+                        SkeletonLine(widthFraction = 0.64f, height = 10.dp, phase = phase)
+                    }
+                    Spacer(modifier = Modifier.width(14.dp))
+                    // 开关位：52×26 的胶囊
+                    SkeletonBone(
+                        modifier = Modifier
+                            .width(52.dp)
+                            .height(26.dp),
+                        shape = RoundedCornerShape(100.dp),
+                        phase = phase,
+                    )
                 }
             }
         }

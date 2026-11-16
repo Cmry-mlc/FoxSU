@@ -3,6 +3,7 @@ package com.kuaimaosu.manager.ui.screen.main
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.twotone.Person
 import androidx.compose.material.icons.twotone.Tune
@@ -11,6 +12,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import com.kuaimaosu.manager.ui.component.KuaiMaoCard
+import com.kuaimaosu.manager.ui.component.RevealItem
+import com.kuaimaosu.manager.ui.component.SkeletonBone
+import com.kuaimaosu.manager.ui.component.SkeletonLine
+import com.kuaimaosu.manager.ui.component.rememberSkeletonPhase
 import com.kuaimaosu.manager.ui.component.KuaiMaoMenuLabel
 import com.kuaimaosu.manager.ui.component.KuaiMaoMenuItem
 import com.kuaimaosu.manager.ui.component.KuaiMaoMenuPanel
@@ -35,7 +40,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.twotone.Article
@@ -409,26 +414,9 @@ private fun SuperUserContent(
             if (uiState.appGroupList.isEmpty()) {
                 item {
                     when {
-                        uiState.isRefreshing -> KuaiMaoCard(
-                            contentPadding = PaddingValues(vertical = 40.dp, horizontal = 22.dp),
-                        ) {
-                            Column(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                            ) {
-                                LoadingIndicator(
-                                    color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(32.dp),
-                                )
-                                Spacer(modifier = Modifier.height(14.dp))
-                                Text(
-                                    text = "正在读取授权列表…",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = KuaiMaoColors.textMuted,
-                                )
-                            }
-                        }
+                        // 读取授权列表：先铺和真实条目同形的骨架（圆头像 + 两条文字 + 标签），
+                        // 数据到了之后再换成真实行，页面高度基本不跳。
+                        uiState.isRefreshing -> SuperUserSkeletonList()
 
                         else -> KuaiMaoCard(
                             contentPadding = PaddingValues(vertical = 34.dp, horizontal = 22.dp),
@@ -483,15 +471,48 @@ private fun SuperUserContent(
                     }
                 }
             } else {
-                items(
+                itemsIndexed(
                     items = uiState.appGroupList,
-                    key = { "${it.uid}-${it.profileKey}" },
-                ) { appGroup ->
-                    AppGroupItem(
-                        appGroup = appGroup,
-                        isManager = appGroup.uid in uiState.managerUids,
-                    ) {
-                        onAppClick(appGroup)
+                    key = { _, item -> "${item.uid}-${item.profileKey}" },
+                ) { index, appGroup ->
+                    // 每行错开 60ms 浮现，视觉上是从上往下「铺」出来。
+                    RevealItem(index = index) {
+                        AppGroupItem(
+                            appGroup = appGroup,
+                            isManager = appGroup.uid in uiState.managerUids,
+                        ) {
+                            onAppClick(appGroup)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** 授权列表骨架：圆头像 + 标题条 + 包名条 + 标签条，与真实行同高。 */
+@Composable
+private fun SuperUserSkeletonList(count: Int = 6) {
+    val phase = rememberSkeletonPhase()
+    Column(modifier = Modifier.fillMaxWidth()) {
+        repeat(count) {
+            KuaiMaoCard(
+                modifier = Modifier.padding(bottom = 8.dp),
+                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 13.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    SkeletonBone(
+                        modifier = Modifier.size(44.dp),
+                        shape = CircleShape,
+                        phase = phase,
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        SkeletonLine(widthFraction = 0.42f, height = 13.dp, phase = phase)
+                        Spacer(modifier = Modifier.height(7.dp))
+                        SkeletonLine(widthFraction = 0.66f, height = 9.dp, phase = phase)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        SkeletonLine(widthFraction = 0.20f, height = 9.dp, phase = phase)
                     }
                 }
             }

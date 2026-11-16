@@ -1,7 +1,31 @@
+# ---- 编辑器 / 系统 ----
 .idea
 .DS_Store
-build.sh
+*.iml
 *.code-workspace
 .trae
-/userspace/ksud/.lkm_image_bootstrap.o
+
+# ---- 本地脚本与临时输出 ----
+build.sh
 out
+
+# ---- 构建产物（Android / Gradle / Rust） ----
+**/build/
+**/.gradle/
+**/.kotlin/
+**/.cxx/
+**/target/
+captures/
+
+# ---- 打包与签名物料：绝不入库 ----
+*.apk
+*.aab
+*.jks
+*.keystore
+local.properties
+key.jks
+
+# ---- 内核编译中间件 ----
+/userspace/ksud/.lkm_image_bootstrap.o
+*.o
+*.ko

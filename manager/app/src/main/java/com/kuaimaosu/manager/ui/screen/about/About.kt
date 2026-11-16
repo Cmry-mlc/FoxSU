@@ -24,6 +24,8 @@ import androidx.compose.material.icons.automirrored.twotone.KeyboardArrowLeft
 import androidx.compose.material.icons.twotone.ChevronRight
 import androidx.compose.material.icons.twotone.Code
 import androidx.compose.material.icons.twotone.Copyright
+import androidx.compose.material.icons.twotone.Difference
+import androidx.compose.material.icons.twotone.Favorite
 import androidx.compose.material.icons.twotone.Group
 import androidx.compose.material.icons.twotone.Info
 import androidx.compose.material.icons.twotone.Update
@@ -215,6 +217,22 @@ fun AboutScreen() {
                         title = stringResource(R.string.open_source_license),
                         description = "GPL-3.0 · 依赖组件清单",
                         onClick = { navigator.push(Route.OpenSourceLicense) },
+                        trailing = { Arrow() },
+                    )
+                    KuaiMaoRowDivider()
+                    KuaiMaoRow(
+                        icon = Icons.TwoTone.Favorite,
+                        title = "开源致谢",
+                        description = "上游项目 · 作者头像 · 仓库与协议",
+                        onClick = { navigator.push(Route.Credits) },
+                        trailing = { Arrow() },
+                    )
+                    KuaiMaoRowDivider()
+                    KuaiMaoRow(
+                        icon = Icons.TwoTone.Difference,
+                        title = "修改清单",
+                        description = "相对 BakaSU 的全部改动，按模块列出",
+                        onClick = { navigator.push(Route.Modifications) },
                         trailing = { Arrow() },
                     )
                 }

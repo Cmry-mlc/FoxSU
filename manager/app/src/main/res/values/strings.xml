@@ -300,6 +300,9 @@
     <string name="predictive_back_animation_aosp">AOSP</string>
     <string name="predictive_back_animation_scale">Scale</string>
     <string name="predictive_back_animation_ksu_classic">KernelSU Classic</string>
+    <string name="predictive_back_animation_depth">Card stack</string>
+    <string name="predictive_back_animation_slide_up">Rise up</string>
+    <string name="predictive_back_animation_cube">Cube</string>
     <string name="predictive_back_animation_miuix" translatable="false">Miuix</string>
     <string name="predictive_back_exit_direction_follow_gesture">Follow Gesture</string>
     <string name="predictive_back_exit_direction_always_right">Always Right</string>

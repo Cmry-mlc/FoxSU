@@ -150,6 +150,18 @@ pub fn list_supported_kmi() -> std::vec::Vec<std::string::String> {
     list
 }
 
+/// KMI 列表，只统计内嵌了 SUSFS guard LKM 的那些。
+pub fn list_supported_susfs_kmi() -> std::vec::Vec<std::string::String> {
+    let mut list = Vec::new();
+    for file in <Asset as RustEmbed>::iter() {
+        if let Some(kmi) = file.strip_suffix("_susfs_guard_lkm.ko") {
+            list.push(kmi.to_string());
+        }
+    }
+    list.sort();
+    list
+}
+
 pub fn get_asset(name: &str) -> Result<std::borrow::Cow<'static, [u8]>> {
     #[cfg(all(target_arch = "arm", target_os = "android"))]
     let asset = if name.ends_with(".ko") && use_arm64_ko() {

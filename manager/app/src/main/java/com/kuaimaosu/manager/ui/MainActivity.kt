@@ -1,5 +1,6 @@
 package com.kuaimaosu.manager.ui
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -24,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
@@ -36,6 +38,8 @@ import com.kuaimaosu.manager.domain.usecase.ApplyLanguageUseCase
 import com.kuaimaosu.manager.domain.usecase.EnsureManagerInstalledUseCase
 import com.kuaimaosu.manager.domain.usecase.ObserveStartupStateUseCase
 import com.kuaimaosu.manager.ui.activity.util.ThemeUtils
+import com.kuaimaosu.manager.ui.component.KuaiMaoDisclaimerDialog
+import com.kuaimaosu.manager.ui.component.KuaiMaoDisclaimerStore
 import com.kuaimaosu.manager.ui.screen.splash.KuaiMaoSplash
 import com.kuaimaosu.manager.ui.theme.KernelSUTheme
 import com.kuaimaosu.manager.ui.viewmodel.HomeUiAction
@@ -48,7 +52,8 @@ import com.kuaimaosu.manager.ui.viewmodel.SettingsViewModel
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
-private const val SPLASH_MIN_DURATION_MS = 1100L
+// 水墨扩散要 1.35s 才走完「墨散 → 图标 → 标题」，留 100ms 余量再淡出。
+private const val SPLASH_MIN_DURATION_MS = 1450L
 private const val SPLASH_FADE_MS = 420
 
 class MainActivity : ComponentActivity() {
@@ -135,6 +140,31 @@ class MainActivity : ComponentActivity() {
 
                             Box(modifier = Modifier.fillMaxSize()) {
                                 NavContainer(settingsViewModel, intentChannel)
+
+                                // 免责声明：等首屏淡出之后再出现，入场动画才看得见
+                                // （否则全程被水墨屏盖着，露出来时已经是静态的）。
+                                val context = LocalContext.current
+                                var disclaimerAccepted by rememberSaveable {
+                                    mutableStateOf(KuaiMaoDisclaimerStore.isAccepted(context))
+                                }
+                                var disclaimerReady by rememberSaveable {
+                                    mutableStateOf(false)
+                                }
+                                LaunchedEffect(showSplash) {
+                                    if (!showSplash) {
+                                        delay(SPLASH_FADE_MS.toLong())
+                                        disclaimerReady = true
+                                    }
+                                }
+                                KuaiMaoDisclaimerDialog(
+                                    visible = disclaimerReady && !disclaimerAccepted,
+                                    onAccept = {
+                                        KuaiMaoDisclaimerStore.accept(context)
+                                        disclaimerAccepted = true
+                                    },
+                                    onExit = { (context as? Activity)?.finish() },
+                                )
+
                                 AnimatedVisibility(
                                     visible = showSplash,
                                     enter = EnterTransition.None,

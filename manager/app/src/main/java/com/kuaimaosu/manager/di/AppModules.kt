@@ -51,6 +51,8 @@ import com.kuaimaosu.manager.data.startup.ApplicationInitializationRepository
 import com.kuaimaosu.manager.data.startup.StartupRepository
 import com.kuaimaosu.manager.data.susfs.SuSFSConfigHelper
 import com.kuaimaosu.manager.data.susfs.SuSFSRepository
+import com.kuaimaosu.manager.data.mount.MountRepository
+import com.kuaimaosu.manager.data.susfs.SusfsLkmRepository
 import com.kuaimaosu.manager.data.system.HomeRuntimeRepository
 import com.kuaimaosu.manager.data.system.HomeStateRepository
 import com.kuaimaosu.manager.data.text.HanziToPinyin
@@ -101,6 +103,7 @@ import com.kuaimaosu.manager.domain.usecase.GetProfileTemplateUseCase
 import com.kuaimaosu.manager.domain.usecase.GetStringPreferenceUseCase
 import com.kuaimaosu.manager.domain.usecase.GetStringSetPreferenceUseCase
 import com.kuaimaosu.manager.domain.usecase.GetSuSFSStatusUseCase
+import com.kuaimaosu.manager.domain.usecase.GetSusfsLkmLoadedUseCase
 import com.kuaimaosu.manager.domain.usecase.GetSuperUserAppGroupUseCase
 import com.kuaimaosu.manager.domain.usecase.ImportAllowlistUseCase
 import com.kuaimaosu.manager.domain.usecase.ImportProfileTemplatesUseCase
@@ -301,6 +304,8 @@ val repositoryModule = module {
     singleOf(::ProfileTemplateRepository)
     singleOf(::SuSFSConfigHelper)
     singleOf(::SuSFSRepository)
+    singleOf(::SusfsLkmRepository)
+    singleOf(::MountRepository)
     singleOf(::MonetCompatColorSource)
     singleOf(::ThemeRepository)
     single {
@@ -357,6 +362,7 @@ val useCaseModule = module {
     factoryOf(::ValidateSepolicyUseCase)
     factoryOf(::GetDefaultUmountModulesUseCase)
     factoryOf(::GetSuSFSStatusUseCase)
+    factoryOf(::GetSusfsLkmLoadedUseCase)
     factoryOf(::SuSFSConfigUseCase)
     factoryOf(::ApplyLanguageUseCase)
     factoryOf(::IsSystemLanguageSettingsUseCase)

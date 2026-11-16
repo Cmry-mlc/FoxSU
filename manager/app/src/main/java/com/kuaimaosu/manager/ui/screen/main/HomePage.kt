@@ -28,6 +28,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.Alignment
+import com.kuaimaosu.manager.ui.theme.renderBackgroundBlur
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -37,6 +41,7 @@ import androidx.compose.material.icons.automirrored.twotone.MenuBook
 import androidx.compose.material.icons.twotone.Android
 import androidx.compose.material.icons.twotone.AutoAwesome
 import androidx.compose.material.icons.twotone.Bolt
+import androidx.compose.material.icons.twotone.Coffee
 import androidx.compose.material.icons.twotone.DeveloperBoard
 import androidx.compose.material.icons.twotone.Error
 import androidx.compose.material.icons.twotone.Extension
@@ -51,7 +56,6 @@ import androidx.compose.material.icons.twotone.Settings
 import androidx.compose.material.icons.twotone.Smartphone
 import androidx.compose.material.icons.twotone.Tag
 import androidx.compose.material.icons.twotone.Tune
-import androidx.compose.material.icons.twotone.VolunteerActivism
 import androidx.compose.material.icons.twotone.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -71,6 +75,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -93,6 +98,12 @@ import com.kuaimaosu.manager.domain.model.ManagerUpdateChannel
 import com.kuaimaosu.manager.domain.model.ManagerUpdateInfo
 import com.kuaimaosu.manager.domain.usecase.EnqueueManagerUpdateUseCase
 import com.kuaimaosu.manager.ui.component.SwipeableSnackbarHost
+import com.kuaimaosu.manager.ui.component.RevealItem
+import com.kuaimaosu.manager.ui.component.SkeletonBone
+import com.kuaimaosu.manager.ui.component.SkeletonLine
+import com.kuaimaosu.manager.ui.component.SkeletonSwap
+import com.kuaimaosu.manager.ui.component.rememberSkeletonPhase
+import com.kuaimaosu.manager.ui.component.rememberSkeletonVisible
 import com.kuaimaosu.manager.ui.component.WarningCard
 import com.kuaimaosu.manager.ui.component.rememberConfirmDialog
 import com.kuaimaosu.manager.ui.component.rememberLoadingDialog
@@ -105,6 +116,7 @@ import com.kuaimaosu.manager.ui.navigation.Route
 import com.kuaimaosu.manager.ui.screen.BottomBarDestination
 import com.kuaimaosu.manager.ui.theme.CardConfig
 import com.kuaimaosu.manager.ui.theme.KuaiMaoColors
+import com.kuaimaosu.manager.ui.theme.backdropInk
 import com.kuaimaosu.manager.ui.theme.KuaiMaoTones
 import com.kuaimaosu.manager.ui.theme.ThemeConfig
 import com.kuaimaosu.manager.ui.theme.barSurfaceColor
@@ -166,6 +178,9 @@ fun HomePage(
     val onInstall: () -> Unit = {
         navigator.push(Route.Install(preselectedKernelUri = null))
     }
+
+    // 内核状态读得很快，骨架一闪而过反而廉价：给它一个最短驻留时间。
+    val skeletonVisible = rememberSkeletonVisible(uiState.isCoreDataLoaded)
 
     var showAssistant by remember { mutableStateOf(false) }
     var entered by remember { mutableStateOf(false) }
@@ -232,6 +247,9 @@ fun HomePage(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    // 内容比一屏高了：改成整页滚动。底栏是浮岛、不参与滚动，
+                    // 滚动内容会从它下方穿过去，所以底部留 96dp 的让位空间。
+                    .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp)
                     .graphicsLayer {
                         alpha = appear
@@ -240,7 +258,14 @@ fun HomePage(
             ) {
                 Spacer(modifier = Modifier.height(16.dp))
 
-                if (uiState.isCoreDataLoaded) {
+                // 骨架盖在真实内容上：内容始终参与测量，页面高度不变，
+                // 切换时不会出现「先塌一下再撑开」的跳动。
+                SkeletonSwap(
+                    loading = skeletonVisible,
+                    skeleton = { HomeSkeleton() },
+                ) {
+                    Column {
+                        if (uiState.isCoreDataLoaded) {
                     val systemStatus = uiState.systemStatus
                     KuaiMaoHeroCard(
                         label = heroLabel(systemStatus),
@@ -250,8 +275,48 @@ fun HomePage(
                         badgeColor = heroBadgeColor(uiState),
                         superuserCount = uiState.systemInfo.superuserCount,
                         moduleCount = uiState.systemInfo.moduleCount,
-                        modeTags = heroModeTags(systemStatus),
+                        modeTags = heroModeTags(systemStatus, uiState.systemInfo.susfsLkmLoaded),
                         isActivated = systemStatus.ksuVersion != null,
+                        // 四个快捷入口并进卡片底部，不再单独占一行卡片。
+                        quickActions = listOf(
+                            KuaiMaoQuickAction(
+                                key = "su",
+                                label = stringResource(R.string.superuser),
+                                icon = Icons.TwoTone.Person,
+                                tone = KuaiMaoTones.violet,
+                                onClick = {
+                                    val index = pages.indexOf(BottomBarDestination.SuperUser)
+                                    if (index >= 0) handlePageChange(index)
+                                },
+                            ),
+                            KuaiMaoQuickAction(
+                                key = "mods",
+                                label = stringResource(R.string.module),
+                                icon = Icons.TwoTone.Extension,
+                                tone = KuaiMaoTones.rose,
+                                onClick = {
+                                    val index = pages.indexOf(BottomBarDestination.Module)
+                                    if (index >= 0) handlePageChange(index)
+                                },
+                            ),
+                            KuaiMaoQuickAction(
+                                key = "ai",
+                                label = "AI 助手",
+                                icon = Icons.TwoTone.AutoAwesome,
+                                tone = KuaiMaoTones.blue,
+                                onClick = { showAssistant = true },
+                            ),
+                            KuaiMaoQuickAction(
+                                key = "set",
+                                label = stringResource(R.string.settings),
+                                icon = Icons.TwoTone.Settings,
+                                tone = KuaiMaoTones.slate,
+                                onClick = {
+                                    val index = pages.indexOf(BottomBarDestination.Settings)
+                                    if (index >= 0) handlePageChange(index)
+                                },
+                            ),
+                        ),
                         onClick = {
                             // 整卡只在「未工作 + 内核可装」时进入安装镜像页，其余不跳转。
                             if (systemStatus.ksuVersion == null && systemStatus.kernelVersion.isGKI()) {
@@ -261,53 +326,20 @@ fun HomePage(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(18.dp))
-
-                KuaiMaoQuickGrid(
-                    actions = listOf(
-                        KuaiMaoQuickAction(
-                            key = "su",
-                            label = stringResource(R.string.superuser),
-                            icon = Icons.TwoTone.Person,
-                            tone = KuaiMaoTones.violet,
-                            onClick = {
-                                val index = pages.indexOf(BottomBarDestination.SuperUser)
-                                if (index >= 0) handlePageChange(index)
-                            },
-                        ),
-                        KuaiMaoQuickAction(
-                            key = "mods",
-                            label = stringResource(R.string.module),
-                            icon = Icons.TwoTone.Extension,
-                            tone = KuaiMaoTones.rose,
-                            onClick = {
-                                val index = pages.indexOf(BottomBarDestination.Module)
-                                if (index >= 0) handlePageChange(index)
-                            },
-                        ),
-                        KuaiMaoQuickAction(
-                            key = "ai",
-                            label = "AI 助手",
-                            icon = Icons.TwoTone.AutoAwesome,
-                            tone = KuaiMaoTones.blue,
-                            onClick = { showAssistant = true },
-                        ),
-                        KuaiMaoQuickAction(
-                            key = "set",
-                            label = stringResource(R.string.settings),
-                            icon = Icons.TwoTone.Settings,
-                            tone = KuaiMaoTones.slate,
-                            onClick = {
-                                val index = pages.indexOf(BottomBarDestination.Settings)
-                                if (index >= 0) handlePageChange(index)
-                            },
-                        ),
-                    ),
-                )
-
-                KuaiMaoSectionHeader(title = "系统动态")
-
-                KuaiMaoFeedCard(items = feedItems(uiState) { })
+                        KuaiMaoSectionHeader(title = "状态信息")
+                        RevealItem(index = 1) {
+                            KuaiMaoFeedCard(items = statusFeedItems(uiState))
+                        }
+                        KuaiMaoSectionHeader(title = "版本信息")
+                        RevealItem(index = 2) {
+                            KuaiMaoFeedCard(items = versionFeedItems(uiState))
+                        }
+                        KuaiMaoSectionHeader(title = "支持开发及了解更多")
+                        RevealItem(index = 3) {
+                            SupportAndLearnCard()
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(bottomPadding + 96.dp))
             }
@@ -364,10 +396,13 @@ private fun heroHintText(uiState: HomeUiState): String {
     }
 }
 
-/** 运行模式标签：LKM / 内置，late-load 时才追加「越狱模式」。 */
-private fun heroModeTags(status: KernelStatus): List<String> = buildList {
+/** 运行模式标签：LKM / 内置，加载了 SUSFS 守卫模块时追加「SUSFS LKM 模式」，late-load 时再追加「越狱模式」。 */
+private fun heroModeTags(status: KernelStatus, susfsLkmLoaded: Boolean): List<String> = buildList {
     if (status.ksuVersion != null) {
         add(if (status.lkmMode == true) "LKM" else "内置")
+    }
+    if (susfsLkmLoaded) {
+        add("SUSFS LKM 模式")
     }
     if (status.isLateLoadMode) {
         add("越狱模式")
@@ -405,8 +440,135 @@ private fun seccompText(status: Int, notSupported: String, disabled: String, str
     else -> notSupported
 }
 
+/**
+ * 主页骨架：圆角、行高、图标块尺寸都照真实卡片摆。
+ *
+ * 骨架是盖在真实内容上的一层（见 SkeletonSwap），所以这里只需要「长得像」，
+ * 不需要负责撑高度——切换时页面高度由真实内容决定，绝不会跳。
+ */
 @Composable
-private fun feedItems(uiState: HomeUiState, onOpen: () -> Unit): List<KuaiMaoFeedItem> {
+private fun HomeSkeleton() {
+    val phase = rememberSkeletonPhase()
+    Column(modifier = Modifier.fillMaxWidth()) {
+        // ── 大卡：标题 / 状态词 / 标签 / 指标 / 四宫格 ──
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(324.dp)
+                .clip(RoundedCornerShape(26.dp))
+                .background(KuaiMaoColors.canvasCard)
+                .renderBackgroundBlur(tintColor = KuaiMaoColors.canvasCardSolid)
+                .padding(horizontal = 20.dp, vertical = 18.dp),
+        ) {
+            SkeletonLine(widthFraction = 0.30f, height = 9.dp, phase = phase)
+            Spacer(Modifier.height(16.dp))
+            SkeletonLine(widthFraction = 0.46f, height = 26.dp, phase = phase)
+            Spacer(Modifier.height(13.dp))
+            Row {
+                SkeletonBone(
+                    modifier = Modifier
+                        .width(58.dp)
+                        .height(11.dp),
+                    shape = RoundedCornerShape(6.dp),
+                    phase = phase,
+                )
+                Spacer(Modifier.width(8.dp))
+                SkeletonBone(
+                    modifier = Modifier
+                        .width(86.dp)
+                        .height(11.dp),
+                    shape = RoundedCornerShape(6.dp),
+                    phase = phase,
+                )
+            }
+            Spacer(Modifier.height(20.dp))
+            SkeletonLine(widthFraction = 1f, height = 1.dp, phase = phase)
+            Spacer(Modifier.height(18.dp))
+            Row {
+                SkeletonBone(
+                    modifier = Modifier
+                        .width(76.dp)
+                        .height(19.dp),
+                    shape = RoundedCornerShape(9.dp),
+                    phase = phase,
+                )
+                Spacer(Modifier.width(28.dp))
+                SkeletonBone(
+                    modifier = Modifier
+                        .width(62.dp)
+                        .height(19.dp),
+                    shape = RoundedCornerShape(9.dp),
+                    phase = phase,
+                )
+            }
+            Spacer(Modifier.height(22.dp))
+            SkeletonLine(widthFraction = 1f, height = 1.dp, phase = phase)
+            Spacer(Modifier.height(16.dp))
+            Row(modifier = Modifier.fillMaxWidth()) {
+                repeat(4) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        SkeletonBone(
+                            modifier = Modifier.size(44.dp),
+                            shape = RoundedCornerShape(15.dp),
+                            phase = phase,
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        SkeletonLine(widthFraction = 0.58f, height = 9.dp, phase = phase)
+                    }
+                }
+            }
+        }
+
+        // ── 状态信息 / 版本信息 / 支持开发及了解更多 三段列表 ──
+        repeat(3) { section ->
+            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(4.dp))
+            SkeletonLine(widthFraction = 0.18f, height = 11.dp, phase = phase)
+            Spacer(Modifier.height(12.dp))
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(22.dp))
+                    .background(KuaiMaoColors.canvasCard)
+                    .renderBackgroundBlur(tintColor = KuaiMaoColors.canvasCardSolid)
+                    .padding(horizontal = 16.dp, vertical = 6.dp),
+            ) {
+                repeat(if (section == 2) 2 else 5) { index ->
+                    if (index > 0) {
+                        SkeletonLine(widthFraction = 1f, height = 1.dp, phase = phase)
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 13.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        SkeletonBone(
+                            modifier = Modifier.size(42.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            phase = phase,
+                        )
+                        Spacer(Modifier.width(13.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            SkeletonLine(widthFraction = 0.34f, height = 12.dp, phase = phase)
+                            Spacer(Modifier.height(6.dp))
+                            SkeletonLine(widthFraction = 0.52f, height = 9.dp, phase = phase)
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        SkeletonLine(widthFraction = 0.16f, height = 11.dp, phase = phase)
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** 状态信息：安全上下文、系统调用过滤、管理器、钩子、注入框架。 */
+@Composable
+private fun statusFeedItems(uiState: HomeUiState): List<KuaiMaoFeedItem> {
     val info = uiState.systemInfo
     val status = uiState.systemStatus
     val selinuxValue = info.selinuxStatus.ifBlank { "—" }
@@ -421,6 +583,15 @@ private fun feedItems(uiState: HomeUiState, onOpen: () -> Unit): List<KuaiMaoFee
     )
     val zygisk = info.zygiskImplement.ifBlank { "None" }
     val zygiskActive = zygisk.isNotBlank() && zygisk != "None"
+    // 活跃管理器：按签名分组拼成「UID 10462 · UID 10503」，和系统状态页同一套口径。
+    val managerText = info.managersList?.managers.orEmpty()
+        .groupBy { it.signatureIndex }
+        .toSortedMap()
+        .entries
+        .joinToString(" · ") { (_, managers) ->
+            managers.joinToString(", ") { "UID ${it.uid}" }
+        }
+        .ifBlank { "无" }
 
     return listOf(
         KuaiMaoFeedItem(
@@ -430,48 +601,104 @@ private fun feedItems(uiState: HomeUiState, onOpen: () -> Unit): List<KuaiMaoFee
             value = selinuxValue,
             icon = Icons.TwoTone.Security,
             tone = if (permissive) KuaiMaoTones.danger else KuaiMaoTones.green,
-            valueColor = if (permissive) KuaiMaoColors.danger else KuaiMaoColors.brand,
-            onClick = onOpen,
+            valueColor = if (permissive) KuaiMaoColors.danger else backdropInk(),
         ),
         KuaiMaoFeedItem(
             key = "seccomp",
-            title = "Seccomp",
+            title = "Seccomp 状态",
             desc = "系统调用过滤",
             value = seccomp,
-            icon = Icons.TwoTone.Layers,
+            icon = Icons.TwoTone.FilterList,
             tone = KuaiMaoTones.violet,
-            valueColor = if (info.seccompStatus > 0) KuaiMaoColors.brand else KuaiMaoColors.textSec,
-            onClick = onOpen,
+            valueColor = if (info.seccompStatus > 0) backdropInk() else KuaiMaoColors.textSec,
         ),
         KuaiMaoFeedItem(
-            key = "kernel",
-            title = "内核版本",
-            desc = info.kernelRelease.ifBlank { "—" },
-            value = if (status.ksuVersion != null) "已加载" else "未加载",
-            icon = Icons.TwoTone.Memory,
+            key = "managers",
+            title = "活跃管理器",
+            desc = "当前签名与进程",
+            value = managerText,
+            icon = Icons.TwoTone.Group,
             tone = KuaiMaoTones.amber,
             valueColor = KuaiMaoColors.textSec,
-            onClick = onOpen,
+        ),
+        KuaiMaoFeedItem(
+            key = "hook",
+            title = "钩子类型",
+            desc = "内核接管方式",
+            value = status.hookType.ifBlank { "—" },
+            icon = Icons.TwoTone.Tune,
+            tone = KuaiMaoTones.blue,
+            valueColor = backdropInk(),
         ),
         KuaiMaoFeedItem(
             key = "zygisk",
-            title = "Zygisk",
+            title = "Zygisk 实现",
             desc = "注入框架",
             value = zygisk,
             icon = Icons.TwoTone.Bolt,
             tone = if (zygiskActive) KuaiMaoTones.blue else KuaiMaoTones.slate,
-            valueColor = if (zygiskActive) KuaiMaoColors.brand else KuaiMaoColors.danger,
-            onClick = onOpen,
+            valueColor = if (zygiskActive) backdropInk() else KuaiMaoColors.danger,
         ),
+    )
+}
+
+/** 版本信息：设备、系统、内核与两个版本号。 */
+@Composable
+private fun versionFeedItems(uiState: HomeUiState): List<KuaiMaoFeedItem> {
+    val info = uiState.systemInfo
+    val status = uiState.systemStatus
+    val managerVersion = info.managerVersion
+    val managerText = if (managerVersion.first.isBlank()) {
+        "—"
+    } else {
+        "${managerVersion.first} (${managerVersion.second}/${managerVersion.third})"
+    }
+
+    return listOf(
         KuaiMaoFeedItem(
             key = "device",
             title = "设备",
-            desc = "${info.deviceModel.ifBlank { "—" }} · ${info.androidVersion.ifBlank { "—" }}",
-            value = "正常",
+            desc = "机型",
+            value = info.deviceModel.ifBlank { "—" },
             icon = Icons.TwoTone.Smartphone,
             tone = KuaiMaoTones.blue,
-            valueColor = KuaiMaoColors.brand,
-            onClick = onOpen,
+            valueColor = backdropInk(),
+        ),
+        KuaiMaoFeedItem(
+            key = "android",
+            title = "Android 版本",
+            desc = "系统版本",
+            value = info.androidVersion.ifBlank { "—" },
+            icon = Icons.TwoTone.Android,
+            tone = KuaiMaoTones.green,
+            valueColor = backdropInk(),
+        ),
+        KuaiMaoFeedItem(
+            key = "kernel",
+            title = "内核版本",
+            desc = "Linux kernel",
+            value = info.kernelRelease.ifBlank { "—" },
+            icon = Icons.TwoTone.Memory,
+            tone = KuaiMaoTones.amber,
+            valueColor = KuaiMaoColors.textSec,
+        ),
+        KuaiMaoFeedItem(
+            key = "driver",
+            title = "内核驱动版本",
+            desc = if (status.ksuVersion != null) "已加载" else "未加载",
+            value = status.ksuFullVersion.orEmpty().ifBlank { "—" },
+            icon = Icons.TwoTone.DeveloperBoard,
+            tone = KuaiMaoTones.violet,
+            valueColor = if (status.ksuVersion != null) backdropInk() else KuaiMaoColors.danger,
+        ),
+        KuaiMaoFeedItem(
+            key = "manager",
+            title = "管理器版本",
+            desc = stringResource(R.string.app_name),
+            value = managerText,
+            icon = Icons.TwoTone.Tag,
+            tone = KuaiMaoTones.slate,
+            valueColor = KuaiMaoColors.textSec,
         ),
     )
 }
@@ -647,8 +874,8 @@ fun SystemInfoPage(bottomPadding: Dp) {
             }
 
             if (!uiState.isSimpleMode) {
-                DonateCard(uiState.showHomeCardIcons)
-                LearnMoreCard(uiState.showHomeCardIcons)
+                KuaiMaoSectionHeader(title = "支持开发及了解更多")
+                SupportAndLearnCard()
             }
 
             Spacer(Modifier.height(bottomPadding + 24.dp))
@@ -741,55 +968,51 @@ private fun ManagerUpdateCardContent(updateInfo: ManagerUpdateInfo) {
 }
 
 
+/**
+ * 「支持开发」+「了解更多」。
+ *
+ * 以前是两张卡、各自带着一句分组标题，读起来像两个互不相干的模块，
+ * 而且标题和行标题重复（上面写「支持开发」下面又写「支持开发」）。
+ * 现在并成一张卡、两行，共用一句分组标题，行高 / 字号 / 配色
+ * 与上面「状态信息」「版本信息」完全一致（同一个 [KuaiMaoFeedCard]）。
+ */
 @Composable
-fun LearnMoreCard(
-    showIcon: Boolean,
-) {
+fun SupportAndLearnCard() {
     val uriHandler = LocalUriHandler.current
-    val url = stringResource(R.string.home_learn_kernelsu_url)
+    val learnUrl = stringResource(R.string.home_learn_kernelsu_url)
 
-    SegmentedColumn(
-        modifier = Modifier.fillMaxWidth(),
-        title = stringResource(R.string.learn_more),
-        contentPadding = PaddingValues(horizontal = 0.dp, vertical = 4.dp),
-    ) {
-        item {
-            SettingsBaseWidget(
-                icon = Icons.AutoMirrored.TwoTone.MenuBook.takeIf { showIcon },
-                iconPlaceholder = false,
-                title = stringResource(R.string.home_learn_kernelsu),
-                description = stringResource(R.string.home_click_to_learn_kernelsu),
-                onClick = {
-                    uriHandler.openUri(url)
-                },
-            )
-        }
-    }
-}
-
-
-@Composable
-fun DonateCard(
-    showIcon: Boolean,
-) {
-    val uriHandler = LocalUriHandler.current
-    SegmentedColumn(
-        modifier = Modifier.fillMaxWidth(),
-        title = stringResource(R.string.home_support_title),
-        contentPadding = PaddingValues(horizontal = 0.dp, vertical = 4.dp),
-    ) {
-        item {
-            SettingsBaseWidget(
-                icon = Icons.TwoTone.VolunteerActivism.takeIf { showIcon },
-                iconPlaceholder = false,
+    KuaiMaoFeedCard(
+        items = listOf(
+            KuaiMaoFeedItem(
+                key = "donate",
                 title = stringResource(R.string.home_support_title),
-                description = stringResource(R.string.home_support_content),
+                desc = stringResource(R.string.home_support_content),
+                value = "",
+                icon = Icons.TwoTone.Coffee,
+                tone = KuaiMaoTones.rose,
+                valueColor = KuaiMaoColors.textSec,
+                descMaxLines = 2,
+                trailingChevron = true,
                 onClick = {
                     uriHandler.openUri("https://patreon.com/weishu")
                 },
-            )
-        }
-    }
+            ),
+            KuaiMaoFeedItem(
+                key = "learn-more",
+                title = stringResource(R.string.home_learn_kernelsu),
+                desc = stringResource(R.string.home_click_to_learn_kernelsu),
+                value = "",
+                icon = Icons.AutoMirrored.TwoTone.MenuBook,
+                tone = KuaiMaoTones.blue,
+                valueColor = KuaiMaoColors.textSec,
+                descMaxLines = 2,
+                trailingChevron = true,
+                onClick = {
+                    uriHandler.openUri(learnUrl)
+                },
+            ),
+        ),
+    )
 }
 
 

@@ -71,12 +71,11 @@ import com.kuaimaosu.manager.domain.model.ModuleReleaseAsset
 import com.kuaimaosu.manager.domain.usecase.ExtractModuleIdUseCase
 import com.kuaimaosu.manager.ui.activity.PermissionRequestInterface
 import com.kuaimaosu.manager.ui.animation.predictiveback.installerNavTransition
+import com.kuaimaosu.manager.ui.component.LocalPagerInterceptionMode
 import com.kuaimaosu.manager.ui.component.LocalRepositoryModuleInstall
 import com.kuaimaosu.manager.ui.navigation.IntentDispatcher
 import com.kuaimaosu.manager.ui.assistant.KuaiMaoAssistantRuntime
-import com.kuaimaosu.manager.ui.component.MiniPlayerHost
 import com.kuaimaosu.manager.ui.navigation.LocalNavigator
-import com.kuaimaosu.manager.ui.screen.MusicScreen
 import com.kuaimaosu.manager.ui.navigation.Navigator
 import com.kuaimaosu.manager.ui.navigation.Route
 import com.kuaimaosu.manager.ui.overscroll.StretchOverscrollCompensationState
@@ -93,6 +92,8 @@ import com.kuaimaosu.manager.ui.screen.SulogScreen
 import com.kuaimaosu.manager.ui.screen.TemplateEditorScreen
 import com.kuaimaosu.manager.ui.screen.UmountManagerScreen
 import com.kuaimaosu.manager.ui.screen.about.AboutScreen
+import com.kuaimaosu.manager.ui.screen.about.CreditsScreen
+import com.kuaimaosu.manager.ui.screen.about.ModificationsScreen
 import com.kuaimaosu.manager.ui.screen.about.OpenSourceLicenseScreen
 import com.kuaimaosu.manager.ui.screen.kernelFlash.KernelFlashScreen
 import com.kuaimaosu.manager.ui.screen.main.MainScreen
@@ -107,7 +108,9 @@ import com.kuaimaosu.manager.ui.screen.main.SystemInfoPage
 import com.kuaimaosu.manager.ui.screen.moduleRepo.AddRepositoryScreen
 import com.kuaimaosu.manager.ui.screen.moduleRepo.ModuleRepoScreen
 import com.kuaimaosu.manager.ui.screen.moduleRepo.OnlineModuleDetailScreen
+import com.kuaimaosu.manager.ui.screen.mount.MountControllerScreen
 import com.kuaimaosu.manager.ui.screen.susfs.SuSFSConfigScreen
+import com.kuaimaosu.manager.ui.screen.susfs.SuSFSLkmScreen
 import com.kuaimaosu.manager.ui.screen.themeSettings.ThemeSettingsScreen
 import com.kuaimaosu.manager.ui.theme.BackgroundRenderState
 import com.kuaimaosu.manager.ui.theme.BackgroundManager
@@ -150,6 +153,7 @@ import top.yukonga.miuix.kmp.nav.core.NavDisplayEffects
 import top.yukonga.miuix.kmp.nav.core.rememberNavBackStack
 import top.yukonga.miuix.kmp.nav.transition.NavSwipeDirection
 import top.yukonga.miuix.kmp.shader.isRenderEffectSupported
+import top.yukonga.miuix.kmp.utils.PagerInterceptionMode
 
 @Composable
 fun NavContainer(
@@ -182,7 +186,7 @@ fun NavContainer(
 
     val backStack = rememberNavBackStack<Route>(Route.Main)
     val navigator = remember(backStack) { Navigator(backStack) }
-    // 助手要能直接改底栏、开页面、放歌：把同一批全局对象交给它的执行端，
+    // 助手要能直接改底栏、开页面：把同一批全局对象交给它的执行端，
     // 不用另建一套状态，用户改完立刻在界面上生效。
     val assistantCardConfig: CardConfig = koinInject()
     val assistantBackgroundManager: BackgroundManager = koinInject()
@@ -346,13 +350,20 @@ fun NavContainer(
         LocalNavigator provides navigator,
         LocalRepositoryModuleInstall provides installRepositoryModule,
         LocalDensity provides density,
+        // 页面切换手势：主界面与所有内页分页共用同一个档位。
+        LocalPagerInterceptionMode provides PagerInterceptionMode.entries.getOrElse(
+            settings.pagerInterceptionMode,
+        ) { PagerInterceptionMode.CrossAxisInterceptor },
     ) {
         IntentDispatcher(intentChannel)
         val navCornerRadius = rememberDeviceCornerRadius(defaultRadius = 0.dp)
         val roundAllCorners =
             settings.predictiveBackAnimation == PredictiveBackAnimation.AOSP ||
                 settings.predictiveBackAnimation == PredictiveBackAnimation.Scale ||
-                settings.predictiveBackAnimation == PredictiveBackAnimation.KernelSUClassic
+                settings.predictiveBackAnimation == PredictiveBackAnimation.KernelSUClassic ||
+                settings.predictiveBackAnimation == PredictiveBackAnimation.Depth ||
+                settings.predictiveBackAnimation == PredictiveBackAnimation.SlideUp ||
+                settings.predictiveBackAnimation == PredictiveBackAnimation.Cube
         val backdropColor = MaterialTheme.colorScheme.surfaceContainer
         val effects = remember(navCornerRadius, roundAllCorners, backdropColor) {
             NavDisplayEffects(
@@ -400,6 +411,28 @@ fun NavContainer(
                     useBlur = useBlur,
                 ) {
                     AboutScreen()
+                }
+            }
+            entry<Route.Credits>(swipeDismiss = swipeBackDirection) {
+                ManagerNavEntry(
+                    interceptPredictiveBack = interceptPredictiveBack,
+                    onBack = onBack,
+                    themeConfig = themeConfig,
+                    backgroundRenderState = backgroundRenderState,
+                    useBlur = useBlur,
+                ) {
+                    CreditsScreen()
+                }
+            }
+            entry<Route.Modifications>(swipeDismiss = swipeBackDirection) {
+                ManagerNavEntry(
+                    interceptPredictiveBack = interceptPredictiveBack,
+                    onBack = onBack,
+                    themeConfig = themeConfig,
+                    backgroundRenderState = backgroundRenderState,
+                    useBlur = useBlur,
+                ) {
+                    ModificationsScreen()
                 }
             }
             entry<Route.OpenSourceLicense>(swipeDismiss = swipeBackDirection) {
@@ -710,6 +743,28 @@ fun NavContainer(
                     SuSFSConfigScreen()
                 }
             }
+            entry<Route.SuSFSLkm>(swipeDismiss = swipeBackDirection) {
+                ManagerNavEntry(
+                    interceptPredictiveBack = interceptPredictiveBack,
+                    onBack = onBack,
+                    themeConfig = themeConfig,
+                    backgroundRenderState = backgroundRenderState,
+                    useBlur = useBlur,
+                ) {
+                    SuSFSLkmScreen()
+                }
+            }
+            entry<Route.MountController>(swipeDismiss = swipeBackDirection) {
+                ManagerNavEntry(
+                    interceptPredictiveBack = interceptPredictiveBack,
+                    onBack = onBack,
+                    themeConfig = themeConfig,
+                    backgroundRenderState = backgroundRenderState,
+                    useBlur = useBlur,
+                ) {
+                    MountControllerScreen()
+                }
+            }
             entry<Route.UmountManager>(swipeDismiss = swipeBackDirection) {
                 ManagerNavEntry(
                     interceptPredictiveBack = interceptPredictiveBack,
@@ -732,17 +787,6 @@ fun NavContainer(
                     DynamicManagerScreen()
                 }
             }
-            entry<Route.Music>(swipeDismiss = swipeBackDirection) {
-                ManagerNavEntry(
-                    interceptPredictiveBack = interceptPredictiveBack,
-                    onBack = onBack,
-                    themeConfig = themeConfig,
-                    backgroundRenderState = backgroundRenderState,
-                    useBlur = useBlur,
-                ) {
-                    MusicScreen(onBack = onBack)
-                }
-            }
             entry<Route.KernelFlash>(swipeDismiss = NavSwipeDirection.None) { key ->
                 ManagerNavEntry(
                     interceptPredictiveBack = interceptPredictiveBack,
@@ -755,8 +799,6 @@ fun NavContainer(
                 }
             }
         }
-        // 迷你播放条浮在所有页面之上，切页不断、歌也不断。
-        MiniPlayerHost()
         }
     }
 }
@@ -998,7 +1040,13 @@ fun rememberMaterial3BlurBackdrop(
 
     return rememberLayerBackdrop {
         if (themeConfig.isEnableBlurExp) {
-            backgroundRenderState.imagePainter?.let { painter ->
+            val wallpaperPainter = backgroundRenderState.imagePainter
+            if (wallpaperPainter == null) {
+                // 没设壁纸时必须先铺一层不透明底色：否则 backdrop 里只有
+                // 页面内容（页面根是透明的），胶囊玻璃采样到透明就是一块黑。
+                drawRect(backgroundColor)
+            }
+            wallpaperPainter?.let { painter ->
                 val backgroundViewportSize = backgroundAnchor
                     ?.takeIf { it.isAttached && it.size.width > 0 && it.size.height > 0 }
                     ?.size

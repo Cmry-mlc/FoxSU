@@ -1,14 +1,27 @@
 package com.kuaimaosu.manager.ui.component
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -27,6 +40,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.twotone.KeyboardArrowLeft
@@ -38,18 +52,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kuaimaosu.manager.R
 import com.kuaimaosu.manager.ui.theme.CardConfig
 import com.kuaimaosu.manager.ui.theme.KuaiMaoColors
 import com.kuaimaosu.manager.ui.theme.renderBackgroundBlur
@@ -57,6 +78,8 @@ import com.kuaimaosu.manager.ui.theme.KuaiMaoDimens
 import com.kuaimaosu.manager.ui.theme.KuaiMaoType
 import com.kuaimaosu.manager.ui.theme.KuaiMaoTones
 import com.kuaimaosu.manager.ui.theme.ThemeConfig
+import com.kuaimaosu.manager.ui.theme.isInDarkTheme
+import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 /**
@@ -455,7 +478,11 @@ fun KuaiMaoSegmentedTabs(
 }
 
 /**
- * 设计稿开关：44×26 胶囊，开启为品牌渐变 + 白色滑块右移，关闭为浅灰 + 滑块左移。
+ * 设计稿开关：52×26 胶囊。
+ * 轨道是中性灰（开 = 深灰、关 = 浅灰），滑块是黑色圆盘，盘里是白色的 K 猫头标志。
+ *
+ * 开 / 关不是硬切：滑块用弹簧追到对面、途中被按住的滑块会横向拉成胶囊、
+ * 抬手时 K 猫头弹一下、轨道里还有一圈从滑块位置扩散出去的涟漪。
  */
 @Composable
 fun KuaiMaoSwitch(
@@ -464,66 +491,138 @@ fun KuaiMaoSwitch(
     enabled: Boolean = true,
     onCheckedChange: ((Boolean) -> Unit)? = null,
 ) {
-    val alpha = if (enabled) 1f else 0.5f
-    val trackWidth = 44.dp
-    val thumb = 20.dp
-    val padding = 3.dp
-    // 夜间强调色是白色：直接用白轨道 + 白滑块会糊成一整块，所以亮度太高时
-    // 把轨道换成中性灰，滑块仍是白色，选中状态一眼能看出来。
-    val brightAccent = KuaiMaoColors.brand.luminance() > 0.72f
-    val trackStart = if (brightAccent) Color(0xFF6E6E73) else KuaiMaoColors.brand
-    val trackEnd = if (brightAccent) Color(0xFF8E8E93) else KuaiMaoColors.brandDeep
-    val checkInk = if (brightAccent) Color(0xFF3A3A3E) else Color(0xFF4F5BE8)
-    val offset by animateDpAsState(
-        targetValue = if (checked) trackWidth - thumb - padding * 2 else 0.dp,
-        animationSpec = tween(durationMillis = 180),
-        label = "kuaimaoSwitchThumb",
+    val alpha = if (enabled) 1f else 0.45f
+    val themeConfig: ThemeConfig = koinInject()
+    val isDark = isInDarkTheme(themeConfig.forceDarkMode)
+    val trackWidth = 52.dp
+    val trackHeight = 26.dp
+    val thumb = 24.dp
+    val inset = 1.dp
+    val maxOffset = trackWidth - thumb - inset * 2
+    // 轨道只做中性底：开 = 中灰、关 = 更浅的灰。深色主题下整体降一档，
+    // 免得在 #1C1C1C 卡面上又浮出一条亮条。
+    val trackOn = if (isDark) Color(0xFF3A3A3E) else Color(0xFFC7C7CC)
+    val trackOff = if (isDark) Color(0xFF2C2C2E) else Color(0xFFECECEF)
+    // 滑块跟随主题色：默认是石墨灰，用户换了彩色主题就跟着变色。
+    // 关闭态用低饱和的灰，避免「没开也像开」。
+    val thumbOn = KuaiMaoColors.brand
+    val thumbOff = if (isDark) Color(0xFF5A5A62) else Color(0xFFA6A6AC)
+
+    // ---- 按下：滑块拉成胶囊 ---------------------------------------
+    // 指头压住时滑块被按得长一点，松手缩回正圆。纯展示用的开关
+    // （onCheckedChange = null，点击交给整行）收不到按压，自然不拉伸。
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+    val press by animateFloatAsState(
+        targetValue = if (pressed) 1f else 0f,
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = 900f),
+        label = "kuaimaoSwitchPress",
     )
+    val stretch = 9.dp * press
+    val thumbWidth = thumb + stretch
+
+    // ---- 位移：弹簧追过去，不是匀速推过去 -------------------------
+    // Animatable 只写布局阶段（offset 的 lambda 版本），拖一个开关不会连带
+    // 让整行文字重组。
+    val progress = remember { Animatable(if (checked) 1f else 0f) }
+    LaunchedEffect(checked) {
+        progress.animateTo(
+            targetValue = if (checked) 1f else 0f,
+            animationSpec = spring(dampingRatio = 0.78f, stiffness = 680f),
+        )
+    }
+
+    val trackColor by animateColorAsState(
+        targetValue = if (checked) trackOn else trackOff,
+        animationSpec = tween(durationMillis = 260),
+        label = "kuaimaoSwitchTrack",
+    )
+    val thumbColor by animateColorAsState(
+        targetValue = if (checked) thumbOn else thumbOff,
+        animationSpec = tween(durationMillis = 220),
+        label = "kuaimaoSwitchThumbColor",
+    )
+    // K 是纯白图形，靠 tint 上色：深色滑块配白字，浅色滑块配近黑字。
+    val markInk = if (thumbColor.luminance() < 0.55f) Color.White else Color(0xFF101318)
+
+    // ---- 切换反馈：猫头弹一下 + 轨道里一圈涟漪 --------------------
+    // lastChecked 一起步就等于当前值，所以「进页面 / 列表滚动重建」不会放动画，
+    // 只有状态真的翻了才播。
+    val markPop = remember { Animatable(1f) }
+    val ripple = remember { Animatable(1f) }
+    var lastChecked by remember { mutableStateOf(checked) }
+    LaunchedEffect(checked) {
+        if (lastChecked == checked) return@LaunchedEffect
+        lastChecked = checked
+        launch {
+            markPop.snapTo(0.74f)
+            markPop.animateTo(1f, spring(dampingRatio = 0.4f, stiffness = 620f))
+        }
+        launch {
+            ripple.snapTo(0f)
+            ripple.animateTo(1f, tween(durationMillis = 340, easing = LinearOutSlowInEasing))
+        }
+    }
+
     Box(
         modifier = modifier
-            .size(width = trackWidth, height = 26.dp)
-            .clip(RoundedCornerShape(13.dp))
-            .background(
-                if (checked) {
-                    Brush.linearGradient(
-                        colors = listOf(
-                            trackStart.copy(alpha = alpha),
-                            trackEnd.copy(alpha = alpha),
-                        ),
-                        start = Offset.Zero,
-                        end = Offset.Infinite,
-                    )
-                } else {
-                    SolidColor(KuaiMaoColors.canvasSubtle.copy(alpha = alpha))
-                },
-            )
+            .size(trackWidth, trackHeight)
+            .clip(RoundedCornerShape(trackHeight / 2))
+            .background(trackColor.copy(alpha = alpha))
+            // 涟漪画在轨道底之上、滑块之下：从滑块中心往外扩，出轨道被圆角裁掉。
+            .drawBehind {
+                val t = ripple.value
+                if (t >= 1f) return@drawBehind
+                val centerX = (inset + (maxOffset - stretch) * progress.value + (thumb + stretch) / 2).toPx()
+                drawCircle(
+                    color = (if (checked) Color.White else thumbOn).copy(
+                        alpha = 0.34f * (1f - t) * alpha,
+                    ),
+                    radius = (thumb / 2).toPx() + 21.dp.toPx() * t,
+                    center = Offset(centerX, size.height / 2f),
+                    style = Stroke(width = 1.5.dp.toPx()),
+                )
+            }
             .then(
                 if (onCheckedChange != null && enabled) {
-                    Modifier.clickable { onCheckedChange(!checked) }
+                    Modifier.clickable(
+                        interactionSource = interactionSource,
+                        indication = LocalIndication.current,
+                    ) { onCheckedChange(!checked) }
                 } else {
                     Modifier
                 },
             )
-            .padding(padding),
+            .padding(inset),
     ) {
         Box(
             modifier = Modifier
-                .offset(x = offset)
-                .size(thumb)
-                .shadow(2.dp, RoundedCornerShape(10.dp), clip = false)
-                .clip(RoundedCornerShape(10.dp))
-                .background(Color.White.copy(alpha = alpha)),
+                // 关态左边缘固定往右长、开态右边缘固定往左长，滑到一半也不会顶出轨道。
+                .offset {
+                    IntOffset(
+                        x = ((maxOffset - stretch) * progress.value).roundToPx(),
+                        y = 0,
+                    )
+                }
+                .width(thumbWidth)
+                .height(thumb)
+                .shadow(2.dp, CircleShape, clip = false)
+                // CircleShape 是 50% 圆角，宽度拉开后自然变成胶囊，不用单独画一条路径。
+                .clip(CircleShape)
+                .background(thumbColor.copy(alpha = alpha)),
             contentAlignment = Alignment.Center,
         ) {
-            if (checked) {
-                Icon(
-                    imageVector = Icons.TwoTone.Check,
-                    contentDescription = null,
-                    // 白色滑块上固定用深一些的强调色，避免暗色主题下对比度不足
-                    tint = checkInk,
-                    modifier = Modifier.size(13.dp),
-                )
-            }
+            Image(
+                painter = painterResource(R.drawable.ic_kuaimao_mark),
+                contentDescription = null,
+                colorFilter = ColorFilter.tint(markInk.copy(alpha = alpha)),
+                modifier = Modifier
+                    .size(15.dp)
+                    .graphicsLayer {
+                        scaleX = markPop.value
+                        scaleY = markPop.value
+                    },
+            )
         }
     }
 }

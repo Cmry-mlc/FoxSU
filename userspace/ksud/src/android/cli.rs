@@ -87,6 +87,9 @@ enum Commands {
         command: UmountConfigOp,
     },
 
+    /// 内置模块挂载控制器（OverlayFS / Magic Mount）
+    Mount(crate::android::mount::cli::MountArgs),
+
     /// Emulate system reboot
     SoftReboot,
 
@@ -617,6 +620,7 @@ pub fn run() -> Result<()> {
     let result = match cli.command {
         Commands::AnyKernel3 { zip, slot } => anykernel3::flash(&zip, slot),
         Commands::Susfs(args) => crate::android::susfs::cli::run_main(args),
+        Commands::Mount(args) => crate::android::mount::cli::run(args),
         Commands::PostFsData => init_event::on_post_fs_data(),
         Commands::BootCompleted => {
             init_event::on_boot_completed();

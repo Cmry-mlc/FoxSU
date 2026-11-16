@@ -7,6 +7,7 @@ mod init_event;
 mod ksucalls;
 mod late_load;
 mod module;
+pub mod mount;
 mod preinit;
 mod profile;
 pub(crate) mod resetprop;

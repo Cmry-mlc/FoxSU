@@ -24,6 +24,15 @@ sealed interface Route :
 
     @Parcelize
     @Serializable
+    data object Credits : Route
+
+    /** 相对上游 BakaSU 的改动清单。 */
+    @Parcelize
+    @Serializable
+    data object Modifications : Route
+
+    @Parcelize
+    @Serializable
     data object Sulog : Route
 
     @Parcelize
@@ -187,6 +196,16 @@ sealed interface Route :
     @Serializable
     data object SuSFSConfig : Route
 
+    /** SUSFS 守卫内核模块：加载 / 卸载 / 开机自动加载。 */
+    @Parcelize
+    @Serializable
+    data object SuSFSLkm : Route
+
+    /** 内置挂载控制器：OverlayFS / Magic Mount 与逐模块规则。 */
+    @Parcelize
+    @Serializable
+    data object MountController : Route
+
     @Parcelize
     @Serializable
     data object ThemeSettings : Route
@@ -198,11 +217,6 @@ sealed interface Route :
     @Parcelize
     @Serializable
     data object DynamicManager : Route
-
-    /** 音乐播放器：在线搜索 + 播放，支持从助手直接拉起。 */
-    @Parcelize
-    @Serializable
-    data object Music : Route
 
     @Parcelize
     @Serializable

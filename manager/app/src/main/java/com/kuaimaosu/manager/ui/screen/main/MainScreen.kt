@@ -1,5 +1,6 @@
 package com.kuaimaosu.manager.ui.screen.main
 
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.layout.Box
@@ -27,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -35,6 +37,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import com.kuaimaosu.manager.ui.activity.component.NavigationBar
 import com.kuaimaosu.manager.ui.component.HorizontalPagerWithInteraction
+import com.kuaimaosu.manager.ui.component.LocalPagerInterceptionMode
+import com.kuaimaosu.manager.ui.component.RebootSheet
 import com.kuaimaosu.manager.ui.rememberMaterial3BlurBackdrop
 import com.kuaimaosu.manager.ui.screen.BottomBarDestination
 import com.kuaimaosu.manager.ui.theme.BottomBarStyle
@@ -46,13 +50,12 @@ import com.kuaimaosu.manager.ui.util.LocalPagerState
 import com.kuaimaosu.manager.ui.util.LocalPortraitState
 import com.kuaimaosu.manager.ui.util.LocalSelectedPage
 import com.kuaimaosu.manager.ui.util.LocalSnackbarHost
+import com.kuaimaosu.manager.ui.viewmodel.HomeUiAction
 import com.kuaimaosu.manager.ui.viewmodel.HomeViewModel
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import top.yukonga.miuix.kmp.utils.PagerGestureNestedScrollConnection
 import top.yukonga.miuix.kmp.utils.PagerInterceptionMode
 import top.yukonga.miuix.kmp.utils.PagerNavigationSpringSpec
-import top.yukonga.miuix.kmp.utils.pagerGestureOverride
 
 @Composable
 fun MainScreen(
@@ -77,9 +80,13 @@ fun MainScreen(
     var lastRequestedPage by remember { mutableIntStateOf(pagerState.currentPage) }
 
     val pagerMode = PagerInterceptionMode.entries.getOrElse(pagerInterceptionMode) {
-        PagerInterceptionMode.Native
+        PagerInterceptionMode.CrossAxisInterceptor
     }
-    val interceptPagerGestures = pagerMode == PagerInterceptionMode.CrossAxisInterceptor
+
+    // 电源面板画在本页最上层，而不是弹一个 ModalBottomSheet：
+    // 弹窗是独立窗口，磨砂对位会失效，面板就只剩一层半透明底。
+    var showRebootSheet by rememberSaveable { mutableStateOf(false) }
+    val context = LocalContext.current
 
     val handlePageChange: (Int) -> Unit = remember(pagerState, coroutineScope, pages) {
         { page ->
@@ -132,27 +139,13 @@ fun MainScreen(
         LocalPagerState provides pagerState,
         LocalHandlePageChange provides handlePageChange,
         LocalSelectedPage provides uiSelectedPage,
+        LocalPagerInterceptionMode provides pagerMode,
     ) {
         val content = @Composable { paddingBottom: Dp ->
             HorizontalPagerWithInteraction(
-                enableGestureOverride = false,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .pagerGestureOverride(
-                        pagerState = pagerState,
-                        mode = pagerMode,
-                        enabled = userScrollEnabled,
-                    ),
+                modifier = Modifier.fillMaxSize(),
                 state = pagerState,
-                userScrollEnabled = userScrollEnabled && !interceptPagerGestures,
-                pageNestedScrollConnection = if (interceptPagerGestures) {
-                    PagerGestureNestedScrollConnection
-                } else {
-                    PagerDefaults.pageNestedScrollConnection(
-                        state = pagerState,
-                        orientation = androidx.compose.foundation.gestures.Orientation.Horizontal,
-                    )
-                },
+                userScrollEnabled = userScrollEnabled,
                 flingBehavior = PagerDefaults.flingBehavior(
                     state = pagerState,
                     snapAnimationSpec = PagerNavigationSpringSpec,
@@ -175,6 +168,8 @@ fun MainScreen(
             }
         }
 
+        Box(modifier = Modifier.fillMaxSize()) {
+
         // 竖屏选「侧边栏」时也走 rail 布局：左侧导航、右侧内容
         if (LocalPortraitState.current && themeConfig.bottomBarStyle != BottomBarStyle.RAIL) {
             Scaffold(
@@ -186,6 +181,7 @@ fun MainScreen(
                     NavigationBar(
                         destinations = pages,
                         isBottomBar = true,
+                        onRequestReboot = { showRebootSheet = true },
                     )
                 },
                 containerColor = Color.Transparent,
@@ -227,8 +223,24 @@ fun MainScreen(
                         },
                     destinations = pages,
                     isBottomBar = false,
+                    onRequestReboot = { showRebootSheet = true },
                 )
             }
+        }
+
+            RebootSheet(
+                visible = showRebootSheet,
+                onDismiss = { showRebootSheet = false },
+                onReboot = { reason ->
+                    showRebootSheet = false
+                    if (homeState.systemStatus.isRootAvailable) {
+                        homeViewModel.dispatch(HomeUiAction.Reboot(reason))
+                    } else {
+                        Toast.makeText(context, "尚未进入工作状态，无法重启", Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                },
+            )
         }
     }
 }
