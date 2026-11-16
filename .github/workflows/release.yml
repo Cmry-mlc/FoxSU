@@ -1,4 +1,8 @@
 name: Release
+
+# 创建 Release 需要写权限：显式声明，避免仓库默认 token 只读时 403
+permissions:
+  contents: write
 on:
   push:
     tags:
