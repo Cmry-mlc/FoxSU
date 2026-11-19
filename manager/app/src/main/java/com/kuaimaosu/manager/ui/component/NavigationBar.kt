@@ -43,10 +43,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
-import androidx.compose.material3.WideNavigationRail
-import androidx.compose.material3.WideNavigationRailColors
-import androidx.compose.material3.WideNavigationRailDefaults
-import androidx.compose.material3.WideNavigationRailItem
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.ReadOnlyComposable
@@ -69,6 +65,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -76,10 +73,12 @@ import com.kuaimaosu.manager.R
 import com.kuaimaosu.manager.ui.component.FloatingBottomBar
 import com.kuaimaosu.manager.ui.component.FloatingBottomBarItem
 import com.kuaimaosu.manager.ui.screen.BottomBarDestination
+import com.kuaimaosu.manager.ui.theme.BackgroundEffect
 import com.kuaimaosu.manager.ui.theme.BottomBarStyle
 import com.kuaimaosu.manager.ui.theme.KuaiMaoColors
 import com.kuaimaosu.manager.ui.theme.KuaiMaoDimens
 import com.kuaimaosu.manager.ui.theme.ThemeConfig
+import com.kuaimaosu.manager.ui.theme.barSurfaceColor
 import com.kuaimaosu.manager.ui.theme.blurEffect
 import com.kuaimaosu.manager.ui.theme.renderBackgroundBlur
 import com.kuaimaosu.manager.ui.theme.isInDarkTheme
@@ -120,10 +119,10 @@ fun NavigationBar(
                 )
                 .then(
                     // 胶囊栏需要四周留白浮起来；传统栏贴底贴边。
+                    // 胶囊的左右留白不用 dp 定死：改成按屏幕宽度取比例（见下方 0.72f），
+                    // 否则 16dp 在 400dp 级宽屏上只占 8%，整条会拉成一长条。
                     if (style == BottomBarStyle.CAPSULE) {
                         Modifier.padding(
-                            start = KuaiMaoDimens.navInset,
-                            end = KuaiMaoDimens.navInset,
                             bottom = KuaiMaoDimens.navInset + bottomInset,
                         )
                     } else {
@@ -163,18 +162,28 @@ fun NavigationBar(
                 ),
         ) {
             when (style) {
-                BottomBarStyle.CAPSULE -> KuaiMaoLiquidBottomBar(
-                    destinations = destinations,
-                    selectedIndex = pagerState.currentPage,
-                    onSelected = handlePageChange,
-                    superuserCount = superuserCount,
-                    moduleCount = moduleCount,
-                    showBadge = showNavigationBarBadge,
-                    // 只有「开关打开」且「真的拿到 backdrop」时才走玻璃。
-                    // 设备不支持 RenderEffect 或 backdrop 为空时退回实心胶囊，
-                    // 否则采样到的是空图层，玻璃会画成一块黑。
-                    isBlurEnabled = themeConfig.isEnableBlur && LocalBlurState.current != null,
-                )
+                BottomBarStyle.CAPSULE -> Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    KuaiMaoLiquidBottomBar(
+                        // 胶囊宽度取屏宽的 72%（对齐原版 BakaSU 的比例），
+                        // 大屏/平板再用 360dp 封顶，避免四格被拉得过散。
+                        modifier = Modifier
+                            .fillMaxWidth(0.72f)
+                            .widthIn(max = 360.dp),
+                        destinations = destinations,
+                        selectedIndex = pagerState.currentPage,
+                        onSelected = handlePageChange,
+                        superuserCount = superuserCount,
+                        moduleCount = moduleCount,
+                        showBadge = showNavigationBarBadge,
+                        // 只有「开关打开」且「真的拿到 backdrop」时才走玻璃。
+                        // 设备不支持 RenderEffect 或 backdrop 为空时退回实心胶囊，
+                        // 否则采样到的是空图层，玻璃会画成一块黑。
+                        isBlurEnabled = themeConfig.isEnableBlur && LocalBlurState.current != null,
+                    )
+                }
 
                 // 侧边栏在 MainScreen 里走 rail 布局，这里只作为兜底。
                 BottomBarStyle.TRADITIONAL,
@@ -209,7 +218,7 @@ fun NavigationBar(
  */
 private const val NAV_BLUR_TINT_ALPHA = 0.80f
 
-/** 侧边栏：竖排导航，整条 rail 也支持左右拖动切页。 */
+/** 侧边栏：悬浮胶囊 rail，圆形按钮竖排（对齐 FoxSu 的侧边样式）。 */
 @Composable
 private fun KuaiMaoRailNavigation(
     modifier: Modifier = Modifier,
@@ -220,18 +229,57 @@ private fun KuaiMaoRailNavigation(
     moduleCount: Int,
     showBadge: Boolean,
 ) {
-    WideNavigationRail(
+    val themeConfig: ThemeConfig = koinInject()
+    val cardConfig: CardConfig = koinInject()
+    val wallpaperMode = cardConfig.isCustomBackgroundEnabled
+    val blurEnabled = themeConfig.isEnableBlur
+    val effect = themeConfig.capsuleEffect
+    val hasBackdrop = wallpaperMode || themeConfig.backgroundEffect != BackgroundEffect.NONE
+    // 膜底色跟顶栏 / 底栏共用 barSurfaceColor()：暗壁纸或夜间配深膜、亮底配浅膜。
+    // 之前这里写死 canvasCardSolid，开着暗色壁纸时侧边栏就是一条惨白的实心柱，
+    // 亮色壁纸上又因为不透明而像贴了块瓷砖。
+    val surface = barSurfaceColor()
+    val darkSurface = surface.luminance() < 0.5f
+    val railShape = RoundedCornerShape(percent = 50)
+    Column(
         modifier = modifier
             .windowInsetsPadding(
                 WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal),
-            ),
-        colors = WideNavigationRailColors(
-            containerColor = KuaiMaoColors.canvasCardSolid,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            modalContainerColor = WideNavigationRailDefaults.colors().modalContainerColor,
-            modalScrimColor = WideNavigationRailDefaults.colors().modalScrimColor,
-            modalContentColor = WideNavigationRailDefaults.colors().modalContentColor,
-        ),
+            )
+            .padding(horizontal = 10.dp, vertical = 16.dp)
+            // 胶囊宽度写死：选中圆 48dp、未选中 44dp，若让外框跟着最宽的那颗走，
+            // 切页时整条 rail 会忽宽忽窄，右侧内容跟着左右抖 4dp。
+            .width(56.dp)
+            // 阴影放在 clip 之前：先画投影，再裁形状，否则投影会被自己裁掉。
+            .shadow(elevation = 14.dp, shape = railShape, clip = false)
+            .clip(railShape)
+            .then(
+                when {
+                    // 有壁纸且选了「半透明」档：按定义不做模糊，只留一层薄膜。
+                    wallpaperMode && blurEnabled && effect == CapsuleEffect.TRANSLUCENT ->
+                        Modifier.background(
+                            surface.copy(
+                                alpha = (cardConfig.cardAlpha * 0.62f).coerceAtLeast(0.30f),
+                            ),
+                        )
+
+                    // 壁纸 / 动态背景：跟底栏同一套磨砂。侧边栏上没有文字，
+                    // 膜可以比底栏薄一档，让壁纸透出一点，边界仍然清楚。
+                    hasBackdrop -> Modifier
+                        .background(surface.copy(alpha = 0.58f))
+                        .renderBackgroundBlur(
+                            tintColor = surface,
+                            tintAlpha = if (effect == CapsuleEffect.FROSTED) 0.90f else 0.80f,
+                        )
+
+                    else -> Modifier.background(surface)
+                },
+            )
+            // 内边距必须留够 48dp：选中圆是 48dp，若内容区只有 44dp，
+            // Box 会被父约束压成 44×48 —— 画出来就是一颗竖椭圆。
+            .padding(horizontal = 4.dp, vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         destinations.forEachIndexed { index, destination ->
             NavigationRailItem(
@@ -241,11 +289,18 @@ private fun KuaiMaoRailNavigation(
                 superuserCount = superuserCount,
                 moduleCount = moduleCount,
                 showNavigationBarBadge = showBadge,
+                darkSurface = darkSurface,
             )
         }
     }
 }
 
+/**
+ * 侧边栏里的一格：正圆。
+ * 选中态用品牌色填充 + 反色图标，尺寸略放大；未选中是浅色圆底 + 次级墨色图标。
+ * 圆形底本身充当「方块背景」——不再是圆角方片，和截图里的圆钮一致。
+ * 不做文字标签——侧边栏宽度只有 60dp 左右，塞字会把圆撑变形。
+ */
 @Composable
 private fun NavigationRailItem(
     isSelected: Boolean,
@@ -254,49 +309,73 @@ private fun NavigationRailItem(
     superuserCount: Int,
     moduleCount: Int,
     showNavigationBarBadge: Boolean,
+    darkSurface: Boolean,
 ) {
-    WideNavigationRailItem(
-        railExpanded = false,
-        selected = isSelected,
-        onClick = onClick,
-        icon = {
-            BadgedBox(
-                badge = {
-                    DestinationBadge(
-                        dest = destination,
-                        superUser = superuserCount,
-                        module = moduleCount,
-                        show = showNavigationBarBadge,
-                    )
-                },
-            ) {
-                if (isSelected) {
-                    Icon(destination.iconSelected, stringResource(destination.label))
+    val accent = KuaiMaoColors.brand
+    val shape = CircleShape
+    // 夜间品牌色本身接近白色（#F2F2F7），再配白图标就是「白底白图」，整整一格看不见。
+    // 选中圆的前景统一按底色亮度反推：白底给近黑，深底给白。
+    val selectedBg = if (darkSurface && accent.luminance() < 0.5f) {
+        // 暗膜上深灰圆几乎和膜同色，提亮一档才看得出是个圆。
+        lerp(accent, Color.White, 0.30f)
+    } else {
+        accent
+    }
+    // 未选中的圆：夜间 canvasField 与卡面同为 #1C1C1C，圆直接消失；
+    // 暗膜上改用 9% 白的玻璃圆，浅膜上仍用 field 底色。
+    val idleBg = if (darkSurface) {
+        Color.White.copy(alpha = 0.09f)
+    } else {
+        KuaiMaoColors.canvasFieldSolid
+    }
+    val idleInk = if (darkSurface) Color(0xFFE8E8EC) else KuaiMaoColors.textSec
+    val background = if (isSelected) selectedBg else idleBg
+    val foreground = if (isSelected) onAccentInk(selectedBg) else idleInk
+    Box(
+        modifier = Modifier
+            .size(if (isSelected) 48.dp else 44.dp)
+            .clip(shape)
+            .background(background)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        BadgedBox(
+            badge = {
+                DestinationBadge(
+                    dest = destination,
+                    superUser = superuserCount,
+                    module = moduleCount,
+                    show = showNavigationBarBadge,
+                )
+            },
+        ) {
+            Icon(
+                imageVector = if (isSelected) {
+                    destination.iconSelected
                 } else {
-                    Icon(destination.iconNotSelected, stringResource(destination.label))
-                }
-            }
-        },
-        label = {
-            Text(
-                stringResource(destination.label),
-                style = MaterialTheme.typography.labelMedium,
-                maxLines = 1,
-                softWrap = false,
-                overflow = TextOverflow.Visible,
+                    destination.iconNotSelected
+                },
+                contentDescription = stringResource(destination.label),
+                tint = foreground,
+                modifier = Modifier.size(22.dp),
             )
-        },
-    )
+        }
+    }
 }
 
 /**
- * 强调色底上的前景色：石墨灰底配白字，亮色主题色底配近黑字。
+ * 强调色底上的前景色：深底配白字，亮底配近黑字。
  * 只看亮度，避免"白底白字"。
  */
 @Composable
 @ReadOnlyComposable
-private fun onBadgeInk(): Color =
-    if (KuaiMaoColors.brand.luminance() < 0.55f) Color.White else Color(0xFF101318)
+private fun onBadgeInk(): Color = onAccentInk(KuaiMaoColors.brand)
+
+/** 同上，但允许调用方传入实际用到的底色（侧边栏选中圆可能被提亮过）。 */
+@Composable
+@ReadOnlyComposable
+private fun onAccentInk(accent: Color): Color =
+    if (accent.luminance() < 0.55f) Color.White else Color(0xFF101318)
 
 @Composable
 private fun DestinationBadge(
@@ -503,6 +582,7 @@ private fun KuaiMaoClassicNavItem(
  */
 @Composable
 private fun KuaiMaoLiquidBottomBar(
+    modifier: Modifier = Modifier,
     destinations: List<BottomBarDestination>,
     selectedIndex: Int,
     onSelected: (Int) -> Unit,
@@ -512,7 +592,7 @@ private fun KuaiMaoLiquidBottomBar(
     isBlurEnabled: Boolean,
 ) {
     FloatingBottomBar(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier,
         selectedIndex = selectedIndex,
         onSelected = onSelected,
         tabsCount = destinations.size,

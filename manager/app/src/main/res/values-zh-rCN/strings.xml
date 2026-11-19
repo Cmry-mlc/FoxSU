@@ -700,6 +700,14 @@
     <string name="theme_style_purple">紫色</string>
     <string name="theme_style_azure">天蓝</string>
     <string name="theme_style_brown">棕色</string>
+    <string name="theme_style_sakura">樱粉</string>
+    <string name="theme_style_lotus">藕灰</string>
+    <string name="theme_style_mist">雾紫</string>
+    <string name="theme_style_ink_violet">墨紫</string>
+    <string name="theme_style_oat">米白</string>
+    <string name="theme_style_warm_gray">暖灰</string>
+    <string name="theme_style_clay">陶杏</string>
+    <string name="theme_style_ink_gray">墨灰</string>
     <string name="theme_style_gray">灰色</string>
     <string name="theme_style_black">黑色</string>
     <string name="theme_style_pure_black">纯黑</string>

@@ -248,6 +248,18 @@ val KuaiMaoThemePresets: List<KuaiMaoThemePreset> = listOf(
     KuaiMaoThemePreset(0xFF8A5F42.toInt(), R.string.theme_style_orange),   // 陶土
     KuaiMaoThemePreset(0xFF6B5445.toInt(), R.string.theme_style_brown),    // 胡桃
     KuaiMaoThemePreset(0xFF4A6E9E.toInt(), R.string.theme_style_azure),    // 雾蓝
+    // 「墨韵生香」两组同族色：粉系与米系，每组从浅到深。
+    // 每组最浅的那颗（#FFE3EE / #F7F5F3）已按需求剔除——它跟白卡几乎同色，
+    // 选上去跟没选一样。剩下的浅色在亮色主题下会被自动压深（见 Theme.asAccent），
+    // 否则会出现「樱花粉当文字色压在白卡上」这种读不出来的情况。
+    KuaiMaoThemePreset(0xFFFFB3D0.toInt(), R.string.theme_style_sakura),    // 樱粉
+    KuaiMaoThemePreset(0xFFD8CCD7.toInt(), R.string.theme_style_lotus),     // 藕灰
+    KuaiMaoThemePreset(0xFFB7B7CC.toInt(), R.string.theme_style_mist),      // 雾紫
+    KuaiMaoThemePreset(0xFF535369.toInt(), R.string.theme_style_ink_violet), // 墨紫
+    KuaiMaoThemePreset(0xFFDFD6CE.toInt(), R.string.theme_style_oat),       // 米白
+    KuaiMaoThemePreset(0xFFA9A09E.toInt(), R.string.theme_style_warm_gray), // 暖灰
+    KuaiMaoThemePreset(0xFFD2A792.toInt(), R.string.theme_style_clay),      // 陶杏
+    KuaiMaoThemePreset(0xFF5E5E61.toInt(), R.string.theme_style_ink_gray),  // 墨灰
     KuaiMaoThemePreset(0xFF6B7280.toInt(), R.string.theme_style_gray),     // 石墨灰（保留）
     KuaiMaoThemePreset(0xFF2A2E35.toInt(), R.string.theme_style_black),    // 墨黑
     KuaiMaoThemePreset(0xFF000000.toInt(), R.string.theme_style_pure_black), // 纯黑

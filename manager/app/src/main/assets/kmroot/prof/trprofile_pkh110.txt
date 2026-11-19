@@ -1,0 +1,11 @@
+timer_link = 0xffffffc080195d48
+task_link = 0xffffffc0800ab93c
+selinux_link = 0xffffffc08236a2e0
+user_ns = 0xffffffc08213ef50
+root_user = 0xffffffc08213f1e0
+groups = 0xffffffc082140740
+ucounts = 0xffffffc082140cb0
+task_cred = 0x820
+kitimer_node = 0x78
+task_alloc = 0x12c0
+page_offset = 0xffffff7f80000000

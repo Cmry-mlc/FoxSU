@@ -133,6 +133,15 @@ private val kernelCredits = listOf(
         note = "内置引擎方案的参考实现，ksud 集成与让位策略借鉴自它",
         initial = "F",
     ),
+    Credit(
+        name = "KMRoot",
+        author = "KaMuaMua2020",
+        repo = "",
+        license = "GPL-3.0",
+        licenseUrl = "https://www.gnu.org/licenses/gpl-3.0.html",
+        note = "一键越狱（临时提权）核心的来源：CVE-2026-98260 竞态 UAF 与 ksud late-load 均由其实现移植，特此感谢",
+        initial = "K",
+    ),
 )
 
 private val uiCredits = listOf(
@@ -389,7 +398,10 @@ private fun androidx.compose.foundation.lazy.LazyListScope.creditSection(
     item {
         KuaiMaoCard(contentPadding = PaddingValues(horizontal = 14.dp, vertical = 4.dp)) {
             credits.forEachIndexed { index, credit ->
-                CreditRow(credit = credit, onClick = { onOpen(credit.repo) })
+                CreditRow(
+                    credit = credit,
+                    onClick = { if (credit.repo.isNotBlank()) onOpen(credit.repo) },
+                )
                 if (index != credits.lastIndex) {
                     // 发丝线从文字起始位置开始，头像那一列留空，看起来更整齐
                     Box(

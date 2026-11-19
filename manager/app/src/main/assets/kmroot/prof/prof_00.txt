@@ -1,0 +1,13 @@
+release=5.15.197-android13-8-o-01214-gbee5b6ef6244
+timer_link=0xffffffc008a121cc
+cred_link=0xffffffc008049208
+selinux_link=0xffffffc00b3159e0
+user_ns=0xffffffc00b233450
+root_user=0xffffffc00b0828f0
+groups=0xffffffc00b083ca8
+ucounts=0xffffffc00b084170
+task_cred=0x798
+cred_ucounts=0x90
+kitimer_node=0x78
+task_alloc=0x1200
+page_offset=0xffffff7f80000000

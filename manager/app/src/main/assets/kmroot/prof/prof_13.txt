@@ -1,0 +1,14 @@
+release=6.6.118-android15-8-g9bc34d5b0c79-abogki537459655-4k
+model=Find X8 Ultra 卫星通信版, Find X8s, Find X8s+, 一加 Ace 6
+timer_link=0xffffffc0801a4dfc
+cred_link=0xffffffc0800e4074
+selinux_link=0xffffffc08239c620
+user_ns=0xffffffc08216f450
+root_user=0xffffffc08216f6e0
+groups=0xffffffc082170c40
+ucounts=0xffffffc0821711b0
+task_cred=0x820
+cred_ucounts=0x90
+kitimer_node=0x78
+task_alloc=0x12c0
+page_offset=0xffffff7f80000000

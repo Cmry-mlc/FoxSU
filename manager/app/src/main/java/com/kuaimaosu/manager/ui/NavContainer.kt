@@ -97,6 +97,7 @@ import com.kuaimaosu.manager.ui.screen.about.IconCreditsScreen
 import com.kuaimaosu.manager.ui.screen.about.ModificationsScreen
 import com.kuaimaosu.manager.ui.screen.about.OpenSourceLicenseScreen
 import com.kuaimaosu.manager.ui.screen.kernelFlash.KernelFlashScreen
+import com.kuaimaosu.manager.ui.screen.language.LanguageScreen
 import com.kuaimaosu.manager.ui.screen.main.MainScreen
 import com.kuaimaosu.manager.ui.screen.main.NotificationsPage
 import com.kuaimaosu.manager.ui.screen.main.SettingsAiPage
@@ -113,6 +114,7 @@ import com.kuaimaosu.manager.ui.screen.susfs.SuSFSConfigScreen
 import com.kuaimaosu.manager.ui.screen.susfs.SuSFSLkmScreen
 import com.kuaimaosu.manager.ui.screen.themeSettings.ThemeSettingsScreen
 import com.kuaimaosu.manager.ui.screen.zygisk.ZygiskScreen
+import com.kuaimaosu.manager.ui.screen.kmroot.KmRootScreen
 import com.kuaimaosu.manager.ui.theme.BackgroundRenderState
 import com.kuaimaosu.manager.ui.theme.BackgroundManager
 import com.kuaimaosu.manager.ui.theme.CardConfig
@@ -700,6 +702,17 @@ fun NavContainer(
                     SettingsToolsPage()
                 }
             }
+            entry<Route.Language>(swipeDismiss = swipeBackDirection) {
+                ManagerNavEntry(
+                    interceptPredictiveBack = interceptPredictiveBack,
+                    onBack = onBack,
+                    themeConfig = themeConfig,
+                    backgroundRenderState = backgroundRenderState,
+                    useBlur = useBlur,
+                ) {
+                    LanguageScreen()
+                }
+            }
             entry<Route.SystemInfo>(swipeDismiss = swipeBackDirection) {
                 ManagerNavEntry(
                     interceptPredictiveBack = interceptPredictiveBack,
@@ -775,6 +788,17 @@ fun NavContainer(
                     useBlur = useBlur,
                 ) {
                     ZygiskScreen()
+                }
+            }
+            entry<Route.KmRoot>(swipeDismiss = swipeBackDirection) {
+                ManagerNavEntry(
+                    interceptPredictiveBack = interceptPredictiveBack,
+                    onBack = onBack,
+                    themeConfig = themeConfig,
+                    backgroundRenderState = backgroundRenderState,
+                    useBlur = useBlur,
+                ) {
+                    KmRootScreen(onBack = { navigator.pop() })
                 }
             }
             entry<Route.UmountManager>(swipeDismiss = swipeBackDirection) {

@@ -38,8 +38,10 @@ import com.kuaimaosu.manager.domain.usecase.ApplyLanguageUseCase
 import com.kuaimaosu.manager.domain.usecase.EnsureManagerInstalledUseCase
 import com.kuaimaosu.manager.domain.usecase.ObserveStartupStateUseCase
 import com.kuaimaosu.manager.ui.activity.util.ThemeUtils
-import com.kuaimaosu.manager.ui.component.KuaiMaoDisclaimerDialog
-import com.kuaimaosu.manager.ui.component.KuaiMaoDisclaimerStore
+import com.kuaimaosu.manager.ui.component.KuaiMaoJailbreakOfferDialog
+import com.kuaimaosu.manager.ui.component.KuaiMaoJailbreakOfferStore
+import com.kuaimaosu.manager.ui.assistant.KuaiMaoAssistantRuntime
+import com.kuaimaosu.manager.ui.navigation.Route
 import com.kuaimaosu.manager.ui.screen.splash.KuaiMaoSplash
 import com.kuaimaosu.manager.ui.theme.KernelSUTheme
 import com.kuaimaosu.manager.ui.viewmodel.HomeUiAction
@@ -141,28 +143,31 @@ class MainActivity : ComponentActivity() {
                             Box(modifier = Modifier.fillMaxSize()) {
                                 NavContainer(settingsViewModel, intentChannel)
 
-                                // 免责声明：等首屏淡出之后再出现，入场动画才看得见
-                                // （否则全程被水墨屏盖着，露出来时已经是静态的）。
+                                // 首次安装引导：等首屏淡出之后再出现，询问要不要一键提权。
                                 val context = LocalContext.current
-                                var disclaimerAccepted by rememberSaveable {
-                                    mutableStateOf(KuaiMaoDisclaimerStore.isAccepted(context))
+                                var offerAsked by rememberSaveable {
+                                    mutableStateOf(KuaiMaoJailbreakOfferStore.isAsked(context))
                                 }
-                                var disclaimerReady by rememberSaveable {
+                                var offerReady by rememberSaveable {
                                     mutableStateOf(false)
                                 }
                                 LaunchedEffect(showSplash) {
                                     if (!showSplash) {
                                         delay(SPLASH_FADE_MS.toLong())
-                                        disclaimerReady = true
+                                        offerReady = true
                                     }
                                 }
-                                KuaiMaoDisclaimerDialog(
-                                    visible = disclaimerReady && !disclaimerAccepted,
-                                    onAccept = {
-                                        KuaiMaoDisclaimerStore.accept(context)
-                                        disclaimerAccepted = true
+                                KuaiMaoJailbreakOfferDialog(
+                                    visible = offerReady && !offerAsked,
+                                    onJailbreak = {
+                                        KuaiMaoJailbreakOfferStore.markAsked(context)
+                                        offerAsked = true
+                                        KuaiMaoAssistantRuntime.navigator?.push(Route.KmRoot)
                                     },
-                                    onExit = { (context as? Activity)?.finish() },
+                                    onLater = {
+                                        KuaiMaoJailbreakOfferStore.markAsked(context)
+                                        offerAsked = true
+                                    },
                                 )
 
                                 AnimatedVisibility(

@@ -9,6 +9,7 @@ import androidx.compose.material.icons.twotone.AutoAwesome
 import androidx.compose.material.icons.twotone.ChevronRight
 import androidx.compose.material.icons.twotone.GridView
 import androidx.compose.material.icons.twotone.Handyman
+import androidx.compose.material.icons.twotone.Lock
 import androidx.compose.material.icons.twotone.Palette
 import androidx.compose.material.icons.twotone.Tune
 import androidx.compose.ui.text.font.FontWeight
@@ -24,6 +25,8 @@ import com.kuaimaosu.manager.ui.component.KuaiMaoPageTitle
 import com.kuaimaosu.manager.ui.component.KuaiMaoTopActions
 import com.kuaimaosu.manager.ui.component.KuaiMaoRowDivider
 import com.kuaimaosu.manager.ui.theme.KuaiMaoColors
+import com.kuaimaosu.manager.ui.theme.LocalDarkBackdrop
+import com.kuaimaosu.manager.ui.theme.LocalOnWallpaper
 import com.kuaimaosu.manager.ui.theme.renderBackgroundBlur
 import com.kuaimaosu.manager.ui.theme.KuaiMaoTone
 import com.kuaimaosu.manager.ui.theme.KuaiMaoTones
@@ -242,6 +245,14 @@ fun SettingsPage(bottomPadding: Dp) {
             route = Route.ZygiskEngine,
         ),
         KuaiMaoCategory(
+            title = "一键越狱",
+            summary = "KMRoot 引擎 · 临时 root（重启失效）",
+            count = 3,
+            icon = Icons.TwoTone.Lock,
+            tone = KuaiMaoTones.rose,
+            route = Route.KmRoot,
+        ),
+        KuaiMaoCategory(
             title = "工具",
             summary = "日志 · 动态管理器 · Umount 路径",
             count = 3 + if (status.lkmMode == true && !status.isLateLoadMode) 1 else 0,
@@ -428,17 +439,32 @@ private fun KuaiMaoCategoryRow(
         }
         Spacer(modifier = Modifier.width(10.dp))
         if (category.count != null) {
+            // 数字胶囊的底不能再用 canvasSubtle：那是不透明实色，
+            // 壁纸 + 夜间模式下卡片只有半透明，这块 #242424 会变成一个比卡面更黑的补丁。
+            // 壁纸模式改成一层薄玻璃（暗底叠白、亮底叠黑），跟着壁纸一起呼吸。
+            val onWallpaper = LocalOnWallpaper.current
+            val darkBackdrop = LocalDarkBackdrop.current
+            val chipBg = when {
+                onWallpaper && darkBackdrop -> Color.White.copy(alpha = 0.12f)
+                onWallpaper -> Color.Black.copy(alpha = 0.05f)
+                else -> KuaiMaoColors.canvasSubtle
+            }
+            val chipInk = when {
+                onWallpaper && darkBackdrop -> Color.White.copy(alpha = 0.86f)
+                onWallpaper -> KuaiMaoColors.textBody
+                else -> KuaiMaoColors.textTer
+            }
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(100.dp))
-                    .background(KuaiMaoColors.canvasSubtle)
+                    .background(chipBg)
                     .padding(horizontal = 8.dp, vertical = 4.dp),
             ) {
                 Text(
                     text = category.count.toString(),
                     fontSize = 9.5.sp,
                     fontWeight = FontWeight.Black,
-                    color = KuaiMaoColors.textTer,
+                    color = chipInk,
                 )
             }
         }

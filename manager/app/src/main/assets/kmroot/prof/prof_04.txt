@@ -1,0 +1,13 @@
+release=6.1.141-android14-11-o-gb6893081c037
+timer_link=0xffffffc00843a438
+cred_link=0xffffffc0080564fc
+selinux_link=0xffffffc00a269e60
+user_ns=0xffffffc00a040ab0
+root_user=0xffffffc00a040d40
+groups=0xffffffc00a042060
+ucounts=0xffffffc00a0425c8
+task_cred=0x838
+cred_ucounts=0x90
+kitimer_node=0x78
+task_alloc=0x12c0
+page_offset=0xffffff7f80000000

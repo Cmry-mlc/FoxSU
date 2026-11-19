@@ -704,6 +704,14 @@
     <string name="theme_style_purple">Purple</string>
     <string name="theme_style_azure">Azure</string>
     <string name="theme_style_brown">Brown</string>
+    <string name="theme_style_sakura">Sakura</string>
+    <string name="theme_style_lotus">Lotus gray</string>
+    <string name="theme_style_mist">Mist violet</string>
+    <string name="theme_style_ink_violet">Ink violet</string>
+    <string name="theme_style_oat">Oat</string>
+    <string name="theme_style_warm_gray">Warm gray</string>
+    <string name="theme_style_clay">Clay</string>
+    <string name="theme_style_ink_gray">Ink gray</string>
     <string name="theme_style_gray">Gray</string>
     <string name="theme_style_black">Black</string>
     <string name="theme_style_pure_black">Pure black</string>

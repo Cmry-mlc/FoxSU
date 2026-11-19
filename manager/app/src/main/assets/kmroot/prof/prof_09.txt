@@ -1,0 +1,14 @@
+release=6.12.69-android16-6-g242e1a07f878-ab15865446-4k
+model=Find X9 系 / 一加 15 系 / 一加 Ace 6T / Find N6 等（6.12.69）
+timer_link=0xffffffc080371908
+cred_link=0xffffffc0800fc504
+selinux_link=0xffffffc082888890
+user_ns=0xffffffc082601ef8
+root_user=0xffffffc082602170
+groups=0xffffffc082603638
+ucounts=0xffffffc082603b08
+task_cred=0x900
+cred_ucounts=0x98
+kitimer_node=0x78
+task_alloc=0x1440
+page_offset=0xffffff7f80000000

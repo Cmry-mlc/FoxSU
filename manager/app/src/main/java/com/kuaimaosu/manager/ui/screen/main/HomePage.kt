@@ -49,6 +49,7 @@ import androidx.compose.material.icons.twotone.FilterList
 import androidx.compose.material.icons.twotone.Group
 import androidx.compose.material.icons.twotone.Info
 import androidx.compose.material.icons.twotone.Layers
+import androidx.compose.material.icons.twotone.Lock
 import androidx.compose.material.icons.twotone.Memory
 import androidx.compose.material.icons.twotone.Person
 import androidx.compose.material.icons.twotone.Security
@@ -583,7 +584,23 @@ private fun statusFeedItems(uiState: HomeUiState): List<KuaiMaoFeedItem> {
         }
         .ifBlank { "无" }
 
-    return listOf(
+    val feed = mutableListOf<KuaiMaoFeedItem>()
+
+    // 漏洞提权利用类型：仅越狱模式（late-load 临时加载）下显示。
+    // KMRoot 引擎统一走 CVE-2026-98260 竞态 UAF。
+    if (status.isLateLoadMode) {
+        feed += KuaiMaoFeedItem(
+            key = "exploit",
+            title = "漏洞提权利用类型",
+            desc = "临时 root · 重启失效",
+            value = "CVE-2026-98260",
+            icon = Icons.TwoTone.Lock,
+            tone = KuaiMaoTones.slate,
+            valueColor = backdropInk(),
+        )
+    }
+
+    feed += listOf(
         KuaiMaoFeedItem(
             key = "selinux",
             title = "SELinux 状态",
@@ -630,6 +647,8 @@ private fun statusFeedItems(uiState: HomeUiState): List<KuaiMaoFeedItem> {
             valueColor = if (zygiskActive) backdropInk() else KuaiMaoColors.danger,
         ),
     )
+
+    return feed
 }
 
 /** 版本信息：设备、系统、内核与两个版本号。 */

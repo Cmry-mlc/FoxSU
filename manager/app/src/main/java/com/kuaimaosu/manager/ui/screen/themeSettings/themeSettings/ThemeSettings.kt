@@ -147,6 +147,7 @@ import com.kuaimaosu.manager.ui.component.settings.SettingsChooseWidget
 import com.kuaimaosu.manager.ui.component.settings.SettingsJumpPageWidget
 import com.kuaimaosu.manager.ui.component.settings.SettingsSwitchWidget
 import com.kuaimaosu.manager.ui.navigation.LocalNavigator
+import com.kuaimaosu.manager.ui.navigation.Route
 import com.kuaimaosu.manager.ui.screen.themeSettings.component.LanguageSelectionDialog
 import com.kuaimaosu.manager.data.theme.ThemeRepository
 import com.kuaimaosu.manager.ui.screen.themeSettings.component.BackgroundEffectPicker
@@ -1469,6 +1470,7 @@ private fun DimSlider(
 private fun LanguageSetting(state: SettingsUiState, viewModel: SettingsViewModel) {
     val language = stringResource(id = R.string.settings_language)
     val languageSystemDefault = stringResource(R.string.language_system_default)
+    val navigator = LocalNavigator.current
 
     // Compute display name based on current app locale
     val currentLanguageDisplay = remember(state.currentAppLocale) {
@@ -1485,7 +1487,9 @@ private fun LanguageSetting(state: SettingsUiState, viewModel: SettingsViewModel
         title = language,
         description = currentLanguageDisplay,
         onClick = {
-            viewModel.dispatch(SettingsUiAction.SetLanguageDialogVisible(true))
+            // 以前这里弹的是系统「应用语言」页：黑底大 logo + 一个没用的搜索按钮，
+            // 跟管理器其余页面两套皮肤。现在走 App 内自建的语言页。
+            navigator.push(Route.Language)
         },
         trailing = {
             Icon(
@@ -1496,22 +1500,4 @@ private fun LanguageSetting(state: SettingsUiState, viewModel: SettingsViewModel
             )
         },
     )
-
-    // Language Selection Dialog
-    if (state.showLanguageDialog) {
-        LanguageSelectionDialog(
-            currentLocale = state.currentAppLocale?.let { locale ->
-                if (locale.country.isEmpty()) locale.language else "${locale.language}_${locale.country}"
-            } ?: "system",
-            onLanguageSelected = { localeTag ->
-                // Update local state immediately
-                viewModel.dispatch(SettingsUiAction.SetLanguage(localeTag))
-                // Apply locale change immediately for Android < 13
-                viewModel.dispatch(SettingsUiAction.RestartActivity)
-            },
-            onDismiss = {
-                viewModel.dispatch(SettingsUiAction.SetLanguageDialogVisible(false))
-            },
-        )
-    }
 }

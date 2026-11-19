@@ -80,6 +80,11 @@ sealed interface Route :
     @Serializable
     data object SettingsTools : Route
 
+    /** 应用语言：应用内自建的语言选择页，不再跳系统设置。 */
+    @Parcelize
+    @Serializable
+    data object Language : Route
+
     @Parcelize
     @Serializable
     data object SystemInfo : Route
@@ -211,6 +216,11 @@ sealed interface Route :
     @Parcelize
     @Serializable
     data object ZygiskEngine : Route
+
+    /** 一键越狱：KMRoot 引擎的临时提权。 */
+    @Parcelize
+    @Serializable
+    data object KmRoot : Route
 
     @Parcelize
     @Serializable

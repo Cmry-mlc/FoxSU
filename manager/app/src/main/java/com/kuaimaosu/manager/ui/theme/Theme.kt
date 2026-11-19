@@ -2286,7 +2286,8 @@ private fun ColorScheme.withSeedAccents(seed: Color, dark: Boolean): ColorScheme
     // 直接用用户选的那颗颜色，不再经 MaterialKolor 的色调映射：
     // 之前选了 #475C91，生成出来会偏成另一个色相（偏紫/偏灰），
     // 色板里看到的是一个色、装到界面上是另一个色。
-    val accent = seed.visibleOn(dark)
+    // 唯一的调整是 asAccent()：色相不动，只把过浅的颜色压深。
+    val accent = seed.asAccent(dark)
     val onAccent = if (accent.luminance() < 0.55f) Color.White else Color(0xFF101318)
     // 容器色只做明度上的加减，色相保持不变，深浅模式看到的是同一个颜色。
     val container = if (dark) {
@@ -2316,6 +2317,43 @@ private fun ColorScheme.withSeedAccents(seed: Color, dark: Boolean): ColorScheme
 private fun Color.visibleOn(dark: Boolean): Color =
     if (dark && luminance() < 0.05f) lerp(this, Color.White, 0.18f) else this
 
+/** 强调色的亮度下限 / 上限：再低就发黑，再高白字就压不住。 */
+private const val ACCENT_MIN_LUMINANCE = 0.14f
+private const val ACCENT_MAX_LUMINANCE = 0.28f
+
+/**
+ * 自选色要当强调色用：色相、饱和度都不动，只把明度压到可读区间。
+ *
+ * 色板里新加了粉系、米系（#FFB3D0、#DFD6CE、#B7B7CC 等），这些颜色直接当 brand 用会出事：
+ * 白卡上的「使用中」「查看全部」变成一抹浅粉，对比度只有 1.3:1；
+ * 侧边栏选中圆配白图标就是白底白图。
+ *
+ * 压深不取齐一档，而是按原亮度乘 0.38 再夹到 [0.14, 0.28]：
+ * 藕灰、米白、暖灰这几个低饱和中性色如果都压到同一个亮度，在色板里就分不出来了。
+ * 现有预设本来就都 ≤0.30，一律原样返回。
+ *
+ * 夜间模式不动：浅色压在纯黑上正好是合适的强调色，压深反而糊。
+ */
+private fun Color.asAccent(dark: Boolean): Color {
+    if (dark) return visibleOn(true)
+    val lum = luminance()
+    // 已经够深就不再碰，避免把 #475C91 这类原本就合适的颜色改样。
+    if (lum <= 0.30f) return this
+    val target = (lum * 0.38f).coerceIn(ACCENT_MIN_LUMINANCE, ACCENT_MAX_LUMINANCE)
+    val hsv = FloatArray(3)
+    android.graphics.Color.colorToHSV(toArgb(), hsv)
+    var v = hsv[2]
+    // HSV 的 V 与相对亮度不是线性关系，迭代几次让它收敛到目标亮度。
+    repeat(8) {
+        val current = Color(
+            android.graphics.Color.HSVToColor(floatArrayOf(hsv[0], hsv[1], v)),
+        ).luminance()
+        val ratio = target / current.coerceAtLeast(0.005f)
+        v = (v * kotlin.math.sqrt(ratio)).coerceIn(0f, 1f)
+    }
+    return Color(android.graphics.Color.HSVToColor(floatArrayOf(hsv[0], hsv[1], v)))
+}
+
 /**
  * KuaiMao 语义色板：把 brand 一族指向自选主题色的 primary，
  * 让选中态图标、按钮、链接、渐变这些「品牌色元素」一起跟着变色。
@@ -2324,7 +2362,8 @@ private fun kuaimaoPaletteFor(themeConfig: ThemeConfig, dark: Boolean): KuaiMaoP
     val base = if (dark) KuaiMaoDarkPalette else KuaiMaoLightPalette
     if (!themeConfig.useCustomThemeColor) return base
     // 同样不做色调映射：亮色、夜间都是同一个色值，只在「色板软底」上按明暗调整。
-    val accent = Color(themeConfig.seedColor).visibleOn(dark)
+    // 浅色种子（樱粉、米白）在亮色主题下要压深，否则白色图标/文字直接消失。
+    val accent = Color(themeConfig.seedColor).asAccent(dark)
     val soft = if (dark) {
         lerp(accent, Color(0xFF121214), 0.78f)
     } else {

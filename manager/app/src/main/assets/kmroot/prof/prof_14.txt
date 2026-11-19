@@ -1,0 +1,14 @@
+release=6.6.118-android15-8-gc4127a25dcf3-ab15863337-4k
+model=Find X8, Find X8 Pro, Find N5
+timer_link=0xffffffc080195d48
+cred_link=0xffffffc0800e4064
+selinux_link=0xffffffc08236a2e0
+user_ns=0xffffffc08213ef50
+root_user=0xffffffc08213f1e0
+groups=0xffffffc082140740
+ucounts=0xffffffc082140cb0
+task_cred=0x820
+cred_ucounts=0x98
+kitimer_node=0x78
+task_alloc=0x12c0
+page_offset=0xffffff7f80000000

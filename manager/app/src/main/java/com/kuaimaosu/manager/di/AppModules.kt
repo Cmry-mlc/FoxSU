@@ -195,6 +195,7 @@ import com.kuaimaosu.manager.ui.viewmodel.RepositorySourcesViewModel
 import com.kuaimaosu.manager.ui.viewmodel.ScriptRunViewModel
 import com.kuaimaosu.manager.ui.viewmodel.SettingsViewModel
 import com.kuaimaosu.manager.ui.viewmodel.SuSFSViewModel
+import com.kuaimaosu.manager.ui.viewmodel.KmRootViewModel
 import com.kuaimaosu.manager.ui.viewmodel.SulogViewModel
 import com.kuaimaosu.manager.ui.viewmodel.SuperUserViewModel
 import com.kuaimaosu.manager.ui.viewmodel.TemplateEditorViewModel
@@ -466,6 +467,7 @@ val viewModelModule = module {
     viewModelOf(::ModuleViewModel)
     viewModelOf(::SuperUserViewModel)
     viewModelOf(::SuSFSViewModel)
+    viewModelOf(::KmRootViewModel)
     viewModel { parameters -> ModuleRepoViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), parameters.getOrNull<String>()) }
     viewModel { parameters -> ModuleDetailViewModel(parameters[0], parameters[1], get(), get(), get(), get(), get(), get(), get()) }
     viewModelOf(::RepositorySourcesViewModel)

@@ -1,0 +1,13 @@
+release=6.6.118-android15-8-g93e223c276e7-abogki500782043-4k
+timer_link=0xffffffc0801a49b0
+cred_link=0xffffffc0800e3f30
+selinux_link=0xffffffc08237b220
+user_ns=0xffffffc08214f450
+root_user=0xffffffc08214f6e0
+groups=0xffffffc082150c40
+ucounts=0xffffffc0821511b0
+task_cred=0x820
+cred_ucounts=0x98
+kitimer_node=0x78
+task_alloc=0x12c0
+page_offset=0xffffff7f80000000

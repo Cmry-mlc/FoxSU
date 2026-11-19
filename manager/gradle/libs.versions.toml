@@ -38,6 +38,7 @@ xz = "1.12"
 spotless = "8.10.3"
 ktlint = "1.8.0"
 compose-rules = "0.6.7"
+shizuku = "13.1.5"
 
 [plugins]
 agp-app = { id = "com.android.application", version.ref = "agp" }
@@ -90,6 +91,9 @@ com-github-topjohnwu-libsu-service = { group = "com.github.topjohnwu.libsu", nam
 com-github-topjohnwu-libsu-io = { group = "com.github.topjohnwu.libsu", name = "io", version.ref = "libsu" }
 
 dev-rikka-rikkax-parcelablelist = { module = "dev.rikka.rikkax.parcelablelist:parcelablelist", version.ref = "parcelablelist" }
+
+shizuku-api = { module = "dev.rikka.shizuku:api", version.ref = "shizuku" }
+shizuku-provider = { module = "dev.rikka.shizuku:provider", version.ref = "shizuku" }
 
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "core-splashscreen" }
