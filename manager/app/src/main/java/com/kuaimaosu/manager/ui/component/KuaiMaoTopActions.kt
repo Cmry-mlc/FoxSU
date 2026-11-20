@@ -99,12 +99,8 @@ fun KuaiMaoTopActions(
 
     Row(
         modifier = modifier
-            // 把右边界和垂直中心报给重启条：展开时整条要原地盖住这块控件。
-            .onGloballyPositioned {
-                val bounds = it.boundsInWindow()
-                rebootPanel.anchorRightPx = bounds.right
-                rebootPanel.anchorCenterPx = (bounds.top + bounds.bottom) / 2f
-            }
+            // 把这块控件的窗口矩形报给重启条：展开时整条要原地盖住它。
+            .rebootAnchor(rebootPanel)
             .height(ACTIONS_HEIGHT)
             .clip(ACTIONS_SHAPE)
             .background(

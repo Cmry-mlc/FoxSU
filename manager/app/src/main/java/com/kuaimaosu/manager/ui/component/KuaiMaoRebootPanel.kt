@@ -1,28 +1,17 @@
 package com.kuaimaosu.manager.ui.component
 
-import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,8 +26,8 @@ import androidx.compose.material.icons.twotone.Usb
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -46,21 +35,25 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.PopupProperties
 import com.kuaimaosu.manager.ui.theme.CardConfig
 import com.kuaimaosu.manager.ui.theme.KuaiMaoColors
-import com.kuaimaosu.manager.ui.theme.LocalKuaiMaoPalette
-import com.kuaimaosu.manager.ui.theme.renderBackgroundBlur
 import org.koin.compose.koinInject
+import kotlin.math.roundToInt
 
 /**
  * 重启条的展开状态。
@@ -73,15 +66,14 @@ class RebootPanelState {
         private set
 
     /**
-     * 标题栏动作条的右边界（窗口坐标，px）。
+     * 标题栏动作条在窗口里的矩形（px）。
      *
-     * 展开时这条要把整块动作条（铃铛 + 重启）盖住，所以右端必须和它严丝合缝：
-     * 右边界对齐才有「原地换了一组图标」的连续感，不会先跳一下再展开。
+     * 条要原地盖住这块（铃铛 + 重启），所以位置必须来自实测、不能用父布局换算：
+     * 首页是 44dp 头像行、其余页是 24sp 大标题 + 副标题，各页高度不一样，任何
+     * 「写死的内边距 + 偏移」都会在某一页错位。这里直接拿窗口矩形，交给 Popup
+     * 的定位器用绝对坐标摆放，不参与父布局，也没有坐标系换算。
      */
-    var anchorRightPx by mutableFloatStateOf(0f)
-
-    /** 标题栏动作条的垂直中心（窗口坐标，px）：条与它同高、垂直居中。 */
-    var anchorCenterPx by mutableFloatStateOf(0f)
+    var anchorBounds by mutableStateOf<IntRect?>(null)
 
     fun toggle() {
         expanded = !expanded
@@ -112,9 +104,6 @@ private val BAR_RADIUS = 13.dp
 /** 最右端的关闭格：正好压在原来那颗重启图标的位置上，点它就是收起。 */
 private val CLOSE_SLOT_WIDTH = 36.dp
 
-/** 拿不到锚点时的兜底右边距：页面右内边距。 */
-private val BAR_FALLBACK_END = 20.dp
-
 private data class RebootOption(
     val label: String,
     /** 26dp 一格只放得下两个汉字，标签都要压到这个长度。 */
@@ -134,6 +123,32 @@ private val REBOOT_OPTIONS = listOf(
 )
 
 /**
+ * 把条摆在锚点矩形上：右端与锚点右端齐平，垂直方向与锚点同高居中。
+ *
+ * 用 Popup 而不是在页面里叠一层，是因为页面里的层要自己做「窗口坐标 → 本层坐标」
+ * 的换算，一旦这一层和标题栏不在同一个 inset 基准上（比如页面被状态栏内边距顶下去
+ * 了、根 Box 却是全屏的），就会整体错开一个状态栏的高度——条会跑到状态栏里去。
+ * Popup 直接在窗口坐标系里摆，锚点是实测的窗口矩形，不存在换算，也就不会错位。
+ */
+private class AnchorRightPositionProvider(
+    private val anchor: IntRect,
+) : PopupPositionProvider {
+    override fun calculatePosition(
+        anchorBounds: IntRect,
+        windowSize: IntSize,
+        layoutDirection: LayoutDirection,
+        popupContentSize: IntSize,
+    ): IntOffset {
+        val x = anchor.right - popupContentSize.width
+        val y = anchor.top + (anchor.height - popupContentSize.height) / 2
+        return IntOffset(
+            x = x.coerceIn(0, (windowSize.width - popupContentSize.width).coerceAtLeast(0)),
+            y = y.coerceIn(0, (windowSize.height - popupContentSize.height).coerceAtLeast(0)),
+        )
+    }
+}
+
+/**
  * 重启条：展开时原地盖住标题栏右侧的「铃铛 + 重启」，换成六个动作 + 一个关闭格。
  *
  * 为什么覆盖而不是另找地方放：标题栏中间只剩 137dp 的窄缝，六格挤进去每格只有
@@ -142,10 +157,6 @@ private val REBOOT_OPTIONS = listOf(
  *
  * 关闭格钉在最右端、和原来那颗重启图标同一个位置：用户想「再点一下关掉」时，
  * 手指落点就是关闭，不会误触到关机或 EDL。
- *
- * 位置不写死：动作条每次布局都把右边界和垂直中心报上来
- * （[RebootPanelState.anchorRightPx] / [RebootPanelState.anchorCenterPx]），
- * 条按它右对齐展开，四个页签都对得准。
  */
 @Composable
 fun KuaiMaoRebootPanel(
@@ -153,121 +164,81 @@ fun KuaiMaoRebootPanel(
     onReboot: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val anchor = state.anchorBounds ?: return
+    if (!state.expanded) return
+
     val cardConfig: CardConfig = koinInject()
     val onWallpaper = cardConfig.isCustomBackgroundEnabled
-    val lightCanvas = LocalKuaiMaoPalette.current.canvasStage.luminance() >= 0.5f
     val shape = RoundedCornerShape(BAR_RADIUS)
-    val density = LocalDensity.current
-    var hostLeftPx by remember { mutableFloatStateOf(0f) }
-    var hostTopPx by remember { mutableFloatStateOf(0f) }
-    var hostWidthPx by remember { mutableFloatStateOf(0f) }
 
-    if (state.expanded) {
-        BackHandler { state.dismiss() }
-    }
+    // Popup 是立刻出现的，所以入场只做「从右端往左摊开」：缩放不改变测量尺寸，
+    // 定位器算出的位置在整个动画里都不变，右端钉死，不会一边长一边漂。
+    var entered by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { entered = true }
+    val scaleX by animateFloatAsState(
+        targetValue = if (entered) 1f else 0.02f,
+        animationSpec = spring(dampingRatio = 0.82f, stiffness = 900f),
+        label = "rebootBarScaleX",
+    )
 
-    BoxWithConstraints(
-        modifier = modifier
-            .fillMaxSize()
-            .onGloballyPositioned {
-                val bounds = it.boundsInWindow()
-                hostLeftPx = bounds.left
-                hostTopPx = bounds.top
-                hostWidthPx = bounds.width.toFloat()
-            },
+    Popup(
+        popupPositionProvider = remember(anchor) { AnchorRightPositionProvider(anchor) },
+        onDismissRequest = { state.dismiss() },
+        properties = PopupProperties(focusable = true, dismissOnClickOutside = true),
     ) {
-        // 右端对齐动作条的右边界：宽度从 0 长到 196dp 时右端钉住，看上去像从
-        // 铃铛那一侧原地铺开、往左把通知和重启两格吃掉。
-        val endPad: Dp = if (state.anchorRightPx > 0f && hostLeftPx > 0f && hostWidthPx > 0f) {
-            with(density) { (hostLeftPx + hostWidthPx - state.anchorRightPx).toDp() }
-        } else {
-            BAR_FALLBACK_END
-        }
-        val topPad: Dp = if (state.anchorCenterPx > 0f && hostTopPx > 0f) {
-            with(density) { (state.anchorCenterPx - hostTopPx).toDp() } - BAR_HEIGHT / 2
-        } else {
-            8.dp
-        }
+        Row(
+            modifier = modifier
+                .width(BAR_WIDTH)
+                .height(BAR_HEIGHT)
+                .graphicsLayer {
+                    this.scaleX = scaleX
+                    transformOrigin = TransformOrigin(1f, 0.5f)
+                }
+                .clip(shape)
+                // Popup 是独立窗口，拿不到页面里的 blurSource，所以这里不用背景模糊，
+                // 改用实色/半透明实色：壁纸下压一层 92% 的白或黑，图标依然清楚。
+                .background(
+                    if (onWallpaper) {
+                        KuaiMaoColors.canvasCard.copy(alpha = 0.92f)
+                    } else {
+                        KuaiMaoColors.canvasCard
+                    },
+                )
+                .border(
+                    width = 1.dp,
+                    color = KuaiMaoColors.line.copy(alpha = 0.8f),
+                    shape = shape,
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(0.dp),
+        ) {
+            REBOOT_OPTIONS.forEach { option ->
+                RebootBarItem(
+                    option = option,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    onClick = {
+                        state.dismiss()
+                        onReboot(option.reason)
+                    },
+                )
+            }
 
-        // 点空白处收起。这一层只在展开时存在，收起后页面照常可点。
-        if (state.expanded) {
+            // 关闭格：压在原来那颗重启图标的位置，点它就是收起。
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                    ) { state.dismiss() },
-            )
-        }
-
-        AnimatedVisibility(
-            visible = state.expanded,
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(end = endPad, top = topPad),
-            enter = expandHorizontally(
-                expandFrom = Alignment.End,
-                animationSpec = spring(dampingRatio = 0.82f, stiffness = 900f),
-            ) + fadeIn(tween(durationMillis = 140)),
-            exit = shrinkHorizontally(
-                shrinkTowards = Alignment.End,
-                animationSpec = tween(durationMillis = 160, easing = FastOutLinearInEasing),
-            ) + fadeOut(tween(durationMillis = 120)),
-        ) {
-            Row(
-                modifier = Modifier
-                    .width(BAR_WIDTH)
-                    .height(BAR_HEIGHT)
-                    .clip(shape)
-                    .background(
-                        if (onWallpaper) Color.Transparent else KuaiMaoColors.canvasCard,
-                    )
-                    .then(
-                        if (onWallpaper) {
-                            Modifier.renderBackgroundBlur(
-                                tintColor = if (lightCanvas) Color.White else Color.Black,
-                                tintAlpha = if (lightCanvas) 0.26f else 0.10f,
-                            )
-                        } else {
-                            Modifier.border(
-                                width = 1.dp,
-                                color = KuaiMaoColors.line.copy(alpha = 0.8f),
-                                shape = shape,
-                            )
-                        },
-                    ),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(0.dp),
+                    .width(CLOSE_SLOT_WIDTH)
+                    .fillMaxHeight()
+                    .clickable { state.dismiss() },
+                contentAlignment = Alignment.Center,
             ) {
-                REBOOT_OPTIONS.forEach { option ->
-                    RebootBarItem(
-                        option = option,
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight(),
-                        onClick = {
-                            state.dismiss()
-                            onReboot(option.reason)
-                        },
-                    )
-                }
-
-                // 关闭格：压在原来那颗重启图标的位置，点它就是收起。
-                Box(
-                    modifier = Modifier
-                        .width(CLOSE_SLOT_WIDTH)
-                        .fillMaxHeight()
-                        .clickable { state.dismiss() },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.TwoTone.Close,
-                        contentDescription = "收起",
-                        tint = KuaiMaoColors.brand,
-                        modifier = Modifier.size(17.dp),
-                    )
-                }
+                Icon(
+                    imageVector = Icons.TwoTone.Close,
+                    contentDescription = "收起",
+                    tint = KuaiMaoColors.brand,
+                    modifier = Modifier.size(17.dp),
+                )
             }
         }
     }
@@ -305,4 +276,19 @@ private fun RebootBarItem(
             softWrap = false,
         )
     }
+}
+
+/** 把窗口里的浮点矩形收成整数矩形，供 Popup 定位使用。 */
+internal fun androidx.compose.ui.geometry.Rect.toWindowIntRect(): IntRect = IntRect(
+    left = left.roundToInt(),
+    top = top.roundToInt(),
+    right = right.roundToInt(),
+    bottom = bottom.roundToInt(),
+)
+
+/** 采集锚点矩形的小工具：给标题栏动作条挂一次即可。 */
+internal fun Modifier.rebootAnchor(
+    state: RebootPanelState,
+): Modifier = onGloballyPositioned {
+    state.anchorBounds = it.boundsInWindow().toWindowIntRect()
 }
