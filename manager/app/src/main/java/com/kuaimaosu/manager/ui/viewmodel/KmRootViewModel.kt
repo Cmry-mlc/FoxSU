@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.kuaimaosu.manager.data.kmroot.KmCfg
 import com.kuaimaosu.manager.data.kmroot.KmEngine
 import com.kuaimaosu.manager.data.kmroot.KmMgr
+import com.kuaimaosu.manager.data.kmroot.KmShell
 import com.kuaimaosu.manager.data.kmroot.KmShizuku
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,16 +20,18 @@ class KmRootViewModel(app: Application) : AndroidViewModel(app) {
     data class UiState(
         val shizukuState: KmShizuku.State = KmShizuku.State.UNKNOWN,
         val shizukuText: String = "",
+        val kernel: String = "",
         val managerPkg: String = KmMgr.KUAIMAO,
         val managerLabel: String = "KuaiMaoSU",
         val managerInstalled: Boolean = true,
-        val mode: String = "auto",
+        val mode: String = "fake",
         val running: Boolean = false,
         val pct: Int = 0,
         val stage: String = "准备",
         val logs: List<String> = emptyList(),
         val resultOk: Boolean? = null,
         val resultMessage: String = "",
+        val showSuccessDialog: Boolean = false,
     )
 
     private val _ui = MutableStateFlow(UiState())
@@ -52,6 +55,8 @@ class KmRootViewModel(app: Application) : AndroidViewModel(app) {
                     resultOk = ok,
                     resultMessage = message,
                     pct = if (ok) 100 else _ui.value.pct,
+                    // 提权成功弹「需重启」说明；失败不弹，让用户直接看日志
+                    showSuccessDialog = ok,
                 )
                 appendLog("== $message")
             }
@@ -72,6 +77,17 @@ class KmRootViewModel(app: Application) : AndroidViewModel(app) {
             mode = KmCfg.mode(ctx),
             running = engine.running,
         )
+        loadKernel()
+    }
+
+    /** 读取当前内核版本串，供"支持机型"弹层高亮匹配项。 */
+    fun loadKernel() {
+        viewModelScope.launch {
+            val k = try {
+                KmShell.run("uname -r", 8).trim().lines().firstOrNull()?.trim().orEmpty()
+            } catch (_: Throwable) { "" }
+            if (k.isNotEmpty()) _ui.value = _ui.value.copy(kernel = k)
+        }
     }
 
     fun selectManager(pkg: String) {
@@ -117,6 +133,36 @@ class KmRootViewModel(app: Application) : AndroidViewModel(app) {
     fun stop() {
         engine.stop()
         _ui.value = _ui.value.copy(running = false)
+    }
+
+    /** 弹窗「稍后手动重启」：仅关闭提示，用户自己决定何时重启。 */
+    fun dismissSuccess() {
+        _ui.value = _ui.value.copy(showSuccessDialog = false)
+    }
+
+    /** 清除一次提权的结果态（供主页内嵌按钮的失败提示「关闭」用）。 */
+    fun dismissResult() {
+        _ui.value = _ui.value.copy(resultOk = null, resultMessage = "", showSuccessDialog = false)
+    }
+
+    /**
+     * 弹窗「立即重启 KuaiMaoSU」：先拉起自身 launcher Activity，再结束当前进程，
+     * 让 APP 以提权后的 root 环境重新初始化，状态才会正确显示。
+     */
+    fun restartApp() {
+        val ctx = getApplication<Application>()
+        try {
+            val intent = ctx.packageManager.getLaunchIntentForPackage(ctx.packageName)?.apply {
+                addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            }
+            if (intent != null) ctx.startActivity(intent)
+        } catch (_: Throwable) {
+        }
+        // 结束当前进程，让新启动的实例在 root 环境下重新初始化
+        try {
+            Runtime.getRuntime().exit(0)
+        } catch (_: Throwable) {
+        }
     }
 
     override fun onCleared() {

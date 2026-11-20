@@ -61,6 +61,7 @@ import androidx.compose.foundation.shape.CircleShape
 import com.kuaimaosu.manager.ui.component.KuaiMaoTopActions
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.twotone.Bolt
 import androidx.compose.material.icons.twotone.Check
 import androidx.compose.material.icons.twotone.ChevronRight
 import androidx.compose.material.icons.twotone.Close
@@ -337,6 +338,55 @@ private fun buildHeroDust(): List<HeroDust> {
 }
 
 /**
+ * 大卡片内嵌的「一键提权」主按钮：未 root 时显示，点击直接走提权主线（不跳界面）。
+ * 用主题色渐变 + 闪电图标，深卡与亮色磨砂卡上都清晰。
+ */
+@Composable
+fun HeroJailbreakButton(
+    onClick: () -> Unit,
+    enabled: Boolean = true,
+) {
+    val accent = KuaiMaoColors.brand
+    val onAccent = if (accent.luminance() < 0.62f) Color.White else Color(0xFF101013)
+    val start = lerp(accent, Color.White, 0.08f)
+    val end = lerp(accent, onAccent, 0.26f)
+    val interaction = remember { MutableInteractionSource() }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(46.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(
+                if (enabled) Brush.horizontalGradient(listOf(start, accent, end))
+                else Brush.horizontalGradient(listOf(Color.Gray, Color.DarkGray)),
+            )
+            .clickable(
+                interactionSource = interaction,
+                indication = null,
+                enabled = enabled,
+                onClick = onClick,
+            )
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Icon(
+            Icons.TwoTone.Bolt,
+            contentDescription = null,
+            tint = onAccent,
+            modifier = Modifier.size(18.dp),
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = "一键提权 · 临时 Root",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = onAccent,
+        )
+    }
+}
+
+/**
  * 内核状态大卡（对应设计稿的深色状态卡）。
  *
  * 深靛渐变 + 双光斑 + 右下弧线，主体是状态与两项指标。
@@ -360,6 +410,8 @@ fun KuaiMaoHeroCard(
     modeTags: List<String> = emptyList(),
     quickActions: List<KuaiMaoQuickAction> = emptyList(),
     isActivated: Boolean = false,
+    /** 卡片内嵌的主操作按钮（如未 root 时的「一键提权」）；为 null 时不显示。 */
+    heroAction: (@Composable () -> Unit)? = null,
     onClick: () -> Unit = {},
 ) {
     val shape = KuaiMaoDimens.rHero
@@ -843,6 +895,12 @@ fun KuaiMaoHeroCard(
                         }
                     }
                 }
+            }
+
+            // 卡片内嵌主操作（未 root 时的一键提权按钮）：直接走提权主线，不跳界面。
+            if (heroAction != null) {
+                Spacer(modifier = Modifier.height(14.dp))
+                heroAction()
             }
 
             Spacer(modifier = Modifier.height(if (modeTags.isEmpty()) 18.dp else 16.dp))

@@ -217,7 +217,7 @@ sealed interface Route :
     @Serializable
     data object ZygiskEngine : Route
 
-    /** 一键越狱：KMRoot 引擎的临时提权。 */
+    /** 一键越狱：自研 98260 引擎的临时提权。 */
     @Parcelize
     @Serializable
     data object KmRoot : Route

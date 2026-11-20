@@ -191,7 +191,7 @@ fun KuaiMaoJailbreakOfferDialog(
                 )
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
-                    text = "提权引擎 KMRoot · 作者 KaMuaMua2020",
+                    text = "自研 98260 引擎 · 致谢 KaMuaMua2020",
                     fontSize = 9.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 0.4.sp,
@@ -282,7 +282,7 @@ private fun HeroHeader() {
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "KMRoot 引擎",
+                        text = "98260 引擎",
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Black,
                         letterSpacing = 1.2.sp,

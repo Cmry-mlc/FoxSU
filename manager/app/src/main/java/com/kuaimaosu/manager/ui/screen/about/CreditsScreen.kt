@@ -134,13 +134,13 @@ private val kernelCredits = listOf(
         initial = "F",
     ),
     Credit(
-        name = "KMRoot",
-        author = "KaMuaMua2020",
+        name = "98260 漏洞研究",
+        author = "KaMuaMua2020 等研究者",
         repo = "",
         license = "GPL-3.0",
         licenseUrl = "https://www.gnu.org/licenses/gpl-3.0.html",
-        note = "一键越狱（临时提权）核心的来源：CVE-2026-98260 竞态 UAF 与 ksud late-load 均由其实现移植，特此感谢",
-        initial = "K",
+        note = "CVE-2026-98260 竞态 UAF 原理与机型偏移数据的公开研究，为本引擎提供了重要参考，特此感谢",
+        initial = "9",
     ),
 )
 

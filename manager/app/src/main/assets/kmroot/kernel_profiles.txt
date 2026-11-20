@@ -1,0 +1,352 @@
+# 98260 引擎内核偏移档案
+# 来源：Shark v2.3.2 各内核链中实机验证过的 profile 表（偏移为硬数据，直接采用）
+# 格式：每行一个机型的 key=value 集合，字段含义见下方说明。代码自行解析此文件。
+#
+# 字段：
+#  release        uname -r 完整串（精确匹配）
+#  family         内核大类：61821 / 61269 / 61258 / 61238 / 61223 / 66118 / 66127
+#  timer_site     do_timer_create 里 kmem 分配点的链接地址（解 KASLR slide 基准）
+#  timer_low21    timer_site 的低 21 位（无 metadata 时按 2MB 页匹配用）
+#  copy_low21     copy_process 里 task_struct 分配点低 21 位
+#  selinux_state  selinux_state 内核符号链接地址（fake 模式写 permissive）
+#  panic_on_warn  panic_on_warn 符号链接地址
+#  root_user      root_user 符号地址（fake cred 引用）
+#  init_user_ns   init_user_ns 符号地址
+#  init_ucounts   init_ucounts 符号地址
+#  init_groups    init_groups 符号地址
+#  cred_site_low21_1 / _2   cred 分配点低 21 位（6.18 用，两个 OTA 变体）
+#  sys_exit_tp    sys_exit tracepoint func 字段地址（vivo 反 root，0=无）
+#  sched_exit_tp  sched_process_exit tracepoint 地址（0=无）
+#  vr             是否有 vivo vr.ko 反 root 钩子（0/1）
+#  gate           是否有 hooks_defend gate（0/1）
+#  gate_modules   modules 符号地址（gate 用，0=无）
+#  task_alloc_min / max  task_struct slab 尺寸范围（vivo 变长 tail）
+#  off_task_cred  task_struct->cred 偏移
+#  kit_it_off     k_itimer 内 it 字段偏移
+#  timer_req / timer_alloc   timer 对象 slab 请求/实分配尺寸
+#  cred_req / cred_alloc     cred 对象 slab 请求/实分配尺寸
+
+# ---------- 6.18.21 ----------
+release=6.18.21-android17-5-gf957accaf563-ab15926176-4k
+family=61821
+timer_site=0xffffffc0803d7880
+rb_alloc=0xffffffc0806b0a50
+selinux_state=0xffffffc082979630
+root_user=0xffffffc0826f10d8
+init_user_ns=0xffffffc0826f1388
+init_groups=0xffffffc0826f2a48
+init_ucounts=0xffffffc0826f2f08
+task_site=0xffffffc08020f904
+off_task_cred=0x908
+kit_it_off=0xe0
+timer_req=0x180
+timer_alloc=0x180
+--
+release=6.18.21-android17-5-g7fcbffcad3e1-ab16353812-4k
+family=61821
+timer_site=0xffffffc0803da37c
+rb_alloc=0xffffffc0806b2b84
+selinux_state=0xffffffc082999630
+root_user=0xffffffc0827110d8
+init_user_ns=0xffffffc082711388
+init_groups=0xffffffc082712a48
+init_ucounts=0xffffffc082712f08
+task_site=0xffffffc080215638
+off_task_cred=0x908
+kit_it_off=0xe0
+timer_req=0x180
+timer_alloc=0x180
+--
+release=6.18.21-android17-5-g1d099fcb35e0-abogki540753930-4k
+family=61821
+timer_site=0xffffffc080211100
+rb_alloc=0xffffffc0803843ac
+selinux_state=0xffffffc082918630
+root_user=0xffffffc0826910d8
+init_user_ns=0xffffffc082691388
+init_groups=0xffffffc082692a48
+init_ucounts=0xffffffc082692f08
+task_site=0xffffffc0800f4074
+off_task_cred=0x908
+kit_it_off=0xe0
+timer_req=0x180
+timer_alloc=0x180
+--
+release=6.18.21-android17-5-g284297031c53-abogki555938958-4k
+family=61821
+timer_site=0xffffffc080211134
+timer_low21=0x011134
+copy_low21=0xf4c10
+cred_site_low21_1=0x133190
+cred_site_low21_2=0x1333a0
+selinux_state=0xffffffc082918630
+panic_on_warn=0xffffffc08266bf10
+root_user=0xffffffc082691388
+init_user_ns=0xffffffc0826910d8
+init_groups=0xffffffc082692a48
+init_ucounts=0xffffffc082692f08
+off_task_cred=0x908
+kit_it_off=0xe0
+timer_req=0x180
+timer_alloc=0x180
+--
+release=6.18.21-android17-5-g805aa6adea19-abogki576585092-4k
+family=61821
+timer_site=0xffffffc0802111a0
+timer_low21=0x0111a0
+copy_low21=0xf4c10
+cred_site_low21_1=0x133198
+cred_site_low21_2=0x1333a8
+selinux_state=0xffffffc082918630
+panic_on_warn=0xffffffc08266bf10
+root_user=0xffffffc082691388
+init_user_ns=0xffffffc0826910d8
+init_groups=0xffffffc082692a48
+init_ucounts=0xffffffc082692f08
+off_task_cred=0x908
+kit_it_off=0xe0
+timer_req=0x180
+timer_alloc=0x180
+# 注：g805 是实验档案，未实机验证
+
+# ---------- 6.12.69 ----------
+release=6.12.69-android16-6-g5fd39602326e-ab16372235-4k
+family=61269
+timer_site=0xffffffc08035783c
+timer_low21=0x15783c
+copy_low21=0xf4320
+selinux_state=0xffffffc082888890
+panic_on_warn=0xffffffc0825dade0
+root_user=0xffffffc082602170
+init_user_ns=0xffffffc082601ef8
+init_groups=0xffffffc082603638
+init_ucounts=0xffffffc082603b08
+off_task_cred=0x900
+kit_it_off=0x78
+timer_req=0x100
+timer_alloc=0x100
+--
+release=6.12.69-android16-6-g242e1a07f878-ab15865446-4k
+family=61269
+timer_site=0xffffffc0803718f4
+timer_low21=0x1718f4
+copy_low21=0xe94a4
+selinux_state=0xffffffc082888890
+panic_on_warn=0xffffffc0825dade0
+root_user=0xffffffc082602170
+init_user_ns=0xffffffc082601ef8
+init_groups=0xffffffc082603638
+init_ucounts=0xffffffc082603b08
+off_task_cred=0x900
+kit_it_off=0x78
+timer_req=0x100
+timer_alloc=0x100
+--
+release=6.12.69-android16-6-g586bfab1b9c5-abogki536749445-4k
+family=61269
+timer_site=0xffffffc0801f9260
+timer_low21=0x1f9260
+copy_low21=0xdda1c
+selinux_state=0xffffffc082809bc8
+panic_on_warn=0xffffffc08255ade0
+root_user=0xffffffc0825821f0
+init_user_ns=0xffffffc082581f78
+init_groups=0xffffffc0825836b8
+init_ucounts=0xffffffc082583b88
+off_task_cred=0x900
+kit_it_off=0x78
+timer_req=0x100
+timer_alloc=0x100
+
+# ---------- 6.12.58 ----------
+release=6.12.58-android16-6-g7704a1ae279b-ab15213644-4k
+family=61258
+timer_site=0xffffffc080517ee8
+timer_low21=0x117ee8
+copy_low21=0x1ab018
+selinux_state=0xffffffc0827b5948
+panic_on_warn=0xffffffc08251afe0
+root_user=0xffffffc082542360
+init_user_ns=0xffffffc0825420e8
+init_groups=0xffffffc082543828
+init_ucounts=0xffffffc082543cf8
+vr=0
+gate=0
+off_task_cred=0x900
+kit_it_off=0x78
+timer_req=0x100
+timer_alloc=0x100
+--
+release=6.12.58-android16-6-g0a092cc0037a-abogki521987229-4k
+family=61258
+timer_site=0xffffffc080517cb8
+timer_low21=0x117cb8
+copy_low21=0x18da1c
+selinux_state=0xffffffc0827c6520
+panic_on_warn=0xffffffc08252afe0
+sys_exit_tp=0xffffffc0826d9360
+root_user=0xffffffc082552948
+init_user_ns=0xffffffc0825526d0
+init_groups=0xffffffc082553e10
+init_ucounts=0xffffffc0825542e0
+vr=1
+gate=0
+off_task_cred=0x900
+kit_it_off=0x78
+timer_req=0x100
+timer_alloc=0x100
+--
+release=6.12.58-android16-6-gdd6fd5c98918-abogki543627742-4k
+family=61258
+timer_site=0xffffffc0805173e4
+timer_low21=0x1173e4
+copy_low21=0x1f2218
+selinux_state=0xffffffc0827c6520
+panic_on_warn=0xffffffc08252afe0
+sys_exit_tp=0xffffffc0826d93e0
+root_user=0xffffffc082552958
+init_user_ns=0xffffffc0825526e0
+init_groups=0xffffffc082553e20
+init_ucounts=0xffffffc0825542f0
+vr=1
+gate=1
+gate_modules=0xffffffc0825d7d18
+off_task_cred=0x900
+kit_it_off=0x78
+timer_req=0x100
+timer_alloc=0x100
+--
+release=6.12.58-android16-6-g690108013dcc-abogki576129896-4k
+family=61258
+timer_site=0xffffffc080517bec
+timer_low21=0x117bec
+copy_low21=0x1f27b0
+selinux_state=0xffffffc0827d6520
+panic_on_warn=0xffffffc08253afe0
+sys_exit_tp=0xffffffc0826e93e0
+root_user=0xffffffc082562958
+init_user_ns=0xffffffc0825626e0
+init_groups=0xffffffc082563e20
+init_ucounts=0xffffffc0825642f0
+vr=1
+gate=1
+gate_modules=0xffffffc0825e7d18
+off_task_cred=0x900
+kit_it_off=0x78
+timer_req=0x100
+timer_alloc=0x100
+
+# ---------- 6.12.38 ----------
+release=6.12.38-android16-5-g844001fb8721-ab14552068-4k
+family=61238
+timer_site=0xffffffc0801e2488
+timer_low21=0x1e2488
+copy_low21=0x0d1598
+selinux_state=0xffffffc0826894d0
+panic_on_warn=0xffffffc0823fafe0
+root_user=0xffffffc0824217a0
+init_user_ns=0xffffffc082421528
+init_groups=0xffffffc082422c68
+init_ucounts=0xffffffc082423138
+off_task_cred=0x900
+kit_it_off=0x78
+timer_req=0x100
+timer_alloc=0x100
+
+# ---------- 6.12.23 ----------
+release=6.12.23-android16-5-g41f4cb1fa7c7-abogki465038634-4k
+family=61223
+timer_site=0xffffffc0801e0890
+timer_low21=0x1e0890
+copy_low21=0x0cfd98
+selinux_state=0xffffffc082679370
+panic_on_warn=0xffffffc0823eafe0
+sys_exit_tp=0xffffffc082594840
+root_user=0xffffffc082411ae0
+init_user_ns=0xffffffc082411868
+init_groups=0xffffffc082412fa8
+init_ucounts=0xffffffc082413478
+vr=1
+off_task_cred=0x900
+kit_it_off=0x78
+timer_req=0x100
+timer_alloc=0x100
+
+# ---------- 6.6.118 ----------
+release=6.6.118-android15-8-g9bc34d5b0c79-abogki537459655-4k
+family=66118
+timer_site=0xffffffc0801a4dfc
+timer_low21=0x1a4dfc
+copy_low21=0x0ab944
+selinux_state=0xffffffc08239c620
+panic_on_warn=0xffffffc08214b2cc
+root_user=0xffffffc08216f6e0
+init_user_ns=0xffffffc08216f450
+init_groups=0xffffffc082170c40
+init_ucounts=0xffffffc0821711b0
+off_task_cred=0x820
+kit_it_off=0x78
+timer_req=0x108
+timer_alloc=0x140
+cred_req=0xb8
+cred_alloc=0xc0
+--
+release=6.6.118-android15-8-gb1422e39c313-abogki552867473-4k
+family=66118
+timer_site=0xffffffc0801a652c
+timer_low21=0x1a652c
+copy_low21=0x0acdb0
+selinux_state=0xffffffc08239c620
+panic_on_warn=0xffffffc08214b2cc
+root_user=0xffffffc08216f830
+init_user_ns=0xffffffc08216f5a0
+init_groups=0xffffffc082170d90
+init_ucounts=0xffffffc082171300
+off_task_cred=0x820
+kit_it_off=0x78
+timer_req=0x108
+timer_alloc=0x140
+cred_req=0xb8
+cred_alloc=0xc0
+--
+release=6.6.118-android15-8-gc4127a25dcf3-ab15863337-4k
+family=66118
+timer_site=0xffffffc080195d48
+timer_low21=0x195d48
+copy_low21=0x0ab93c
+selinux_state=0xffffffc08236a2e0
+panic_on_warn=0xffffffc08211ae0c
+root_user=0xffffffc08213f1e0
+init_user_ns=0xffffffc08213ef50
+init_groups=0xffffffc082140740
+init_ucounts=0xffffffc082140cb0
+off_task_cred=0x820
+kit_it_off=0x78
+timer_req=0x108
+timer_alloc=0x140
+cred_req=0xb8
+cred_alloc=0xc0
+
+# ---------- 6.6.127 ----------
+release=6.6.127-android15-8-gd489d4ad2a70-abogki567717946-4k
+family=66127
+timer_site=0xffffffc080198000
+timer_low21=0x198000
+copy_low21=0x0ac790
+selinux_state=0xffffffc08239a170
+panic_on_warn=0xffffffc08214ac0c
+sys_exit_tp=0xffffffc0822f3760
+sched_exit_tp=0xffffffc0822f4f20
+root_user=0xffffffc08216f108
+init_user_ns=0xffffffc08216ee78
+init_groups=0xffffffc082170668
+init_ucounts=0xffffffc082170bd8
+vr=1
+gate=1
+gate_modules=0xffffffc0821ec498
+off_task_cred=0x820
+kit_it_off=0x78
+timer_req=0x108
+timer_alloc=0x140
+cred_req=0xb8
+cred_alloc=0xc0

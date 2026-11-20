@@ -17,7 +17,9 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -60,6 +62,7 @@ import androidx.compose.material.icons.twotone.Tune
 import androidx.compose.material.icons.twotone.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
@@ -84,8 +87,10 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -128,10 +133,12 @@ import com.kuaimaosu.manager.ui.util.LocalPermissionRequestInterface
 import com.kuaimaosu.manager.ui.util.LocalSnackbarHost
 import com.kuaimaosu.manager.ui.util.adaptiveScaffoldWindowInsets
 import com.kuaimaosu.manager.ui.util.downloader.downloadManagerUpdate
+import com.kuaimaosu.manager.ui.component.RootSuccessDialog
 import com.kuaimaosu.manager.ui.viewmodel.HomeUiAction
 import com.kuaimaosu.manager.ui.viewmodel.HomeUiEvent
 import com.kuaimaosu.manager.ui.viewmodel.HomeUiState
 import com.kuaimaosu.manager.ui.viewmodel.HomeViewModel
+import com.kuaimaosu.manager.ui.viewmodel.KmRootViewModel
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -150,6 +157,10 @@ fun HomePage(
     val context = LocalContext.current
     val viewModel = koinViewModel<HomeViewModel>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // 大卡片「一键提权」直接走提权主线（不跳界面），用独立 VM 实例驱动。
+    val jailbreakVm = koinViewModel<KmRootViewModel>()
+    val jailbreakUi by jailbreakVm.ui.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         viewModel.dispatch(HomeUiAction.AwaitInitialData)
@@ -268,6 +279,15 @@ fun HomePage(
                         moduleCount = uiState.systemInfo.moduleCount,
                         modeTags = heroModeTags(systemStatus, uiState.systemInfo.susfsLkmLoaded),
                         isActivated = systemStatus.ksuVersion != null,
+                        // 未 root 时把「一键提权」按钮内嵌进大卡，点击直接走提权主线，不跳界面。
+                        heroAction = if (systemStatus.ksuVersion == null) {
+                            {
+                                HeroJailbreakButton(
+                                    onClick = { jailbreakVm.start() },
+                                    enabled = !jailbreakUi.running,
+                                )
+                            }
+                        } else null,
                         // 四个快捷入口并进卡片底部，不再单独占一行卡片。
                         quickActions = listOf(
                             KuaiMaoQuickAction(
@@ -361,6 +381,83 @@ fun HomePage(
             },
         )
     }
+
+    // 大卡片「一键提权」的进度 / 失败反馈（不跳界面，就地覆盖）。
+    if (jailbreakUi.running || jailbreakUi.resultOk == false) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.6f))
+                .clickable(enabled = false) {},
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 36.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(KuaiMaoColors.canvasCardSolid)
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                if (jailbreakUi.running) {
+                    CircularProgressIndicator(color = KuaiMaoColors.brand)
+                    Spacer(Modifier.height(18.dp))
+                    Text(
+                        text = "正在提权",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = KuaiMaoColors.text,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = "${jailbreakUi.stage} · ${jailbreakUi.pct}%",
+                        fontSize = 12.sp,
+                        color = KuaiMaoColors.textMuted,
+                    )
+                } else {
+                    Icon(
+                        Icons.TwoTone.Error,
+                        contentDescription = null,
+                        tint = KuaiMaoColors.warning,
+                        modifier = Modifier.size(36.dp),
+                    )
+                    Spacer(Modifier.height(14.dp))
+                    Text(
+                        text = "提权未成功",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = KuaiMaoColors.text,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = jailbreakUi.resultMessage.ifBlank { "请检查 Shizuku 授权后重试" },
+                        fontSize = 12.sp,
+                        color = KuaiMaoColors.textMuted,
+                    )
+                    Spacer(Modifier.height(18.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(KuaiMaoColors.brand)
+                            .clickable { jailbreakVm.dismissResult() },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text("关闭", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
+                }
+            }
+        }
+    }
+
+    // 提权成功：提示重启 KuaiMaoSU 才会显示 root 状态。
+    RootSuccessDialog(
+        visible = jailbreakUi.showSuccessDialog,
+        onRestart = { jailbreakVm.restartApp() },
+        onLater = { jailbreakVm.dismissSuccess() },
+    )
 }
 
 /** 「越狱模式」是真实 late-load 运行态才有的说法，其余情况只描述工作状态。 */
@@ -587,7 +684,7 @@ private fun statusFeedItems(uiState: HomeUiState): List<KuaiMaoFeedItem> {
     val feed = mutableListOf<KuaiMaoFeedItem>()
 
     // 漏洞提权利用类型：仅越狱模式（late-load 临时加载）下显示。
-    // KMRoot 引擎统一走 CVE-2026-98260 竞态 UAF。
+    // 自研引擎统一走 CVE-2026-98260 竞态 UAF。
     if (status.isLateLoadMode) {
         feed += KuaiMaoFeedItem(
             key = "exploit",

@@ -1,6 +1,11 @@
 package com.kuaimaosu.manager.ui.screen.kmroot
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,7 +25,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.twotone.Bolt
 import androidx.compose.material.icons.twotone.CheckCircle
+import androidx.compose.material.icons.twotone.ContentCopy
 import androidx.compose.material.icons.twotone.ChevronRight
+import androidx.compose.material.icons.twotone.Devices
 import androidx.compose.material.icons.twotone.ErrorOutline
 import androidx.compose.material.icons.twotone.Lock
 import androidx.compose.material.icons.twotone.ManageAccounts
@@ -32,11 +39,21 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import kotlinx.coroutines.delay
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -49,13 +66,14 @@ import com.kuaimaosu.manager.ui.component.KuaiMaoPrimaryButton
 import com.kuaimaosu.manager.ui.component.KuaiMaoRow
 import com.kuaimaosu.manager.ui.component.KuaiMaoRowDivider
 import com.kuaimaosu.manager.ui.screen.main.KuaiMaoSettingsScaffold
+import com.kuaimaosu.manager.ui.component.RootSuccessDialog
 import com.kuaimaosu.manager.ui.theme.KuaiMaoColors
 import com.kuaimaosu.manager.ui.theme.KuaiMaoTones
 import com.kuaimaosu.manager.ui.viewmodel.KmRootViewModel
 import org.koin.androidx.compose.koinViewModel
 
 /**
- * 一键临时提权页面（KMRoot 引擎移植）。
+ * 一键临时提权页面（自研 98260 引擎）。
  *
  * 通过 Shizuku/Stellar 的 shell 域触发内核 UAF，临时加载 KernelSU，
  * 并用 KuaiMaoSU 自带、内嵌全套 ko 的 ksud 做 late-load。重启后失效。
@@ -67,17 +85,19 @@ fun KmRootScreen(
     vm: KmRootViewModel = koinViewModel(),
 ) {
     val ui by vm.ui.collectAsStateWithLifecycle()
+    var showDevices by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) { vm.refresh() }
 
-    // 提权成功后短暂停留展示结果，然后自动返回主页。
-    // 主页检测到栈深回到 1 会自动刷新内核/root 状态，无需重启管理器。
-    LaunchedEffect(ui.resultOk) {
-        if (ui.resultOk == true) {
-            delay(1400)
-            onBack()
-        }
+    if (showDevices) {
+        SupportedDevicesSheet(
+            currentKernel = ui.kernel,
+            onDismiss = { showDevices = false },
+        )
     }
+
+    // 提权成功后弹出「需重启 KuaiMaoSU」提示（由 resultOk 触发，见下方 RootSuccessDialog）。
+    // 临时 root 注入的是已运行进程，APP 自身需重启才能刷新 root 状态显示。
 
     val shizukuReady = ui.shizukuState == KmShizuku.State.READY
     val headline = when {
@@ -95,11 +115,23 @@ fun KmRootScreen(
         else -> ui.shizukuText
     }
 
+    Box(modifier = Modifier.fillMaxSize()) {
     KuaiMaoSettingsScaffold(
         title = "一键越狱",
-        subtitle = "KMRoot 引擎 · 临时 root",
+        subtitle = "CVE-2026-98260 · 临时 root · v${com.kuaimaosu.manager.BuildConfig.VERSION_NAME}",
         bottomPadding = bottomPadding,
     ) {
+        // 引擎 hero 卡：CVE 徽标 + 当前状态，作为整页视觉重心
+        item {
+            EngineHero(
+                running = ui.running,
+                ok = ui.resultOk,
+                headline = headline,
+                pct = ui.pct,
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
         item {
             KuaiMaoCard {
                 KuaiMaoRow(
@@ -204,16 +236,35 @@ fun KmRootScreen(
                 KuaiMaoRow(
                     icon = Icons.TwoTone.Bolt,
                     title = "提权模式",
-                    description = if (ui.mode == "slow") "慢速 98260（兼容模式）" else "快速（自动）",
+                    description = if (ui.mode == "zero") "zero（只清零，兼容模式）" else "fake（完整 root + 管理器）",
                     iconTint = KuaiMaoTones.blue.content,
                     iconContainer = KuaiMaoTones.blue.container,
-                    onClick = { vm.setMode(if (ui.mode == "slow") "auto" else "slow") },
+                    onClick = { vm.setMode(if (ui.mode == "zero") "fake" else "zero") },
                     trailing = {
                         Text(
-                            text = if (ui.mode == "slow") "慢速" else "快速",
+                            text = if (ui.mode == "zero") "zero" else "fake",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = KuaiMaoColors.brand,
+                        )
+                    },
+                )
+                KuaiMaoRowDivider()
+                KuaiMaoRow(
+                    icon = Icons.TwoTone.Devices,
+                    title = "支持机型",
+                    description = if (ui.kernel.isNotBlank())
+                        "当前内核 ${ui.kernel.take(24)}${if (ui.kernel.length > 24) "…" else ""} · 点击查看完整清单"
+                    else "点击查看 ${SupportedDevices.totalDevices} 款已验证机型与内核",
+                    iconTint = KuaiMaoTones.violet.content,
+                    iconContainer = KuaiMaoTones.violet.container,
+                    onClick = { showDevices = true },
+                    trailing = {
+                        Icon(
+                            Icons.TwoTone.ChevronRight,
+                            contentDescription = null,
+                            tint = KuaiMaoColors.textMuted,
+                            modifier = Modifier.size(18.dp),
                         )
                     },
                 )
@@ -234,21 +285,18 @@ fun KmRootScreen(
             }
         }
 
-        // 实时日志
-        if (ui.logs.isNotEmpty()) {
-            item {
-                Spacer(modifier = Modifier.height(14.dp))
-                LogConsole(lines = ui.logs)
-            }
+        // 实时日志（常驻显示，未提权也能看到"复制日志"入口）
+        item {
+            Spacer(modifier = Modifier.height(14.dp))
+            LogConsole(lines = ui.logs)
         }
 
         item {
             Spacer(modifier = Modifier.height(14.dp))
             Text(
-                text = "本功能移植自 KMRoot（作者 KaMuaMua2020，特此感谢），" +
-                    "通过内核竞态 UAF（CVE-2026-98260）临时加载 KernelSU，重启即失效。" +
-                    "仅用于自有设备；引擎适配机型有限，不适配时可能内核 panic / 重启。" +
-                    "late-load 使用 KuaiMaoSU 自带的内核模块。内核模块与 ko 的 KMI 需与设备匹配。",
+                text = "本功能利用内核竞态 UAF（CVE-2026-98260）临时加载 KernelSU，重启即失效。" +
+                    "漏洞研究参考 KaMuaMua2020、AzirX1337、YuKongA，特此感谢。" +
+                    "仅用于自有设备；引擎按内核精确匹配偏移，不适配时不会强跑。",
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Medium,
                 color = KuaiMaoColors.textMuted,
@@ -257,11 +305,20 @@ fun KmRootScreen(
             Spacer(modifier = Modifier.height(bottomPadding + 12.dp))
         }
     }
+
+    // 提权成功提示：需重启 KuaiMaoSU 才会显示 root 状态
+    RootSuccessDialog(
+        visible = ui.showSuccessDialog,
+        onRestart = { vm.restartApp() },
+        onLater = { vm.dismissSuccess() },
+    )
+    }
 }
 
 @Composable
 private fun LogConsole(lines: List<String>) {
     val state = rememberLazyListState()
+    val context = LocalContext.current
     LaunchedEffect(lines.size) {
         if (lines.isNotEmpty()) state.animateScrollToItem(lines.size - 1)
     }
@@ -273,7 +330,9 @@ private fun LogConsole(lines: List<String>) {
             .background(KuaiMaoColors.textMuted.copy(alpha = 0.08f)),
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
@@ -288,7 +347,40 @@ private fun LogConsole(lines: List<String>) {
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
                 color = KuaiMaoColors.textMuted,
+                modifier = Modifier.weight(1f),
             )
+            // 一键复制全部日志，方便真机跑完直接回传排障。
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(KuaiMaoColors.brand)
+                    .clickable {
+                        val text = lines.joinToString("\n")
+                        if (text.isBlank()) {
+                            Toast.makeText(context, "暂无日志", Toast.LENGTH_SHORT).show()
+                        } else {
+                            val cb = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            cb.setPrimaryClip(ClipData.newPlainText("提权运行日志", text))
+                            Toast.makeText(context, "已复制 ${lines.size} 行日志", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    Icons.TwoTone.ContentCopy,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(13.dp),
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "复制日志",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                )
+            }
         }
         LazyColumn(
             state = state,
@@ -305,6 +397,109 @@ private fun LogConsole(lines: List<String>) {
                     color = KuaiMaoColors.text,
                     lineHeight = 14.sp,
                 )
+            }
+        }
+    }
+}
+
+/** 主题色锁明度染到深底：只借色相，近白补一点饱和，避免深 hero 里出现浅色块。 */
+@Composable
+private fun engineTint(value: Float): Color {
+    val hsv = FloatArray(3)
+    android.graphics.Color.colorToHSV(KuaiMaoColors.brand.toArgb(), hsv)
+    hsv[2] = value
+    hsv[1] = hsv[1].coerceAtLeast(0.18f)
+    return Color(android.graphics.Color.HSVToColor(hsv))
+}
+
+/** 引擎 hero 卡：整页视觉重心。深色底固定白字，光环用主题色染色，运行时旋转。 */
+@Composable
+private fun EngineHero(running: Boolean, ok: Boolean?, headline: String, pct: Int) {
+    val spin = androidx.compose.animation.core.rememberInfiniteTransition()
+    val angle by spin.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = androidx.compose.animation.core.infiniteRepeatable(
+            androidx.compose.animation.core.tween(5200, easing = androidx.compose.animation.core.LinearEasing),
+        ),
+    )
+    val glow = engineTint(0.42f)
+    val ring = engineTint(0.62f)
+    val heroBg = Color(0xFF12151C)
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(132.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(heroBg),
+    ) {
+        // 右上柔光
+        androidx.compose.foundation.Canvas(modifier = Modifier.matchParentSize()) {
+            drawCircle(
+                color = glow.copy(alpha = if (running) 0.30f else 0.18f),
+                radius = 92.dp.toPx(),
+                center = androidx.compose.ui.geometry.Offset(size.width - 8.dp.toPx(), 8.dp.toPx()),
+            )
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 18.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // 旋转光环徽标
+            Box(modifier = Modifier.size(84.dp), contentAlignment = Alignment.Center) {
+                androidx.compose.foundation.Canvas(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .graphicsLayer { rotationZ = angle },
+                ) {
+                    drawCircle(color = ring.copy(alpha = 0.85f), radius = 38.dp.toPx(),
+                        style = androidx.compose.ui.graphics.drawscope.Stroke(2.5.dp.toPx()))
+                    drawArc(color = Color.White.copy(alpha = 0.9f), startAngle = 0f,
+                        sweepAngle = 70f, useCenter = false,
+                        style = androidx.compose.ui.graphics.drawscope.Stroke(3.dp.toPx()))
+                }
+                Icon(
+                    Icons.TwoTone.Lock,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(30.dp),
+                )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "CVE-2026-98260",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = ring,
+                    letterSpacing = 0.6.sp,
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = if (ok == true) "已取得临时 root" else if (running) "提权进行中" else headline,
+                    fontSize = 21.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                // 细进度条
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(100.dp))
+                        .background(Color.White.copy(alpha = 0.14f)),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth((if (ok == true) 100f else pct.toFloat()).coerceIn(0f, 100f) / 100f)
+                            .height(4.dp)
+                            .clip(RoundedCornerShape(100.dp))
+                            .background(ring),
+                    )
+                }
             }
         }
     }

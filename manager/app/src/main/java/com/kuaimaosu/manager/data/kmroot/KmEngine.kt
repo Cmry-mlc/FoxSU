@@ -3,9 +3,13 @@ package com.kuaimaosu.manager.data.kmroot
 import android.content.Context
 
 /**
- * KMRoot 提权引擎 —— 编排核心。
- * 移植自 com.km.kmroot.engine.Engine：部署载荷 → spawn trrun.sh → 逐行解析日志 → 判定结果。
- * late-load 用 KuaiMaoSU 自带、已内嵌全套 ko 的 ksud（由 KmCfg.deployKsud 从本 APK 落地）。
+ * 98260 提权引擎 —— 编排核心（新引擎版）。
+ *
+ * 流程：等 Shizuku shell → 探测工作目录 → 部署 kmengine/kmplant/ksud/profile →
+ * spawn `kmengine run`（环境变量下发 KE_*）→ 逐行解析日志 → 判定结果。
+ *
+ * runner（libkmengine.so）会 fork plant（libkmplant.so）并把 stdout/stderr 实时转发，
+ * 出现 CRED_OK / LATE_LOAD_RC=0 即判定成功；plant 结束输出 DONE，runner 退出码 0。
  */
 class KmEngine {
     interface Listener {
@@ -29,37 +33,18 @@ class KmEngine {
     private var lastLabel = "准备"
     @Volatile
     private var lastLineAt = 0L
-    @Volatile
-    private var sawDeath = false
 
     private var listener: Listener? = null
     private var live: KmShell.Live? = null
     private var worker: Thread? = null
 
-    // 日志标志位
-    private var sawKsuLoaded = false
-    private var sawRootdReady = false
-    private var sawGuardOff = false
-    private var sawFallback = false
-    private var sawHeld = false
+    private var sawUnsupported = false
+    private var sawProfileOk = false
+    private var sawCredOk = false
+    private var sawLateLoad = false
     private var sawScriptError = false
-    private var sawKernelMismatch = false
-    private var sawBaseCalFail = false
-    private var sawAdaptUnsupported = false
-    private var sawOldNextArmed = false
-    private var sawProfileRelaxed = false
-    private var sawTraceBlocked = false
-    private var sawFast61Gate = false
-    private var sawFast66Gate = false
-    private var saw61269B = false
-    private var sawRetryHolder = false
-
-    private var result = ""
-    private var resultLine = ""
-    private var nosuWhy = ""
-    private var gate612 = ""
-    private var lastLine = ""
     private var lastFail = ""
+    private var lastLine = ""
 
     fun setListener(l: Listener?) {
         listener = l
@@ -91,32 +76,16 @@ class KmEngine {
         done = false
         settled = false
         earlyOk = false
-        sawKsuLoaded = false
-        sawRootdReady = false
-        sawGuardOff = false
-        sawFallback = false
-        sawHeld = false
-        sawDeath = false
+        sawUnsupported = false
+        sawProfileOk = false
+        sawCredOk = false
+        sawLateLoad = false
         sawScriptError = false
-        sawKernelMismatch = false
-        sawBaseCalFail = false
-        sawAdaptUnsupported = false
-        sawOldNextArmed = false
-        sawProfileRelaxed = false
-        sawTraceBlocked = false
-        sawFast61Gate = false
-        sawFast66Gate = false
-        saw61269B = false
-        sawRetryHolder = false
-        result = ""
-        resultLine = ""
-        nosuWhy = ""
-        gate612 = ""
-        lastLine = ""
         lastFail = ""
+        lastLine = ""
         lastPct = 0
         lastLabel = "准备"
-        val t = Thread({ runInternal(app) }, "kmroot-fast").apply { isDaemon = true }
+        val t = Thread({ runInternal(app) }, "kmengine").apply { isDaemon = true }
         worker = t
         t.start()
         return true
@@ -135,10 +104,17 @@ class KmEngine {
 
     private fun safe(s: String?) = s ?: ""
 
-    private fun buildCmd(dir: String, mgr: String, mode: String, nd: String?, assets: String): String {
-        var cmd = "KMROOT_DIR='$dir' KMROOT_MGR='$mgr' KMROOT_MODE='$mode' KMROOT_ASSETS='$assets'"
-        if (nd != null) cmd += " KMROOT_ND='$nd'"
-        return "$cmd sh '$assets/trrun.sh'"
+    /** 由内核 release 串推导 ksud late-load 用的 KMI（不匹配时 plant.c 有默认值兜底）。 */
+    private fun kmiOf(kernel: String): String {
+        val rel = kernel.lowercase()
+        return when {
+            rel.contains("6.12") -> "android16-6.12"
+            rel.contains("6.18") -> "android17-6.18"
+            rel.contains("6.6") -> "android15-6.6"   // 66118/66127（如用户 abogki537459655）
+            rel.contains("6.10") -> "android15-6.10"
+            rel.contains("6.1") -> "android14-6.1"
+            else -> "android16-6.12"
+        }
     }
 
     private fun runInternal(context: Context) {
@@ -149,124 +125,93 @@ class KmEngine {
                 return
             }
 
-            stage(6, "部署载荷")
-            val probe = safe(
-                KmShell.run(
-                    "printf '%s\\n' \"\$(getprop ro.product.model)\" \"\$(uname -r)\" \"\$(getprop ro.build.display.id)\" \"\$(getenforce)\" " +
-                        "\"\$(grep -i '^kernelsu ' /proc/modules | head -n1)\" " +
-                        "\"\$( { test -w /sys/kernel/tracing/events/kmem/mm_page_alloc/enable && test -w /sys/kernel/tracing/events/kmem/mm_page_free/enable; } && echo KMEM_OK || echo KMEM_DENIED)\" " +
-                        "\"\$(cut -d. -f1 /proc/uptime)\" \"\$( [ -f /sdcard/kmroot-force ] && echo FORCE || echo NOFORCE)\"",
-                    20
-                )
-            )
-            val parts = probe.split("\n")
-            val model = parts.getOrNull(0)?.trim() ?: ""
-            val kernel = parts.getOrNull(1)?.trim() ?: ""
-            log("机型: $model · 内核: $kernel")
-            if (parts.size > 2) log("${parts[2].trim()} · ${parts.getOrNull(3)?.trim() ?: ""}")
-            if (parts.size > 4 && parts[4].trim().isNotEmpty()) log("已加载: ${parts[4].trim()}")
-            if (parts.size > 5) log("tracefs: ${parts[5].trim()}")
+            stage(6, "探测环境")
+            val kernel = safe(KmShell.run("uname -r", 12)).trim().split("\n")[0].trim()
+            log("内核: $kernel")
+            if (kernel.isEmpty()) {
+                finish(false, "读不到内核版本（uname -r 为空）")
+                return
+            }
 
-            // 开机稳定门：uptime < 100s 时等待（抢页命中的关键），支持 /sdcard/kmroot-force 跳过
-            try {
-                var uptime = parts.getOrNull(6)?.trim()?.toInt() ?: 0
-                val force = parts.getOrNull(7)?.trim() == "FORCE"
-                when {
-                    force -> log("环境门：检测到 /sdcard/kmroot-force → 直接开跑")
-                    uptime >= 100 -> log("环境门：uptime=${uptime}s（≥100s）→ 系统已稳定，直接开跑")
-                    else -> {
-                        val t0 = System.currentTimeMillis()
-                        while (uptime < 100 && System.currentTimeMillis() - t0 < 110000 && !done) {
-                            log("刚开机（uptime=${uptime}s < 100s），等系统稳定再跑…")
-                            Thread.sleep(3000)
-                            try {
-                                uptime = safe(KmShell.run("cut -d. -f1 /proc/uptime", 8)).trim().split("\n")[0].trim().toInt()
-                            } catch (_: Throwable) {}
-                        }
-                        log("环境门：开跑（uptime=${uptime}s）")
-                    }
-                }
-            } catch (_: Throwable) {}
-
-            val mgr = KmMgr.pkg(context)
-            val mode = KmCfg.mode(context)
-            log("提权模式: ${if (mode == "slow") "慢速 98260（兼容模式）" else "快速（自动）"}")
-            val installed = KmMgr.installed(context, mgr)
-            log("ROOT 管理器: ${KmMgr.displayName(context, mgr)}（$mgr）${if (installed) " 已安装" else " 未安装"}")
-
+            stage(10, "部署载荷")
             val dir = KmCfg.resolveDev(context)
             if (KmCfg.lastResolveError.isNotEmpty()) {
                 log((if (KmCfg.ndMode) "工作目录: " else "工作目录探测失败: ") + KmCfg.lastResolveError)
             }
+            val mgr = KmMgr.pkg(context)
+            val mode = KmCfg.mode(context) // fake | zero
+            log("提权模式: ${if (mode == "zero") "zero（只清零）" else "fake（完整 root + late-load）"}")
+            log("管理器: ${KmMgr.displayName(context, mgr)}（$mgr）")
 
-            // 从 KuaiMaoSU 自身 APK 提取带全套 ko 的 ksud
             val ksudInfo = KmCfg.deployKsud(mgr)
             if (ksudInfo.isNotEmpty()) log("ksud: $ksudInfo")
 
-            val copyResult = safe(KmShell.run(KmCfg.copyScript(context, kernel, installed), 240))
+            val copyResult = safe(KmShell.run(KmCfg.copyScript(context), 240))
             if (copyResult.trim().isNotEmpty()) log(copyResult.trim())
             if (copyResult.contains("COPY_FAIL")) {
-                val diag = safe(KmShell.run("id; getenforce; ls -ld /data /data/local /data/local/tmp 2>&1 | head -n 6; df -h /data 2>/dev/null | tail -n 2", 20)).trim()
+                val diag = safe(KmShell.run("id; getenforce; ls -ld /data /data/local /data/local/tmp 2>&1 | head -n 6", 20)).trim()
                 log("落地诊断："); log(diag)
-                finish(false, "载荷落地失败：目标目录建不出来/写不进（看上面「落地诊断」的目录属主与 SELinux）")
+                finish(false, "载荷落地失败：目标目录建不出来/写不进（看上面的落地诊断）")
                 return
             }
             val deploySkip = copyResult.contains("DEPLOY_SKIP")
             if (!KmCfg.ndMode && !deploySkip) {
-                val verify = safe(KmShell.run(KmCfg.verifyScript(kernel, installed), 60))
-                log("载荷校验："); log(verify.trim())
-                if (verify.contains("size:0 ")) {
-                    finish(false, "载荷落地失败（nativeLibraryDir 里缺文件）")
+                val verify = safe(KmShell.run(KmCfg.verifyScript(), 60))
+                log("载荷校验：$verify")
+                if (verify.contains("engine:0 ") || verify.contains("plant:0 ")) {
+                    finish(false, "载荷落地失败（nativeLibraryDir 里缺新引擎 so）")
                     return
                 }
             }
 
-            stage(18, "启动引擎")
-            val assetsDir = KmCfg.ensureAssets(context, kernel)
+            val assetsDir = KmCfg.ensureAssets(context)
             if (KmCfg.assetsError.isNotEmpty()) {
-                finish(false, "设备端脚本落地失败：${KmCfg.assetsError}")
+                finish(false, "内核档案落地失败：${KmCfg.assetsError}")
                 return
             }
-            log("脚本目录: $assetsDir")
+            log("档案目录: $assetsDir")
 
-            val argv = arrayOf("sh", "-c", buildCmd(dir, mgr, mode, if (KmCfg.ndMode) KmCfg.nativeDir(context) else null, assetsDir))
+            // 拼 runner 命令：环境变量前置，exec 工作目录里的 kmengine
+            val plantPath = if (KmCfg.ndMode) "${KmCfg.nativeDir(context)}/libkmplant.so" else "$dir/kmplant"
+            val runner = if (KmCfg.ndMode) "${KmCfg.nativeDir(context)}/libkmengine.so" else "$dir/kmengine"
+            val keMode = if (mode == "zero") "zero" else "fake"
+            val kmi = kmiOf(kernel)
+            val ksudPath = "$dir/ksud"
+            val cmd = buildString {
+                append("KE_DIR='$dir' ")
+                append("KE_PLANT='$plantPath' ")
+                append("KE_PROFILE='$dir/kernel_profiles.txt' ")
+                append("KE_MODE='$keMode' ")
+                // 新 core（plant_core.inc）的 late-load 读 PYB110_* 环境变量
+                append("PYB110_KSUD='$ksudPath' ")
+                append("PYB110_MANAGER_PKG='$mgr' ")
+                append("PYB110_KMI='$kmi' ")
+                append("PYB110_FILES_DIR='$dir' ")
+                append("'$runner' run 2>&1")
+            }
+            log("启动引擎: KE_MODE=$keMode PYB110_KMI=$kmi")
+
+            stage(18, "启动引擎")
+            val argv = arrayOf("sh", "-c", cmd)
             val process = KmShell.spawn(argv, dir)
             live = process
             lastLineAt = System.currentTimeMillis()
             val onLineCb: (String) -> Unit = { onLine(it) }
             process.startReaders(onLineCb, onLineCb)
 
-            val budgetMs = (if (mode == "slow") 45 else 16) * 60 * 1000L
-            if (mode == "slow") log("慢速链预算 ${budgetMs / 60000} 分钟")
-            val deadline = System.currentTimeMillis() + budgetMs
+            // 新引擎看门狗 5 分钟（runner 内部 300s 会自己收尾）
+            val deadline = System.currentTimeMillis() + 5 * 60 * 1000L
             while (System.currentTimeMillis() < deadline && !done) {
                 Thread.sleep(400)
-                if (!process.isAlive() && System.currentTimeMillis() - lastLineAt > 8000) {
-                    sawDeath = true
-                    break
-                }
+                if (!process.isAlive() && System.currentTimeMillis() - lastLineAt > 8000) break
             }
             if (!earlyOk) try { live?.kill() } catch (_: Throwable) {}
             if (settled) return
 
-            if (!done) {
-                val tail = safe(KmShell.run("tail -n 20 '${KmCfg.dev}/kmfast.log' 2>/dev/null; tail -n 20 '${KmCfg.dev}/plant.log' 2>/dev/null", 20))
-                if (tail.trim().isNotEmpty()) log(tail.trim())
-            }
-
             stage(94, "验证结果")
-            var module = safe(KmShell.run("grep -E '^kernelsu ' /proc/modules | head -n1", 15)).trim()
-            if (module.isEmpty() && sawDeath) {
-                var i = 0
-                while (i < 20) {
-                    Thread.sleep(1500); i++
-                    module = safe(KmShell.run("grep -E '^kernelsu ' /proc/modules | head -n1", 5)).trim()
-                    if (module.isNotEmpty()) break
-                }
-            }
-            var su = ""
+            val module = safe(KmShell.run("grep -E '^kernelsu ' /proc/modules | head -n1", 15)).trim()
             val suOut = safe(KmShell.run("su -c id 2>&1", 20)).trim()
-            if (!suOut.contains("inaccessible") && !suOut.contains("not found")) su = suOut
+            val su = if (!suOut.contains("inaccessible") && !suOut.contains("not found")) suOut else ""
             log("模块: ${if (module.isEmpty()) "未加载" else module}")
             log("su: ${if (su.isEmpty()) "不可用" else su}")
 
@@ -280,73 +225,20 @@ class KmEngine {
     }
 
     private fun judgeResult(module: String, su: String) {
-        when (result) {
-            "ROOT", "ALREADY" -> {
-                finish(true, if (result == "ALREADY") "KernelSU 已就绪（本机本来就加载着，无需重复越狱）"
-                            else "越狱成功：临时 root 已就绪，KernelSU 已接管")
-                return
-            }
+        if (sawCredOk || sawLateLoad || su.contains("uid=0") || module.isNotEmpty()) {
+            finish(true, "越狱成功：临时 root 已就绪，KernelSU 已接管")
+            return
         }
-        when (result) {
-            "NOSU" -> {
-                if (module.isEmpty()) {
-                    finish(false, if (nosuWhy.isEmpty()) "模块已加载但 su 不可用：重新点一次；仍不行就冷重启手机后重试"
-                                else "模块已加载但 su 不可用 —— $nosuWhy")
-                } else {
-                    finish(true, "越狱成功：KernelSU 模块已加载（su 暂不可用，重启后生效）")
-                }
-                return
-            }
-            "NOMGR" -> { finish(false, "所选管理器没装：先装好它，否则无法 late-load。"); return }
-            "ENVFAIL" -> { finish(false, "系统负载太高，这一轮没有开跑（保护设备）。关掉后台应用 / 等几分钟再试；确实要跑可在 /sdcard 建 kmroot-force 强制"); return }
-            "DEPLOYFAIL" -> { finish(false, "引擎文件不完整（工作目录载荷没拷全）。重装 APK / 删掉工作目录后重试"); return }
-            "UNSUPPORTED" -> {
-                val msg = when {
-                    gate612.isNotEmpty() -> "本机是 $gate612，与 6.12.69 不是同一内核布局，引擎偏移按 6.12.69 编译，硬套会野写，故未开跑（安全）"
-                    saw61269B -> "本机是 6.12.69 的第二个 OTA 构建，内置引擎按第一份构建编译，base 校准不过属预期"
-                    sawProfileRelaxed -> "这台机内核没有精确档案，本轮借用同系列档案试跑，失败属预期"
-                    sawFast66Gate -> "6.6 内核（$lastLine）没有匹配档案，引擎没启动（安全）"
-                    sawFast61Gate -> "6.1 内核没有匹配档案，引擎没启动（安全）"
-                    sawTraceBlocked -> "这台机的 ROM 不给 shell 开 tracefs 的 kmem 事件（权限门槛），引擎拿不到 page 事件"
-                    sawAdaptUnsupported -> "内核 build 需要引擎侧适配：两条 6.12 引擎都在 base 校准阶段失败，重试无意义"
-                    sawKernelMismatch -> "内核串不在慢速 98260 兼容链档案里，重试无意义。切回「快速」再试"
-                    else -> "内核不在快速引擎已验证名单里，也没有匹配档案。可切「慢速 98260」再试"
-                }
-                finish(false, msg); return
-            }
-            "TRACEBLOCK" -> { finish(false, "ROM 没给 shell 开 tracefs 的 kmem 事件，快速引擎无法工作。可切「慢速 98260」兼容模式再试"); return }
-            "FASTFAIL" -> {
-                val msg = when {
-                    sawRetryHolder -> "快速引擎这次没中，但已把持页交给 holder 进程 → 同一 boot 直接再点一次即可，不必重启"
-                    sawBaseCalFail && sawOldNextArmed -> "内核 build 让新引擎 base 校准失败 —— 冷重启手机后再点一次就会自动改试老引擎"
-                    sawBaseCalFail -> "内核 build 让引擎在 base 校准阶段就失败（[base] best=0 count=0），引擎还没适配这个 build"
-                    else -> "快速引擎没有成功（当前「快速」模式不会自动回退）。重启后再点；多次失败可切「慢速 98260」"
-                }
-                finish(false, msg); return
-            }
-            "PARTIAL" -> { finish(false, "已拿到临时 root（uid=0），但 KernelSU 没起来：检查管理器是否装好，或重启后重试"); return }
-            "HELD", "PARKED", "REBOOT" -> { finish(false, "失败，请手动重启手机后再尝试"); return }
+        val msg = when {
+            sawUnsupported -> "内核不在 19 机型精确档案里，引擎未开跑（安全）。可反馈机型+内核串适配"
+            sawProfileOk && lastFail.isNotEmpty() -> "已匹配内核档案，但利用未成功：$lastFail"
+            lastFail.isNotEmpty() -> "引擎未成功：$lastFail"
+            else -> "未拿到临时 root：${if (lastLine.isEmpty()) "引擎运行中断" else lastLine}"
         }
-        if (su.contains("uid=0") || module.isNotEmpty()) {
-            finish(true, "越狱成功：KernelSU 模块已加载（su ${if (su.isEmpty()) "稍后才能用" else "uid=0"}）")
-        } else {
-            finish(false, failReason())
-        }
+        finish(false, msg)
     }
 
-    private fun failReason(): String = when {
-        sawKernelMismatch -> "内核串不在慢链适配档案里（kernel mismatch），重试无意义；切「快速」或把机型+内核串反馈适配"
-        sawKsuLoaded && sawHeld -> "KernelSU 已 late-load，但引擎持页（parking without reap）：冷重启手机后再点一次"
-        sawHeld -> "引擎已持页：这次开机不能再试，必须冷重启手机后再点"
-        sawScriptError -> "设备端脚本损坏：重新打开 App 会自动重写脚本；若仍出现，卸载重装"
-        sawDeath && resultLine.isEmpty() -> "运行中断：脚本进程提前结束（多半是 shell 服务被系统回收）。重新点一次即可"
-        result == "FAIL" -> "未拿到 root${if (lastFail.isEmpty()) "" else "：$lastFail"}"
-        resultLine.isNotEmpty() -> "未成功：$resultLine"
-        lastFail.isNotEmpty() -> "未成功：$lastFail"
-        else -> "未拿到临时 root：${if (lastLine.isEmpty()) "运行中断" else lastLine}"
-    }
-
-    /** 逐行日志 → 进度状态机 + 标志位。移植自 Engine.onLine。 */
+    /** 逐行日志 → 进度状态机。解析新引擎 runner/plant 的标志串。 */
     fun onLine(raw: String?) {
         lastLineAt = System.currentTimeMillis()
         log(raw ?: "")
@@ -355,65 +247,47 @@ class KmEngine {
         lastLine = s
 
         when {
-            s.startsWith("KERNEL=") -> stage(20, "内核分流")
-            s.startsWith("MGR_READY") || s.startsWith("MGR_INSTALL") -> stage(22, "管理器就绪")
-            s.startsWith("KSUD=") -> stage(24, "ksud 就绪")
-            s.contains("engine=kmfast61") -> stage(30, "快速引擎 · 6.1")
-            s.contains("engine=km612s") -> stage(30, "快速引擎 · 6.12")
-            s.contains("engine=km612") -> stage(30, "快速引擎 · 6.12")
-            s.contains("engine=kmfast") -> stage(30, "快速引擎 · 6.6")
-            s.contains("FAST_PROFILE") -> stage(26, "加载内核档案")
-            s.startsWith("[1/5]") -> stage(26, "probe")
-            s.contains("PROBE_OK") -> stage(30, "probe 通过")
-            s.startsWith("[2/5]") -> stage(34, "解算 slide")
-            s.startsWith("SAMPLE_ROUND") -> stage(38, "采样 KASLR")
-            s.startsWith("SLIDE_READY") -> stage(46, "slide 就绪")
-            s.startsWith("[3/5]") || s.startsWith("PLANT_PID") -> stage(50, "触发 UAF")
-            s.contains("ROOTD_LISTEN") -> stage(58, "rootd 已监听")
-            s.contains("ROOTD_READY") -> stage(66, "临时 root 就绪")
-            s.contains("GUARD_ANTIROOT_OFF") -> stage(70, "压制反 root 守卫")
-            s.startsWith("LATE_LOAD") -> stage(76, "管理器 late-load")
-            s.startsWith("KSU_LOADED") -> stage(88, "KernelSU 已加载")
-            s.startsWith("MODULE_LOADED") -> stage(90, "模块已加载")
-            s.startsWith("SU_OK") -> stage(94, "su 可用")
-            s.startsWith("GUARD_RESTORED") -> stage(96, "收尾")
-            s.startsWith("MGR_START") || s.startsWith("FALLBACK") -> stage(92, "收尾")
-        }
-
-        if (s == "KSU_LOADED") sawKsuLoaded = true
-        if (s.startsWith("ROOTD_READY")) sawRootdReady = true
-        if (s.contains("GUARD_ANTIROOT_OFF")) sawGuardOff = true
-        if (s.startsWith("FALLBACK")) sawFallback = true
-        if (s.startsWith("PLANT_PARKED") || s.startsWith("FAST_HELD") || s.startsWith("ENGINE_HOLD") ||
-            s.startsWith("PARKED=1") || s.contains("parking") || s.contains("page held")) sawHeld = true
-        if (s.contains("syntax error") || s.contains("inaccessible or not found") ||
-            Regex(".*trrun\\.sh\\[\\d+\\]:.*not found.*").matches(s)) sawScriptError = true
-        if (s.contains("REASON=kernel mismatch") || s.startsWith("KERNEL_MISMATCH")) sawKernelMismatch = true
-        if (s.contains("ENGINE_BASECAL_FAIL") || s.contains("base calibration failed")) sawBaseCalFail = true
-        if (s.contains("ADAPT_ENGINE_UNSUPPORTED")) sawAdaptUnsupported = true
-        if (s.contains("TRACE_BLOCKED") || s.contains("TRACE_BLOCK_KIND")) sawTraceBlocked = true
-        if (s.contains("FAST61_GATE")) sawFast61Gate = true
-        if (s.contains("FAST_GATE")) sawFast66Gate = true
-        if (s.contains("PROFILE_RELAXED")) sawProfileRelaxed = true
-        if (s.contains("ENGINE_WARN_61269B")) saw61269B = true
-        if (s.contains("ENGINE_GATE_61238")) gate612 = "6.12.38"
-        else if (s.contains("ENGINE_GATE_61258")) gate612 = "6.12.58"
-        else if (s.contains("ENGINE_GATE_61223")) gate612 = "6.12.23"
-        if (s.contains("ENGINE_OLDNEXT_ARMED")) sawOldNextArmed = true
-        if (s.contains("ENGINE_WARN_RETRYHOLDER") || s.contains("RETRY_HOLDER")) sawRetryHolder = true
-        if (s.startsWith("NOSU_WHY:")) nosuWhy = s.substring(9).trim()
-        if (s.startsWith("FAIL=") || s.startsWith("ENGINE_FAIL") || s.startsWith("DEPLOY_FAIL")) lastFail = s
-
-        if (s.startsWith("RESULT=")) {
-            result = s.substring(7).trim()
-            if (result == "ROOT" || result == "ALREADY") {
-                earlyOk = true
-                finish(true, if (result == "ALREADY") "KernelSU 已就绪（本机本来就加载着，无需重复越狱）"
-                            else "越狱成功：临时 root 已就绪，KernelSU 已接管")
+            s.startsWith("PROBE_KERNEL=") || s.startsWith("RELEASE=") -> stage(20, "识别内核")
+            s.startsWith("PROFILE_OK=") || s.startsWith("PROFILE_66118=") || s.startsWith("PROFILE_FUZZY=") -> {
+                sawProfileOk = true
+                stage(26, "加载内核档案")
             }
-            resultLine = s
+            s.startsWith("PROFILE_UNSUPPORTED=") || s.contains("REASON=kernel mismatch") || s.startsWith("UNSUPPORTED_KERNEL=") -> {
+                sawUnsupported = true
+                lastFail = "内核无匹配档案（$s）"
+            }
+            s.contains("[+] pid=") || s.startsWith("ENGINE_START") -> stage(30, "触发 UAF")
+            s.contains("base=") || s.startsWith("PLANT_SLIDE=") -> stage(42, "解算 KASLR")
+            s.contains("victim page") || s.startsWith("FAST_CHURN") -> stage(52, "抢占 victim 页")
+            s.contains("burst hit") || s.startsWith("FAST_RESULT") -> stage(66, "写原语收割")
+            s.contains("[cred]") || s.startsWith("CRED_SCAN") -> stage(70, "定位 cred")
+            s.contains("[+] stage ") || s.startsWith("STAGE ") -> stage(74, "写入内核")
+            s.startsWith("PLANT_CRED_OK") || s.startsWith("CRED_OK") -> {
+                sawCredOk = true
+                stage(86, "root 就绪")
+            }
+            s.startsWith("LATE_LOAD_CMD=") || s.contains("late-load") -> stage(90, "管理器 late-load")
+            s.contains("LATE_LOAD_RC=0") || s.contains("MODULE_LOADED") -> sawLateLoad = true
+            s.startsWith("PARKED=1") || s == "DONE" -> stage(96, "收尾")
         }
-        if (s == "DONE" || s.startsWith("DEPLOY_FAIL")) done = true
+
+        if (s.startsWith("PLANT_NOT_FOUND=") || s.startsWith("PROFILE_NOT_FOUND=") ||
+            s.startsWith("DIR_MISSING=") || s.startsWith("PLANT_SPAWN_FAIL=") ||
+            s.startsWith("PROFILE_FILE_MISSING=")) {
+            lastFail = "引擎文件不完整：$s"
+            sawScriptError = true
+        }
+        // 新 core 失败标志：FAIL=<tag> REASON=<...> 或 [-] ... miss/failed
+        if (s.startsWith("FAIL=")) {
+            lastFail = s.removePrefix("FAIL=")
+        }
+        if (s == "PLANT_FAIL") lastFail = if (lastFail.isEmpty()) "利用链未成功（竞态未命中，可重试）" else lastFail
+        if (s.startsWith("ZERO_NO_TARGET")) lastFail = "zero 模式需要目标地址，请改用 fake 模式"
+
+        if (s == "DONE" || s == "PLANT_FAIL") done = true
+        if (s.startsWith("PLANT_CRED_OK") || s.startsWith("CRED_OK")) {
+            earlyOk = true   // 已成 root，收尾阶段不要再 kill plant（它持有 fake cred 页）
+        }
     }
 
     @Synchronized
