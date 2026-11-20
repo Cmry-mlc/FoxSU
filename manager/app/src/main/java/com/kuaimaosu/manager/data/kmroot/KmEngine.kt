@@ -104,16 +104,27 @@ class KmEngine {
 
     private fun safe(s: String?) = s ?: ""
 
-    /** 由内核 release 串推导 ksud late-load 用的 KMI（不匹配时 plant.c 有默认值兜底）。 */
+    /**
+     * 由内核 release 串推导 ksud late-load 用的 KMI。
+     *
+     * 两个原则：
+     * 1) 用正则取「主版本.次版本」，不再用 contains("6.1")——否则 6.10/6.12/6.18
+     *    都会被它误命中，只能靠判断顺序躲坑，极易在加新版本时踩雷。
+     * 2) 只返回 bin/aarch64 里真实存在的 ko 前缀。旧代码会给 6.10 内核返回
+     *    android15-6.10，但根本没有这个 ko，late-load 取文件时必然失败。
+     *    6.10 没有专属 ko，按最接近的 6.12 兜底（ksuinit 手动重定位会绕过 vermagic）。
+     */
     private fun kmiOf(kernel: String): String {
-        val rel = kernel.lowercase()
-        return when {
-            rel.contains("6.12") -> "android16-6.12"
-            rel.contains("6.18") -> "android17-6.18"
-            rel.contains("6.6") -> "android15-6.6"   // 66118/66127（如用户 abogki537459655）
-            rel.contains("6.10") -> "android15-6.10"
-            rel.contains("6.1") -> "android14-6.1"
-            else -> "android16-6.12"
+        val m = Regex("""(\d+)\.(\d+)""").find(kernel.lowercase())
+        val ver = if (m != null) "${m.groupValues[1]}.${m.groupValues[2]}" else ""
+        return when (ver) {
+            "6.18" -> "android17-6.18"
+            "6.12" -> "android16-6.12"
+            "6.6"  -> "android15-6.6"   // 66118/66127（如用户 abogki537459655）
+            "6.1"  -> "android14-6.1"
+            "5.15" -> "android14-5.15"
+            "5.10" -> "android13-5.10"
+            else   -> "android16-6.12"  // 6.10 及未知内核：用真实存在且最接近的 ko 兜底
         }
     }
 
@@ -225,17 +236,28 @@ class KmEngine {
     }
 
     private fun judgeResult(module: String, su: String) {
-        if (sawCredOk || sawLateLoad || su.contains("uid=0") || module.isNotEmpty()) {
-            finish(true, "越狱成功：临时 root 已就绪，KernelSU 已接管")
-            return
+        // 只看「结果证据」：su 真的返回 uid=0，或 /proc/modules 里真的有 kernelsu。
+        // 过程标志（sawCredOk / sawLateLoad）只代表 UAF 拿到临时 cred、发起过 late-load，
+        // 不能单独判定成功——否则会出现「界面说成功，但 su 根本用不了」的假成功。
+        val suOk = su.contains("uid=0")
+        val moduleOk = module.isNotEmpty()
+        when {
+            suOk && moduleOk -> finish(true, "越狱成功：临时 root 已就绪，KernelSU 已接管")
+            suOk -> finish(true, "越狱成功：su 已就绪（模块未在 /proc/modules 显示，可能延迟加载）")
+            moduleOk -> finish(true, "越狱成功：KernelSU 模块已加载（su 尚未响应，若用不了请重启 KuaiMaoSU）")
+            // 到这里 su 和模块都没有真实证据，即使过程标志为真也判失败并给出可诊断的原因。
+            sawCredOk -> finish(false, "已拿到临时 root，但 KernelSU 未接管、su 不可用：多半是 ko 加载失败（KMI 不匹配或缺少对应 ko），请把日志回传")
+            sawLateLoad -> finish(false, "发起过 late-load，但模块和 su 都不可用：ko 加载失败，请把日志回传")
+            else -> {
+                val msg = when {
+                    sawUnsupported -> "内核不在 19 机型精确档案里，引擎未开跑（安全）。可反馈机型+内核串适配"
+                    sawProfileOk && lastFail.isNotEmpty() -> "已匹配内核档案，但利用未成功：$lastFail"
+                    lastFail.isNotEmpty() -> "引擎未成功：$lastFail"
+                    else -> "未拿到临时 root：${if (lastLine.isEmpty()) "引擎运行中断" else lastLine}"
+                }
+                finish(false, msg)
+            }
         }
-        val msg = when {
-            sawUnsupported -> "内核不在 19 机型精确档案里，引擎未开跑（安全）。可反馈机型+内核串适配"
-            sawProfileOk && lastFail.isNotEmpty() -> "已匹配内核档案，但利用未成功：$lastFail"
-            lastFail.isNotEmpty() -> "引擎未成功：$lastFail"
-            else -> "未拿到临时 root：${if (lastLine.isEmpty()) "引擎运行中断" else lastLine}"
-        }
-        finish(false, msg)
     }
 
     /** 逐行日志 → 进度状态机。解析新引擎 runner/plant 的标志串。 */
