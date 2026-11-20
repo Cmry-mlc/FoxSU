@@ -58,6 +58,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
+import com.kuaimaosu.manager.ui.component.KuaiMaoRebootBar
 import com.kuaimaosu.manager.ui.component.KuaiMaoTopActions
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -172,8 +173,12 @@ fun KuaiMaoGreetingRow(
         }
     }
 
+    // 标题行外层必须是一个满宽的 Box：重启条是这个 Box 的兄弟节点，展开时
+    // 直接盖在右侧动作条上（右边缘天生齐平、垂直跟着这行居中）。放在 Row 里
+    // 会被当成普通子项挤位置；包 Popup 则会跨页重复出现、还要手算窗口坐标。
+    Box(modifier = modifier.fillMaxWidth()) {
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
@@ -203,6 +208,10 @@ fun KuaiMaoGreetingRow(
 
         // 通知与重启合成在一个 13dp 圆角的动作条里，四个页签的标题栏都是它。
         KuaiMaoTopActions()
+    }
+
+        // 展开后原地盖住「铃铛 + 重启」：同一层里的兄弟节点，位置由布局给。
+        KuaiMaoRebootBar(modifier = Modifier.align(Alignment.CenterEnd))
     }
 }
 

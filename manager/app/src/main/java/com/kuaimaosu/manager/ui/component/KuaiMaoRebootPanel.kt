@@ -39,14 +39,9 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
-import com.kuaimaosu.manager.ui.theme.CardConfig
 import com.kuaimaosu.manager.ui.theme.KuaiMaoColors
-import org.koin.compose.koinInject
 
 /**
  * 重启条的展开状态与回调。
@@ -118,29 +113,27 @@ private val REBOOT_OPTIONS = listOf(
 /**
  * 重启条：展开时原地盖住标题栏右侧的「铃铛 + 重启」，换成六个动作 + 一个关闭格。
  *
- * 为什么覆盖而不是另找地方放：标题栏中间只剩 137dp 的窄缝，六格挤进去每格只有
- * 21dp、文字得压到 6sp，基本看不清；而铃铛 + 重启本身占着 80dp。展开时把这块
- * 让出来，整条可用宽度就有约 200dp，每格 26dp、文字 7sp，不用牺牲可读性。
+ * **必须放在标题栏那一层的 Box 里**（各页标题行外层包一个 `fillMaxWidth` 的 Box，
+ * 用 `Modifier.align(Alignment.CenterEnd)` 摆进来），不要再包 Popup。
  *
- * 定位方式：这个 composable 直接调用在 [KuaiMaoTopActions] 的 Row 里，
- * `Popup(alignment = TopEnd)` 会把弹窗右上角对齐到那条动作条的右上角——位置由
- * Compose 按父布局自己算，不做任何「窗口坐标 → 本层坐标」的换算。之前两种手算
- * 坐标的写法都会因为页面被状态栏内边距顶下去而整体错开一行，这条路径没有这个
- * 误差：父布局在哪，条就在哪。
+ * 之前两版都错在「让这条脱离父布局」：Popup 是独立窗口，位置要靠窗口坐标换算，
+ * 一旦页面被状态栏内边距顶下去，整条就往上错一行；更糟的是分页容器会预组合相邻
+ * 页，而设置页标题栏也挂了同一份面板状态，于是**两个窗口同时显示**——屏幕上看得
+ * 见两条「重启」，还互相错开一格。
  *
- * 关闭格钉在最右端、和原来那颗重启图标同一个位置：用户想「再点一下关掉」时，
- * 手指落点就是关闭，不会误触到关机或 EDL。
+ * 现在它就在标题栏这一层里当兄弟节点画：右边缘天生和动作条右边缘齐平，垂直跟着
+ * 标题行居中，坐标一次都不用手算，也不会跨页重复出现（离屏的页被分页容器裁掉）。
  */
 @Composable
-fun RebootPanelPopup(state: RebootPanelState) {
+fun KuaiMaoRebootBar(
+    modifier: Modifier = Modifier,
+    state: RebootPanelState = LocalRebootPanel.current,
+) {
     if (!state.expanded) return
 
-    val cardConfig: CardConfig = koinInject()
-    val onWallpaper = cardConfig.isCustomBackgroundEnabled
     val shape = RoundedCornerShape(BAR_RADIUS)
 
-    // Popup 是立刻出现的，入场只做「从右端往左摊开」：缩放不改变测量尺寸，
-    // 右端在整个动画里钉死不动，不会一边长一边漂。
+    // 入场只做「从右端往左摊开」：缩放不改变测量尺寸，右端在整个动画里钉死不动。
     var entered by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { entered = true }
     val scaleX by animateFloatAsState(
@@ -149,64 +142,49 @@ fun RebootPanelPopup(state: RebootPanelState) {
         label = "rebootBarScaleX",
     )
 
-    Popup(
-        // 右上角对齐父布局（那条 40dp 的动作条）的右上角，整条往左展开。
-        alignment = Alignment.TopEnd,
-        offset = IntOffset(0, 0),
-        onDismissRequest = { state.dismiss() },
-        properties = PopupProperties(focusable = true, dismissOnClickOutside = true),
+    Row(
+        modifier = modifier
+            .width(BAR_WIDTH)
+            .height(BAR_HEIGHT)
+            .graphicsLayer {
+                this.scaleX = scaleX
+                transformOrigin = TransformOrigin(1f, 0.5f)
+            }
+            .clip(shape)
+            // 实色卡片：它是标题栏上的覆盖层，跟着标题行的底色走，不用背景模糊。
+            .background(KuaiMaoColors.canvasCard)
+            .border(
+                width = 1.dp,
+                color = KuaiMaoColors.line.copy(alpha = 0.8f),
+                shape = shape,
+            ),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(0.dp),
     ) {
-        Row(
-            modifier = Modifier
-                .width(BAR_WIDTH)
-                .height(BAR_HEIGHT)
-                .graphicsLayer {
-                    this.scaleX = scaleX
-                    transformOrigin = TransformOrigin(1f, 0.5f)
-                }
-                .clip(shape)
-                // Popup 是独立窗口，拿不到页面里的 blurSource，所以不用背景模糊，
-                // 改用实色 / 半透明实色：壁纸下压一层 92% 的底色，图标依然清楚。
-                .background(
-                    if (onWallpaper) {
-                        KuaiMaoColors.canvasCard.copy(alpha = 0.92f)
-                    } else {
-                        KuaiMaoColors.canvasCard
-                    },
-                )
-                .border(
-                    width = 1.dp,
-                    color = KuaiMaoColors.line.copy(alpha = 0.8f),
-                    shape = shape,
-                ),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(0.dp),
-        ) {
-            REBOOT_OPTIONS.forEach { option ->
-                RebootBarItem(
-                    option = option,
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
-                    onClick = { state.trigger(option.reason) },
-                )
-            }
-
-            // 关闭格：压在原来那颗重启图标的位置，点它就是收起。
-            Box(
+        REBOOT_OPTIONS.forEach { option ->
+            RebootBarItem(
+                option = option,
                 modifier = Modifier
-                    .width(CLOSE_SLOT_WIDTH)
-                    .fillMaxHeight()
-                    .clickable { state.dismiss() },
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = Icons.TwoTone.Close,
-                    contentDescription = "收起",
-                    tint = KuaiMaoColors.brand,
-                    modifier = Modifier.size(17.dp),
-                )
-            }
+                    .weight(1f)
+                    .fillMaxHeight(),
+                onClick = { state.trigger(option.reason) },
+            )
+        }
+
+        // 关闭格：压在原来那颗重启图标的位置，点它就是收起。
+        Box(
+            modifier = Modifier
+                .width(CLOSE_SLOT_WIDTH)
+                .fillMaxHeight()
+                .clickable { state.dismiss() },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = Icons.TwoTone.Close,
+                contentDescription = "收起",
+                tint = KuaiMaoColors.brand,
+                modifier = Modifier.size(17.dp),
+            )
         }
     }
 }

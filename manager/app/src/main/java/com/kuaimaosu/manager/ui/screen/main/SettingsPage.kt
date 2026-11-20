@@ -22,6 +22,7 @@ import com.kuaimaosu.manager.ui.component.SkeletonSwap
 import com.kuaimaosu.manager.ui.component.rememberSkeletonPhase
 import com.kuaimaosu.manager.ui.component.rememberSkeletonVisible
 import com.kuaimaosu.manager.ui.component.KuaiMaoPageTitle
+import com.kuaimaosu.manager.ui.component.KuaiMaoRebootBar
 import com.kuaimaosu.manager.ui.component.KuaiMaoTopActions
 import com.kuaimaosu.manager.ui.component.KuaiMaoRowDivider
 import com.kuaimaosu.manager.ui.theme.KuaiMaoColors
@@ -292,19 +293,26 @@ fun SettingsPage(bottomPadding: Dp) {
             // 标题固定在顶部，下面只有卡片列表滚动。
             // 右侧是全局动作条（通知 + 重启），与其他三个页签同一套位置。
             Spacer(modifier = Modifier.height(10.dp))
-            Row(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp),
-                verticalAlignment = Alignment.CenterVertically,
             ) {
-                KuaiMaoPageTitle(
-                    title = "设置",
-                    subtitle = "KuaiMaoSU · V${BuildConfig.VERSION_NAME}",
-                    modifier = Modifier.weight(1f),
-                )
-                Spacer(modifier = Modifier.width(10.dp))
-                KuaiMaoTopActions()
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    KuaiMaoPageTitle(
+                        title = "设置",
+                        subtitle = "KuaiMaoSU · V${BuildConfig.VERSION_NAME}",
+                        modifier = Modifier.weight(1f),
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    KuaiMaoTopActions()
+                }
+
+                // 重启条与本页标题行同层，展开时盖住右侧动作条，右边缘自动齐平。
+                KuaiMaoRebootBar(modifier = Modifier.align(Alignment.CenterEnd))
             }
             Spacer(modifier = Modifier.height(16.dp))
 

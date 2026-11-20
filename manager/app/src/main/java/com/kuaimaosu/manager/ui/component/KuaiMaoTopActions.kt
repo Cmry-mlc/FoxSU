@@ -173,9 +173,6 @@ fun KuaiMaoTopActions(
                     .graphicsLayer { rotationZ = rebootSpin },
             )
         }
-
-        // 展开后原地盖住这条动作条：Popup 不占布局，右上角对齐这里。
-        RebootPanelPopup(rebootPanel)
     }
 }
 
