@@ -683,12 +683,12 @@ private fun statusFeedItems(uiState: HomeUiState): List<KuaiMaoFeedItem> {
 
     val feed = mutableListOf<KuaiMaoFeedItem>()
 
-    // 漏洞提权利用类型：仅越狱模式（late-load 临时加载）下显示。
+    // 提权利用方式：仅越狱模式（late-load 临时加载）下显示。
     // 自研引擎统一走 CVE-2026-98260 竞态 UAF。
     if (status.isLateLoadMode) {
         feed += KuaiMaoFeedItem(
             key = "exploit",
-            title = "漏洞提权利用类型",
+            title = "提权利用方式",
             desc = "临时 root · 重启失效",
             value = "CVE-2026-98260",
             icon = Icons.TwoTone.Lock,
