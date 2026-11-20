@@ -83,6 +83,7 @@ import androidx.compose.material.icons.twotone.Settings
 import androidx.compose.material.icons.twotone.Share
 import androidx.compose.material.icons.twotone.Update
 import androidx.compose.material.icons.twotone.VerifiedUser
+import androidx.compose.material.icons.twotone.VisibilityOff
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -228,6 +229,14 @@ fun SettingsPage(bottomPadding: Dp) {
             icon = Icons.TwoTone.Security,
             tone = KuaiMaoTones.violet,
             route = Route.SuSFSLkm,
+        ),
+        KuaiMaoCategory(
+            title = "SUSFS 配置",
+            summary = "隐藏挂载 · 路径隐藏 · Kstat · uname 伪装",
+            count = 6,
+            icon = Icons.TwoTone.VisibilityOff,
+            tone = KuaiMaoTones.violet,
+            route = Route.SuSFSConfig,
         ),
         KuaiMaoCategory(
             title = "挂载控制",

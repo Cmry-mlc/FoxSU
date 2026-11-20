@@ -226,6 +226,22 @@ class KmEngine {
             log("模块: ${if (module.isEmpty()) "未加载" else module}")
             log("su: ${if (su.isEmpty()) "不可用" else su}")
 
+            // 提权成功后自动开启 SUSFS 挂载隐藏。
+            // Duck Detector 这类检测工具会 fork zygote_next 隔离进程去读 /proc/self/mountinfo；
+            // 不开这个开关，非 root 进程就能看到 Root 管理的 200+ 条挂载，直接暴露 root。
+            // 临时 root 没有 post-fs-data 阶段，持久化配置不会自动应用，所以这里下发的是
+            // 「当前内核即时命令」，生效于本次开机周期；每次提权后重下，幂等无副作用。
+            if (su.contains("uid=0")) {
+                log("自动开启 SUSFS 挂载隐藏（对非 root 进程隐藏 sus 挂载）…")
+                val susfsOut = safe(
+                    KmShell.run(
+                        "su -c \"$ksudPath susfs hide_sus_mnts_for_non_su_procs 1\" 2>&1",
+                        25,
+                    )
+                ).trim()
+                log("SUSFS 挂载隐藏: ${if (susfsOut.isEmpty()) "已下发（无回显即成功）" else susfsOut}")
+            }
+
             judgeResult(module, su)
         } catch (t: Throwable) {
             try {
