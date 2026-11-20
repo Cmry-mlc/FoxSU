@@ -5,10 +5,10 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,18 +17,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.twotone.Close
 import androidx.compose.material.icons.twotone.DeveloperBoard
 import androidx.compose.material.icons.twotone.PowerSettingsNew
 import androidx.compose.material.icons.twotone.Refresh
@@ -54,7 +53,7 @@ import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kuaimaosu.manager.ui.theme.CardConfig
@@ -64,23 +63,25 @@ import com.kuaimaosu.manager.ui.theme.renderBackgroundBlur
 import org.koin.compose.koinInject
 
 /**
- * 重启面板的展开状态。
+ * 重启条的展开状态。
  *
- * 状态放在 MainScreen 上（面板也画在那里），标题栏里的重启按钮只负责 flip 这个开关，
- * 所以四个页签点哪儿都是同一个面板、同一份状态。
+ * 状态放在 MainScreen 上（条也画在那里），标题栏里的重启按钮只负责 flip 这个开关，
+ * 所以四个页签点哪儿都是同一条、同一份状态。
  */
 class RebootPanelState {
     var expanded by mutableStateOf(false)
         private set
 
     /**
-     * 标题栏图标簇的下边缘（窗口坐标，px）。
+     * 标题栏动作条的右边界（窗口坐标，px）。
      *
-     * 面板要贴着它往下展开，所以位置不写死：首页是 44dp 的头像行、
-     * 其余页是 24sp 大标题 + 副标题，高度本来就不一样，量出来才准，
-     * 也才能保证不管哪一页都不压到标题文字。
+     * 展开时这条要把整块动作条（铃铛 + 重启）盖住，所以右端必须和它严丝合缝：
+     * 右边界对齐才有「原地换了一组图标」的连续感，不会先跳一下再展开。
      */
-    var anchorBottomPx by mutableFloatStateOf(0f)
+    var anchorRightPx by mutableFloatStateOf(0f)
+
+    /** 标题栏动作条的垂直中心（窗口坐标，px）：条与它同高、垂直居中。 */
+    var anchorCenterPx by mutableFloatStateOf(0f)
 
     fun toggle() {
         expanded = !expanded
@@ -93,43 +94,58 @@ class RebootPanelState {
 
 val LocalRebootPanel = staticCompositionLocalOf { RebootPanelState() }
 
-/** 图标簇下边缘与面板顶边之间的空隙。 */
-private val PANEL_TOP_GAP = 8.dp
+/**
+ * 展开后的整条宽度。
+ *
+ * 收起时标题栏右侧只占「铃铛 + 重启」两格（80dp），展开后这条直接把它们盖掉，
+ * 可用宽度就从标题栏中间那段 137dp 的窄缝，变成「标题右边界 → 屏幕右边」的
+ * 约 200dp：六格各到 26dp、文字能到 7sp，看得清、点得准。
+ */
+private val BAR_WIDTH = 196.dp
 
-/** 拿不到锚点时的兜底：状态栏 + 标题行。 */
-private val PANEL_FALLBACK_TOP = 58.dp
+/** 与标题栏动作条同高（40dp），盖上去刚好同一档。 */
+private val BAR_HEIGHT = 40.dp
 
-private val PANEL_RADIUS = 13.dp
+/** 圆角与动作条一致，换过去像同一块控件。 */
+private val BAR_RADIUS = 13.dp
 
-/** 竖排面板定宽：足够放下最长标签（Bootloader），贴右边缘。 */
-private val PANEL_WIDTH = 76.dp
+/** 最右端的关闭格：正好压在原来那颗重启图标的位置上，点它就是收起。 */
+private val CLOSE_SLOT_WIDTH = 36.dp
+
+/** 拿不到锚点时的兜底右边距：页面右内边距。 */
+private val BAR_FALLBACK_END = 20.dp
 
 private data class RebootOption(
     val label: String,
+    /** 26dp 一格只放得下两个汉字，标签都要压到这个长度。 */
+    val short: String,
     val reason: String,
     val icon: ImageVector,
     val danger: Boolean = false,
 )
 
 private val REBOOT_OPTIONS = listOf(
-    RebootOption("重启", "reboot", Icons.TwoTone.RestartAlt),
-    RebootOption("软重启", "soft_reboot", Icons.TwoTone.Refresh),
-    RebootOption("Recovery", "recovery", Icons.TwoTone.SettingsBackupRestore),
-    RebootOption("Bootloader", "bootloader", Icons.TwoTone.DeveloperBoard),
-    RebootOption("EDL", "edl", Icons.TwoTone.Usb, danger = true),
-    RebootOption("关机", "poweroff", Icons.TwoTone.PowerSettingsNew, danger = true),
+    RebootOption("重启", "重启", "reboot", Icons.TwoTone.RestartAlt),
+    RebootOption("软重启", "软启", "soft_reboot", Icons.TwoTone.Refresh),
+    RebootOption("Recovery", "恢复", "recovery", Icons.TwoTone.SettingsBackupRestore),
+    RebootOption("Bootloader", "BL", "bootloader", Icons.TwoTone.DeveloperBoard),
+    RebootOption("EDL", "EDL", "edl", Icons.TwoTone.Usb, danger = true),
+    RebootOption("关机", "关机", "poweroff", Icons.TwoTone.PowerSettingsNew, danger = true),
 )
 
 /**
- * 重启面板：从标题栏右侧图标簇正下方、贴右边缘竖着抽出来的一列动作。
+ * 重启条：展开时原地盖住标题栏右侧的「铃铛 + 重启」，换成六个动作 + 一个关闭格。
  *
- * 为什么不做成底部抽屉：那是半屏浮层，点一次要「上滑—选—收起」三步，而且面板
- * 和底栏的导航职责混在一起。现在它就在重启图标正下方，高度从 0 展开到内容高
- * （顶边对齐图标簇，所以视觉上是「贴着右边往下拉开」），六个动作一列看完，选完即走。
+ * 为什么覆盖而不是另找地方放：标题栏中间只剩 137dp 的窄缝，六格挤进去每格只有
+ * 21dp、文字得压到 6sp，基本看不清；而铃铛 + 重启本身占着 80dp。展开时把这块
+ * 让出来，整条可用宽度就有约 200dp，每格 26dp、文字 7sp，不用牺牲可读性。
  *
- * 位置不是写死的：图标簇每次布局都会把自己的下沿报上来（[RebootPanelState.anchorBottomPx]），
- * 面板贴在它下方 8dp 展开。所以首页的 44dp 头像行、其余页的 24sp 大标题 + 副标题，
- * 不管哪一页、副标题有没有换行，标题文字都不会被压住。
+ * 关闭格钉在最右端、和原来那颗重启图标同一个位置：用户想「再点一下关掉」时，
+ * 手指落点就是关闭，不会误触到关机或 EDL。
+ *
+ * 位置不写死：动作条每次布局都把右边界和垂直中心报上来
+ * （[RebootPanelState.anchorRightPx] / [RebootPanelState.anchorCenterPx]），
+ * 条按它右对齐展开，四个页签都对得准。
  */
 @Composable
 fun KuaiMaoRebootPanel(
@@ -140,18 +156,11 @@ fun KuaiMaoRebootPanel(
     val cardConfig: CardConfig = koinInject()
     val onWallpaper = cardConfig.isCustomBackgroundEnabled
     val lightCanvas = LocalKuaiMaoPalette.current.canvasStage.luminance() >= 0.5f
-    val shape = RoundedCornerShape(PANEL_RADIUS)
+    val shape = RoundedCornerShape(BAR_RADIUS)
     val density = LocalDensity.current
-    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    var hostLeftPx by remember { mutableFloatStateOf(0f) }
     var hostTopPx by remember { mutableFloatStateOf(0f) }
-    // 锚点（px，窗口坐标）→ 相对本层的偏移；还没量到图标簇就先按状态栏兜底。
-    val panelTop = if (state.anchorBottomPx > 0f && hostTopPx > 0f) {
-        with(density) {
-            (state.anchorBottomPx - hostTopPx).toDp() + PANEL_TOP_GAP
-        }
-    } else {
-        statusBarTop + PANEL_FALLBACK_TOP
-    }
+    var hostWidthPx by remember { mutableFloatStateOf(0f) }
 
     if (state.expanded) {
         BackHandler { state.dismiss() }
@@ -160,8 +169,26 @@ fun KuaiMaoRebootPanel(
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
-            .onGloballyPositioned { hostTopPx = it.boundsInWindow().top },
+            .onGloballyPositioned {
+                val bounds = it.boundsInWindow()
+                hostLeftPx = bounds.left
+                hostTopPx = bounds.top
+                hostWidthPx = bounds.width.toFloat()
+            },
     ) {
+        // 右端对齐动作条的右边界：宽度从 0 长到 196dp 时右端钉住，看上去像从
+        // 铃铛那一侧原地铺开、往左把通知和重启两格吃掉。
+        val endPad: Dp = if (state.anchorRightPx > 0f && hostLeftPx > 0f && hostWidthPx > 0f) {
+            with(density) { (hostLeftPx + hostWidthPx - state.anchorRightPx).toDp() }
+        } else {
+            BAR_FALLBACK_END
+        }
+        val topPad: Dp = if (state.anchorCenterPx > 0f && hostTopPx > 0f) {
+            with(density) { (state.anchorCenterPx - hostTopPx).toDp() } - BAR_HEIGHT / 2
+        } else {
+            8.dp
+        }
+
         // 点空白处收起。这一层只在展开时存在，收起后页面照常可点。
         if (state.expanded) {
             Box(
@@ -178,20 +205,20 @@ fun KuaiMaoRebootPanel(
             visible = state.expanded,
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(start = 16.dp, end = 20.dp, top = panelTop),
-            // 顶边钉住图标簇，高度 0 → 内容高：看上去就是从重启按钮里往下抽出来。
-            enter = expandVertically(
-                expandFrom = Alignment.Top,
+                .padding(end = endPad, top = topPad),
+            enter = expandHorizontally(
+                expandFrom = Alignment.End,
                 animationSpec = spring(dampingRatio = 0.82f, stiffness = 900f),
             ) + fadeIn(tween(durationMillis = 140)),
-            exit = shrinkVertically(
-                shrinkTowards = Alignment.Top,
+            exit = shrinkHorizontally(
+                shrinkTowards = Alignment.End,
                 animationSpec = tween(durationMillis = 160, easing = FastOutLinearInEasing),
             ) + fadeOut(tween(durationMillis = 120)),
         ) {
-            Column(
+            Row(
                 modifier = Modifier
-                    .width(PANEL_WIDTH)
+                    .width(BAR_WIDTH)
+                    .height(BAR_HEIGHT)
                     .clip(shape)
                     .background(
                         if (onWallpaper) Color.Transparent else KuaiMaoColors.canvasCard,
@@ -209,19 +236,36 @@ fun KuaiMaoRebootPanel(
                                 shape = shape,
                             )
                         },
-                    )
-                    .padding(vertical = 4.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(0.dp),
+                    ),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(0.dp),
             ) {
                 REBOOT_OPTIONS.forEach { option ->
-                    RebootOptionItem(
+                    RebootBarItem(
                         option = option,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
                         onClick = {
                             state.dismiss()
                             onReboot(option.reason)
                         },
+                    )
+                }
+
+                // 关闭格：压在原来那颗重启图标的位置，点它就是收起。
+                Box(
+                    modifier = Modifier
+                        .width(CLOSE_SLOT_WIDTH)
+                        .fillMaxHeight()
+                        .clickable { state.dismiss() },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.TwoTone.Close,
+                        contentDescription = "收起",
+                        tint = KuaiMaoColors.brand,
+                        modifier = Modifier.size(17.dp),
                     )
                 }
             }
@@ -229,9 +273,9 @@ fun KuaiMaoRebootPanel(
     }
 }
 
-/** 一格里两行：17dp 图标 + 9.5sp 标签，和标题栏图标簇同一套字号与档位。 */
+/** 一格：16dp 图标 + 7sp 简称，塞进 26dp × 40dp。危险项走红色。 */
 @Composable
-private fun RebootOptionItem(
+private fun RebootBarItem(
     option: RebootOption,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
@@ -239,9 +283,8 @@ private fun RebootOptionItem(
     val tint = if (option.danger) KuaiMaoColors.danger else KuaiMaoColors.textLabel
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(PANEL_RADIUS - 3.dp))
-            .clickable(onClick = onClick)
-            .padding(vertical = 6.dp),
+            .clip(RoundedCornerShape(BAR_RADIUS - 4.dp))
+            .clickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
@@ -249,18 +292,17 @@ private fun RebootOptionItem(
             imageVector = option.icon,
             contentDescription = option.label,
             tint = tint,
-            modifier = Modifier.size(18.dp),
+            modifier = Modifier.size(16.dp),
         )
-        Spacer(modifier = Modifier.height(3.dp))
+        Spacer(modifier = Modifier.height(2.dp))
         Text(
-            text = option.label,
+            text = option.short,
             color = if (option.danger) KuaiMaoColors.danger else KuaiMaoColors.textMuted,
-            fontSize = 9.sp,
-            lineHeight = 10.sp,
+            fontSize = 7.sp,
+            lineHeight = 8.sp,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
             softWrap = false,
-            overflow = TextOverflow.Ellipsis,
         )
     }
 }

@@ -99,8 +99,12 @@ fun KuaiMaoTopActions(
 
     Row(
         modifier = modifier
-            // 把图标簇的下沿报给重启面板：面板要贴着它往下展开。
-            .onGloballyPositioned { rebootPanel.anchorBottomPx = it.boundsInWindow().bottom }
+            // 把右边界和垂直中心报给重启条：展开时整条要原地盖住这块控件。
+            .onGloballyPositioned {
+                val bounds = it.boundsInWindow()
+                rebootPanel.anchorRightPx = bounds.right
+                rebootPanel.anchorCenterPx = (bounds.top + bounds.bottom) / 2f
+            }
             .height(ACTIONS_HEIGHT)
             .clip(ACTIONS_SHAPE)
             .background(
