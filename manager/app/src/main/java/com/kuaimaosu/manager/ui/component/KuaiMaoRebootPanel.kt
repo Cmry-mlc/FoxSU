@@ -5,10 +5,10 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,9 +17,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -101,6 +101,9 @@ private val PANEL_FALLBACK_TOP = 58.dp
 
 private val PANEL_RADIUS = 13.dp
 
+/** 竖排面板定宽：足够放下最长标签（Bootloader），贴右边缘。 */
+private val PANEL_WIDTH = 76.dp
+
 private data class RebootOption(
     val label: String,
     val reason: String,
@@ -118,11 +121,11 @@ private val REBOOT_OPTIONS = listOf(
 )
 
 /**
- * 重启面板：从标题栏右侧的图标簇下方往左滑开的一条动作条。
+ * 重启面板：从标题栏右侧图标簇正下方、贴右边缘竖着抽出来的一列动作。
  *
- * 为什么不放回底部抽屉：那是半屏浮层，点一次要「上滑—选—收起」三步，而且面板
- * 和底栏的导航职责混在一起。现在它就在重启图标正下方，宽度从 0 展开到满宽
- * （右端对齐图标簇，所以视觉上是「往左边拉开」），六个动作一行看完，选完即走。
+ * 为什么不做成底部抽屉：那是半屏浮层，点一次要「上滑—选—收起」三步，而且面板
+ * 和底栏的导航职责混在一起。现在它就在重启图标正下方，高度从 0 展开到内容高
+ * （顶边对齐图标簇，所以视觉上是「贴着右边往下拉开」），六个动作一列看完，选完即走。
  *
  * 位置不是写死的：图标簇每次布局都会把自己的下沿报上来（[RebootPanelState.anchorBottomPx]），
  * 面板贴在它下方 8dp 展开。所以首页的 44dp 头像行、其余页的 24sp 大标题 + 副标题，
@@ -159,9 +162,6 @@ fun KuaiMaoRebootPanel(
             .fillMaxSize()
             .onGloballyPositioned { hostTopPx = it.boundsInWindow().top },
     ) {
-        // 面板内容的定宽：左右各让出 16 / 20dp，和标题栏的横向内边距对齐。
-        // 定宽是为了让展开动画「只裁不挤」——按动画宽度去测内容，六个格子会被压扁。
-        val panelWidth = maxWidth - 36.dp
         // 点空白处收起。这一层只在展开时存在，收起后页面照常可点。
         if (state.expanded) {
             Box(
@@ -179,20 +179,19 @@ fun KuaiMaoRebootPanel(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(start = 16.dp, end = 20.dp, top = panelTop),
-            // 右端钉住图标簇，宽度 0 → 满宽：看上去就是从重启按钮里往左边抽出来。
-            enter = expandHorizontally(
-                expandFrom = Alignment.End,
+            // 顶边钉住图标簇，高度 0 → 内容高：看上去就是从重启按钮里往下抽出来。
+            enter = expandVertically(
+                expandFrom = Alignment.Top,
                 animationSpec = spring(dampingRatio = 0.82f, stiffness = 900f),
             ) + fadeIn(tween(durationMillis = 140)),
-            exit = shrinkHorizontally(
-                shrinkTowards = Alignment.End,
+            exit = shrinkVertically(
+                shrinkTowards = Alignment.Top,
                 animationSpec = tween(durationMillis = 160, easing = FastOutLinearInEasing),
             ) + fadeOut(tween(durationMillis = 120)),
         ) {
-            Row(
+            Column(
                 modifier = Modifier
-                    .width(panelWidth)
-                    .height(52.dp)
+                    .width(PANEL_WIDTH)
                     .clip(shape)
                     .background(
                         if (onWallpaper) Color.Transparent else KuaiMaoColors.canvasCard,
@@ -211,14 +210,14 @@ fun KuaiMaoRebootPanel(
                             )
                         },
                     )
-                    .padding(horizontal = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(0.dp),
+                    .padding(vertical = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(0.dp),
             ) {
                 REBOOT_OPTIONS.forEach { option ->
                     RebootOptionItem(
                         option = option,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.fillMaxWidth(),
                         onClick = {
                             state.dismiss()
                             onReboot(option.reason)
