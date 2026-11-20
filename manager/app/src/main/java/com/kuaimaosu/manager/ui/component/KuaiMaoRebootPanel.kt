@@ -38,42 +38,29 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.boundsInWindow
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntRect
-import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import com.kuaimaosu.manager.ui.theme.CardConfig
 import com.kuaimaosu.manager.ui.theme.KuaiMaoColors
 import org.koin.compose.koinInject
-import kotlin.math.roundToInt
 
 /**
- * 重启条的展开状态。
+ * 重启条的展开状态与回调。
  *
- * 状态放在 MainScreen 上（条也画在那里），标题栏里的重启按钮只负责 flip 这个开关，
- * 所以四个页签点哪儿都是同一条、同一份状态。
+ * 状态放在 MainScreen 上（四个页签共用一条），标题栏里的重启按钮只负责 flip
+ * 这个开关；真正的重启动作由 MainScreen 塞进 [onReboot]，因为那层才知道
+ * 当前有没有拿到 root、要不要提示。
  */
 class RebootPanelState {
     var expanded by mutableStateOf(false)
         private set
 
-    /**
-     * 标题栏动作条在窗口里的矩形（px）。
-     *
-     * 条要原地盖住这块（铃铛 + 重启），所以位置必须来自实测、不能用父布局换算：
-     * 首页是 44dp 头像行、其余页是 24sp 大标题 + 副标题，各页高度不一样，任何
-     * 「写死的内边距 + 偏移」都会在某一页错位。这里直接拿窗口矩形，交给 Popup
-     * 的定位器用绝对坐标摆放，不参与父布局，也没有坐标系换算。
-     */
-    var anchorBounds by mutableStateOf<IntRect?>(null)
+    /** 选中某项后要做的事，由 MainScreen 注入。 */
+    var onReboot: ((String) -> Unit)? = null
 
     fun toggle() {
         expanded = !expanded
@@ -81,6 +68,12 @@ class RebootPanelState {
 
     fun dismiss() {
         expanded = false
+    }
+
+    /** 收起并执行动作：先收再执行，避免面板挂在还没重启完的界面上。 */
+    fun trigger(reason: String) {
+        dismiss()
+        onReboot?.invoke(reason)
     }
 }
 
@@ -123,56 +116,31 @@ private val REBOOT_OPTIONS = listOf(
 )
 
 /**
- * 把条摆在锚点矩形上：右端与锚点右端齐平，垂直方向与锚点同高居中。
- *
- * 用 Popup 而不是在页面里叠一层，是因为页面里的层要自己做「窗口坐标 → 本层坐标」
- * 的换算，一旦这一层和标题栏不在同一个 inset 基准上（比如页面被状态栏内边距顶下去
- * 了、根 Box 却是全屏的），就会整体错开一个状态栏的高度——条会跑到状态栏里去。
- * Popup 直接在窗口坐标系里摆，锚点是实测的窗口矩形，不存在换算，也就不会错位。
- */
-private class AnchorRightPositionProvider(
-    private val anchor: IntRect,
-) : PopupPositionProvider {
-    override fun calculatePosition(
-        anchorBounds: IntRect,
-        windowSize: IntSize,
-        layoutDirection: LayoutDirection,
-        popupContentSize: IntSize,
-    ): IntOffset {
-        val x = anchor.right - popupContentSize.width
-        val y = anchor.top + (anchor.height - popupContentSize.height) / 2
-        return IntOffset(
-            x = x.coerceIn(0, (windowSize.width - popupContentSize.width).coerceAtLeast(0)),
-            y = y.coerceIn(0, (windowSize.height - popupContentSize.height).coerceAtLeast(0)),
-        )
-    }
-}
-
-/**
  * 重启条：展开时原地盖住标题栏右侧的「铃铛 + 重启」，换成六个动作 + 一个关闭格。
  *
  * 为什么覆盖而不是另找地方放：标题栏中间只剩 137dp 的窄缝，六格挤进去每格只有
  * 21dp、文字得压到 6sp，基本看不清；而铃铛 + 重启本身占着 80dp。展开时把这块
  * 让出来，整条可用宽度就有约 200dp，每格 26dp、文字 7sp，不用牺牲可读性。
  *
+ * 定位方式：这个 composable 直接调用在 [KuaiMaoTopActions] 的 Row 里，
+ * `Popup(alignment = TopEnd)` 会把弹窗右上角对齐到那条动作条的右上角——位置由
+ * Compose 按父布局自己算，不做任何「窗口坐标 → 本层坐标」的换算。之前两种手算
+ * 坐标的写法都会因为页面被状态栏内边距顶下去而整体错开一行，这条路径没有这个
+ * 误差：父布局在哪，条就在哪。
+ *
  * 关闭格钉在最右端、和原来那颗重启图标同一个位置：用户想「再点一下关掉」时，
  * 手指落点就是关闭，不会误触到关机或 EDL。
  */
 @Composable
-fun KuaiMaoRebootPanel(
-    state: RebootPanelState,
-    onReboot: (String) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val anchor = state.anchorBounds ?: return
+fun RebootPanelPopup(state: RebootPanelState) {
     if (!state.expanded) return
 
     val cardConfig: CardConfig = koinInject()
     val onWallpaper = cardConfig.isCustomBackgroundEnabled
     val shape = RoundedCornerShape(BAR_RADIUS)
 
-    // Popup 是立刻出现的，所以入场只做「从右端往左摊开」：缩放不改变测量尺寸，
-    // 定位器算出的位置在整个动画里都不变，右端钉死，不会一边长一边漂。
+    // Popup 是立刻出现的，入场只做「从右端往左摊开」：缩放不改变测量尺寸，
+    // 右端在整个动画里钉死不动，不会一边长一边漂。
     var entered by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { entered = true }
     val scaleX by animateFloatAsState(
@@ -182,12 +150,14 @@ fun KuaiMaoRebootPanel(
     )
 
     Popup(
-        popupPositionProvider = remember(anchor) { AnchorRightPositionProvider(anchor) },
+        // 右上角对齐父布局（那条 40dp 的动作条）的右上角，整条往左展开。
+        alignment = Alignment.TopEnd,
+        offset = IntOffset(0, 0),
         onDismissRequest = { state.dismiss() },
         properties = PopupProperties(focusable = true, dismissOnClickOutside = true),
     ) {
         Row(
-            modifier = modifier
+            modifier = Modifier
                 .width(BAR_WIDTH)
                 .height(BAR_HEIGHT)
                 .graphicsLayer {
@@ -195,8 +165,8 @@ fun KuaiMaoRebootPanel(
                     transformOrigin = TransformOrigin(1f, 0.5f)
                 }
                 .clip(shape)
-                // Popup 是独立窗口，拿不到页面里的 blurSource，所以这里不用背景模糊，
-                // 改用实色/半透明实色：壁纸下压一层 92% 的白或黑，图标依然清楚。
+                // Popup 是独立窗口，拿不到页面里的 blurSource，所以不用背景模糊，
+                // 改用实色 / 半透明实色：壁纸下压一层 92% 的底色，图标依然清楚。
                 .background(
                     if (onWallpaper) {
                         KuaiMaoColors.canvasCard.copy(alpha = 0.92f)
@@ -218,10 +188,7 @@ fun KuaiMaoRebootPanel(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight(),
-                    onClick = {
-                        state.dismiss()
-                        onReboot(option.reason)
-                    },
+                    onClick = { state.trigger(option.reason) },
                 )
             }
 
@@ -276,19 +243,4 @@ private fun RebootBarItem(
             softWrap = false,
         )
     }
-}
-
-/** 把窗口里的浮点矩形收成整数矩形，供 Popup 定位使用。 */
-internal fun androidx.compose.ui.geometry.Rect.toWindowIntRect(): IntRect = IntRect(
-    left = left.roundToInt(),
-    top = top.roundToInt(),
-    right = right.roundToInt(),
-    bottom = bottom.roundToInt(),
-)
-
-/** 采集锚点矩形的小工具：给标题栏动作条挂一次即可。 */
-internal fun Modifier.rebootAnchor(
-    state: RebootPanelState,
-): Modifier = onGloballyPositioned {
-    state.anchorBounds = it.boundsInWindow().toWindowIntRect()
 }

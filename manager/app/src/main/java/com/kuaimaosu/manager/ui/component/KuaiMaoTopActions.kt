@@ -99,8 +99,6 @@ fun KuaiMaoTopActions(
 
     Row(
         modifier = modifier
-            // 把这块控件的窗口矩形报给重启条：展开时整条要原地盖住它。
-            .rebootAnchor(rebootPanel)
             .height(ACTIONS_HEIGHT)
             .clip(ACTIONS_SHAPE)
             .background(
@@ -175,6 +173,9 @@ fun KuaiMaoTopActions(
                     .graphicsLayer { rotationZ = rebootSpin },
             )
         }
+
+        // 展开后原地盖住这条动作条：Popup 不占布局，右上角对齐这里。
+        RebootPanelPopup(rebootPanel)
     }
 }
 

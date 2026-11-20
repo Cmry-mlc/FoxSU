@@ -38,7 +38,6 @@ import kotlinx.coroutines.launch
 import com.kuaimaosu.manager.ui.activity.component.NavigationBar
 import com.kuaimaosu.manager.ui.component.HorizontalPagerWithInteraction
 import com.kuaimaosu.manager.ui.component.LocalPagerInterceptionMode
-import com.kuaimaosu.manager.ui.component.KuaiMaoRebootPanel
 import com.kuaimaosu.manager.ui.component.RebootPanelState
 import com.kuaimaosu.manager.ui.rememberMaterial3BlurBackdrop
 import com.kuaimaosu.manager.ui.screen.BottomBarDestination
@@ -85,11 +84,18 @@ fun MainScreen(
         PagerInterceptionMode.CrossAxisInterceptor
     }
 
-    // 重启面板画在本页最上层，而不是弹窗：
-    // 弹窗是独立窗口，磨砂对位会失效，面板就只剩一层半透明底；
-    // 而且它要贴着标题栏右侧的图标簇，位置只能在主 composition 里算。
+    // 重启面板的入口在标题栏（KuaiMaoTopActions）里，条也由它自己用 Popup 画；
+    // 这里只负责把「选中之后干什么」注入进去。
     val rebootPanel = remember { RebootPanelState() }
     val context = LocalContext.current
+
+    rebootPanel.onReboot = { reason ->
+        if (homeState.systemStatus.isRootAvailable) {
+            homeViewModel.dispatch(HomeUiAction.Reboot(reason))
+        } else {
+            Toast.makeText(context, "尚未进入工作状态，无法重启", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     val handlePageChange: (Int) -> Unit = remember(pagerState, coroutineScope, pages) {
         { page ->
@@ -233,18 +239,6 @@ fun MainScreen(
 
             // 切换页签就收起，免得切到别的页还挂着上一层页面的面板。
             LaunchedEffect(pagerState.currentPage) { rebootPanel.dismiss() }
-
-            KuaiMaoRebootPanel(
-                state = rebootPanel,
-                onReboot = { reason ->
-                    if (homeState.systemStatus.isRootAvailable) {
-                        homeViewModel.dispatch(HomeUiAction.Reboot(reason))
-                    } else {
-                        Toast.makeText(context, "尚未进入工作状态，无法重启", Toast.LENGTH_SHORT)
-                            .show()
-                    }
-                },
-            )
         }
     }
 }
