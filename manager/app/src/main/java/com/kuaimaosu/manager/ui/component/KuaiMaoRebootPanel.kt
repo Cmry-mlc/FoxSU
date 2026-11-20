@@ -77,11 +77,12 @@ val LocalRebootPanel = staticCompositionLocalOf { RebootPanelState() }
 /**
  * 展开后的整条宽度。
  *
- * 收起时标题栏右侧只占「铃铛 + 重启」两格（80dp），展开后这条直接把它们盖掉，
- * 可用宽度就从标题栏中间那段 137dp 的窄缝，变成「标题右边界 → 屏幕右边」的
- * 约 200dp：六格各到 26dp、文字能到 7sp，看得清、点得准。
+ * 收起时标题栏右侧只占「铃铛 + 重启」两格（80dp），展开后这条直接把它们盖掉。
+ * 宽度按实测取的：标题「KuaiMaoSU」右边界到动作条左边缘还有 45dp 空地，把条
+ * 从 196dp 拉到 228dp，左边仍留约 10dp 呼吸位，不会碰到标题最后一个字。
+ * 六格各 32dp、标签 8sp，比原来宽了一档，字也清楚一档。
  */
-private val BAR_WIDTH = 196.dp
+private val BAR_WIDTH = 228.dp
 
 /** 与标题栏动作条同高（40dp），盖上去刚好同一档。 */
 private val BAR_HEIGHT = 40.dp
@@ -183,13 +184,13 @@ fun KuaiMaoRebootBar(
                 imageVector = Icons.TwoTone.Close,
                 contentDescription = "收起",
                 tint = KuaiMaoColors.brand,
-                modifier = Modifier.size(17.dp),
+                modifier = Modifier.size(18.dp),
             )
         }
     }
 }
 
-/** 一格：16dp 图标 + 7sp 简称，塞进 26dp × 40dp。危险项走红色。 */
+/** 一格：17dp 图标 + 8sp 简称，塞进 32dp × 40dp。危险项走红色。 */
 @Composable
 private fun RebootBarItem(
     option: RebootOption,
@@ -208,14 +209,14 @@ private fun RebootBarItem(
             imageVector = option.icon,
             contentDescription = option.label,
             tint = tint,
-            modifier = Modifier.size(16.dp),
+            modifier = Modifier.size(17.dp),
         )
         Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = option.short,
             color = if (option.danger) KuaiMaoColors.danger else KuaiMaoColors.textMuted,
-            fontSize = 7.sp,
-            lineHeight = 8.sp,
+            fontSize = 8.sp,
+            lineHeight = 9.sp,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
             softWrap = false,
