@@ -1,6 +1,5 @@
 package com.kuaimaosu.manager.ui.screen.acehide
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.twotone.Bolt
 import androidx.compose.material.icons.twotone.Refresh
@@ -29,9 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -41,6 +37,8 @@ import kotlinx.coroutines.launch
 import com.kuaimaosu.manager.data.acehide.AceHideRepository
 import com.kuaimaosu.manager.ui.component.KuaiMaoCard
 import com.kuaimaosu.manager.ui.component.KuaiMaoRow
+import com.kuaimaosu.manager.ui.component.KuaiMaoRowDivider
+import com.kuaimaosu.manager.ui.component.KuaiMaoSwitch
 import com.kuaimaosu.manager.ui.component.rememberLoadingDialog
 import com.kuaimaosu.manager.ui.screen.main.KuaiMaoSettingsScaffold
 import com.kuaimaosu.manager.ui.theme.KuaiMaoColors
@@ -50,10 +48,13 @@ import com.kuaimaosu.manager.ui.util.showReplacingSnackbar
 import org.koin.compose.koinInject
 
 /**
- * eBPF 控制台：raw_syscalls hook getdents64，隐藏目录里名字含关键字的条目。
+ * eBPF 控制台：三个模块 + 检测项矩阵。
  *
- * 用探针目录在 App 内自证隐藏是否生效，不依赖终端。守护进程脱离 App 常驻，
- * 停止即 detach，完全可回滚。
+ *  - dents   getdents64 目录项过滤，多关键字
+ *  - procfs  /proc/modules、/proc/kallsyms 读空
+ *  - stealth 守护进程自身伪装（常开）
+ *
+ * 所有结论都来自 App 内实测命令，不依赖终端。
  */
 @Composable
 fun AceHideScreen(bottomPadding: Dp = 0.dp) {
@@ -63,35 +64,36 @@ fun AceHideScreen(bottomPadding: Dp = 0.dp) {
     val loadingDialog = rememberLoadingDialog()
 
     var state by remember { mutableStateOf(AceHideRepository.AceState()) }
-    var keyword by rememberSaveable { mutableStateOf(AceHideRepository.DEFAULT_KEYWORD) }
+    var keywords by rememberSaveable { mutableStateOf(AceHideRepository.DEFAULT_KEYWORDS) }
+    var dents by rememberSaveable { mutableStateOf(true) }
+    var procfs by rememberSaveable { mutableStateOf(true) }
     var proof by remember { mutableStateOf("") }
+    var checks by remember { mutableStateOf(listOf<AceHideRepository.CheckItem>()) }
     var busy by remember { mutableStateOf(false) }
 
     suspend fun refresh() {
         state = repository.status()
-        keyword = state.keyword
+        keywords = state.keywords
+        dents = state.dentsOn
+        procfs = state.procfsOn
     }
 
     LaunchedEffect(Unit) { refresh() }
 
+    fun snack(msg: String) = scope.launch { snackbarHost.showReplacingSnackbar(msg) }
+
     fun runStart() {
         if (busy) return
-        if (keyword.isBlank()) {
-            scope.launch { snackbarHost.showReplacingSnackbar("请先输入关键字") }
-            return
-        }
+        if (keywords.isBlank()) { snack("请先输入关键字"); return }
         busy = true
         scope.launch {
             loadingDialog.show()
-            val result = repository.start(keyword.trim())
+            val result = repository.start(keywords, dents, procfs)
             loadingDialog.hide()
             busy = false
-            result.onSuccess { proof = it; refresh() }
-                .onFailure { proof = it.message.orEmpty(); refresh() }
-            snackbarHost.showReplacingSnackbar(
-                result.getOrElse { it.message ?: "启用失败" }
-                    .lineSequence().firstOrNull().orEmpty().ifBlank { "操作完成" },
-            )
+            proof = result.getOrElse { it.message ?: "启用失败" }
+            refresh()
+            snack(result.getOrElse { it.message ?: "启用失败" }.lineSequence().firstOrNull().orEmpty())
         }
     }
 
@@ -104,60 +106,61 @@ fun AceHideScreen(bottomPadding: Dp = 0.dp) {
             loadingDialog.hide()
             busy = false
             proof = ""
+            checks = emptyList()
             refresh()
-            snackbarHost.showReplacingSnackbar(
-                result.getOrElse { it.message ?: "停止失败" }.lineSequence().firstOrNull().orEmpty(),
-            )
+            snack(result.getOrElse { it.message ?: "停止失败" }.lineSequence().firstOrNull().orEmpty())
         }
     }
 
-    fun runRefresh() {
+    fun runCheck() {
         if (busy) return
-        scope.launch { refresh() }
+        busy = true
+        scope.launch {
+            loadingDialog.show()
+            checks = repository.selfCheck()
+            loadingDialog.hide()
+            busy = false
+            val pass = checks.count { it.verdict == AceHideRepository.Verdict.PASS }
+            snack("检测矩阵：$pass/${checks.size} 项已阻断")
+        }
     }
 
     KuaiMaoSettingsScaffold(
         title = "eBPF 控制台",
-        subtitle = "raw_syscalls · getdents64 目录项隐藏",
+        subtitle = "目录项过滤 · /proc 表屏蔽 · 进程隐身",
         bottomPadding = bottomPadding,
     ) {
         item {
-            KuaiMaoCard {
-                KuaiMaoRow(
-                    icon = Icons.TwoTone.Security,
-                    title = "守护进程状态",
-                    description = if (state.running) {
-                        "常驻中 (pid=${state.pid}) · 关键字 \"${state.keyword}\""
-                    } else {
-                        "未运行，隐藏当前未生效"
-                    },
-                    iconTint = if (state.running) KuaiMaoTones.green.content else KuaiMaoTones.slate.content,
-                    iconContainer = if (state.running) KuaiMaoTones.green.container else KuaiMaoTones.slate.container,
-                )
-            }
+            KuaiMaoCard { KuaiMaoRow(
+                icon = Icons.TwoTone.Security,
+                title = "守护进程",
+                description = if (state.running) {
+                    "常驻中 (pid=${state.pid}) · dents=${if (state.dentsOk) "OK" else "FAIL"}" +
+                        " · procfs=${if (state.procfsOk) "OK" else "FAIL"}"
+                } else {
+                    "未运行，所有 hook 已解除"
+                },
+                iconTint = if (state.running) KuaiMaoTones.green.content else KuaiMaoTones.slate.content,
+                iconContainer = if (state.running) KuaiMaoTones.green.container else KuaiMaoTones.slate.container,
+            ) }
         }
 
         item {
             KuaiMaoCard(modifier = Modifier.padding(top = 12.dp)) {
                 Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-                    Text(
-                        text = "隐藏关键字",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = KuaiMaoColors.text,
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("隐藏关键字", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = KuaiMaoColors.text)
+                    Spacer(Modifier.height(8.dp))
                     OutlinedTextField(
-                        value = keyword,
-                        onValueChange = { keyword = it },
+                        value = keywords,
+                        onValueChange = { keywords = it },
                         singleLine = true,
                         enabled = !state.running && !busy,
-                        label = { Text("如: ksu") },
+                        label = { Text("逗号分隔，最多 4 个") },
                         modifier = Modifier.fillMaxWidth(),
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(Modifier.height(4.dp))
                     Text(
-                        text = "隐藏名字含该关键字的目录项（如 /data/adb/ksu）。停止后可修改。",
+                        "前缀匹配：填 ksu 会同时挡住 ksud、ksu_backup。建议 ksu,kernelsu,susfs",
                         fontSize = 11.sp,
                         color = KuaiMaoColors.textMuted,
                     )
@@ -166,38 +169,67 @@ fun AceHideScreen(bottomPadding: Dp = 0.dp) {
         }
 
         item {
+            KuaiMaoCard(modifier = Modifier.padding(top = 12.dp)) {
+                Column {
+                    KuaiMaoRow(
+                        icon = Icons.TwoTone.VisibilityOff,
+                        title = "目录项隐藏 (dents)",
+                        description = "hook getdents64：ls / find / ps 遍历时，名字命中的项直接不返回",
+                        trailing = {
+                            KuaiMaoSwitch(
+                                checked = dents,
+                                enabled = !state.running && !busy,
+                                onCheckedChange = { dents = it },
+                            )
+                        },
+                    )
+                    KuaiMaoRowDivider()
+                    KuaiMaoRow(
+                        icon = Icons.TwoTone.Security,
+                        title = "/proc 表屏蔽 (procfs)",
+                        description = "把 /proc/modules、/proc/kallsyms 的打开重定向到 /dev/null，模块表读空",
+                        trailing = {
+                            KuaiMaoSwitch(
+                                checked = procfs,
+                                enabled = !state.running && !busy,
+                                onCheckedChange = { procfs = it },
+                            )
+                        },
+                    )
+                    KuaiMaoRowDivider()
+                    KuaiMaoRow(
+                        icon = Icons.TwoTone.Bolt,
+                        title = "进程隐身 (stealth)",
+                        description = "comm=kworker/u8:2，cmdline 擦除，pid/日志走中性路径（常开）",
+                        trailing = {
+                            KuaiMaoSwitch(checked = true, enabled = false, onCheckedChange = null)
+                        },
+                    )
+                }
+            }
+        }
+
+        item {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Button(
                     onClick = { runStart() },
-                    enabled = !state.running && !busy,
+                    enabled = !state.running && !busy && (dents || procfs),
                     modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = KuaiMaoTones.green.content,
-                    ),
+                    colors = ButtonDefaults.buttonColors(containerColor = KuaiMaoTones.green.content),
                 ) {
                     Icon(Icons.TwoTone.VisibilityOff, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.size(4.dp))
-                    Text("启用隐藏")
+                    Spacer(Modifier.size(4.dp))
+                    Text("启用")
                 }
-                TextButton(
-                    onClick = { runStop() },
-                    enabled = state.running && !busy,
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text("停止隐藏")
+                TextButton(onClick = { runStop() }, enabled = state.running && !busy, modifier = Modifier.weight(1f)) {
+                    Text("停止")
                 }
-                TextButton(
-                    onClick = { runRefresh() },
-                    enabled = !busy,
-                    modifier = Modifier.weight(1f),
-                ) {
+                TextButton(onClick = { scope.launch { refresh() } }, enabled = !busy, modifier = Modifier.weight(1f)) {
                     Icon(Icons.TwoTone.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.size(4.dp))
+                    Spacer(Modifier.size(4.dp))
                     Text("刷新")
                 }
             }
@@ -206,13 +238,11 @@ fun AceHideScreen(bottomPadding: Dp = 0.dp) {
         if (proof.isNotBlank()) {
             item {
                 KuaiMaoCard(modifier = Modifier.padding(top = 12.dp)) {
-                    Text(
-                        text = proof,
-                        fontSize = 11.sp,
-                        fontFamily = FontFamily.Monospace,
-                        color = KuaiMaoColors.text,
-                        modifier = Modifier.padding(14.dp),
-                    )
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Text("自证", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = KuaiMaoColors.text)
+                        Spacer(Modifier.height(6.dp))
+                        Text(proof, fontSize = 11.sp, fontFamily = FontFamily.Monospace, lineHeight = 16.sp, color = KuaiMaoColors.text)
+                    }
                 }
             }
         }
@@ -220,16 +250,60 @@ fun AceHideScreen(bottomPadding: Dp = 0.dp) {
         item {
             KuaiMaoCard(modifier = Modifier.padding(top = 12.dp)) {
                 Column(modifier = Modifier.padding(14.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Text("检测项矩阵", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = KuaiMaoColors.text)
+                        TextButton(onClick = { runCheck() }, enabled = state.running && !busy) {
+                            Text("实测")
+                        }
+                    }
                     Text(
-                        text = "守护进程日志",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = KuaiMaoColors.text,
+                        "逐项跑真实检测命令，给出 PASS / 未覆盖。未覆盖项会写明原因，不粉饰。",
+                        fontSize = 11.sp,
+                        color = KuaiMaoColors.textMuted,
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    val logText = state.log.ifBlank { "（暂无日志，启用隐藏后可见）" }
+                    if (checks.isNotEmpty()) {
+                        Spacer(Modifier.height(8.dp))
+                        checks.forEach { item ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
+                                verticalAlignment = androidx.compose.ui.Alignment.Top,
+                            ) {
+                                Text(
+                                    text = when (item.verdict) {
+                                        AceHideRepository.Verdict.PASS -> "PASS"
+                                        AceHideRepository.Verdict.FAIL -> "FAIL"
+                                        AceHideRepository.Verdict.UNCOVERED -> "未覆盖"
+                                    },
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = when (item.verdict) {
+                                        AceHideRepository.Verdict.PASS -> KuaiMaoTones.green.content
+                                        AceHideRepository.Verdict.FAIL -> KuaiMaoColors.amber
+                                        AceHideRepository.Verdict.UNCOVERED -> KuaiMaoColors.textMuted
+                                    },
+                                    modifier = Modifier.padding(end = 8.dp),
+                                )
+                                Column {
+                                    Text(item.name, fontSize = 11.sp, color = KuaiMaoColors.text)
+                                    Text(item.detail, fontSize = 10.sp, color = KuaiMaoColors.textMuted)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            KuaiMaoCard(modifier = Modifier.padding(top = 12.dp)) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Text("守护进程日志", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = KuaiMaoColors.text)
+                    Spacer(Modifier.height(8.dp))
                     Text(
-                        text = logText,
+                        text = state.log.ifBlank { "（暂无日志，启用后可见）" },
                         fontSize = 10.sp,
                         fontFamily = FontFamily.Monospace,
                         lineHeight = 14.sp,
@@ -240,12 +314,12 @@ fun AceHideScreen(bottomPadding: Dp = 0.dp) {
         }
 
         item {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(Modifier.height(12.dp))
             Text(
-                text = "说明：eBPF 隐藏针对 getdents64 返回的目录项名，可挡住扫 /data/adb/ksu 这类目录项的检测。" +
-                    "它不改变包名、so 内部字符串或内核日志。守护进程常驻，停止即解除，不留痕。",
+                text = "覆盖边界：eBPF 只改「内核回给用户的数据」——目录项列表、/proc 文件内容。" +
+                    "改不了 syscall 返回值（stat 仍会成功）、改不了包名查询、改不了属性服务；" +
+                    "这几项要靠 SUSFS 或模块侧解决，矩阵里会标「未覆盖」。",
                 fontSize = 11.sp,
-                fontWeight = FontWeight.Medium,
                 color = KuaiMaoColors.textMuted,
                 modifier = Modifier.padding(horizontal = 6.dp),
             )

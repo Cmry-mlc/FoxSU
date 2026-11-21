@@ -192,7 +192,7 @@ fun SettingsPage(bottomPadding: Dp) {
         ),
         KuaiMaoCategory(
             title = "eBPF 控制台",
-            summary = "raw_syscalls · 目录项隐藏 · 自证",
+            summary = "目录项过滤 · /proc 表屏蔽 · 进程隐身",
             count = 3,
             icon = Icons.TwoTone.VisibilityOff,
             tone = KuaiMaoTones.violet,
