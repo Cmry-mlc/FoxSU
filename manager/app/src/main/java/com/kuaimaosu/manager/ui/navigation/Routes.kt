@@ -207,6 +207,11 @@ sealed interface Route :
     @Serializable
     data object SuSFSLkm : Route
 
+    /** eBPF 控制台：raw_syscalls hook getdents64 目录项隐藏。 */
+    @Parcelize
+    @Serializable
+    data object AceHide : Route
+
     /** 内置挂载控制器：OverlayFS / Magic Mount 与逐模块规则。 */
     @Parcelize
     @Serializable

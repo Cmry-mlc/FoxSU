@@ -56,6 +56,9 @@ class KsuCliRepository(context: Context) {
 
     fun getKsuDaemonPath(): String = getNativeLibraryPath("dove")
 
+    /** eBPF 控制台：ace_hide 独立可执行 ELF（随包 libace.so）的绝对路径。 */
+    fun getAceHidePath(): String = getNativeLibraryPath("ace")
+
     /** Shared shells belong to this repository; callers must not close them. */
     fun getRootShell(globalMnt: Boolean = false): Shell = synchronized(shellLock) {
         val cached = if (globalMnt) globalMountShell else rootShell

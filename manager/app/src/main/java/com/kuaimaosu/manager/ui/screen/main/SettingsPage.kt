@@ -191,6 +191,14 @@ fun SettingsPage(bottomPadding: Dp) {
             route = Route.SettingsRoot,
         ),
         KuaiMaoCategory(
+            title = "eBPF 控制台",
+            summary = "raw_syscalls · 目录项隐藏 · 自证",
+            count = 3,
+            icon = Icons.TwoTone.VisibilityOff,
+            tone = KuaiMaoTones.violet,
+            route = Route.AceHide,
+        ),
+        KuaiMaoCategory(
             title = "App Profile",
             summary = "模版管理 · 默认卸载策略",
             count = 2,

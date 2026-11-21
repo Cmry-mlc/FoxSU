@@ -46,6 +46,7 @@ import com.kuaimaosu.manager.data.settings.LocaleHelper
 import com.kuaimaosu.manager.data.settings.LocaleRepository
 import com.kuaimaosu.manager.data.settings.SettingsPlatformRepository
 import com.kuaimaosu.manager.data.shell.KsuCliRepository
+import com.kuaimaosu.manager.data.acehide.AceHideRepository
 import com.kuaimaosu.manager.data.shell.ShortcutRepository
 import com.kuaimaosu.manager.data.startup.ApplicationInitializationRepository
 import com.kuaimaosu.manager.data.startup.StartupRepository
@@ -307,6 +308,7 @@ val repositoryModule = module {
     singleOf(::SuSFSConfigHelper)
     singleOf(::SuSFSRepository)
     singleOf(::SusfsLkmRepository)
+    single { AceHideRepository(androidApplication(), get()) }
     singleOf(::ZygiskRepository)
     singleOf(::MountRepository)
     singleOf(::MonetCompatColorSource)

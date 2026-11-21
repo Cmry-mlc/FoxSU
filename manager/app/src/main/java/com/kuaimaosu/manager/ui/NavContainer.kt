@@ -112,6 +112,7 @@ import com.kuaimaosu.manager.ui.screen.moduleRepo.OnlineModuleDetailScreen
 import com.kuaimaosu.manager.ui.screen.mount.MountControllerScreen
 import com.kuaimaosu.manager.ui.screen.susfs.SuSFSConfigScreen
 import com.kuaimaosu.manager.ui.screen.susfs.SuSFSLkmScreen
+import com.kuaimaosu.manager.ui.screen.acehide.AceHideScreen
 import com.kuaimaosu.manager.ui.screen.themeSettings.ThemeSettingsScreen
 import com.kuaimaosu.manager.ui.screen.zygisk.ZygiskScreen
 import com.kuaimaosu.manager.ui.screen.kmroot.KmRootScreen
@@ -766,6 +767,17 @@ fun NavContainer(
                     useBlur = useBlur,
                 ) {
                     SuSFSLkmScreen()
+                }
+            }
+            entry<Route.AceHide>(swipeDismiss = swipeBackDirection) {
+                ManagerNavEntry(
+                    interceptPredictiveBack = interceptPredictiveBack,
+                    onBack = onBack,
+                    themeConfig = themeConfig,
+                    backgroundRenderState = backgroundRenderState,
+                    useBlur = useBlur,
+                ) {
+                    AceHideScreen()
                 }
             }
             entry<Route.MountController>(swipeDismiss = swipeBackDirection) {
