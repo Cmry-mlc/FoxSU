@@ -104,4 +104,4 @@ org.gradle.configuration-cache=true
 | `jniLibs/arm64-v8a/libkmengine.so` | Rust runner，编排放置与执行 |
 | `jniLibs/arm64-v8a/libkmplant.so` | 静态链接的 plant 可执行（写原语核心） |
 | `jniLibs/arm64-v8a/libksud.so` | late-load 用的 ksud |
-| `assets/kmroot/kernel_profiles.txt` | 内核偏移表，按 `uname -r` 精确匹配 |
+| `assets/KuaiMaoroot/kernel_profiles.txt` | 内核偏移表，按 `uname -r` 精确匹配 |

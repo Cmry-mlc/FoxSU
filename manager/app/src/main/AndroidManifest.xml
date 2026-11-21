@@ -142,7 +142,7 @@
             android:exported="false"
             android:theme="@style/Theme.KernelSU" />
 
-        <!-- KMRoot 一键临时提权引擎：Shizuku provider -->
+        <!-- KuaiMao 一键临时提权引擎：Shizuku provider -->
         <provider
             android:name="rikka.shizuku.ShizukuProvider"
             android:authorities="${applicationId}.shizuku"

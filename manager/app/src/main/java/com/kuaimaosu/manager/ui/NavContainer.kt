@@ -115,7 +115,7 @@ import com.kuaimaosu.manager.ui.screen.susfs.SuSFSLkmScreen
 import com.kuaimaosu.manager.ui.screen.acehide.AceHideScreen
 import com.kuaimaosu.manager.ui.screen.themeSettings.ThemeSettingsScreen
 import com.kuaimaosu.manager.ui.screen.zygisk.ZygiskScreen
-import com.kuaimaosu.manager.ui.screen.kmroot.KmRootScreen
+import com.kuaimaosu.manager.ui.screen.kuaimao.KuaiMaoRootScreen
 import com.kuaimaosu.manager.ui.theme.BackgroundRenderState
 import com.kuaimaosu.manager.ui.theme.BackgroundManager
 import com.kuaimaosu.manager.ui.theme.CardConfig
@@ -802,7 +802,7 @@ fun NavContainer(
                     ZygiskScreen()
                 }
             }
-            entry<Route.KmRoot>(swipeDismiss = swipeBackDirection) {
+            entry<Route.KuaiMaoRoot>(swipeDismiss = swipeBackDirection) {
                 ManagerNavEntry(
                     interceptPredictiveBack = interceptPredictiveBack,
                     onBack = onBack,
@@ -810,7 +810,7 @@ fun NavContainer(
                     backgroundRenderState = backgroundRenderState,
                     useBlur = useBlur,
                 ) {
-                    KmRootScreen(onBack = { navigator.pop() })
+                    KuaiMaoRootScreen(onBack = { navigator.pop() })
                 }
             }
             entry<Route.UmountManager>(swipeDismiss = swipeBackDirection) {

@@ -1,4 +1,4 @@
-package com.kuaimaosu.manager.ui.screen.kmroot
+package com.kuaimaosu.manager.ui.screen.kuaimao
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

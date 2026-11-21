@@ -268,7 +268,7 @@ fun SettingsPage(bottomPadding: Dp) {
             count = 3,
             icon = Icons.TwoTone.Lock,
             tone = KuaiMaoTones.rose,
-            route = Route.KmRoot,
+            route = Route.KuaiMaoRoot,
         ),
         KuaiMaoCategory(
             title = "工具",

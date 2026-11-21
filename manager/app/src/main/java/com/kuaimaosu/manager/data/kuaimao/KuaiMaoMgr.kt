@@ -1,15 +1,15 @@
-package com.kuaimaosu.manager.data.kmroot
+package com.kuaimaosu.manager.data.kuaimao
 
 import android.content.Context
 
 /**
- * KMRoot 提权引擎 —— 管理器选择层。
- * 移植自 com.km.kmroot.core.Mgr，默认管理器改为 KuaiMaoSU 自身。
+ * KuaiMao 提权引擎 —— 管理器选择层。
+ * 默认管理器固定为 KuaiMaoSU 自身。
  *
  * 说明：搬运进 KuaiMaoSU 后，late-load 用本 APK 自带、已内嵌全套 ko 的 ksud，
- * 所以把默认管理器固定为 com.kuaimaosu.manager 即可，其它内置项保留以兼容原 KMRoot 行为。
+ * 所以把默认管理器固定为 com.kuaimaosu.manager 即可，其它内置项保留以兼容原提权方案行为。
  */
-object KmMgr {
+object KuaiMaoMgr {
     private const val FILE = "KuaiMaoroot"
     private const val KEY = "rootMgrPkg"
     const val KSU = "me.weishu.kernelsu"

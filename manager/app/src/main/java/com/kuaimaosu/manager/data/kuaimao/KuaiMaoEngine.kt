@@ -1,4 +1,4 @@
-package com.kuaimaosu.manager.data.kmroot
+package com.kuaimaosu.manager.data.kuaimao
 
 import android.content.Context
 
@@ -11,7 +11,7 @@ import android.content.Context
  * runner（libkmengine.so）会 fork plant（libkmplant.so）并把 stdout/stderr 实时转发，
  * 出现 CRED_OK / LATE_LOAD_RC=0 即判定成功；plant 结束输出 DONE，runner 退出码 0。
  */
-class KmEngine {
+class KuaiMaoEngine {
     interface Listener {
         fun onLog(line: String)
         fun onStage(pct: Int, label: String)
@@ -35,7 +35,7 @@ class KmEngine {
     private var lastLineAt = 0L
 
     private var listener: Listener? = null
-    private var live: KmShell.Live? = null
+    private var live: KuaiMaoShell.Live? = null
     private var worker: Thread? = null
 
     private var sawUnsupported = false
@@ -131,13 +131,13 @@ class KmEngine {
     private fun runInternal(context: Context) {
         try {
             stage(2, "检查 Shizuku")
-            if (!KmShizuku.waitReady(context, 12000) { log(it) }) {
-                finish(false, "shell 服务未就绪：${KmShizuku.describe(context, KmShizuku.current(context))}")
+            if (!KuaiMaoShizuku.waitReady(context, 12000) { log(it) }) {
+                finish(false, "shell 服务未就绪：${KuaiMaoShizuku.describe(context, KuaiMaoShizuku.current(context))}")
                 return
             }
 
             stage(6, "探测环境")
-            val kernel = safe(KmShell.run("uname -r", 12)).trim().split("\n")[0].trim()
+            val kernel = safe(KuaiMaoShell.run("uname -r", 12)).trim().split("\n")[0].trim()
             log("内核: $kernel")
             if (kernel.isEmpty()) {
                 finish(false, "读不到内核版本（uname -r 为空）")
@@ -145,29 +145,29 @@ class KmEngine {
             }
 
             stage(10, "部署载荷")
-            val dir = KmCfg.resolveDev(context)
-            if (KmCfg.lastResolveError.isNotEmpty()) {
-                log((if (KmCfg.ndMode) "工作目录: " else "工作目录探测失败: ") + KmCfg.lastResolveError)
+            val dir = KuaiMaoCfg.resolveDev(context)
+            if (KuaiMaoCfg.lastResolveError.isNotEmpty()) {
+                log((if (KuaiMaoCfg.ndMode) "工作目录: " else "工作目录探测失败: ") + KuaiMaoCfg.lastResolveError)
             }
-            val mgr = KmMgr.pkg(context)
-            val mode = KmCfg.mode(context) // fake | zero
+            val mgr = KuaiMaoMgr.pkg(context)
+            val mode = KuaiMaoCfg.mode(context) // fake | zero
             log("提权模式: ${if (mode == "zero") "zero（只清零）" else "fake（完整 root + late-load）"}")
-            log("管理器: ${KmMgr.displayName(context, mgr)}（$mgr）")
+            log("管理器: ${KuaiMaoMgr.displayName(context, mgr)}（$mgr）")
 
-            val ksudInfo = KmCfg.deployKsud(mgr)
+            val ksudInfo = KuaiMaoCfg.deployKsud(mgr)
             if (ksudInfo.isNotEmpty()) log("ksud: $ksudInfo")
 
-            val copyResult = safe(KmShell.run(KmCfg.copyScript(context), 240))
+            val copyResult = safe(KuaiMaoShell.run(KuaiMaoCfg.copyScript(context), 240))
             if (copyResult.trim().isNotEmpty()) log(copyResult.trim())
             if (copyResult.contains("COPY_FAIL")) {
-                val diag = safe(KmShell.run("id; getenforce; ls -ld /data /data/local /data/local/tmp 2>&1 | head -n 6", 20)).trim()
+                val diag = safe(KuaiMaoShell.run("id; getenforce; ls -ld /data /data/local /data/local/tmp 2>&1 | head -n 6", 20)).trim()
                 log("落地诊断："); log(diag)
                 finish(false, "载荷落地失败：目标目录建不出来/写不进（看上面的落地诊断）")
                 return
             }
             val deploySkip = copyResult.contains("DEPLOY_SKIP")
-            if (!KmCfg.ndMode && !deploySkip) {
-                val verify = safe(KmShell.run(KmCfg.verifyScript(), 60))
+            if (!KuaiMaoCfg.ndMode && !deploySkip) {
+                val verify = safe(KuaiMaoShell.run(KuaiMaoCfg.verifyScript(), 60))
                 log("载荷校验：$verify")
                 if (verify.contains("engine:0 ") || verify.contains("plant:0 ")) {
                     finish(false, "载荷落地失败（nativeLibraryDir 里缺新引擎 so）")
@@ -175,16 +175,16 @@ class KmEngine {
                 }
             }
 
-            val assetsDir = KmCfg.ensureAssets(context)
-            if (KmCfg.assetsError.isNotEmpty()) {
-                finish(false, "内核档案落地失败：${KmCfg.assetsError}")
+            val assetsDir = KuaiMaoCfg.ensureAssets(context)
+            if (KuaiMaoCfg.assetsError.isNotEmpty()) {
+                finish(false, "内核档案落地失败：${KuaiMaoCfg.assetsError}")
                 return
             }
             log("档案目录: $assetsDir")
 
             // 拼 runner 命令：环境变量前置，exec 工作目录里的 kmengine
-            val plantPath = if (KmCfg.ndMode) "${KmCfg.nativeDir(context)}/libmaple.so" else "$dir/kmplant"
-            val runner = if (KmCfg.ndMode) "${KmCfg.nativeDir(context)}/libcedar.so" else "$dir/kmengine"
+            val plantPath = if (KuaiMaoCfg.ndMode) "${KuaiMaoCfg.nativeDir(context)}/libmaple.so" else "$dir/kmplant"
+            val runner = if (KuaiMaoCfg.ndMode) "${KuaiMaoCfg.nativeDir(context)}/libcedar.so" else "$dir/kmengine"
             val keMode = if (mode == "zero") "zero" else "fake"
             val kmi = kmiOf(kernel)
             val ksudPath = "$dir/ksud"
@@ -204,7 +204,7 @@ class KmEngine {
 
             stage(18, "启动引擎")
             val argv = arrayOf("sh", "-c", cmd)
-            val process = KmShell.spawn(argv, dir)
+            val process = KuaiMaoShell.spawn(argv, dir)
             live = process
             lastLineAt = System.currentTimeMillis()
             val onLineCb: (String) -> Unit = { onLine(it) }
@@ -220,8 +220,8 @@ class KmEngine {
             if (settled) return
 
             stage(94, "验证结果")
-            val module = safe(KmShell.run("grep -E '^kernelsu ' /proc/modules | head -n1", 15)).trim()
-            val suOut = safe(KmShell.run("su -c id 2>&1", 20)).trim()
+            val module = safe(KuaiMaoShell.run("grep -E '^kernelsu ' /proc/modules | head -n1", 15)).trim()
+            val suOut = safe(KuaiMaoShell.run("su -c id 2>&1", 20)).trim()
             val su = if (!suOut.contains("inaccessible") && !suOut.contains("not found")) suOut else ""
             log("模块: ${if (module.isEmpty()) "未加载" else module}")
             log("su: ${if (su.isEmpty()) "不可用" else su}")
@@ -234,7 +234,7 @@ class KmEngine {
             if (su.contains("uid=0")) {
                 log("自动开启 SUSFS 挂载隐藏（对非 root 进程隐藏 sus 挂载）…")
                 val susfsOut = safe(
-                    KmShell.run(
+                    KuaiMaoShell.run(
                         "su -c \"$ksudPath susfs hide_sus_mnts_for_non_su_procs 1\" 2>&1",
                         25,
                     )

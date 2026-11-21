@@ -138,7 +138,7 @@ import com.kuaimaosu.manager.ui.viewmodel.HomeUiAction
 import com.kuaimaosu.manager.ui.viewmodel.HomeUiEvent
 import com.kuaimaosu.manager.ui.viewmodel.HomeUiState
 import com.kuaimaosu.manager.ui.viewmodel.HomeViewModel
-import com.kuaimaosu.manager.ui.viewmodel.KmRootViewModel
+import com.kuaimaosu.manager.ui.viewmodel.KuaiMaoRootViewModel
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -159,7 +159,7 @@ fun HomePage(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     // 大卡片「一键提权」直接走提权主线（不跳界面），用独立 VM 实例驱动。
-    val jailbreakVm = koinViewModel<KmRootViewModel>()
+    val jailbreakVm = koinViewModel<KuaiMaoRootViewModel>()
     val jailbreakUi by jailbreakVm.ui.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {

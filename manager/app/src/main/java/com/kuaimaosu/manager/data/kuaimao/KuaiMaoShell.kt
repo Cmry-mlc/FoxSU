@@ -1,4 +1,4 @@
-package com.kuaimaosu.manager.data.kmroot
+package com.kuaimaosu.manager.data.kuaimao
 
 import rikka.shizuku.Shizuku
 import java.io.BufferedReader
@@ -10,10 +10,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * KMRoot 提权引擎 —— shell 进程层。
- * 移植自 com.km.kmroot.core.Shell。通过反射调用 Shizuku 隐藏的 newProcess 拿到 shell 域进程。
+ * KuaiMao 提权引擎 —— shell 进程层。
+ * 通过反射调用 Shizuku 隐藏的 newProcess 拿到 shell 域进程。
  */
-object KmShell {
+object KuaiMaoShell {
     @Volatile
     var lastError: String = ""
         private set
@@ -105,7 +105,7 @@ object KmShell {
         private val stopped = AtomicBoolean(false)
         private val lines = AtomicInteger()
 
-        fun isAlive(): Boolean = !stopped.get() && KmShell.isAlive(proc)
+        fun isAlive(): Boolean = !stopped.get() && KuaiMaoShell.isAlive(proc)
         fun lineCount(): Int = lines.get()
 
         fun write(s: String): Boolean = try {

@@ -254,7 +254,7 @@ dependencies {
 
     implementation(libs.dev.rikka.rikkax.parcelablelist)
 
-    // KMRoot 一键临时提权引擎：Shizuku/Stellar shell 域
+    // KuaiMao 一键临时提权引擎：Shizuku/Stellar shell 域
     implementation(libs.shizuku.api)
     implementation(libs.shizuku.provider)
 

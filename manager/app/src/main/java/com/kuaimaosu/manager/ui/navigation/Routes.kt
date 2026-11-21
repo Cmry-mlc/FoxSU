@@ -225,7 +225,7 @@ sealed interface Route :
     /** 一键越狱：自研 98260 引擎的临时提权。 */
     @Parcelize
     @Serializable
-    data object KmRoot : Route
+    data object KuaiMaoRoot : Route
 
     @Parcelize
     @Serializable

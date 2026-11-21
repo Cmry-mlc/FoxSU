@@ -1,4 +1,4 @@
-package com.kuaimaosu.manager.ui.screen.kmroot
+package com.kuaimaosu.manager.ui.screen.kuaimao
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -60,7 +60,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kuaimaosu.manager.data.kmroot.KmShizuku
+import com.kuaimaosu.manager.data.kuaimao.KuaiMaoShizuku
 import com.kuaimaosu.manager.ui.component.KuaiMaoCard
 import com.kuaimaosu.manager.ui.component.KuaiMaoPrimaryButton
 import com.kuaimaosu.manager.ui.component.KuaiMaoRow
@@ -69,7 +69,7 @@ import com.kuaimaosu.manager.ui.screen.main.KuaiMaoSettingsScaffold
 import com.kuaimaosu.manager.ui.component.RootSuccessDialog
 import com.kuaimaosu.manager.ui.theme.KuaiMaoColors
 import com.kuaimaosu.manager.ui.theme.KuaiMaoTones
-import com.kuaimaosu.manager.ui.viewmodel.KmRootViewModel
+import com.kuaimaosu.manager.ui.viewmodel.KuaiMaoRootViewModel
 import org.koin.androidx.compose.koinViewModel
 
 /**
@@ -79,10 +79,10 @@ import org.koin.androidx.compose.koinViewModel
  * 并用 KuaiMaoSU 自带、内嵌全套 ko 的 ksud 做 late-load。重启后失效。
  */
 @Composable
-fun KmRootScreen(
+fun KuaiMaoRootScreen(
     bottomPadding: Dp = 0.dp,
     onBack: () -> Unit = {},
-    vm: KmRootViewModel = koinViewModel(),
+    vm: KuaiMaoRootViewModel = koinViewModel(),
 ) {
     val ui by vm.ui.collectAsStateWithLifecycle()
     var showDevices by remember { mutableStateOf(false) }
@@ -99,7 +99,7 @@ fun KmRootScreen(
     // 提权成功后弹出「需重启 KuaiMaoSU」提示（由 resultOk 触发，见下方 RootSuccessDialog）。
     // 临时 root 注入的是已运行进程，APP 自身需重启才能刷新 root 状态显示。
 
-    val shizukuReady = ui.shizukuState == KmShizuku.State.READY
+    val shizukuReady = ui.shizukuState == KuaiMaoShizuku.State.READY
     val headline = when {
         ui.resultOk == true -> "提权成功"
         ui.resultOk == false -> "未成功"
@@ -199,7 +199,7 @@ fun KmRootScreen(
                             )
                         },
                     )
-                    if (ui.shizukuState == KmShizuku.State.NO_PERMISSION) {
+                    if (ui.shizukuState == KuaiMaoShizuku.State.NO_PERMISSION) {
                         KuaiMaoRowDivider()
                         KuaiMaoRow(
                             icon = Icons.TwoTone.CheckCircle,

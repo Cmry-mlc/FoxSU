@@ -1,4 +1,4 @@
-package com.kuaimaosu.manager.data.kmroot
+package com.kuaimaosu.manager.data.kuaimao
 
 import android.content.Context
 import android.content.Intent
@@ -6,12 +6,12 @@ import android.net.Uri
 import rikka.shizuku.Shizuku
 
 /**
- * KMRoot 一键临时提权引擎 —— Shizuku / Stellar shell 域对接层。
+ * KuaiMao 一键临时提权引擎 —— Shizuku / Stellar shell 域对接层。
  *
- * 移植自 KMRoot (com.km.kmroot.core.ShizukuBridge)，按 KuaiMaoSU 包名做了适配。
+ * 按 KuaiMaoSU 包名适配的 Shizuku / Stellar shell 域对接层。
  * 提权引擎依赖 Shizuku/Stellar 提供的普通 shell 域起步，不依赖设备已有 root。
  */
-object KmShizuku {
+object KuaiMaoShizuku {
     const val PKG_SHIZUKU = "moe.shizuku.privileged.api"
     const val PKG_STELLAR = "roro.stellar.manager"
 

@@ -1,4 +1,4 @@
-package com.kuaimaosu.manager.ui.screen.kmroot
+package com.kuaimaosu.manager.ui.screen.kuaimao
 
 /**
  * 98260 引擎支持的机型清单。

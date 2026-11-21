@@ -1,4 +1,4 @@
-package com.kuaimaosu.manager.data.kmroot
+package com.kuaimaosu.manager.data.kuaimao
 
 import android.content.Context
 import android.util.Base64
@@ -18,7 +18,7 @@ import java.io.FileOutputStream
  * 部署：nativeLibraryDir 里的 so + assets 里的 profile 拷到 /data/local/tmp 工作目录，
  * chmod 755 后由 Shizuku shell 域执行。late-load 复用随包 libksud.so（内嵌全套 ko）。
  */
-object KmCfg {
+object KuaiMaoCfg {
     const val DEV_DEFAULT = "/data/local/tmp/kmengine"
     @Volatile
     var dev: String = DEV_DEFAULT
@@ -62,7 +62,7 @@ object KmCfg {
         lastResolveError = ""
         val candidates = arrayOf(DEV_DEFAULT, "/data/local/tmp/kmengine2", "/data/local/tmp")
         for (d in candidates) {
-            val r = KmShell.run(
+            val r = KuaiMaoShell.run(
                 "mkdir -p '$d' 2>/dev/null;if : > '$d/.km_wtest' 2>/dev/null; then rm -f '$d/.km_wtest'; echo WRITABLE; fi",
                 10
             )
@@ -75,7 +75,7 @@ object KmCfg {
             }
         }
         val sd = "/sdcard/KuaiMaoEngine"
-        val r2 = KmShell.run(
+        val r2 = KuaiMaoShell.run(
             "mkdir -p '$sd' 2>/dev/null;if : > '$sd/.km_wtest' 2>/dev/null; then rm -f '$sd/.km_wtest'; echo WRITABLE; fi",
             10
         )
@@ -92,7 +92,7 @@ object KmCfg {
                     val f = File(ext, "engine")
                     f.mkdirs()
                     val path = f.absolutePath
-                    val r3 = KmShell.run(
+                    val r3 = KuaiMaoShell.run(
                         "mkdir -p '$path' 2>/dev/null;if : > '$path/.km_wtest' 2>/dev/null; then rm -f '$path/.km_wtest'; echo WRITABLE; fi",
                         10
                     )
@@ -146,7 +146,7 @@ object KmCfg {
 
     /** 从所选管理器 APK 提取 libksud.so（优先），落地为工作目录的 ksud。 */
     fun deployKsud(mgr: String): String {
-        val path = KmShell.run("pm path '$mgr' 2>/dev/null | head -n1", 15).trim()
+        val path = KuaiMaoShell.run("pm path '$mgr' 2>/dev/null | head -n1", 15).trim()
         if (!path.startsWith("package:")) return "KSUD_SOURCE=builtin（$mgr 未安装，用随包 ksud）"
         val apk = path.removePrefix("package:").trim()
         val cmd = "A='$apk';DIR=\$(dirname \"\$A\");M='$dev/ksud.mgr'; rm -f \"\$M\";" +
@@ -154,7 +154,7 @@ object KmCfg {
             "if [ ! -s \"\$M\" ] && command -v unzip >/dev/null 2>&1; then unzip -p \"\$A\" lib/arm64-v8a/libksud.so > \"\$M\" 2>/dev/null; fi;" +
             "if [ -s \"\$M\" ]; then mv -f \"\$M\" '$dev/ksud' 2>/dev/null; echo USED=manager; else rm -f \"\$M\"; echo USED=builtin; fi;" +
             "chmod 755 '$dev/ksud' 2>/dev/null;echo KSUD_SOURCE size=\$(stat -c %s '$dev/ksud' 2>/dev/null || echo 0)"
-        return KmShell.run(cmd, 30).trim()
+        return KuaiMaoShell.run(cmd, 30).trim()
     }
 
     fun mode(context: Context): String {
@@ -208,7 +208,7 @@ object KmCfg {
         if (missing.isEmpty()) writeSmall(tagFile, tag)
         else assetsError = "写盘失败或内容不完整（${missing.trim()}），目录 $dir" +
             if (lastWriteError.isEmpty()) "" else "；最后一次写入错误：$lastWriteError"
-        KmShell.run("mkdir -p '$dev' 2>/dev/null;cp -f '$dir/kernel_profiles.txt' '$dev/kernel_profiles.txt' 2>/dev/null;chmod 644 '$dev/kernel_profiles.txt' 2>/dev/null", 15)
+        KuaiMaoShell.run("mkdir -p '$dev' 2>/dev/null;cp -f '$dir/kernel_profiles.txt' '$dev/kernel_profiles.txt' 2>/dev/null;chmod 644 '$dev/kernel_profiles.txt' 2>/dev/null", 15)
         return dir
     }
 

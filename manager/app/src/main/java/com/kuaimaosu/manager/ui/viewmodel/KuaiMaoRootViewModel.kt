@@ -3,25 +3,25 @@ package com.kuaimaosu.manager.ui.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.kuaimaosu.manager.data.kmroot.KmCfg
-import com.kuaimaosu.manager.data.kmroot.KmEngine
-import com.kuaimaosu.manager.data.kmroot.KmMgr
-import com.kuaimaosu.manager.data.kmroot.KmShell
-import com.kuaimaosu.manager.data.kmroot.KmShizuku
+import com.kuaimaosu.manager.data.kuaimao.KuaiMaoCfg
+import com.kuaimaosu.manager.data.kuaimao.KuaiMaoEngine
+import com.kuaimaosu.manager.data.kuaimao.KuaiMaoMgr
+import com.kuaimaosu.manager.data.kuaimao.KuaiMaoShell
+import com.kuaimaosu.manager.data.kuaimao.KuaiMaoShizuku
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
- * 一键临时提权（KMRoot 引擎）页面状态。
+ * 一键临时提权（KuaiMao 引擎）页面状态。
  */
-class KmRootViewModel(app: Application) : AndroidViewModel(app) {
+class KuaiMaoRootViewModel(app: Application) : AndroidViewModel(app) {
     data class UiState(
-        val shizukuState: KmShizuku.State = KmShizuku.State.UNKNOWN,
+        val shizukuState: KuaiMaoShizuku.State = KuaiMaoShizuku.State.UNKNOWN,
         val shizukuText: String = "",
         val kernel: String = "",
-        val managerPkg: String = KmMgr.KUAIMAO,
+        val managerPkg: String = KuaiMaoMgr.KUAIMAO,
         val managerLabel: String = "KuaiMaoSU",
         val managerInstalled: Boolean = true,
         val mode: String = "fake",
@@ -37,10 +37,10 @@ class KmRootViewModel(app: Application) : AndroidViewModel(app) {
     private val _ui = MutableStateFlow(UiState())
     val ui: StateFlow<UiState> = _ui.asStateFlow()
 
-    private val engine = KmEngine()
+    private val engine = KuaiMaoEngine()
 
     init {
-        engine.setListener(object : KmEngine.Listener {
+        engine.setListener(object : KuaiMaoEngine.Listener {
             override fun onLog(line: String) {
                 appendLog(line)
             }
@@ -66,15 +66,15 @@ class KmRootViewModel(app: Application) : AndroidViewModel(app) {
 
     fun refresh() {
         val ctx = getApplication<Application>()
-        val state = KmShizuku.current(ctx)
-        val pkg = KmMgr.pkg(ctx)
+        val state = KuaiMaoShizuku.current(ctx)
+        val pkg = KuaiMaoMgr.pkg(ctx)
         _ui.value = _ui.value.copy(
             shizukuState = state,
-            shizukuText = KmShizuku.describe(ctx, state),
+            shizukuText = KuaiMaoShizuku.describe(ctx, state),
             managerPkg = pkg,
-            managerLabel = KmMgr.displayName(ctx, pkg),
-            managerInstalled = KmMgr.installed(ctx, pkg),
-            mode = KmCfg.mode(ctx),
+            managerLabel = KuaiMaoMgr.displayName(ctx, pkg),
+            managerInstalled = KuaiMaoMgr.installed(ctx, pkg),
+            mode = KuaiMaoCfg.mode(ctx),
             running = engine.running,
         )
         loadKernel()
@@ -84,7 +84,7 @@ class KmRootViewModel(app: Application) : AndroidViewModel(app) {
     fun loadKernel() {
         viewModelScope.launch {
             val k = try {
-                KmShell.run("uname -r", 8).trim().lines().firstOrNull()?.trim().orEmpty()
+                KuaiMaoShell.run("uname -r", 8).trim().lines().firstOrNull()?.trim().orEmpty()
             } catch (_: Throwable) { "" }
             if (k.isNotEmpty()) _ui.value = _ui.value.copy(kernel = k)
         }
@@ -92,22 +92,22 @@ class KmRootViewModel(app: Application) : AndroidViewModel(app) {
 
     fun selectManager(pkg: String) {
         val ctx = getApplication<Application>()
-        KmMgr.setPkg(ctx, pkg)
+        KuaiMaoMgr.setPkg(ctx, pkg)
         refresh()
     }
 
     fun setMode(mode: String) {
         val ctx = getApplication<Application>()
-        KmCfg.setMode(ctx, mode)
+        KuaiMaoCfg.setMode(ctx, mode)
         refresh()
     }
 
     fun requestPermission() {
-        KmShizuku.request(getApplication()) { appendLog(it) }
+        KuaiMaoShizuku.request(getApplication()) { appendLog(it) }
     }
 
     fun openShizukuManager() {
-        KmShizuku.openManager(getApplication())
+        KuaiMaoShizuku.openManager(getApplication())
     }
 
     private fun appendLog(line: String) {
