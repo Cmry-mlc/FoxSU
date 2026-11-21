@@ -35,7 +35,7 @@ class DynamicManagerRepository(
                     .mapNotNull { packageInfo ->
                         val nativeLibraryDir = packageInfo.nativeLibraryDir
                         if (nativeLibraryDir.isNullOrBlank() ||
-                            !File(nativeLibraryDir, "libksud.so").isFile
+                            !File(nativeLibraryDir, "libdove.so").isFile
                         ) {
                             return@mapNotNull null
                         }

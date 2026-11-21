@@ -5,7 +5,7 @@
 #include <string.h>
 
 #ifndef LOG_TAG
-# define LOG_TAG "KernelSU"
+# define LOG_TAG "Guava"
 #endif
 
 #ifndef NDEBUG

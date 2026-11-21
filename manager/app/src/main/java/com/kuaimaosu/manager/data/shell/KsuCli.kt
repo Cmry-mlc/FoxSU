@@ -54,7 +54,7 @@ class KsuCliRepository(context: Context) {
         return library.absolutePath
     }
 
-    fun getKsuDaemonPath(): String = getNativeLibraryPath("ksud")
+    fun getKsuDaemonPath(): String = getNativeLibraryPath("dove")
 
     /** Shared shells belong to this repository; callers must not close them. */
     fun getRootShell(globalMnt: Boolean = false): Shell = synchronized(shellLock) {
@@ -204,7 +204,7 @@ class KsuCliRepository(context: Context) {
 
     fun install() {
         val start = SystemClock.elapsedRealtime()
-        val libadbroot = getNativeLibraryPath("adbroot")
+        val libadbroot = getNativeLibraryPath("willow")
         val result = execKsud("install --libadbroot $libadbroot", true)
         Log.w(TAG, "install result: $result, cost: ${SystemClock.elapsedRealtime() - start}ms")
     }

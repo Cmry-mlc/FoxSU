@@ -4,26 +4,26 @@
 # Sets the minimum version of CMake required to build the native library.
 cmake_minimum_required(VERSION 3.18.1)
 
-project("kernelsu")
+project("guava")
 
-add_library(kernelsu
+add_library(guava
         SHARED
         jni.c
         ksu.c
         legacy.c
 )
 
-target_include_directories(kernelsu PRIVATE .)
+target_include_directories(guava PRIVATE .)
 
 find_library(log-lib log)
 
 target_link_libraries(
-        kernelsu
+        guava
         ${log-lib}
 )
 
 find_package(cxx REQUIRED CONFIG)
 link_libraries(cxx::cxx)
 
-add_library(adbroot SHARED adbroot.cc)
-target_link_libraries(adbroot ${log-lib})
+add_library(willow SHARED adbroot.cc)
+target_link_libraries(willow ${log-lib})

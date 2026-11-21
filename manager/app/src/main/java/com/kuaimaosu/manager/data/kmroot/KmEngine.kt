@@ -183,8 +183,8 @@ class KmEngine {
             log("档案目录: $assetsDir")
 
             // 拼 runner 命令：环境变量前置，exec 工作目录里的 kmengine
-            val plantPath = if (KmCfg.ndMode) "${KmCfg.nativeDir(context)}/libkmplant.so" else "$dir/kmplant"
-            val runner = if (KmCfg.ndMode) "${KmCfg.nativeDir(context)}/libkmengine.so" else "$dir/kmengine"
+            val plantPath = if (KmCfg.ndMode) "${KmCfg.nativeDir(context)}/libmaple.so" else "$dir/kmplant"
+            val runner = if (KmCfg.ndMode) "${KmCfg.nativeDir(context)}/libcedar.so" else "$dir/kmengine"
             val keMode = if (mode == "zero") "zero" else "fake"
             val kmi = kmiOf(kernel)
             val ksudPath = "$dir/ksud"

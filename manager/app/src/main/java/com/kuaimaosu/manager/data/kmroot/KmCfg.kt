@@ -40,9 +40,9 @@ object KmCfg {
 
     /** (so 文件名 -> 落地别名) */
     val NATIVE_MAP = arrayOf(
-        arrayOf("libkmengine.so", "kmengine"),
-        arrayOf("libkmplant.so", "kmplant"),
-        arrayOf("libksud.so", "ksud"),
+        arrayOf("libcedar.so", "kmengine"),
+        arrayOf("libmaple.so", "kmplant"),
+        arrayOf("libdove.so", "ksud"),
     )
 
     private var cachedNativeDir: String? = null
@@ -114,7 +114,7 @@ object KmCfg {
     fun nativeDir(context: Context): String {
         cachedNativeDir?.let { return it }
         var d = context.applicationInfo.nativeLibraryDir
-        if (!File(d, "libkmengine.so").exists() && File("$d/arm64", "libkmengine.so").exists()) {
+        if (!File(d, "libcedar.so").exists() && File("$d/arm64", "libcedar.so").exists()) {
             d = "$d/arm64"
         }
         cachedNativeDir = d

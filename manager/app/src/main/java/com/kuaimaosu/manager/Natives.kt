@@ -45,7 +45,7 @@ object Natives {
     external fun getFullVersion(): String
 
     init {
-        System.loadLibrary("kernelsu")
+        System.loadLibrary("guava")
     }
 
     val version: Int
