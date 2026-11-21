@@ -48,6 +48,7 @@ import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.twotone.Undo
 import androidx.compose.material.icons.automirrored.twotone.Wysiwyg
+import androidx.compose.material.icons.twotone.Backup
 import androidx.compose.material.icons.twotone.Check
 import androidx.compose.material.icons.twotone.ChevronRight
 import androidx.compose.material.icons.twotone.Close
@@ -138,6 +139,7 @@ import com.kuaimaosu.manager.ui.theme.KuaiMaoColors
 import com.kuaimaosu.manager.ui.theme.KuaiMaoTones
 import com.kuaimaosu.manager.R
 import com.kuaimaosu.manager.data.settings.SettingsPlatformRepository
+import com.kuaimaosu.manager.data.shell.KsuCliRepository
 import com.kuaimaosu.manager.domain.model.DocumentFormat
 import com.kuaimaosu.manager.domain.model.DocumentPolicy
 import com.kuaimaosu.manager.domain.model.InstalledModule
@@ -720,6 +722,7 @@ private fun ModuleList(
 ) {
     val shortcut = koinInject<Shortcut>()
     val settings = koinInject<SettingsPlatformRepository>()
+    val ksuCli = koinInject<KsuCliRepository>()
     var showMetaModuleWarning by rememberSaveable { mutableStateOf(true) }
     val enqueueDownload = koinInject<EnqueueDownloadUseCase>()
     val observeDownload = koinInject<ObserveDownloadUseCase>()
@@ -974,6 +977,18 @@ private fun ModuleList(
         }
     }
 
+    fun onModuleBackupClicked(module: InstalledModule) {
+        scope.launch {
+            val path = withContext(Dispatchers.IO) {
+                runCatching { ksuCli.backupModule(module.dirId, module.name) }
+            }
+            path.fold(
+                onSuccess = { snackBarHost.showReplacingSnackbar("模块已备份到 $it") },
+                onFailure = { snackBarHost.showReplacingSnackbar("备份失败：${it.message.orEmpty()}") },
+            )
+        }
+    }
+
     suspend fun onModuleUninstallClicked(module: InstalledModule) {
         val isUninstall = !module.remove
         if (isUninstall) {
@@ -1097,6 +1112,7 @@ private fun ModuleList(
                             }
                         }
                     },
+                    onBackupClicked = { onModuleBackupClicked(it) },
                     onCheckChanged = { enabled ->
                         viewModel.dispatch(ModuleUiAction.SetEnabled(module.dirId, enabled))
                         true
@@ -1373,6 +1389,7 @@ fun ModuleItem(
     moduleSizes: Map<String, String>,
     updateUrl: String,
     onUninstallClicked: (InstalledModule) -> Unit,
+    onBackupClicked: (InstalledModule) -> Unit,
     onCheckChanged: suspend (Boolean) -> Boolean,
     onUpdate: (InstalledModule) -> Unit,
     onClick: (InstalledModule) -> Unit,
@@ -1562,11 +1579,67 @@ fun ModuleItem(
                 )
             }
 
-            ModuleIconAction(
-                icon = if (removed) Icons.TwoTone.Refresh else Icons.TwoTone.Delete,
-                enabled = true,
-                rotate = removed,
-                onClick = { onUninstallClicked(module) },
+            ModuleBackupDeleteActions(
+                removed = removed,
+                onBackup = { onBackupClicked(module) },
+                onDelete = { onUninstallClicked(module) },
+            )
+        }
+    }
+}
+
+/**
+ * 模块卡底部的「备份 + 删除」连体操作按钮。
+ *
+ * 与标题栏「通知 + 重启」同一套观感：两枚图标共用一块圆角底、背景连在一起，
+ * 点击区各自独立。备份在左（用户划线位置）、删除在右；备份图标用 TwoTone
+ * 风格，与删除图标一致。模块被标记移除时，右侧照旧变成「撤销」。
+ */
+@Composable
+private fun ModuleBackupDeleteActions(
+    removed: Boolean,
+    onBackup: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    val tone = KuaiMaoTones.unified
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .clip(RoundedCornerShape(11.dp))
+            .background(tone.container),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(width = 46.dp, height = 34.dp)
+                .clickable(onClick = onBackup),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = Icons.TwoTone.Backup,
+                contentDescription = "备份模块",
+                tint = tone.content,
+                modifier = Modifier.size(17.dp),
+            )
+        }
+        Box(
+            modifier = Modifier
+                .width(1.dp)
+                .height(18.dp)
+                .background(tone.content.copy(alpha = 0.14f * tone.content.alpha)),
+        )
+        Box(
+            modifier = Modifier
+                .size(width = 46.dp, height = 34.dp)
+                .clickable(onClick = onDelete),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = if (removed) Icons.TwoTone.Refresh else Icons.TwoTone.Delete,
+                contentDescription = null,
+                tint = tone.content,
+                modifier = Modifier
+                    .size(17.dp)
+                    .then(if (removed) Modifier.rotate(180f) else Modifier),
             )
         }
     }
@@ -1657,6 +1730,7 @@ private fun ModuleItemPreview() {
         module,
         emptyMap(),
         "",
+        {},
         {},
         { true },
         {},

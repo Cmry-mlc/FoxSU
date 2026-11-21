@@ -13,6 +13,9 @@ import com.topjohnwu.superuser.ShellUtils
 import com.topjohnwu.superuser.io.SuFile
 import java.io.File
 import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import java.util.Properties
 import java.util.concurrent.Executor
 import java.util.zip.ZipFile
@@ -247,6 +250,39 @@ class KsuCliRepository(context: Context) {
         val result = execKsud(cmd, true)
         Log.i(TAG, "undo uninstall module $id result: $result")
         return result
+    }
+
+    /**
+     * 备份单个已安装模块到 /storage/emulated/0/Download。
+     *
+     * 用 busybox tar 直接打包模块目录：tar 默认保留符号链接与权限，而 KernelSU
+     * 模块的 system/ 下几乎全是软链到 /system 的链接，若用 zip 跟随链接会把
+     * 整个系统分区塞进去，既慢又不可用。备份产物是一个 .tar.gz，放在 Download，
+     * 用户后续可用任意解压缩工具还原。
+     *
+     * @return 备份文件的完整路径；失败时抛出异常由调用方转成提示。
+     */
+    fun backupModule(dirId: String, name: String): String {
+        require(MODULE_ID_REGEX.matches(dirId)) { "Invalid module id: $dirId" }
+        val shell = getRootShell()
+        check(shell.isRoot) { "Root access is unavailable" }
+        val stamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val safeName = name.replace(Regex("[^a-zA-Z0-9\\u4e00-\\u9fa5._\\-]"), "_").take(60)
+        val fileName = "KuaiMao_${safeName}_${stamp}.tar.gz"
+        val outDir = "/storage/emulated/0/Download"
+        val outPath = "$outDir/$fileName"
+        val cmd = buildString {
+            append("mkdir -p ${shellQuote(outDir)} && ")
+            append("/data/adb/ksu/bin/busybox tar -czf ${shellQuote(outPath)} ")
+            append("-C /data/adb/modules ${shellQuote(dirId)} && ")
+            append("test -s ${shellQuote(outPath)}")
+        }
+        val result = shell.newJob().add(cmd).to(ArrayList<String>(), null).exec()
+        if (!result.isSuccess) {
+            throw IOException(result.err.joinToString("\n").ifBlank { "tar exited with ${result.code}" })
+        }
+        Log.i(TAG, "backup module $dirId -> $outPath")
+        return outPath
     }
 
     private fun flashWithIO(

@@ -2,6 +2,11 @@
 
 本项目以 GPL-3.0 发布，下面的记录同时充当「相对上游 BakaSU 改了什么」的说明。
 
+## 4.1.3
+
+- **模块备份**：模块卡底部删除按钮左侧新增「备份」按钮，与删除共享一块圆角底（同标题栏通知+重启风格）。点击后用 busybox tar 打包该模块目录（保留 symlink/权限）到 `/storage/emulated/0/Download/KuaiMao_<模块名>_<时间戳>.tar.gz`，结果以 snackbar 提示。
+- 包名保持 `com.kuaimaosu.manager`；`libksud.so` 用旧包名重编，与引擎/动态管理器一致。
+
 ## 4.0.0
 
 首个以 KuaiMaoSU 名义发布的版本：应用名、包名（`com.kuaimaosu.manager`）与模块名统一，`ksud` 重新编译。
