@@ -264,7 +264,7 @@ fun SettingsPage(bottomPadding: Dp) {
         ),
         KuaiMaoCategory(
             title = "一键越狱",
-            summary = "自研 98260 引擎 · 临时 root（重启失效）",
+            summary = "KuaiMao 提权引擎 · 临时 root（重启失效）",
             count = 3,
             icon = Icons.TwoTone.Lock,
             tone = KuaiMaoTones.rose,

@@ -36,7 +36,7 @@ object KmCfg {
     var assetsError: String = ""
         private set
 
-    private const val ASSETS = "kmroot"
+    private const val ASSETS = "KuaiMaoroot"
 
     /** (so 文件名 -> 落地别名) */
     val NATIVE_MAP = arrayOf(
@@ -74,7 +74,7 @@ object KmCfg {
                 return d
             }
         }
-        val sd = "/sdcard/kmengine"
+        val sd = "/sdcard/KuaiMaoEngine"
         val r2 = KmShell.run(
             "mkdir -p '$sd' 2>/dev/null;if : > '$sd/.km_wtest' 2>/dev/null; then rm -f '$sd/.km_wtest'; echo WRITABLE; fi",
             10
@@ -89,7 +89,7 @@ object KmCfg {
             try {
                 val ext = context.getExternalFilesDir(null)
                 if (ext != null) {
-                    val f = File(ext, "kmengine")
+                    val f = File(ext, "engine")
                     f.mkdirs()
                     val path = f.absolutePath
                     val r3 = KmShell.run(
@@ -158,12 +158,12 @@ object KmCfg {
     }
 
     fun mode(context: Context): String {
-        val m = context.applicationContext.getSharedPreferences("kmroot", 0).getString("mode", "fake")
+        val m = context.applicationContext.getSharedPreferences("KuaiMaoroot", 0).getString("mode", "fake")
         return if (m.isNullOrEmpty()) "fake" else m
     }
 
     fun setMode(context: Context, value: String?) {
-        context.applicationContext.getSharedPreferences("kmroot", 0).edit()
+        context.applicationContext.getSharedPreferences("KuaiMaoroot", 0).edit()
             .putString("mode", value ?: "fake").apply()
     }
 
@@ -171,7 +171,7 @@ object KmCfg {
         if (cachedExtDir.isNotEmpty()) return cachedExtDir
         var base = context.getExternalFilesDir(null) ?: context.filesDir
         if (!base.isDirectory) base.mkdirs()
-        val d = File(base, "kmengine")
+        val d = File(base, "engine")
         d.mkdirs()
         if (!probeWritable(d)) {
             val alt = File(base, "kmengine-app")

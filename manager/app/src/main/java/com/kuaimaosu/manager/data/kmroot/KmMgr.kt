@@ -10,7 +10,7 @@ import android.content.Context
  * 所以把默认管理器固定为 com.kuaimaosu.manager 即可，其它内置项保留以兼容原 KMRoot 行为。
  */
 object KmMgr {
-    private const val FILE = "kmroot"
+    private const val FILE = "KuaiMaoroot"
     private const val KEY = "rootMgrPkg"
     const val KSU = "me.weishu.kernelsu"
     const val NEXT = "com.rifsxd.ksunext"

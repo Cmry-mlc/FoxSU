@@ -13,6 +13,11 @@ import com.topjohnwu.superuser.ShellUtils
 import com.topjohnwu.superuser.io.SuFile
 import java.io.File
 import java.io.IOException
+import java.nio.file.FileVisitResult
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.SimpleFileVisitor
+import java.nio.file.attribute.BasicFileAttributes
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -28,6 +33,8 @@ import com.kuaimaosu.manager.data.module.registry.DownloadVerificationException
 import com.kuaimaosu.manager.data.module.registry.RegistryDownloadStore
 import com.kuaimaosu.manager.data.module.registry.copyForInstall
 import com.kuaimaosu.manager.domain.model.LkmSelection
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -42,6 +49,7 @@ class KsuCliRepository(context: Context) {
     }
 
     private val nativeLibraryDir = context.applicationInfo.nativeLibraryDir
+    private val appContext = context.applicationContext
     private val shellLock = Any()
     private var rootShell: Shell? = null
     private var globalMountShell: Shell? = null
@@ -256,12 +264,13 @@ class KsuCliRepository(context: Context) {
     }
 
     /**
-     * 备份单个已安装模块到 /storage/emulated/0/Download。
+     * 备份单个已安装模块到 /storage/emulated/0/Download，产物是**标准模块 zip**：
+     * 顶层直接是 module.prop 与 system/ 等模块内容，可被管理器直接刷入。
      *
-     * 用 busybox tar 直接打包模块目录：tar 默认保留符号链接与权限，而 KernelSU
-     * 模块的 system/ 下几乎全是软链到 /system 的链接，若用 zip 跟随链接会把
-     * 整个系统分区塞进去，既慢又不可用。备份产物是一个 .tar.gz，放在 Download，
-     * 用户后续可用任意解压缩工具还原。
+     * zip 必须把符号链接存成链接本身（KernelSU 模块的 system/ 下大量指向 /system 的
+     * 软链），所以不能用设备上的 busybox zip —— 它不支持 `-y`，会跟随链接把整个系统
+     * 目录打进去。这里改为：root 用 `cp -a` 把模块目录暂存到应用私有目录（保留链接），
+     * 再由 commons-compress 写入 Unix 模式位生成 zip，最后 root 拷回 Download。
      *
      * @return 备份文件的完整路径；失败时抛出异常由调用方转成提示。
      */
@@ -271,21 +280,98 @@ class KsuCliRepository(context: Context) {
         check(shell.isRoot) { "Root access is unavailable" }
         val stamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val safeName = name.replace(Regex("[^a-zA-Z0-9\\u4e00-\\u9fa5._\\-]"), "_").take(60)
-        val fileName = "KuaiMao_${safeName}_${stamp}.tar.gz"
+        val fileName = "KuaiMao_${safeName}_${stamp}.zip"
         val outDir = "/storage/emulated/0/Download"
         val outPath = "$outDir/$fileName"
-        val cmd = buildString {
-            append("mkdir -p ${shellQuote(outDir)} && ")
-            append("/data/adb/ksu/bin/busybox tar -czf ${shellQuote(outPath)} ")
-            append("-C /data/adb/modules ${shellQuote(dirId)} && ")
-            append("test -s ${shellQuote(outPath)}")
-        }
-        val result = shell.newJob().add(cmd).to(ArrayList<String>(), null).exec()
-        if (!result.isSuccess) {
-            throw IOException(result.err.joinToString("\n").ifBlank { "tar exited with ${result.code}" })
+        val moduleDir = "/data/adb/modules/$dirId"
+
+        val stage = File(appContext.cacheDir, "modbackup_$stamp")
+        val localZip = File(appContext.cacheDir, "modbackup_$stamp.zip")
+        val stagePath = stage.absolutePath
+        try {
+            stage.deleteRecursively()
+            val prep = buildString {
+                append("rm -rf ${shellQuote(stagePath)};")
+                append("mkdir -p ${shellQuote(stagePath)};")
+                append("cp -a ${shellQuote("$moduleDir/.")} ${shellQuote("$stagePath/")} 2>/dev/null;")
+                // 状态标记不放进备份包，否则刷回去会变成"已禁用/待删除"
+                append("rm -f ${shellQuote("$stagePath/update")} ")
+                append("${shellQuote("$stagePath/disable")} ${shellQuote("$stagePath/remove")};")
+                append("chmod -R a+rX ${shellQuote(stagePath)} 2>/dev/null;")
+                append("echo BACKUP_STAGED")
+            }
+            val staged = shell.newJob().add(prep).to(ArrayList<String>(), null).exec()
+            if (!staged.isSuccess) {
+                throw IOException(staged.err.joinToString("\n").ifBlank { "暂存模块失败 (code ${staged.code})" })
+            }
+            if (!File(stagePath, "module.prop").isFile) {
+                throw IOException("模块目录缺少 module.prop，无法生成可刷入的备份")
+            }
+
+            zipModuleTree(stage, localZip)
+
+            val copy = buildString {
+                append("mkdir -p ${shellQuote(outDir)};")
+                append("cp -f ${shellQuote(localZip.absolutePath)} ${shellQuote(outPath)};")
+                append("chmod 644 ${shellQuote(outPath)};")
+                append("test -s ${shellQuote(outPath)}")
+            }
+            val copied = shell.newJob().add(copy).to(ArrayList<String>(), null).exec()
+            if (!copied.isSuccess) {
+                throw IOException(copied.err.joinToString("\n").ifBlank { "写入 Download 失败 (code ${copied.code})" })
+            }
+        } finally {
+            localZip.delete()
+            // 暂存目录里有 root 拥有的文件，交给 root 清
+            runCatching { shell.newJob().add("rm -rf ${shellQuote(stagePath)}").exec() }
         }
         Log.i(TAG, "backup module $dirId -> $outPath")
         return outPath
+    }
+
+    /** 以模块目录为根写 zip，保留权限位与符号链接。 */
+    private fun zipModuleTree(root: File, target: File) {
+        val base = root.toPath()
+        ZipArchiveOutputStream(target).use { zos ->
+            zos.setLevel(6)
+            Files.walkFileTree(
+                base,
+                object : SimpleFileVisitor<Path>() {
+                    override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
+                        if (dir != base) {
+                            val rel = base.relativize(dir).toString().replace(File.separatorChar, '/')
+                            val entry = ZipArchiveEntry("$rel/")
+                            entry.unixMode = "40755".toInt(8)
+                            zos.putArchiveEntry(entry)
+                            zos.closeArchiveEntry()
+                        }
+                        return FileVisitResult.CONTINUE
+                    }
+
+                    override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+                        val rel = base.relativize(file).toString().replace(File.separatorChar, '/')
+                        if (rel.isEmpty()) return FileVisitResult.CONTINUE
+                        if (attrs.isSymbolicLink) {
+                            val link = Files.readSymbolicLink(file).toString().toByteArray()
+                            val entry = ZipArchiveEntry(rel)
+                            entry.unixMode = "120777".toInt(8)
+                            entry.size = link.size.toLong()
+                            zos.putArchiveEntry(entry)
+                            zos.write(link)
+                            zos.closeArchiveEntry()
+                        } else if (attrs.isRegularFile) {
+                            val entry = ZipArchiveEntry(rel)
+                            entry.unixMode = if (Files.isExecutable(file)) "100755".toInt(8) else "100644".toInt(8)
+                            entry.size = attrs.size()
+                            zos.putArchiveEntry(entry)
+                            Files.newInputStream(file).use { it.copyTo(zos) }
+                            zos.closeArchiveEntry()
+                        }
+                        return FileVisitResult.CONTINUE
+                    }
+                },
+            )
+        }
     }
 
     private fun flashWithIO(

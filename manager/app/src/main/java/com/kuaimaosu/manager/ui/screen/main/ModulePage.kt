@@ -376,6 +376,8 @@ fun ModulePage(bottomPadding: Dp) {
         snackbarHost = {
             SwipeableSnackbarHost(
                 hostState = snackBarHost,
+                // 抬到底部导航栏之上，否则提示会被导航栏挡住看不见
+                modifier = Modifier.padding(bottom = bottomPadding + 12.dp),
             )
         },
     ) { innerPadding ->
